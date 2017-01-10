@@ -9,7 +9,7 @@
   <version>develop-SNAPSHOT</version>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
-  <url>https://github.com/reaktivity/build-template.java</url>
+  <url>https://github.com/reaktivity/nukleus-maven-plugin</url>
 
   <licenses>
     <license>
