@@ -8,6 +8,7 @@
   <artifactId>nukleus-maven-plugin</artifactId>
   <version>0.1</version>
   <name>Nukleus Maven Plugin</name>
+  <description>Nukleus Maven Plugin</description>
   <url>https://github.com/reaktivity/build-template.java</url>
 
   <licenses>
