@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>develop-SNAPSHOT</version>
+  <version>0.1</version>
   <name>Nukleus Maven Plugin</name>
   <url>https://github.com/reaktivity/build-template.java</url>
 
