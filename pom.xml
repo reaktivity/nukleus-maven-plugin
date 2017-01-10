@@ -6,10 +6,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.1</version>
+  <version>0.2</version>
+  <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
-  <url>https://github.com/reaktivity/build-template.java</url>
+  <url>https://github.com/reaktivity/nukleus-maven-plugin</url>
 
   <licenses>
     <license>
@@ -129,6 +130,11 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>3.3</version>
       </plugin>
     </plugins>
   </build>
