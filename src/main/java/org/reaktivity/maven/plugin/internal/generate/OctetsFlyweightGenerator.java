@@ -50,7 +50,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
 
         this.visitorRawType = flyweightType.nestedClass("Visitor");
         this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "nuklei").build());
+                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
     }
 
