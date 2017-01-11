@@ -50,7 +50,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
         super(flyweightType);
 
         this.classBuilder = classBuilder(thisName).addModifiers(PUBLIC, ABSTRACT)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "nuklei").build());
+                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
         this.builderClassBuilder = new BuilderClassBuilder(thisName);
     }
 

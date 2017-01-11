@@ -54,7 +54,7 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
 
         this.classBuilder = classBuilder(thisRawName).superclass(flyweightType)
                 .addTypeVariable(itemType).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "nuklei").build());
+                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
     }
 

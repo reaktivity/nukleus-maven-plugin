@@ -75,7 +75,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
         this.baseName = baseName;
         this.builder = classBuilder(structName).superclass(flyweightName).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "nuklei").build());
+                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
         this.typeId = new TypeIdGenerator(structName, builder);
         this.memberSizeConstant = new MemberSizeConstantGenerator(structName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
