@@ -21,11 +21,14 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.reaktivity.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.maven.plugin.internal.ast.AstType;
 import org.reaktivity.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.maven.plugin.internal.generate.EnumFlyweightGenerator;
+import org.reaktivity.maven.plugin.internal.generate.EnumTypeGenerator;
 import org.reaktivity.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -109,6 +112,27 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         UnionFlyweightGenerator generator = new UnionFlyweightGenerator(unionName, resolver.flyweightName(), baseName);
 
         return new UnionVisitor(generator, resolver).visitUnion(unionNode);
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitEnum(
+        AstEnumNode enumNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        String baseName = enumNode.name();
+        AstType enumType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+        ClassName enumFlyweightName = resolver.resolveClass(enumType);
+        ClassName enumTypeName = enumFlyweightName.peerClass(baseName);
+System.out.format("typeName: %s, flyweightName: %s", enumTypeName, enumFlyweightName);
+        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName);
+        EnumFlyweightGenerator flyweightGenerator =
+                new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(), enumTypeName);
+
+        return new EnumVisitor(typeGenerator, flyweightGenerator).visitEnum(enumNode);
     }
 
     @Override

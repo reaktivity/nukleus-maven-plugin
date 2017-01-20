@@ -20,9 +20,20 @@ import java.util.LinkedList;
 
 import org.reaktivity.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.maven.plugin.internal.ast.AstCaseNode.Builder;
+import org.reaktivity.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.maven.plugin.internal.ast.AstMemberNode;
+import org.reaktivity.maven.plugin.internal.ast.AstNode;
+import org.reaktivity.maven.plugin.internal.ast.AstScopeNode;
+import org.reaktivity.maven.plugin.internal.ast.AstSpecificationNode;
+import org.reaktivity.maven.plugin.internal.ast.AstStructNode;
+import org.reaktivity.maven.plugin.internal.ast.AstType;
+import org.reaktivity.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int64_typeContext;
@@ -41,19 +52,13 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
-import org.reaktivity.maven.plugin.internal.ast.AstMemberNode;
-import org.reaktivity.maven.plugin.internal.ast.AstNode;
-import org.reaktivity.maven.plugin.internal.ast.AstScopeNode;
-import org.reaktivity.maven.plugin.internal.ast.AstSpecificationNode;
-import org.reaktivity.maven.plugin.internal.ast.AstStructNode;
-import org.reaktivity.maven.plugin.internal.ast.AstType;
-import org.reaktivity.maven.plugin.internal.ast.AstUnionNode;
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
 {
     private final Deque<AstScopeNode.Builder> scopeBuilders;
 
     private AstSpecificationNode.Builder specificationBuilder;
+    private AstEnumNode.Builder enumBuilder;
     private AstStructNode.Builder structBuilder;
     private AstMemberNode.Builder memberBuilder;
     private AstUnionNode.Builder unionBuilder;
@@ -107,6 +112,45 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             return scopeBuilder.build();
         }
+    }
+
+    @Override
+    public AstEnumNode visitEnum_type(
+        Enum_typeContext ctx)
+    {
+        enumBuilder = new AstEnumNode.Builder();
+        enumBuilder.name(ctx.ID().getText());
+
+        super.visitEnum_type(ctx);
+
+        AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
+        if (scopeBuilder != null)
+        {
+            AstEnumNode enumeration = enumBuilder.build();
+            scopeBuilder.enumeration(enumeration);
+            return enumeration;
+        }
+        else
+        {
+            return enumBuilder.build();
+        }
+    }
+
+    @Override
+    public AstValueNode visitEnum_value(
+        Enum_valueContext ctx)
+    {
+        AstValueNode.Builder valueBuilder = new AstValueNode.Builder();
+
+        super.visitEnum_value(ctx);
+
+        AstValueNode value = valueBuilder.name(ctx.ID().getText())
+                                         .ordinal(enumBuilder.size())
+                                         .build();
+
+        enumBuilder.value(value);
+
+        return value;
     }
 
     @Override

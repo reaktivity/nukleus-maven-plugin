@@ -27,21 +27,24 @@ public final class AstScopeNode extends AstNode
     private final int depth;
     private final String name;
     private final List<AstScopeNode> scopes;
+    private final List<AstEnumNode> enums;
     private final List<AstStructNode> structs;
     private final List<AstUnionNode> unions;
 
     private AstScopeNode(
         int depth,
         String name,
-        List<AstScopeNode> scopes,
+        List<AstEnumNode> enums,
         List<AstStructNode> structs,
-        List<AstUnionNode> unions)
+        List<AstUnionNode> unions,
+        List<AstScopeNode> scopes)
     {
         this.depth = depth;
         this.name = requireNonNull(name);
-        this.scopes = unmodifiableList(scopes);
+        this.enums = unmodifiableList(enums);
         this.structs = unmodifiableList(structs);
         this.unions = unmodifiableList(unions);
+        this.scopes = unmodifiableList(scopes);
     }
 
     @Override
@@ -59,6 +62,11 @@ public final class AstScopeNode extends AstNode
     public String name()
     {
         return name;
+    }
+
+    public List<AstEnumNode> enums()
+    {
+        return enums;
     }
 
     public List<AstStructNode> structs()
@@ -79,7 +87,9 @@ public final class AstScopeNode extends AstNode
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 11) ^ scopes.hashCode() << 7 ^ structs.hashCode();
+        return (name.hashCode() << 11) ^ (scopes.hashCode() << 7) ^
+                (enums.hashCode() << 5) ^ (structs.hashCode() << 3) ^
+                unions.hashCode();
     }
 
     @Override
@@ -98,7 +108,9 @@ public final class AstScopeNode extends AstNode
         AstScopeNode that = (AstScopeNode)o;
         return this.depth == that.depth &&
                 Objects.equals(this.name, that.name) &&
+                Objects.equals(this.enums, that.enums) &&
                 Objects.equals(this.structs, that.structs) &&
+                Objects.equals(this.unions, that.unions) &&
                 Objects.equals(this.scopes, that.scopes);
     }
 
@@ -107,13 +119,15 @@ public final class AstScopeNode extends AstNode
         private int depth;
         private String name;
         private List<AstScopeNode> scopes;
+        private List<AstEnumNode> enums;
         private List<AstStructNode> structs;
         private List<AstUnionNode> unions;
 
         public Builder()
         {
-            this.structs = new LinkedList<>();
             this.scopes = new LinkedList<>();
+            this.enums = new LinkedList<>();
+            this.structs = new LinkedList<>();
             this.unions = new LinkedList<>();
         }
 
@@ -129,19 +143,29 @@ public final class AstScopeNode extends AstNode
             return this;
         }
 
-        public Builder struct(AstStructNode struct)
+        public Builder enumeration(
+            AstEnumNode enumeration)
+        {
+            this.enums.add(enumeration);
+            return this;
+        }
+
+        public Builder struct(
+            AstStructNode struct)
         {
             this.structs.add(struct);
             return this;
         }
 
-        public Builder union(AstUnionNode union)
+        public Builder union(
+            AstUnionNode union)
         {
             this.unions.add(union);
             return this;
         }
 
-        public Builder scope(AstScopeNode scope)
+        public Builder scope(
+            AstScopeNode scope)
         {
             this.scopes.add(scope);
             return this;
@@ -150,7 +174,7 @@ public final class AstScopeNode extends AstNode
         @Override
         public AstScopeNode build()
         {
-            return new AstScopeNode(depth, name, scopes, structs, unions);
+            return new AstScopeNode(depth, name, enums, structs, unions, scopes);
         }
     }
 }

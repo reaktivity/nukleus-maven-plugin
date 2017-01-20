@@ -26,9 +26,6 @@ import static org.reaktivity.maven.plugin.internal.generate.TypeNames.BIT_UTIL_T
 import static org.reaktivity.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
-import javax.annotation.Generated;
-
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -50,7 +47,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
 
         this.visitorRawType = flyweightType.nestedClass("Visitor");
         this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
+                .addAnnotation(GENERATED_ANNOTATION);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
     }
 

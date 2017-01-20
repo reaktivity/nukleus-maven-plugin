@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.reaktivity.maven.plugin.internal.ast.AstCaseNode;
+import org.reaktivity.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.maven.plugin.internal.ast.AstStructNode;
@@ -53,6 +54,13 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
         AstStructNode structNode)
+    {
+        return defaultResult();
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitEnum(
+        AstEnumNode enumNode)
     {
         return defaultResult();
     }

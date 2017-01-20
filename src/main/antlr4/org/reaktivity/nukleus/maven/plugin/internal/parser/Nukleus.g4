@@ -68,7 +68,8 @@ template_type_spec
    ;
 
 constr_type_spec
-   : struct_type
+   : enum_type
+   | struct_type
    | union_type
    ;
 
@@ -126,6 +127,26 @@ uint64_type
 octets_type
    : KW_OCTETS LEFT_SQUARE_BRACKET positive_int_const RIGHT_SQUARE_BRACKET
    | KW_OCTETS
+   ;
+
+enum_type
+   : KW_ENUM ID LEFT_BRACE enum_values RIGHT_BRACE
+   ;
+
+enum_values
+   : enum_value_non_terminal * enum_value_terminal
+   ;
+
+enum_value_non_terminal
+   : enum_value COMMA
+   ;
+
+enum_value_terminal
+   : enum_value
+   ;
+
+enum_value
+   : ID
    ;
 
 struct_type
@@ -289,6 +310,11 @@ KW_LIST
 
 KW_OCTETS
    : 'octets'
+   ;
+
+
+KW_ENUM
+   : 'enum'
    ;
 
 

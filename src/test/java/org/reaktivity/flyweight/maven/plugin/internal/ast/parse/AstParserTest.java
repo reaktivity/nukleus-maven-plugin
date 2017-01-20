@@ -21,13 +21,16 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.Test;
+import org.reaktivity.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.maven.plugin.internal.ast.AstType;
+import org.reaktivity.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.maven.plugin.internal.ast.parse.AstParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusLexer;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
@@ -59,6 +62,24 @@ public class AstParserTest
                 .name("common")
                 .scope(new AstScopeNode.Builder().depth(1).name("control").build())
                 .scope(new AstScopeNode.Builder().depth(1).name("stream").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseEnumWithValues()
+    {
+        NukleusParser parser = newParser("enum Coin { PENNY, NICKLE, DIME, QUARTER }");
+        Enum_typeContext ctx = parser.enum_type();
+        AstEnumNode actual = new AstParser().visitEnum_type(ctx);
+
+        AstEnumNode expected = new AstEnumNode.Builder()
+                .name("Coin")
+                .value(new AstValueNode.Builder().ordinal(0).name("PENNY").build())
+                .value(new AstValueNode.Builder().ordinal(1).name("NICKLE").build())
+                .value(new AstValueNode.Builder().ordinal(2).name("DIME").build())
+                .value(new AstValueNode.Builder().ordinal(3).name("QUARTER").build())
                 .build();
 
         assertEquals(expected, actual);
