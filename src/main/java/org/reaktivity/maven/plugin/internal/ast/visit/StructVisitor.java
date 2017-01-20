@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Set;
 
+import org.reaktivity.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.maven.plugin.internal.ast.AstStructNode;
@@ -61,6 +62,13 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
         }
 
         super.visitStruct(structNode);
+        return defaultResult();
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitEnum(
+        AstEnumNode enumNode)
+    {
         return defaultResult();
     }
 

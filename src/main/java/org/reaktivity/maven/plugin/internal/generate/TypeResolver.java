@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.reaktivity.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.maven.plugin.internal.ast.AstSpecificationNode;
@@ -181,6 +182,13 @@ public final class TypeResolver
         }
 
         @Override
+        public Map<AstType, TypeName> visitEnum(
+            AstEnumNode enumNode)
+        {
+            return visitNamedType(enumNode, enumNode.name(), super::visitEnum);
+        }
+
+        @Override
         public Map<AstType, TypeName> visitStruct(
             AstStructNode structNode)
         {
@@ -227,6 +235,5 @@ public final class TypeResolver
         {
             return namesByType;
         }
-
     }
 }

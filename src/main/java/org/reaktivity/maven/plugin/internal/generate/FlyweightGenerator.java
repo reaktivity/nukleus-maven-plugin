@@ -29,9 +29,6 @@ import static org.reaktivity.maven.plugin.internal.generate.TypeNames.MUTABLE_DI
 
 import java.util.function.Consumer;
 
-import javax.annotation.Generated;
-
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -50,7 +47,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
         super(flyweightType);
 
         this.classBuilder = classBuilder(thisName).addModifiers(PUBLIC, ABSTRACT)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
+                .addAnnotation(GENERATED_ANNOTATION);
         this.builderClassBuilder = new BuilderClassBuilder(thisName);
     }
 

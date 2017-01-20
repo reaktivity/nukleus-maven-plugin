@@ -40,9 +40,6 @@ import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntUnaryOperator;
 
-import javax.annotation.Generated;
-
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -75,7 +72,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
         this.baseName = baseName;
         this.builder = classBuilder(structName).superclass(flyweightName).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
+                .addAnnotation(GENERATED_ANNOTATION);
         this.typeId = new TypeIdGenerator(structName, builder);
         this.memberSizeConstant = new MemberSizeConstantGenerator(structName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);

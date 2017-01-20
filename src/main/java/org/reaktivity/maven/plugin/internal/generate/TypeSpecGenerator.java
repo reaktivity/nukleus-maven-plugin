@@ -15,12 +15,18 @@
  */
 package org.reaktivity.maven.plugin.internal.generate;
 
+import javax.annotation.Generated;
+
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 public abstract class TypeSpecGenerator<T extends TypeName>
 {
+    protected static final AnnotationSpec GENERATED_ANNOTATION =
+            AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build();
+
     protected final T thisName;
     protected final ClassName thisRawName;
 

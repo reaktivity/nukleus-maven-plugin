@@ -36,9 +36,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import javax.annotation.Generated;
-
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -65,25 +62,25 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
     private final BuilderClassGenerator builderClass;
 
     public UnionFlyweightGenerator(
-        ClassName structName,
+        ClassName unionName,
         ClassName flyweightName,
         String baseName)
     {
-        super(structName);
+        super(unionName);
 
         this.baseName = baseName;
-        this.builder = classBuilder(structName).superclass(flyweightName).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build());
-        this.memberKindConstant = new KindConstantGenerator(structName, builder);
-        this.memberSizeConstant = new MemberSizeConstantGenerator(structName, builder);
-        this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
-        this.memberField = new MemberFieldGenerator(structName, builder);
-        this.kindAccessor = new KindAccessorGenerator(structName, builder);
-        this.memberAccessor = new MemberAccessorGenerator(structName, flyweightName.nestedClass("Visitor"), builder);
+        this.builder = classBuilder(unionName).superclass(flyweightName).addModifiers(PUBLIC, FINAL)
+                .addAnnotation(GENERATED_ANNOTATION);
+        this.memberKindConstant = new KindConstantGenerator(unionName, builder);
+        this.memberSizeConstant = new MemberSizeConstantGenerator(unionName, builder);
+        this.memberOffsetConstant = new MemberOffsetConstantGenerator(unionName, builder);
+        this.memberField = new MemberFieldGenerator(unionName, builder);
+        this.kindAccessor = new KindAccessorGenerator(unionName, builder);
+        this.memberAccessor = new MemberAccessorGenerator(unionName, flyweightName.nestedClass("Visitor"), builder);
         this.wrapMethod = new WrapMethodGenerator();
         this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
-        this.builderClass = new BuilderClassGenerator(structName, flyweightName);
+        this.builderClass = new BuilderClassGenerator(unionName, flyweightName);
     }
 
     public UnionFlyweightGenerator addMember(

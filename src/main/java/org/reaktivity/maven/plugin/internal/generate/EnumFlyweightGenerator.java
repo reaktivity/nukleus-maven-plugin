@@ -26,8 +26,6 @@ import static org.reaktivity.maven.plugin.internal.generate.TypeNames.BIT_UTIL_T
 import static org.reaktivity.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
-import java.nio.charset.Charset;
-
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -35,45 +33,49 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-public final class StringFlyweightGenerator extends ClassSpecGenerator
+public final class EnumFlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
+    private final ClassName enumTypeName;
 
-    public StringFlyweightGenerator(
-        ClassName flyweightType)
+    public EnumFlyweightGenerator(
+        ClassName enumName,
+        ClassName flyweightName,
+        ClassName enumTypeName)
     {
-        super(flyweightType.peerClass("StringFW"));
+        super(enumName);
 
-        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL)
+        this.enumTypeName = enumTypeName;
+        this.classBuilder = classBuilder(thisName).superclass(flyweightName).addModifiers(PUBLIC, FINAL)
                 .addAnnotation(GENERATED_ANNOTATION);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName);
     }
 
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldOffsetLengthConstant())
-                            .addField(fieldSizeLengthConstant())
+        return classBuilder.addField(fieldOffsetValueConstant())
+                            .addField(fieldSizeValueConstant())
                             .addMethod(limitMethod())
-                            .addMethod(asStringMethod())
+                            .addMethod(getMethod())
                             .addMethod(wrapMethod())
                             .addMethod(toStringMethod())
-                            .addMethod(length0Method())
                             .addType(builderClassBuilder.build())
                             .build();
     }
 
-    private FieldSpec fieldOffsetLengthConstant()
+
+    private FieldSpec fieldOffsetValueConstant()
     {
-        return FieldSpec.builder(int.class, "FIELD_OFFSET_LENGTH", PRIVATE, STATIC, FINAL)
+        return FieldSpec.builder(int.class, "FIELD_OFFSET_VALUE", PRIVATE, STATIC, FINAL)
                 .initializer("0")
                 .build();
     }
 
-    private FieldSpec fieldSizeLengthConstant()
+    private FieldSpec fieldSizeValueConstant()
     {
-        return FieldSpec.builder(int.class, "FIELD_SIZE_LENGTH", PRIVATE, STATIC, FINAL)
+        return FieldSpec.builder(int.class, "FIELD_SIZE_VALUE", PRIVATE, STATIC, FINAL)
                 .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
                 .build();
     }
@@ -84,19 +86,19 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return maxLimit() == offset() ? offset() : offset() + FIELD_SIZE_LENGTH + length0()")
+                .addStatement("return maxLimit() == offset() ? offset() : offset() + FIELD_SIZE_VALUE")
                 .build();
     }
 
-    private MethodSpec asStringMethod()
+    private MethodSpec getMethod()
     {
-        return methodBuilder("asString")
+        return methodBuilder("get")
                 .addModifiers(PUBLIC)
-                .returns(String.class)
+                .returns(enumTypeName)
                 .beginControlFlow("if (maxLimit() == offset())")
                 .addStatement("return null")
                 .endControlFlow()
-                .addStatement("return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length0())")
+                .addStatement("return $T.valueOf(buffer().getInt(offset() + FIELD_OFFSET_VALUE))", enumTypeName)
                 .build();
     }
 
@@ -121,33 +123,27 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(String.class)
-                .addStatement("return maxLimit() == offset() ? \"null\" : String.format(\"\\\"%s\\\"\", asString())")
-                .build();
-    }
-
-    private MethodSpec length0Method()
-    {
-        return methodBuilder("length0")
-                .addModifiers(PRIVATE)
-                .returns(int.class)
-                .addStatement("return buffer().getByte(offset() + FIELD_OFFSET_LENGTH) & 0xFF")
+                .addStatement("return maxLimit() == offset() ? \"null\" : get().toString()")
                 .build();
     }
 
     private static final class BuilderClassBuilder
     {
         private final TypeSpec.Builder classBuilder;
+        private final ClassName enumTypeName;
         private final ClassName classType;
-        private final ClassName stringType;
+        private final ClassName enumName;
 
         private BuilderClassBuilder(
-            ClassName stringType,
-            ClassName builderRawType)
+            ClassName enumName,
+            ClassName builderRawType,
+            ClassName enumTypeName)
         {
-            TypeName builderType = ParameterizedTypeName.get(builderRawType, stringType);
+            TypeName builderType = ParameterizedTypeName.get(builderRawType, enumName);
 
-            this.stringType = stringType;
-            this.classType = stringType.nestedClass("Builder");
+            this.enumName = enumName;
+            this.enumTypeName = enumTypeName;
+            this.classType = enumName.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
                     .addModifiers(PUBLIC, STATIC, FINAL)
                     .superclass(builderType);
@@ -158,7 +154,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
             return classBuilder.addMethod(constructor())
                     .addMethod(wrapMethod())
                     .addMethod(setMethod())
-                    .addMethod(setStringMethod())
+                    .addMethod(setEnumMethod())
                     .build();
         }
 
@@ -166,7 +162,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return constructorBuilder()
                     .addModifiers(PUBLIC)
-                    .addStatement("super(new $T())", stringType)
+                    .addStatement("super(new $T())", enumName)
                     .build();
         }
 
@@ -174,7 +170,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return methodBuilder("wrap")
                     .addModifiers(PUBLIC)
-                    .returns(stringType.nestedClass("Builder"))
+                    .returns(enumName.nestedClass("Builder"))
                     .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
@@ -187,25 +183,22 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return methodBuilder("set")
                     .addModifiers(PUBLIC)
-                    .returns(stringType.nestedClass("Builder"))
-                    .addParameter(stringType, "value")
+                    .returns(enumName.nestedClass("Builder"))
+                    .addParameter(enumName, "value")
                     .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.length())")
                     .addStatement("return this")
                     .build();
         }
 
-        private MethodSpec setStringMethod()
+        private MethodSpec setEnumMethod()
         {
             return methodBuilder("set")
                     .addModifiers(PUBLIC)
-                    .returns(stringType.nestedClass("Builder"))
-                    .addParameter(String.class, "value")
-                    .addParameter(Charset.class, "charset")
-                    .addStatement("byte[] charBytes = value.getBytes(charset)")
+                    .returns(enumName.nestedClass("Builder"))
+                    .addParameter(enumTypeName, "value")
                     .addStatement("MutableDirectBuffer buffer = buffer()")
                     .addStatement("int offset = offset()")
-                    .addStatement("buffer.putByte(offset, (byte) charBytes.length)")
-                    .addStatement("buffer.putBytes(offset + 1, charBytes)")
+                    .addStatement("buffer.putByte(offset, (byte) value.ordinal())")
                     .addStatement("return this")
                     .build();
         }

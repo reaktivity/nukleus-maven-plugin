@@ -42,12 +42,16 @@ public abstract class AstNode
         {
             return Stream.concat(
                       Stream.concat(
-                        scopeNode.scopes()
+                          Stream.concat(
+                              scopeNode.scopes()
+                                       .stream()
+                                       .map(this::visitNestedScope),
+                              scopeNode.structs()
+                                       .stream()
+                                       .map(this::visitStruct)),
+                        scopeNode.enums()
                                  .stream()
-                                 .map(this::visitNestedScope),
-                        scopeNode.structs()
-                                 .stream()
-                                 .map(this::visitStruct)),
+                                 .map(this::visitEnum)),
                       scopeNode.unions()
                                .stream()
                                .map(this::visitUnion))
@@ -58,6 +62,21 @@ public abstract class AstNode
             AstScopeNode scopeNode)
         {
             return visitScope(scopeNode);
+        }
+
+        public R visitEnum(
+            AstEnumNode enumNode)
+        {
+            return enumNode.values()
+                           .stream()
+                           .map(this::visitValue)
+                           .collect(reducing(defaultResult(), this::aggregateResult));
+        }
+
+        public R visitValue(
+            AstValueNode valueNode)
+        {
+            return defaultResult();
         }
 
         public R visitStruct(
