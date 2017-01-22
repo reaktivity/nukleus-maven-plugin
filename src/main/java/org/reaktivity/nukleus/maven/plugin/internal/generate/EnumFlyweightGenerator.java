@@ -98,7 +98,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                 .beginControlFlow("if (maxLimit() == offset())")
                 .addStatement("return null")
                 .endControlFlow()
-                .addStatement("return $T.valueOf(buffer().getInt(offset() + FIELD_OFFSET_VALUE))", enumTypeName)
+                .addStatement("return $T.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE))", enumTypeName)
                 .build();
     }
 
