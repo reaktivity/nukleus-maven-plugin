@@ -111,12 +111,13 @@
             <include>src/**</include>
           </includes>
           <excludes>
-            <include>src/conf/**</include>
+            <exclude>src/conf/**</exclude>
           </excludes>
           <mapping>
             <idl>SLASHSTAR_STYLE</idl>
             <g4>SLASHSTAR_STYLE</g4>
           </mapping>
+          <failIfUnknown>true</failIfUnknown>
         </configuration>
         <executions>
           <execution>
