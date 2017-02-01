@@ -110,11 +110,22 @@
           <includes>
             <include>src/**</include>
           </includes>
+          <excludes>
+            <include>src/conf/**</include>
+          </excludes>
           <mapping>
             <idl>SLASHSTAR_STYLE</idl>
             <g4>SLASHSTAR_STYLE</g4>
           </mapping>
         </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
