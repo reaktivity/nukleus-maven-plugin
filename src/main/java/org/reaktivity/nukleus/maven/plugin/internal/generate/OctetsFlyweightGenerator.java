@@ -19,15 +19,12 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
@@ -54,30 +51,12 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldOffsetLengthConstant())
-                            .addField(fieldSizeLengthConstant())
-                            .addMethod(getMethod())
+        return classBuilder.addMethod(getMethod())
                             .addMethod(limitMethod())
                             .addMethod(wrapMethod())
                             .addMethod(toStringMethod())
-                            .addMethod(length0Method())
                             .addType(builderClassBuilder.build())
                             .build();
-    }
-
-
-    private FieldSpec fieldOffsetLengthConstant()
-    {
-        return FieldSpec.builder(int.class, "FIELD_OFFSET_LENGTH", PRIVATE, STATIC, FINAL)
-                .initializer("0")
-                .build();
-    }
-
-    private FieldSpec fieldSizeLengthConstant()
-    {
-        return FieldSpec.builder(int.class, "FIELD_SIZE_LENGTH", PRIVATE, STATIC, FINAL)
-                .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
-                .build();
     }
 
     private MethodSpec getMethod()
@@ -92,8 +71,8 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .returns(typeVarT)
                 .addStatement("DirectBuffer buffer = buffer()")
                 .addStatement("int offset = offset()")
-                .addStatement("int length = buffer.getByte(offset() + FIELD_OFFSET_LENGTH) & 0xFF")
-                .addStatement("return visitor.visit(buffer, offset + FIELD_SIZE_LENGTH, offset + FIELD_SIZE_LENGTH + length)")
+                .addStatement("int limit = limit()")
+                .addStatement("return visitor.visit(buffer, offset, limit)")
                 .build();
     }
 
@@ -103,7 +82,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return maxLimit() == offset() ? offset() : offset() + FIELD_SIZE_LENGTH + length0()")
+                .addStatement("return maxLimit()")
                 .build();
     }
 
@@ -128,16 +107,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(String.class)
-                .addStatement("return maxLimit() == offset() ? \"null\" : String.format(\"length=%d\", length0())")
-                .build();
-    }
-
-    private MethodSpec length0Method()
-    {
-        return methodBuilder("length0")
-                .addModifiers(PRIVATE)
-                .returns(int.class)
-                .addStatement("return buffer().getByte(offset() + FIELD_OFFSET_LENGTH) & 0xFF")
+                .addStatement("return String.format(\"octets[%d]\", sizeof())")
                 .build();
     }
 
@@ -201,8 +171,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("reset")
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
-                    .addStatement("buffer().putByte(offset() + FIELD_OFFSET_LENGTH, (byte) 0)")
-                    .addStatement("limit(offset() + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH)")
+                    .addStatement("limit(offset())")
                     .addStatement("return this")
                     .build();
         }
@@ -213,8 +182,8 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(octetsType, "value")
-                    .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.length())")
-                    .addStatement("limit(offset() + value.length())")
+                    .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
+                    .addStatement("limit(offset() + value.sizeof())")
                     .addStatement("return this")
                     .build();
         }
@@ -227,9 +196,8 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "value")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "length")
-                    .addStatement("buffer().putByte(offset() + FIELD_OFFSET_LENGTH, (byte) length)")
-                    .addStatement("buffer().putBytes(offset() + FIELD_SIZE_LENGTH, value, offset, length)")
-                    .addStatement("limit(offset() + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH + length)")
+                    .addStatement("buffer().putBytes(offset(), value, offset, length)")
+                    .addStatement("limit(offset() + length)")
                     .addStatement("return this")
                     .build();
         }
@@ -240,9 +208,8 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(byte[].class, "value")
-                    .addStatement("buffer().putByte(offset() + FIELD_OFFSET_LENGTH, (byte) value.length)")
-                    .addStatement("buffer().putBytes(offset() + FIELD_SIZE_LENGTH, value)")
-                    .addStatement("limit(offset() + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH + value.length)")
+                    .addStatement("buffer().putBytes(offset(), value)")
+                    .addStatement("limit(offset() + value.length)")
                     .addStatement("return this")
                     .build();
         }
@@ -253,10 +220,8 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(visitorType, "visitor")
-                    .addStatement("int length = visitor.visit(buffer(), offset() + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH," +
-                            " maxLimit())")
-                    .addStatement("buffer().putByte(offset() + FIELD_OFFSET_LENGTH, (byte) length)")
-                    .addStatement("limit(offset() + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH + length)")
+                    .addStatement("int length = visitor.visit(buffer(), offset(), maxLimit())")
+                    .addStatement("limit(offset() + length)")
                     .addStatement("return this")
                     .build();
         }

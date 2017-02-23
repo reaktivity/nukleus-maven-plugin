@@ -125,7 +125,7 @@ uint64_type
    ;
 
 octets_type
-   : KW_OCTETS LEFT_SQUARE_BRACKET positive_int_const RIGHT_SQUARE_BRACKET
+   : KW_OCTETS LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
    | KW_OCTETS
    ;
 

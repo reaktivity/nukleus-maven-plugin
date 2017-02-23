@@ -88,17 +88,18 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         String name,
         TypeName type,
         TypeName unsignedType,
-        int size)
+        int size,
+        String sizeName)
     {
         memberKindConstant.addMember(value, name);
         memberOffsetConstant.addMember(name);
         memberSizeConstant.addMember(name, type, size);
         memberField.addMember(name, type);
         memberAccessor.addMember(name, type, unsignedType);
-        wrapMethod.addMember(name, type);
+        wrapMethod.addMember(name, type, size, sizeName);
         limitMethod.addMember(name, type);
         toStringMethod.addMember(name, type);
-        builderClass.addMember(name, type, size);
+        builderClass.addMember(name, type, size, sizeName);
         return this;
     }
 
@@ -445,7 +446,9 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
         public WrapMethodGenerator addMember(
             String name,
-            TypeName type)
+            TypeName type,
+            int size,
+            String sizeName)
         {
             builder.beginControlFlow("case $L:", kind(name));
 
@@ -456,7 +459,20 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             }
             else if (!type.isPrimitive())
             {
-                builder.addStatement("$LRO.wrap(buffer, offset + $L, maxLimit)", name, offset(name));
+                if (size >= 0)
+                {
+                    builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + $L)",
+                            name, offset(name), offset(name), size);
+                }
+                else if (sizeName != null)
+                {
+                    builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + $L())",
+                            name, offset(name), offset(name), sizeName);
+                }
+                else
+                {
+                    builder.addStatement("$LRO.wrap(buffer, offset + $L, maxLimit)", name, offset(name));
+                }
             }
 
             builder.addStatement("break").endControlFlow();
@@ -557,14 +573,15 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         private void addMember(
             String name,
             TypeName type,
-            int size)
+            int size,
+            String sizeName)
         {
             // TODO: eliminate need for lookahead
             memberMutator.lookaheadMember(name, type);
 
             memberField.addMember(name, type);
-            memberAccessor.addMember(name, type, size);
-            memberMutator.addMember(name, type);
+            memberAccessor.addMember(name, type, size, sizeName);
+            memberMutator.addMember(name, type, sizeName);
 
             //   setMethod
         }
@@ -653,20 +670,22 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             public MemberAccessorGenerator addMember(
                 String name,
                 TypeName type,
-                int size)
+                int size,
+                String sizeName)
             {
                 if (!type.isPrimitive())
                 {
                     if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
                     {
-                        String limit = (size > 0) ? size(name) : "maxLimit()";
+                        String limit = (size >= 0) ? "offset() + " + offset(name) + " + " + size(name) :
+                            sizeName != null ? sizeName + "()" : "maxLimit()";
+
                         builder.addMethod(methodBuilder(name)
                                 .addModifiers(PRIVATE)
                                 .addStatement("$LRW.wrap(buffer(), offset() + $L, $L)", name, offset(name), limit)
                                 .addStatement("return $LRW", name)
                                 .returns(MUTABLE_DIRECT_BUFFER_TYPE)
                                 .build());
-
                     }
                     else if (type instanceof ParameterizedTypeName)
                     {
@@ -688,12 +707,24 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     {
                         ClassName classType = (ClassName) type;
                         TypeName builderType = classType.nestedClass("Builder");
+                        String limit = (size >= 0) ? "offset() + " + offset(name) + " + " + size(name) :
+                            sizeName != null ? sizeName + "()" : "maxLimit()";
 
                         builder.addMethod(methodBuilder(name)
                                 .addModifiers(PRIVATE)
-                                .addStatement("return $LRW.wrap(buffer(), offset() + $L, maxLimit())", name, offset(name))
+                                .addStatement("return $LRW.wrap(buffer(), offset() + $L, $L)", name, offset(name), limit)
                                 .returns(builderType)
                                 .build());
+
+                        if (sizeName != null)
+                        {
+                            builder.addMethod(methodBuilder(name)
+                                    .addModifiers(PRIVATE)
+                                    .addParameter(int.class, "limit")
+                                    .addStatement("return $LRW.wrap(buffer(), offset() + $L, limit)", name, offset(name))
+                                    .returns(builderType)
+                                    .build());
+                        }
                     }
                     else
                     {
@@ -727,6 +758,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             private String deferredName;
             private TypeName deferredType;
+            private String deferredSizeName;
 
             private MemberMutatorGenerator(
                 ClassName thisType,
@@ -753,10 +785,12 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             public MemberMutatorGenerator addMember(
                 String name,
-                TypeName type)
+                TypeName type,
+                String sizeName)
             {
                 deferredName = name;
                 deferredType = type;
+                deferredSizeName = sizeName;
                 return this;
             }
 
@@ -776,9 +810,11 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
                 String name = deferredName;
                 TypeName type = deferredType;
+                String sizeName = deferredSizeName;
 
                 deferredName = null;
                 deferredType = null;
+                deferredSizeName = null;
 
                 if (type.isPrimitive())
                 {
@@ -786,7 +822,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type);
+                    addNonPrimitiveMember(name, type, sizeName);
                 }
 
                 return this;
@@ -825,12 +861,13 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             private void addNonPrimitiveMember(
                 String name,
-                TypeName type)
+                TypeName type,
+                String sizeName)
             {
                 if (type instanceof ClassName)
                 {
                     ClassName className = (ClassName) type;
-                    addClassType(name, className);
+                    addClassType(name, className, sizeName);
                 }
                 else if (type instanceof ParameterizedTypeName)
                 {
@@ -852,7 +889,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             private void addClassType(
                 String name,
-                ClassName className)
+                ClassName className,
+                String sizeName)
             {
                 if ("StringFW".equals(className.simpleName()))
                 {
@@ -891,14 +929,27 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     ClassName builderType = className.nestedClass("Builder");
                     TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
 
+                    CodeBlock.Builder code = CodeBlock.builder()
+                        .addStatement("kind($L)", kind(name));
+
+                    if (sizeName != null)
+                    {
+                        code.addStatement("$T $L = $L(maxLimit())", builderType, name, name);
+                    }
+                    else
+                    {
+                        code.addStatement("$T $L = $L()", builderType, name, name);
+                    }
+
+                    code.addStatement("mutator.accept($L)", name)
+                        .addStatement("limit($L.build().limit())", name)
+                        .addStatement("return this");
+
                     builder.addMethod(methodBuilder(name)
                             .addModifiers(PUBLIC)
                             .returns(thisType)
                             .addParameter(mutatorType, "mutator")
-                            .addStatement("kind($L)", kind(name))
-                            .addStatement("mutator.accept($L())", name)
-                            .addStatement("limit($L().build().limit())", name)
-                            .addStatement("return this")
+                            .addCode(code.build())
                             .build());
 
                 }

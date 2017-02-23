@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.6.1</version>
+  <version>0.7</version>
   <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
@@ -110,11 +110,23 @@
           <includes>
             <include>src/**</include>
           </includes>
+          <excludes>
+            <exclude>src/conf/**</exclude>
+          </excludes>
           <mapping>
             <idl>SLASHSTAR_STYLE</idl>
             <g4>SLASHSTAR_STYLE</g4>
           </mapping>
+          <failIfUnknown>true</failIfUnknown>
         </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>

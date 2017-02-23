@@ -21,6 +21,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static java.util.Collections.unmodifiableMap;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
@@ -94,7 +95,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     public StructFlyweightGenerator addMember(
         String name,
         TypeName type,
-        TypeName unsignedType)
+        TypeName unsignedType,
+        int size,
+        String sizeName)
     {
         memberOffsetConstant.addMember(name, type, unsignedType);
         memberSizeConstant.addMember(name, type, unsignedType);
@@ -102,9 +105,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         memberAccessor.addMember(name, type, unsignedType);
 
         limitMethod.addMember(name, type, unsignedType);
-        wrapMethod.addMember(name, type, unsignedType);
+        wrapMethod.addMember(name, type, unsignedType, size, sizeName);
         toStringMethod.addMember(name, type, unsignedType);
-        builderClass.addMember(name, type, unsignedType);
+        builderClass.addMember(name, type, unsignedType, size, sizeName);
 
         return this;
     }
@@ -219,7 +222,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType)
         {
             builder.addField(
-                    FieldSpec.builder(int.class, offset(name), PRIVATE, STATIC, FINAL)
+                    FieldSpec.builder(int.class, offset(name), PUBLIC, STATIC, FINAL)
                              .initializer((previousName == null)
                                      ? "0" : String.format("%s + %s", offset(previousName), size(previousName)))
                              .build());
@@ -493,7 +496,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         public WrapMethodGenerator addMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            int size,
+            String sizeName)
         {
             if (DIRECT_BUFFER_TYPE.equals(type))
             {
@@ -504,11 +509,39 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 if (anchorName != null)
                 {
-                    builder.addStatement("$LRO.wrap(buffer, $LRO.limit() + $L, maxLimit)", name, anchorName, offset(name));
+                    if (size >= 0)
+                    {
+                        builder.addStatement("$LRO.wrap(buffer, $LRO.limit() + $L, $LRO.limit() + $L + $L)",
+                                name, anchorName, offset(name), anchorName, offset(name), size);
+                    }
+                    else if (sizeName != null)
+                    {
+                        builder.addStatement("$LRO.wrap(buffer, $LRO.limit() + $L, $LRO.limit() + $L + $L())",
+                                name, anchorName, offset(name), anchorName, offset(name), sizeName);
+                    }
+                    else
+                    {
+                        builder.addStatement("$LRO.wrap(buffer, $LRO.limit() + $L, maxLimit)",
+                                name, anchorName, offset(name));
+                    }
                 }
                 else
                 {
-                    builder.addStatement("$LRO.wrap(buffer, offset + $L, maxLimit)", name, offset(name));
+                    if (size >= 0)
+                    {
+                        builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + $L)",
+                                name, offset(name), offset(name), size);
+                    }
+                    else if (sizeName != null)
+                    {
+                        builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + $L())",
+                                name, offset(name), offset(name), sizeName);
+                    }
+                    else
+                    {
+                        builder.addStatement("$LRO.wrap(buffer, offset + $L, maxLimit)",
+                                name, offset(name));
+                    }
                 }
                 anchorName = name;
             }
@@ -607,14 +640,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private void addMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            int size,
+            String sizeName)
         {
             // TODO: eliminate need for lookahead
             memberMutator.lookaheadMember(name, type, unsignedType);
 
             memberField.addMember(name, type, unsignedType);
-            memberAccessor.addMember(name, type, unsignedType);
-            memberMutator.addMember(name, type, unsignedType);
+            memberAccessor.addMember(name, type, unsignedType, size, sizeName);
+            memberMutator.addMember(name, type, unsignedType, sizeName);
             wrapMethod.addMember(name, type, unsignedType);
         }
 
@@ -691,6 +726,21 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
         private static final class MemberAccessorGenerator extends ClassSpecMixinGenerator
         {
+            private static final Map<TypeName, String> GETTER_NAMES;
+
+            static
+            {
+                Map<TypeName, String> getterNames = new HashMap<>();
+                getterNames.put(TypeName.BYTE, "getByte");
+                getterNames.put(TypeName.CHAR, "getChar");
+                getterNames.put(TypeName.SHORT, "getShort");
+                getterNames.put(TypeName.FLOAT, "getFloat");
+                getterNames.put(TypeName.INT, "getInt");
+                getterNames.put(TypeName.DOUBLE, "getDouble");
+                getterNames.put(TypeName.LONG, "getLong");
+                GETTER_NAMES = unmodifiableMap(getterNames);
+            }
+
             private String anchorName;
 
             private MemberAccessorGenerator(
@@ -703,9 +753,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             public MemberAccessorGenerator addMember(
                 String name,
                 TypeName type,
-                TypeName unsignedType)
+                TypeName unsignedType,
+                int size,
+                String sizeName)
             {
-                if (!type.isPrimitive())
+                if (type.isPrimitive())
+                {
+                    addPrimitiveMember(name, type, unsignedType);
+                }
+                else
                 {
                     if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
                     {
@@ -713,41 +769,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (type instanceof ParameterizedTypeName)
                     {
-                        ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
-                        ClassName rawType = parameterizedType.rawType;
-                        ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
-                        ClassName builderRawType = rawType.nestedClass("Builder");
-                        ClassName itemBuilderType = itemType.nestedClass("Builder");
-                        ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
-
-                        builder.addMethod(methodBuilder(name)
-                                .addModifiers(PRIVATE)
-                                .addParameter(int.class, "offset")
-                                .addStatement("return $LRW.wrap(buffer(), offset, maxLimit())", name)
-                                .returns(builderType)
-                                .build());
+                        addParameterizedType(name, type, size, sizeName);
                     }
                     else if (type instanceof ClassName)
                     {
-                        ClassName classType = (ClassName) type;
-                        TypeName builderType = classType.nestedClass("Builder");
-
-                        CodeBlock.Builder code = CodeBlock.builder();
-                        if (anchorName != null)
-                        {
-                            code.addStatement("return $LRW.wrap(buffer(), $L().build().limit() + $L, maxLimit())",
-                                    name, anchorName, offset(name));
-                        }
-                        else
-                        {
-                            code.addStatement("return $LRW.wrap(buffer(), offset() + $L, maxLimit())", name, offset(name));
-                        }
-
-                        builder.addMethod(methodBuilder(name)
-                                .addModifiers(PRIVATE)
-                                .addCode(code.build())
-                                .returns(builderType)
-                                .build());
+                        addClassName(name, type, size, sizeName);
                     }
                     else
                     {
@@ -758,6 +784,167 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
 
                 return this;
+            }
+
+            private void addClassName(
+                String name,
+                TypeName type,
+                int size,
+                String sizeName)
+            {
+                ClassName classType = (ClassName) type;
+                TypeName builderType = classType.nestedClass("Builder");
+
+                CodeBlock.Builder code = CodeBlock.builder();
+                if (anchorName != null)
+                {
+                    code.addStatement("int anchor = $L().build().limit() + $L", anchorName, offset(name));
+                    if (size >= 0)
+                    {
+                        code.addStatement("return $LRW.wrap(buffer(), anchor, anchor + $L)",
+                                name, offset(name), size);
+                    }
+                    else if (sizeName != null)
+                    {
+                        builder.addMethod(methodBuilder(name)
+                                .addModifiers(PRIVATE)
+                                .addParameter(int.class, "limit")
+                                .returns(builderType)
+                                .addStatement("int anchor = $L().build().limit() + $L", anchorName, offset(name))
+                                .addStatement("return $LRW.wrap(buffer(), anchor, limit)", name)
+                                .build());
+
+                        code.addStatement("return $LRW.wrap(buffer(), anchor, anchor + $L())", name, sizeName);
+                    }
+                    else
+                    {
+                        code.addStatement("return $LRW.wrap(buffer(), anchor, maxLimit())", name);
+                    }
+                }
+                else
+                {
+                    if (size >= 0)
+                    {
+                        code.addStatement("int offset = offset() + $L", offset(name))
+                            .addStatement("return $LRW.wrap(buffer(), offset, offset + $L)", name, size);
+                    }
+                    else if (sizeName != null)
+                    {
+                        builder.addMethod(methodBuilder(name)
+                                .addModifiers(PRIVATE)
+                                .addParameter(int.class, "limit")
+                                .returns(builderType)
+                                .addStatement("return $LRW.wrap(buffer(), offset() + $L, limit)", name, offset(name))
+                                .build());
+
+                        code.addStatement("int offset = offset() + $L", offset(name))
+                            .addStatement("return $LRW.wrap(buffer(), offset, offset + $L())", name, sizeName);
+                    }
+                    else
+                    {
+                        code.addStatement("return $LRW.wrap(buffer(), offset() + $L, maxLimit())", name, offset(name));
+                    }
+                }
+
+                builder.addMethod(methodBuilder(name)
+                        .addModifiers(PRIVATE)
+                        .returns(builderType)
+                        .addCode(code.build())
+                        .build());
+            }
+
+            private void addParameterizedType(
+                String name,
+                TypeName type,
+                int size,
+                String sizeName)
+            {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                ClassName rawType = parameterizedType.rawType;
+                ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+                ClassName builderRawType = rawType.nestedClass("Builder");
+                ClassName itemBuilderType = itemType.nestedClass("Builder");
+                ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+                if (size >= 0)
+                {
+                    builder.addMethod(methodBuilder(name)
+                            .addModifiers(PRIVATE)
+                            .addParameter(int.class, "offset")
+                            .addStatement("return $LRW.wrap(buffer(), offset, offset + $L)", name, size)
+                            .returns(builderType)
+                            .build());
+                }
+                else if (sizeName != null)
+                {
+                    builder.addMethod(methodBuilder(name)
+                            .addModifiers(PRIVATE)
+                            .addParameter(int.class, "offset")
+                            .addStatement("return $LRW.wrap(buffer(), offset, offset + $L())", name, sizeName)
+                            .returns(builderType)
+                            .build());
+                }
+                else // unbounded
+                {
+                    builder.addMethod(methodBuilder(name)
+                            .addModifiers(PRIVATE)
+                            .addParameter(int.class, "offset")
+                            .addStatement("return $LRW.wrap(buffer(), offset, maxLimit())", name)
+                            .returns(builderType)
+                            .build());
+                }
+            }
+
+            private void addPrimitiveMember(
+                String name,
+                TypeName type,
+                TypeName unsignedType)
+            {
+                String getterName = GETTER_NAMES.get(type);
+                if (getterName == null)
+                {
+                    throw new IllegalArgumentException("Unrecognized primitive type: " + type);
+                }
+
+                TypeName publicType = (unsignedType != null) ? unsignedType : type;
+                CodeBlock.Builder code = CodeBlock.builder()
+                        .add("$[")
+                        .add("buffer().$L(offset() + $L)", getterName, offset(name));
+
+                if (publicType != type)
+                {
+                    code.add("($T)", type);
+
+                    if (type == TypeName.BYTE)
+                    {
+                        code.add("(value & 0xFF))");
+                    }
+                    else if (type == TypeName.SHORT)
+                    {
+                        code.add("(value & 0xFFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                    }
+                    else if (type == TypeName.INT)
+                    {
+                        code.add("(value & 0xFFFF_FFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                    }
+                    else
+                    {
+                        code.add("value)");
+                    }
+                }
+                else
+                {
+                    code.add("value)");
+                }
+
+                code.add(";\n$]");
+
+                // note: assumes fixed offset
+                builder.addMethod(methodBuilder(name)
+                        .addModifiers(PROTECTED)
+                        .returns(publicType)
+                        .addStatement("return buffer().$L(offset() + $L)", getterName, offset(name))
+                        .build());
             }
         }
 
@@ -785,6 +972,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             private String deferredName;
             private TypeName deferredType;
             private TypeName deferredUnsignedType;
+            private String deferredSizeName;
 
             private MemberMutatorGenerator(
                 ClassName thisType,
@@ -806,11 +994,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             public MemberMutatorGenerator addMember(
                 String name,
                 TypeName type,
-                TypeName unsignedType)
+                TypeName unsignedType,
+                String sizeName)
             {
                 deferredName = name;
                 deferredType = type;
                 deferredUnsignedType = unsignedType;
+                deferredSizeName = sizeName;
                 return this;
             }
 
@@ -831,10 +1021,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name = deferredName;
                 TypeName type = deferredType;
                 TypeName unsignedType = deferredUnsignedType;
+                String sizeName = deferredSizeName;
 
                 deferredName = null;
                 deferredType = null;
                 deferredUnsignedType = null;
+                deferredSizeName = null;
 
                 if (type.isPrimitive())
                 {
@@ -842,7 +1034,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type);
+                    addNonPrimitiveMember(name, type, sizeName);
                 }
 
                 return this;
@@ -859,9 +1051,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     throw new IllegalStateException("member type not supported: " + type);
                 }
 
+                TypeName publicType = (unsignedType != null) ? unsignedType : type;
                 if (anchorName != null)
                 {
-                    TypeName publicType = (unsignedType != null) ? unsignedType : type;
                     String statement = DIRECT_BUFFER_TYPE.equals(anchorType)
                             ? String.format("$L(offset -> { buffer().%s(offset() + $L, ", putterName)
                             : String.format("buffer().%s($L().build().limit() + $L, ", putterName);
@@ -876,7 +1068,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                         if (type == TypeName.BYTE)
                         {
-                            code.add("(value & 0xFF))", ByteOrder.class);
+                            code.add("(value & 0xFF))");
                         }
                         else if (type == TypeName.SHORT)
                         {
@@ -924,10 +1116,37 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    String statement = String.format("buffer().%s(offset() + $L, value)", putterName);
-
                     CodeBlock.Builder code = CodeBlock.builder()
-                            .addStatement(statement, offset(name));
+                            .add("$[")
+                            .add("buffer().$L(offset() + $L, ", putterName, offset(name));
+
+                    if (publicType != type)
+                    {
+                        code.add("($T)", type);
+
+                        if (type == TypeName.BYTE)
+                        {
+                            code.add("(value & 0xFF))");
+                        }
+                        else if (type == TypeName.SHORT)
+                        {
+                            code.add("(value & 0xFFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                        }
+                        else if (type == TypeName.INT)
+                        {
+                            code.add("(value & 0xFFFF_FFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                        }
+                        else
+                        {
+                            code.add("value)");
+                        }
+                    }
+                    else
+                    {
+                        code.add("value)");
+                    }
+
+                    code.add(";\n$]");
 
                     if (nextType instanceof ParameterizedTypeName)
                     {
@@ -939,7 +1158,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                     builder.addMethod(methodBuilder(name)
                             .addModifiers(PUBLIC)
-                            .addParameter(type, "value")
+                            .addParameter(publicType, "value")
                             .returns(thisType)
                             .addCode(code.build())
                             .build());
@@ -948,12 +1167,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
             private void addNonPrimitiveMember(
                 String name,
-                TypeName type)
+                TypeName type,
+                String sizeName)
             {
                 if (type instanceof ClassName)
                 {
                     ClassName className = (ClassName) type;
-                    addClassType(name, className);
+                    addClassType(name, className, sizeName);
                 }
                 else if (type instanceof ParameterizedTypeName)
                 {
@@ -977,7 +1197,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
             private void addClassType(
                 String name,
-                ClassName className)
+                ClassName className,
+                String sizeName)
             {
                 if ("StringFW".equals(className.simpleName()))
                 {
@@ -1034,13 +1255,32 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     ClassName builderType = className.nestedClass("Builder");
                     TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
 
+                    CodeBlock.Builder code = CodeBlock.builder();
+
+                    if (sizeName != null)
+                    {
+                        code.addStatement("$T $L = $L(maxLimit())", builderType, name, name);
+                    }
+                    else
+                    {
+                        code.addStatement("$T $L = $L()", builderType, name, name);
+                    }
+
+                    code.addStatement("mutator.accept($L)", name);
+
+                    if (sizeName != null)
+                    {
+                        code.addStatement("$L($L.limit() - (offset() + $L))", sizeName, name, offset(name));
+                    }
+
+                    code.addStatement("limit($L.build().limit())", name)
+                        .addStatement("return this");
+
                     builder.addMethod(methodBuilder(name)
                             .addModifiers(PUBLIC)
                             .returns(thisType)
                             .addParameter(mutatorType, "mutator")
-                            .addStatement("mutator.accept($L())", name)
-                            .addStatement("limit($L().build().limit())", name)
-                            .addStatement("return this")
+                            .addCode(code.build())
                             .build());
 
                 }
