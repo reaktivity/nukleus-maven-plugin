@@ -185,7 +185,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(enumName.nestedClass("Builder"))
                     .addParameter(enumName, "value")
-                    .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.length())")
+                    .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
                     .addStatement("return this")
                     .build();
         }

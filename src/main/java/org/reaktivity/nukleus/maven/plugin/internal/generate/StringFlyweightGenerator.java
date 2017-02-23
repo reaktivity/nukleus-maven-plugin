@@ -189,7 +189,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(stringType.nestedClass("Builder"))
                     .addParameter(stringType, "value")
-                    .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.length())")
+                    .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
                     .addStatement("return this")
                     .build();
         }

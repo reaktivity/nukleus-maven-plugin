@@ -28,17 +28,20 @@ public final class AstMemberNode extends AstNode
     private final String name;
     private final List<AstType> types;
     private final int size;
+    private final String sizeName;
     private final AstType unsignedType;
 
     private AstMemberNode(
         String name,
         List<AstType> types,
         int size,
+        String sizeName,
         AstType unsignedType)
     {
         this.name = requireNonNull(name);
         this.types = unmodifiableList(requireNotEmpty(requireNonNull(types)));
         this.size = size;
+        this.sizeName = sizeName;
         this.unsignedType = unsignedType;
     }
 
@@ -74,10 +77,16 @@ public final class AstMemberNode extends AstNode
         return size;
     }
 
+    public String sizeName()
+    {
+        return sizeName;
+    }
+
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 11) ^ (types.hashCode() << 7) ^ (unsignedType.hashCode() << 3) ^ size;
+        return (name.hashCode() << 13) ^ (types.hashCode() << 11) ^ (unsignedType.hashCode() << 7) ^
+                (sizeName.hashCode() << 3) ^ size;
     }
 
     @Override
@@ -94,15 +103,18 @@ public final class AstMemberNode extends AstNode
         }
 
         AstMemberNode that = (AstMemberNode)o;
-        return Objects.equals(this.name, that.name) &&
+        return this.size == that.size &&
+                Objects.equals(this.name, that.name) &&
                 Objects.deepEquals(this.types, that.types) &&
-                Objects.equals(this.unsignedType, that.unsignedType);
+                Objects.equals(this.unsignedType, that.unsignedType) &&
+                Objects.equals(this.sizeName, that.sizeName);
     }
 
     @Override
     public String toString()
     {
-        return String.format("MEMBER [name=%s, types=%s, unsignedType=%s]", name, types, unsignedType);
+        String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
+        return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s]", name, size, types, unsignedType);
     }
 
     private static <T extends Collection<?>> T requireNotEmpty(
@@ -121,11 +133,13 @@ public final class AstMemberNode extends AstNode
         private String name;
         private List<AstType> types;
         private int size;
+        private String sizeName;
         private AstType unsignedType;
 
         public Builder()
         {
             this.types = new LinkedList<>();
+            this.size = -1;
         }
 
         public Builder name(String name)
@@ -146,6 +160,13 @@ public final class AstMemberNode extends AstNode
             return this;
         }
 
+        public Builder sizeName(
+            String sizeName)
+        {
+            this.sizeName = sizeName;
+            return this;
+        }
+
         public Builder unsignedType(AstType unsignedType)
         {
             this.unsignedType = requireNonNull(unsignedType);
@@ -155,7 +176,7 @@ public final class AstMemberNode extends AstNode
         @Override
         public AstMemberNode build()
         {
-            return new AstMemberNode(name, types, size, unsignedType);
+            return new AstMemberNode(name, types, size, sizeName, unsignedType);
         }
     }
 }

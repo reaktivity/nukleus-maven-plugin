@@ -19,6 +19,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -28,7 +29,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
@@ -334,6 +334,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         if (ctx.positive_int_const() != null)
         {
             memberBuilder.size(Integer.parseInt(ctx.positive_int_const().getText()));
+        }
+        else if (ctx.ID() != null)
+        {
+            memberBuilder.sizeName(ctx.ID().getText());
         }
         return super.visitOctets_type(ctx);
     }

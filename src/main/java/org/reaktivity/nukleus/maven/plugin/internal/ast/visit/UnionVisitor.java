@@ -81,6 +81,7 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String memberName = memberNode.name();
         AstType memberType = memberNode.type();
         int size = memberNode.size();
+        String sizeName = memberNode.sizeName();
         AstType memberUnsignedType = memberNode.unsignedType();
 
         if (memberType == AstType.LIST)
@@ -94,13 +95,13 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size);
+            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName);
         }
         else
         {
             TypeName memberTypeName = resolver.resolveType(memberType);
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size);
+            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName);
         }
 
         return defaultResult();

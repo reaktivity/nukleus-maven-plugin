@@ -60,7 +60,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                     .addMethod(offsetMethod())
                     .addMethod(bufferMethod())
                     .addMethod(limitMethod())
-                    .addMethod(lengthMethod())
+                    .addMethod(sizeofMethod())
                     .addMethod(maxLimitMethod())
                     .addMethod(wrapMethod())
                     .addMethod(checkLimitMethod())
@@ -136,9 +136,9 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                   .build();
     }
 
-    private MethodSpec lengthMethod()
+    private MethodSpec sizeofMethod()
     {
-        return methodBuilder("length")
+        return methodBuilder("sizeof")
                   .addModifiers(PUBLIC, FINAL)
                   .returns(int.class)
                   .addStatement("return limit() - offset()")
