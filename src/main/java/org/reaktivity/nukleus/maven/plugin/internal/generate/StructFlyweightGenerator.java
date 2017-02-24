@@ -742,6 +742,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
 
             private String anchorName;
+            private TypeName anchorType;
 
             private MemberAccessorGenerator(
                 ClassName thisType,
@@ -781,6 +782,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
 
                     anchorName = name;
+                    anchorType = type;
                 }
 
                 return this;
@@ -907,43 +909,60 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
 
                 TypeName publicType = (unsignedType != null) ? unsignedType : type;
-                CodeBlock.Builder code = CodeBlock.builder()
-                        .add("$[")
-                        .add("buffer().$L(offset() + $L)", getterName, offset(name));
+                CodeBlock.Builder codeBlock = CodeBlock.builder()
+                    .add("$[").add("return ");
 
                 if (publicType != type)
                 {
-                    code.add("($T)", type);
+                    codeBlock.add("($T)(", publicType);
+                }
 
-                    if (type == TypeName.BYTE)
+                if (anchorName != null)
+                {
+                    if (DIRECT_BUFFER_TYPE.equals(anchorType))
                     {
-                        code.add("(value & 0xFF))");
-                    }
-                    else if (type == TypeName.SHORT)
-                    {
-                        code.add("(value & 0xFFFF), $T.BIG_ENDIAN)", ByteOrder.class);
-                    }
-                    else if (type == TypeName.INT)
-                    {
-                        code.add("(value & 0xFFFF_FFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                        codeBlock.add("buffer().$L($L().capacity() + $L", getterName, anchorName, offset(name));
                     }
                     else
                     {
-                        code.add("value)");
+                        codeBlock.add("buffer().$L($L().limit() + $L", getterName, anchorName, offset(name));
                     }
                 }
                 else
                 {
-                    code.add("value)");
+                    codeBlock.add("buffer().$L(offset() + $L", getterName, offset(name));
                 }
 
-                code.add(";\n$]");
+                if (publicType != type)
+                {
+                    if (type == TypeName.BYTE)
+                    {
+                        codeBlock.add(") & 0xFF)");
+                    }
+                    else if (type == TypeName.SHORT)
+                    {
+                        codeBlock.add(", $T.BIG_ENDIAN) & 0xFFFF)", ByteOrder.class);
+                    }
+                    else if (type == TypeName.INT)
+                    {
+                        codeBlock.add(", $T.BIG_ENDIAN) & 0xFFFF_FFFF)", ByteOrder.class);
+                    }
+                    else
+                    {
+                        codeBlock.add(")");
+                    }
+                }
+                else
+                {
+                    codeBlock.add(")");
+                }
 
-                // note: assumes fixed offset
+                codeBlock.add(";\n$]");
+
                 builder.addMethod(methodBuilder(name)
                         .addModifiers(PROTECTED)
                         .returns(publicType)
-                        .addStatement("return buffer().$L(offset() + $L)", getterName, offset(name))
+                        .addCode(codeBlock.build())
                         .build());
             }
         }
