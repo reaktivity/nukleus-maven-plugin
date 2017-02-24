@@ -1,10 +1,9 @@
-dist: trusty
 language: java
 before_install:
   - rm ~/.m2/settings.xml
 jdk:
   - oraclejdk8
-install: true
+install: mvn -v
 script: mvn -B -nsu verify
 cache:
   directories:
