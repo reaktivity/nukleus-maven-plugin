@@ -29,5 +29,17 @@
         </execute>
       </action>
     </pluginExecution>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <goals>
+          <goal>validate</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <execute>
+          <ignore/>
+        </execute>
+      </action>
+    </pluginExecution>
   </pluginExecutions>
 </lifecycleMappingMetadata>
