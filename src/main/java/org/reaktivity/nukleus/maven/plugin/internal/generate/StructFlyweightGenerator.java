@@ -1302,6 +1302,38 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addCode(code.build())
                             .build());
 
+                    if ("OctetsFW".equals(className.simpleName()))
+                    {
+                        CodeBlock.Builder code2 = CodeBlock.builder();
+
+                        if (sizeName != null)
+                        {
+                            code2.addStatement("$T $L = $L(maxLimit())", builderType, name, name);
+                        }
+                        else
+                        {
+                            code2.addStatement("$T $L = $L()", builderType, name, name);
+                        }
+
+                        code2.addStatement("$LRW.set(buffer, offset, length)", name);
+
+                        if (sizeName != null)
+                        {
+                            code2.addStatement("$L($L.limit() - (offset() + $L))", sizeName, name, offset(name));
+                        }
+
+                        code2.addStatement("limit($L.build().limit())", name)
+                             .addStatement("return this");
+
+                        builder.addMethod(methodBuilder(name)
+                                .addModifiers(PUBLIC)
+                                .returns(thisType)
+                                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                                .addParameter(int.class, "offset")
+                                .addParameter(int.class, "length")
+                                .addCode(code2.build())
+                                .build());
+                    }
                 }
             }
 
