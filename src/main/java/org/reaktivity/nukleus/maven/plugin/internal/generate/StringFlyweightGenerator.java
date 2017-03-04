@@ -158,6 +158,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
             return classBuilder.addMethod(constructor())
                     .addMethod(wrapMethod())
                     .addMethod(setMethod())
+                    .addMethod(setDirectBufferMethod())
                     .addMethod(setStringMethod())
                     .build();
         }
@@ -190,6 +191,20 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .returns(stringType.nestedClass("Builder"))
                     .addParameter(stringType, "value")
                     .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
+                    .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec setDirectBufferMethod()
+        {
+            return methodBuilder("set")
+                    .addModifiers(PUBLIC)
+                    .returns(stringType.nestedClass("Builder"))
+                    .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
+                    .addParameter(int.class, "srcOffset")
+                    .addParameter(int.class, "length")
+                    .addStatement("buffer().putByte(offset(), (byte) length)")
+                    .addStatement("buffer().putBytes(offset() + 1, srcBuffer, srcOffset, length)")
                     .addStatement("return this")
                     .build();
         }
