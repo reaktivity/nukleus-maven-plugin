@@ -1221,48 +1221,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 if ("StringFW".equals(className.simpleName()))
                 {
-                    CodeBlock.Builder codeBlock = CodeBlock.builder();
-
-                    // TODO: handle optional fields
-                    if (anchorName != null)
-                    {
-                        codeBlock.beginControlFlow("if (value == null)")
-                            .addStatement("limit($L().build().limit() + $L)", anchorName, offset(name))
-                            .nextControlFlow("else")
-                            .addStatement("$L().set(value, $T.UTF_8)", name, StandardCharsets.class);
-
-                        if (nextType instanceof ParameterizedTypeName)
-                        {
-                            codeBlock.addStatement("$L($L().build().limit())", nextName, name);
-                        }
-
-                        codeBlock.addStatement("limit($L().build().limit())", name)
-                            .endControlFlow()
-                            .addStatement("return this");
-                    }
-                    else
-                    {
-                        codeBlock.beginControlFlow("if (value == null)")
-                            .addStatement("limit(offset() + $L)", offset(name))
-                            .nextControlFlow("else")
-                            .addStatement("$L().set(value, $T.UTF_8)", name, StandardCharsets.class);
-
-                        if (nextType instanceof ParameterizedTypeName)
-                        {
-                            codeBlock.addStatement("$L($L().build().limit())", nextName, name);
-                        }
-
-                        codeBlock.addStatement("limit($L().build().limit())", name)
-                            .endControlFlow()
-                            .addStatement("return this");
-                    }
-
-                    builder.addMethod(methodBuilder(name)
-                            .addModifiers(PUBLIC)
-                            .returns(thisType)
-                            .addParameter(String.class, "value")
-                            .addCode(codeBlock.build())
-                            .build());
+                    addStringType(className, name, sizeName);
                 }
                 else if (DIRECT_BUFFER_TYPE.equals(className))
                 {
@@ -1335,6 +1294,68 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                 .build());
                     }
                 }
+            }
+
+            private void addStringType(
+                ClassName className,
+                String name,
+                String sizeName)
+            {
+                CodeBlock.Builder codeBlock = CodeBlock.builder();
+
+                // TODO: handle optional fields
+                if (anchorName != null)
+                {
+                    codeBlock.beginControlFlow("if (value == null)")
+                        .addStatement("limit($L().build().limit() + $L)", anchorName, offset(name))
+                        .nextControlFlow("else")
+                        .addStatement("$L().set(value, $T.UTF_8)", name, StandardCharsets.class);
+
+                    if (nextType instanceof ParameterizedTypeName)
+                    {
+                        codeBlock.addStatement("$L($L().build().limit())", nextName, name);
+                    }
+
+                    codeBlock.addStatement("limit($L().build().limit())", name)
+                        .endControlFlow()
+                        .addStatement("return this");
+                }
+                else
+                {
+                    codeBlock.beginControlFlow("if (value == null)")
+                        .addStatement("limit(offset() + $L)", offset(name))
+                        .nextControlFlow("else")
+                        .addStatement("$L().set(value, $T.UTF_8)", name, StandardCharsets.class);
+
+                    if (nextType instanceof ParameterizedTypeName)
+                    {
+                        codeBlock.addStatement("$L($L().build().limit())", nextName, name);
+                    }
+
+                    codeBlock.addStatement("limit($L().build().limit())", name)
+                        .endControlFlow()
+                        .addStatement("return this");
+                }
+
+                builder.addMethod(methodBuilder(name)
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addParameter(String.class, "value")
+                        .addCode(codeBlock.build())
+                        .build());
+
+                ClassName builderType = className.nestedClass("Builder");
+                builder.addMethod(methodBuilder(name)
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                        .addParameter(int.class, "offset")
+                        .addParameter(int.class, "length")
+                        .addStatement("$T $L = $L()", builderType, name, name)
+                        .addStatement("$L.set(buffer, offset, length)", name)
+                        .addStatement("limit($L.build().limit())", name)
+                        .addStatement("return this")
+                        .build());
             }
 
             private void addDirectBufferType(
