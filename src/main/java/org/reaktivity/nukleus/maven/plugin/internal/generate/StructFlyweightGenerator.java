@@ -1221,7 +1221,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 if ("StringFW".equals(className.simpleName()))
                 {
-                    addStringType(name, sizeName);
+                    addStringType(className, name, sizeName);
                 }
                 else if (DIRECT_BUFFER_TYPE.equals(className))
                 {
@@ -1297,6 +1297,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
 
             private void addStringType(
+                ClassName className,
                 String name,
                 String sizeName)
             {
@@ -1343,14 +1344,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addCode(codeBlock.build())
                         .build());
 
+                ClassName builderType = className.nestedClass("Builder");
                 builder.addMethod(methodBuilder(name)
                         .addModifiers(PUBLIC)
                         .returns(thisType)
                         .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                         .addParameter(int.class, "offset")
                         .addParameter(int.class, "length")
-                        .addStatement("$LRW.set(buffer, offset, length)", name)
-                        .addStatement("limit($LRW.build().limit())", name)
+                        .addStatement("$T $L = $L()", builderType, name, name)
+                        .addStatement("$L.set(buffer, offset, length)", name)
+                        .addStatement("limit($L.build().limit())", name)
                         .addStatement("return this")
                         .build());
             }
