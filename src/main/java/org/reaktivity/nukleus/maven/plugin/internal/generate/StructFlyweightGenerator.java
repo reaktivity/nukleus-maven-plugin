@@ -1348,6 +1348,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 builder.addMethod(methodBuilder(name)
                         .addModifiers(PUBLIC)
                         .returns(thisType)
+                        .addParameter(className, "value")
+                        .addStatement("$T $$$L = $L()", builderType, name, name)
+                        .addStatement("$$$L.set(value)", name)
+                        .addStatement("limit($$$L.build().limit())", name)
+                        .addStatement("return this")
+                        .build());
+
+                builder.addMethod(methodBuilder(name)
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
                         .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                         .addParameter(int.class, "offset")
                         .addParameter(int.class, "length")
