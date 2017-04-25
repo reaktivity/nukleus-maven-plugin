@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static com.squareup.javapoet.TypeName.INT;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -61,6 +62,7 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
     {
         return classBuilder
                 .addField(itemROField())
+                .addField(limitField())
                 .addMethod(constructor())
                 .addMethod(limitMethod())
                 .addMethod(wrapMethod())
@@ -74,6 +76,12 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
     {
         TypeName itemType = thisName.typeArguments.get(0);
         return FieldSpec.builder(itemType, "itemRO", PRIVATE, FINAL)
+                .build();
+    }
+
+    private FieldSpec limitField()
+    {
+        return FieldSpec.builder(INT, "limit", PRIVATE)
                 .build();
     }
 
@@ -93,7 +101,7 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return (maxLimit() == offset()) ? maxLimit() : itemRO.limit()")
+                .addStatement("return limit")
                 .build();
     }
 
@@ -107,10 +115,8 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("int currentOffset = offset")
-                .beginControlFlow("while (currentOffset < maxLimit)")
-                .addStatement("itemRO.wrap(buffer, currentOffset, maxLimit)")
-                .addStatement("currentOffset = itemRO.limit()")
+                .beginControlFlow("for (limit = offset; limit < maxLimit; limit = itemRO.limit())")
+                .addStatement("itemRO.wrap(buffer, limit, maxLimit)")
                 .endControlFlow()
                 .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("return this")
@@ -130,10 +136,9 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addModifiers(PUBLIC)
                 .addParameter(consumerType, "consumer")
                 .returns(thisName)
-                .addStatement("int offset = offset()")
-                .beginControlFlow("while (offset < maxLimit())")
-                .addStatement("consumer.accept((T) itemRO.wrap(buffer(), offset, maxLimit()))")
-                .addStatement("offset = itemRO.limit()")
+                .beginControlFlow("for (int offset = offset(); offset < maxLimit(); offset = itemRO.limit())")
+                .addStatement("itemRO.wrap(buffer(), offset, maxLimit())")
+                .addStatement("consumer.accept(itemRO)")
                 .endControlFlow()
                 .addStatement("return this")
                 .build();
