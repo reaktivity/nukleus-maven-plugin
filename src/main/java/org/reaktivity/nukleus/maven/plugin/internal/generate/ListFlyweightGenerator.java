@@ -17,8 +17,8 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeName.INT;
 import static com.squareup.javapoet.TypeName.BOOLEAN;
+import static com.squareup.javapoet.TypeName.INT;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -38,6 +38,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import com.squareup.javapoet.WildcardTypeName;
 
 public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
 {
@@ -128,7 +129,7 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
     private MethodSpec forEachMethod()
     {
         ClassName consumerRawType = ClassName.get(Consumer.class);
-        TypeName itemType = thisName.typeArguments.get(0);
+        TypeName itemType = WildcardTypeName.supertypeOf(thisName.typeArguments.get(0));
         TypeName consumerType = ParameterizedTypeName.get(consumerRawType, itemType);
 
         return methodBuilder("forEach")
@@ -146,7 +147,7 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
     private MethodSpec anyMatchMethod()
     {
         ClassName predicateRawType = ClassName.get(Predicate.class);
-        TypeName itemType = thisName.typeArguments.get(0);
+        TypeName itemType = WildcardTypeName.supertypeOf(thisName.typeArguments.get(0));
         TypeName consumerType = ParameterizedTypeName.get(predicateRawType, itemType);
         return methodBuilder("anyMatch")
               .addModifiers(PUBLIC)
