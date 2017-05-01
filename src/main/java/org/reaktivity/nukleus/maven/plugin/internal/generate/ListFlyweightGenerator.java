@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static com.squareup.javapoet.TypeName.BOOLEAN;
 import static com.squareup.javapoet.TypeName.INT;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -28,8 +29,8 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MU
 
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -37,6 +38,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import com.squareup.javapoet.WildcardTypeName;
 
 public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
 {
@@ -67,6 +69,7 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addMethod(limitMethod())
                 .addMethod(wrapMethod())
                 .addMethod(forEachMethod())
+                .addMethod(anyMatchMethod())
                 .addMethod(toStringMethod())
                 .addType(builderClassBuilder.build())
                 .build();
@@ -126,13 +129,10 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
     private MethodSpec forEachMethod()
     {
         ClassName consumerRawType = ClassName.get(Consumer.class);
-        TypeName itemType = thisName.typeArguments.get(0);
+        TypeName itemType = WildcardTypeName.supertypeOf(thisName.typeArguments.get(0));
         TypeName consumerType = ParameterizedTypeName.get(consumerRawType, itemType);
-        AnnotationSpec suppressWarningsUnchecked =
-                AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "unchecked").build();
 
         return methodBuilder("forEach")
-                .addAnnotation(suppressWarningsUnchecked)
                 .addModifiers(PUBLIC)
                 .addParameter(consumerType, "consumer")
                 .returns(thisName)
@@ -142,6 +142,26 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .endControlFlow()
                 .addStatement("return this")
                 .build();
+    }
+
+    private MethodSpec anyMatchMethod()
+    {
+        ClassName predicateRawType = ClassName.get(Predicate.class);
+        TypeName itemType = WildcardTypeName.supertypeOf(thisName.typeArguments.get(0));
+        TypeName consumerType = ParameterizedTypeName.get(predicateRawType, itemType);
+        return methodBuilder("anyMatch")
+              .addModifiers(PUBLIC)
+              .addParameter(consumerType, "predicate")
+              .returns(BOOLEAN)
+              .beginControlFlow("for (int offset = offset(); offset < maxLimit(); offset = itemRO.limit())")
+              .addStatement("itemRO.wrap(buffer(), offset, maxLimit())")
+                  .beginControlFlow("if (predicate.test(itemRO))")
+                      .addStatement("return true")
+                  .endControlFlow()
+              .endControlFlow()
+              .addStatement("return false")
+              .build();
+
     }
 
     private MethodSpec toStringMethod()
