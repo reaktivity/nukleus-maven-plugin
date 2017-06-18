@@ -142,6 +142,10 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addMethod(setMethodViaBuffer())
                     .addMethod(setMethodViaByteArray())
                     .addMethod(setMethodViaMutator())
+                    .addMethod(putMethod())
+                    .addMethod(putMethodViaBuffer())
+                    .addMethod(putMethodViaByteArray())
+                    .addMethod(putMethodViaMutator())
                     .build();
         }
 
@@ -222,6 +226,56 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(visitorType, "visitor")
                     .addStatement("int length = visitor.visit(buffer(), offset(), maxLimit())")
                     .addStatement("limit(offset() + length)")
+                    .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec putMethodViaMutator()
+        {
+            return methodBuilder("put")
+                    .addModifiers(PUBLIC)
+                    .returns(octetsType.nestedClass("Builder"))
+                    .addParameter(visitorType, "visitor")
+                    .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
+                    .addStatement("limit(limit() + length)")
+                    .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec putMethod()
+        {
+            return methodBuilder("put")
+                    .addModifiers(PUBLIC)
+                    .returns(octetsType.nestedClass("Builder"))
+                    .addParameter(octetsType, "value")
+                    .addStatement("buffer().putBytes(limit(), value.buffer(), value.offset(), value.sizeof())")
+                    .addStatement("limit(limit() + value.sizeof())")
+                    .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec putMethodViaBuffer()
+        {
+            return methodBuilder("put")
+                    .addModifiers(PUBLIC)
+                    .returns(octetsType.nestedClass("Builder"))
+                    .addParameter(DIRECT_BUFFER_TYPE, "value")
+                    .addParameter(int.class, "offset")
+                    .addParameter(int.class, "length")
+                    .addStatement("buffer().putBytes(limit(), value, offset, length)")
+                    .addStatement("limit(limit() + length)")
+                    .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec putMethodViaByteArray()
+        {
+            return methodBuilder("put")
+                    .addModifiers(PUBLIC)
+                    .returns(octetsType.nestedClass("Builder"))
+                    .addParameter(byte[].class, "value")
+                    .addStatement("buffer().putBytes(limit(), value)")
+                    .addStatement("limit(limit() + value.length)")
                     .addStatement("return this")
                     .build();
         }
