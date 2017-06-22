@@ -130,7 +130,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("length0")
                 .addModifiers(PRIVATE)
                 .returns(int.class)
-                .addStatement("return buffer().getShort(offset() + FIELD_OFFSET_LENGTH) & 0xFFFF")
+                .addStatement("return buffer().getShort(offset() + FIELD_OFFSET_LENGTH, java.nio.ByteOrder.BIG_ENDIAN) & 0xFFFF")
                 .build();
     }
 
@@ -203,7 +203,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                     .addParameter(int.class, "srcOffset")
                     .addParameter(int.class, "length")
-                    .addStatement("buffer().putShort(offset(), (short) length)")
+                    .addStatement("buffer().putShort(offset(), (short) length, java.nio.ByteOrder.BIG_ENDIAN)")
                     .addStatement("buffer().putBytes(offset() + 2, srcBuffer, srcOffset, length)")
                     .addStatement("return this")
                     .build();
@@ -219,7 +219,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("byte[] charBytes = value.getBytes(charset)")
                     .addStatement("MutableDirectBuffer buffer = buffer()")
                     .addStatement("int offset = offset()")
-                    .addStatement("buffer.putShort(offset, (short) charBytes.length)")
+                    .addStatement("buffer.putShort(offset, (short) charBytes.length, java.nio.ByteOrder.BIG_ENDIAN)")
                     .addStatement("buffer.putBytes(offset + 2, charBytes)")
                     .addStatement("return this")
                     .build();
