@@ -26,7 +26,6 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BI
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
-import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 import com.squareup.javapoet.ClassName;
@@ -131,7 +130,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("length0")
                 .addModifiers(PRIVATE)
                 .returns(int.class)
-                .addStatement("return buffer().getShort(offset() + FIELD_OFFSET_LENGTH, $T.BIG_ENDIAN) & 0xFFFF", ByteOrder.class)
+                .addStatement("return buffer().getShort(offset() + FIELD_OFFSET_LENGTH) & 0xFFFF")
                 .build();
     }
 
@@ -204,7 +203,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                     .addParameter(int.class, "srcOffset")
                     .addParameter(int.class, "length")
-                    .addStatement("buffer().putShort(offset(), (short) length, $T.BIG_ENDIAN)", ByteOrder.class)
+                    .addStatement("buffer().putShort(offset(), (short) length)")
                     .addStatement("buffer().putBytes(offset() + 2, srcBuffer, srcOffset, length)")
                     .addStatement("return this")
                     .build();
@@ -220,7 +219,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .addStatement("byte[] charBytes = value.getBytes(charset)")
                     .addStatement("MutableDirectBuffer buffer = buffer()")
                     .addStatement("int offset = offset()")
-                    .addStatement("buffer.putShort(offset, (short) charBytes.length, $T.BIG_ENDIAN)", ByteOrder.class)
+                    .addStatement("buffer.putShort(offset, (short) charBytes.length)")
                     .addStatement("buffer.putBytes(offset + 2, charBytes)")
                     .addStatement("return this")
                     .build();
