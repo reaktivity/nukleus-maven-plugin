@@ -576,7 +576,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType)
         {
             formats.add(String.format("%s=%%%s", name, type.isPrimitive() ? "d" : "s"));
-            if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName()))
+            if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName())
+                    || type instanceof ClassName && "String16FW".equals(((ClassName) type).simpleName()))
             {
                 args.add(String.format("%sRO.asString()", name));
             }
@@ -1219,7 +1220,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 ClassName className,
                 String sizeName)
             {
-                if ("StringFW".equals(className.simpleName()))
+                if ("StringFW".equals(className.simpleName()) || "String16FW".equals(className.simpleName()))
                 {
                     addStringType(className, name, sizeName);
                 }

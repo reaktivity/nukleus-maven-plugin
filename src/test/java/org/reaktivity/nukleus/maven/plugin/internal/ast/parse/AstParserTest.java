@@ -115,6 +115,22 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseStructWithString16Members()
+    {
+        NukleusParser parser = newParser("struct Person { string16 firstName; string16 lastName; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("Person")
+                .member(new AstMemberNode.Builder().type(AstType.STRING16).name("firstName").build())
+                .member(new AstMemberNode.Builder().type(AstType.STRING16).name("lastName").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseStructWithExtends()
     {
         NukleusParser parser = newParser("struct Employee extends common::Person { }");
@@ -192,6 +208,21 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseString16Member()
+    {
+        NukleusParser parser = newParser("string16 field;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.STRING16)
+                .name("field")
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseListMember()
     {
         NukleusParser parser = newParser("list<string> field;");
@@ -201,6 +232,22 @@ public class AstParserTest
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.LIST)
                 .type(AstType.STRING)
+                .name("field")
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseListMemberString16()
+    {
+        NukleusParser parser = newParser("list<string16> field;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.LIST)
+                .type(AstType.STRING16)
                 .name("field")
                 .build();
 
