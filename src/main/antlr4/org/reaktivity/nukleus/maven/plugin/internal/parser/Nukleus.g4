@@ -60,11 +60,13 @@ base_type_spec
    : integer_type
    | octets_type
    | string_type
+   | string16_type
    ;
 
 template_type_spec
    : list_type
    | string_type
+   | string16_type
    ;
 
 constr_type_spec
@@ -183,6 +185,11 @@ string_type
    | KW_STRING
    ;
 
+string16_type
+   : KW_STRING16 LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
+   | KW_STRING16
+   ;
+
 int_literal
    : INTEGER_LITERAL
    | HEX_LITERAL
@@ -285,6 +292,10 @@ DOUBLE_COLON
 
 KW_STRING
    : 'string'
+   ;
+
+KW_STRING16
+   : 'string16'
    ;
 
 

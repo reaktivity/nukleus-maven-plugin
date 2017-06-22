@@ -35,15 +35,15 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-public final class StringFlyweightGenerator extends ClassSpecGenerator
+public final class String16FlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
 
-    public StringFlyweightGenerator(
+    public String16FlyweightGenerator(
         ClassName flyweightType)
     {
-        super(flyweightType.peerClass("StringFW"));
+        super(flyweightType.peerClass("String16FW"));
 
         this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL)
                 .addAnnotation(GENERATED_ANNOTATION);
@@ -74,7 +74,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     private FieldSpec fieldSizeLengthConstant()
     {
         return FieldSpec.builder(int.class, "FIELD_SIZE_LENGTH", PRIVATE, STATIC, FINAL)
-                .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
+                .initializer("$T.SIZE_OF_SHORT", BIT_UTIL_TYPE)
                 .build();
     }
 
@@ -130,7 +130,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("length0")
                 .addModifiers(PRIVATE)
                 .returns(int.class)
-                .addStatement("return buffer().getByte(offset() + FIELD_OFFSET_LENGTH) & 0xFF")
+                .addStatement("return buffer().getShort(offset() + FIELD_OFFSET_LENGTH) & 0xFFFF")
                 .build();
     }
 
@@ -203,8 +203,8 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                     .addParameter(int.class, "srcOffset")
                     .addParameter(int.class, "length")
-                    .addStatement("buffer().putByte(offset(), (byte) length)")
-                    .addStatement("buffer().putBytes(offset() + 1, srcBuffer, srcOffset, length)")
+                    .addStatement("buffer().putShort(offset(), (short) length)")
+                    .addStatement("buffer().putBytes(offset() + 2, srcBuffer, srcOffset, length)")
                     .addStatement("return this")
                     .build();
         }
@@ -219,8 +219,8 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("byte[] charBytes = value.getBytes(charset)")
                     .addStatement("MutableDirectBuffer buffer = buffer()")
                     .addStatement("int offset = offset()")
-                    .addStatement("buffer.putByte(offset, (byte) charBytes.length)")
-                    .addStatement("buffer.putBytes(offset + 1, charBytes)")
+                    .addStatement("buffer.putShort(offset, (short) charBytes.length)")
+                    .addStatement("buffer.putBytes(offset + 2, charBytes)")
                     .addStatement("return this")
                     .build();
         }
