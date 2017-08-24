@@ -84,11 +84,19 @@ declarator
    ;
 
 integer_type
+   : signed_integer_type
+   | unsigned_integer_type
+   ;
+   
+signed_integer_type
    : int8_type
    | int16_type
    | int32_type
    | int64_type
-   | uint8_type
+   ;
+   
+unsigned_integer_type
+   : uint8_type
    | uint16_type
    | uint32_type
    | uint64_type
@@ -161,6 +169,8 @@ member_list
 
 member
    : type_spec declarators SEMICOLON
+   | unsigned_integer_type declarator EQUALS int_literal
+   | signed_integer_type declarator EQUALS signed_int_literal
    ;
 
 union_type
@@ -188,6 +198,10 @@ string_type
 string16_type
    : KW_STRING16 LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
    | KW_STRING16
+   ;
+   
+signed_int_literal
+   : '-'? int_literal
    ;
 
 int_literal
@@ -237,6 +251,10 @@ COLON
 
 COMMA
    : ','
+   ;
+   
+EQUALS
+   : '='
    ;
 
 

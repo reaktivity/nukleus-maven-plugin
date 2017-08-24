@@ -30,19 +30,22 @@ public final class AstMemberNode extends AstNode
     private final int size;
     private final String sizeName;
     private final AstType unsignedType;
+    private final Integer defaultValue;
 
     private AstMemberNode(
         String name,
         List<AstType> types,
         int size,
         String sizeName,
-        AstType unsignedType)
+        AstType unsignedType,
+        Integer defaultValue)
     {
         this.name = requireNonNull(name);
         this.types = unmodifiableList(requireNotEmpty(requireNonNull(types)));
         this.size = size;
         this.sizeName = sizeName;
         this.unsignedType = unsignedType;
+        this.defaultValue = defaultValue;
     }
 
     @Override
@@ -82,6 +85,11 @@ public final class AstMemberNode extends AstNode
         return sizeName;
     }
 
+    public Integer defaultValue()
+    {
+        return defaultValue;
+    }
+
     @Override
     public int hashCode()
     {
@@ -107,14 +115,16 @@ public final class AstMemberNode extends AstNode
                 Objects.equals(this.name, that.name) &&
                 Objects.deepEquals(this.types, that.types) &&
                 Objects.equals(this.unsignedType, that.unsignedType) &&
-                Objects.equals(this.sizeName, that.sizeName);
+                Objects.equals(this.sizeName, that.sizeName) &&
+                Objects.equals(this.defaultValue, that.defaultValue);
     }
 
     @Override
     public String toString()
     {
         String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
-        return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s]", name, size, types, unsignedType);
+        return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s, defaultValue=%s]",
+                name, size, types, unsignedType, defaultValue);
     }
 
     private static <T extends Collection<?>> T requireNotEmpty(
@@ -135,6 +145,7 @@ public final class AstMemberNode extends AstNode
         private int size;
         private String sizeName;
         private AstType unsignedType;
+        private Integer defaultValue;
 
         public Builder()
         {
@@ -173,10 +184,17 @@ public final class AstMemberNode extends AstNode
             return this;
         }
 
+        public  Builder defaultValue(
+            int defaultValue)
+        {
+            this.defaultValue = defaultValue;
+            return this;
+        }
+
         @Override
         public AstMemberNode build()
         {
-            return new AstMemberNode(name, types, size, sizeName, unsignedType);
+            return new AstMemberNode(name, types, size, sizeName, unsignedType, defaultValue);
         }
     }
 }

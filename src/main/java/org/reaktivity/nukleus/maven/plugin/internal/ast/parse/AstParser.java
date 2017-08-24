@@ -44,6 +44,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberC
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_nameContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Signed_int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
@@ -188,6 +189,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         MemberContext ctx)
     {
         memberBuilder = new AstMemberNode.Builder();
+
+        if (ctx.EQUALS() != null)
+        {
+            memberBuilder.defaultValue(parseInt(ctx.signed_int_literal()));
+        }
 
         super.visitMember(ctx);
 
@@ -371,14 +377,33 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     private static int parseInt(
+        Signed_int_literalContext ctx)
+    {
+        if (ctx == null)
+        {
+            return 0;
+        }
+        else
+        {
+            return parseInt(ctx.getText());
+        }
+    }
+
+    private static int parseInt(
         Int_literalContext ctx)
     {
         if (ctx == null)
         {
             return 0;
         }
+        else
+        {
+            return parseInt(ctx.getText());
+        }
+    }
 
-        String text = ctx.getText();
+    private static int parseInt(String text)
+    {
         if (text.startsWith("0x"))
         {
             return Integer.parseInt(text.substring(2), 16);

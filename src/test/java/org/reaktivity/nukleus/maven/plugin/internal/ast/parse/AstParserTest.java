@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
@@ -161,6 +162,39 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseInt64MemberWithPositiveDefaultValue()
+    {
+        NukleusParser parser = newParser("int64 field = 123;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.INT64)
+                .name("field")
+                .defaultValue(123)
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseInt64MemberWithNegativeDefaultValue()
+    {
+        NukleusParser parser = newParser("int64 field = -12;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.INT64)
+                .name("field")
+                .defaultValue(-12)
+                .build();
+
+        assertEquals(expected, actual);
+        assertEquals(-12, actual.defaultValue().intValue());
+    }
+
+    @Test
     public void shouldParseUint8Member()
     {
         NukleusParser parser = newParser("uint8 field;");
@@ -174,6 +208,30 @@ public class AstParserTest
                 .build();
 
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseUint8MemberWithPositiveDefaultValue()
+    {
+        NukleusParser parser = newParser("uint8 field = 0;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.UINT8)
+                .unsignedType(AstType.INT32)
+                .name("field")
+                .defaultValue(0)
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test(expected = ParseCancellationException.class)
+    public void shouldNotParseUint8MemberWithNegativeDefaultValue()
+    {
+        NukleusParser parser = newParser("uint8 field = -1;");
+        parser.member();
     }
 
     @Test
@@ -196,6 +254,21 @@ public class AstParserTest
     public void shouldParseStringMember()
     {
         NukleusParser parser = newParser("string field;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.STRING)
+                .name("field")
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseStringMemberWithLength()
+    {
+        NukleusParser parser = newParser("string<10> field;");
         MemberContext ctx = parser.member();
         AstMemberNode actual = new AstParser().visitMember(ctx);
 
