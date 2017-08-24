@@ -178,6 +178,22 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseStructWithSomeMembersWithDefaultValues()
+    {
+        NukleusParser parser = newParser("struct Person { int16 field1; int16 field2 = -123; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("Person")
+                .member(new AstMemberNode.Builder().type(AstType.INT16).name("field1").build())
+                .member(new AstMemberNode.Builder().type(AstType.INT16).name("field2").defaultValue(-123).build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseInt64MemberWithNegativeDefaultValue()
     {
         NukleusParser parser = newParser("int64 field = -12;");

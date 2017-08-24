@@ -59,7 +59,10 @@ public final class AstStructNode extends AstNode
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 11) ^ supertype.hashCode() << 7 ^ members.hashCode() << 3 ^ typeId;
+        return supertype != null
+               ? (name.hashCode() << 11) ^ supertype.hashCode() << 7 ^ members.hashCode() << 3 ^ typeId
+               : (name.hashCode() << 11) ^ members.hashCode() << 3 ^ typeId;
+
     }
 
     @Override

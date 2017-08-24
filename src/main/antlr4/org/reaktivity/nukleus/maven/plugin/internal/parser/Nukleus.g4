@@ -169,8 +169,8 @@ member_list
 
 member
    : type_spec declarators SEMICOLON
-   | unsigned_integer_type declarator EQUALS int_literal
-   | signed_integer_type declarator EQUALS signed_int_literal
+   | unsigned_integer_type declarator EQUALS int_literal SEMICOLON
+   | signed_integer_type declarator EQUALS signed_int_literal SEMICOLON
    ;
 
 union_type
