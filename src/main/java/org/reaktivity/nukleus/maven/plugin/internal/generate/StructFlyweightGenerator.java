@@ -97,7 +97,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         TypeName type,
         TypeName unsignedType,
         int size,
-        String sizeName)
+        String sizeName,
+        Integer defaultValue)
     {
         memberOffsetConstant.addMember(name, type, unsignedType);
         memberSizeConstant.addMember(name, type, unsignedType);
@@ -107,7 +108,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         limitMethod.addMember(name, type, unsignedType);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName);
         toStringMethod.addMember(name, type, unsignedType);
-        builderClass.addMember(name, type, unsignedType, size, sizeName);
+        builderClass.addMember(name, type, unsignedType, size, sizeName, defaultValue);
 
         return this;
     }
@@ -643,7 +644,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName type,
             TypeName unsignedType,
             int size,
-            String sizeName)
+            String sizeName,
+            Integer defaultValue)
         {
             // TODO: eliminate need for lookahead
             memberMutator.lookaheadMember(name, type, unsignedType);
@@ -651,7 +653,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             memberField.addMember(name, type, unsignedType);
             memberAccessor.addMember(name, type, unsignedType, size, sizeName);
             memberMutator.addMember(name, type, unsignedType, sizeName);
-            wrapMethod.addMember(name, type, unsignedType);
+            wrapMethod.addMember(name, type, unsignedType, defaultValue);
         }
 
         @Override
@@ -1491,7 +1493,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             public WrapMethodGenerator addMember(
                 String name,
                 TypeName type,
-                TypeName unsignedType)
+                TypeName unsignedType,
+                Integer defaultValue)
             {
                 if (!type.isPrimitive())
                 {
@@ -1505,6 +1508,19 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
 
                     anchorName = name;
+                }
+                else if (defaultValue != null)
+                {
+                    if (anchorName != null)
+                    {
+                        throw new UnsupportedOperationException(
+                                "Fields with default values must precede variable length fields");
+                    }
+                    else
+                    {
+                        builder.addStatement("$N($L)",
+                                name, defaultValue);
+                    }
                 }
                 return this;
             }

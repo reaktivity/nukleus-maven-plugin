@@ -34,7 +34,7 @@ definition
 
 positive_int_const
    : HEX_LITERAL
-   | INTEGER_LITERAL
+   | UNSIGNED_INTEGER_LITERAL
    ;
 
 type_decl
@@ -160,7 +160,7 @@ enum_value
    ;
 
 struct_type
-   : KW_STRUCT ID (KW_EXTENDS scoped_name)? (LEFT_SQUARE_BRACKET int_literal RIGHT_SQUARE_BRACKET)? LEFT_BRACE member_list RIGHT_BRACE
+   : KW_STRUCT ID (KW_EXTENDS scoped_name)? (LEFT_SQUARE_BRACKET uint_literal RIGHT_SQUARE_BRACKET)? LEFT_BRACE member_list RIGHT_BRACE
    ;
 
 member_list
@@ -169,8 +169,8 @@ member_list
 
 member
    : type_spec declarators SEMICOLON
-   | unsigned_integer_type declarator EQUALS int_literal SEMICOLON
-   | signed_integer_type declarator EQUALS signed_int_literal SEMICOLON
+   | unsigned_integer_type declarator EQUALS uint_literal SEMICOLON
+   | signed_integer_type declarator EQUALS int_literal SEMICOLON
    ;
 
 union_type
@@ -182,7 +182,7 @@ case_list
    ;
 
 case_member
-   : KW_CASE int_literal COLON member
+   : KW_CASE uint_literal COLON member
    ;
 
 list_type
@@ -200,16 +200,21 @@ string16_type
    | KW_STRING16
    ;
    
-signed_int_literal
-   : '-'? int_literal
+int_literal
+   : negative_int_literal
+   | uint_literal
+   ;
+   
+negative_int_literal
+   : '-' UNSIGNED_INTEGER_LITERAL
    ;
 
-int_literal
-   : INTEGER_LITERAL
+uint_literal
+   : UNSIGNED_INTEGER_LITERAL
    | HEX_LITERAL
    ;
-
-INTEGER_LITERAL
+    
+UNSIGNED_INTEGER_LITERAL
    : ('0' | '1' .. '9' '0' .. '9'*) INTEGER_TYPE_SUFFIX?
    ;
 

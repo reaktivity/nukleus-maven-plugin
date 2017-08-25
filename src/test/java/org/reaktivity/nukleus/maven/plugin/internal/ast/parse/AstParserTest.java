@@ -229,7 +229,7 @@ public class AstParserTest
     @Test
     public void shouldParseUint8MemberWithPositiveDefaultValue()
     {
-        NukleusParser parser = newParser("uint8 field = 0;");
+        NukleusParser parser = newParser("uint8 field = 12;");
         MemberContext ctx = parser.member();
         AstMemberNode actual = new AstParser().visitMember(ctx);
 

@@ -44,7 +44,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberC
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_nameContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Signed_int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
@@ -53,6 +52,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint16_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
@@ -161,7 +161,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         structBuilder = new AstStructNode.Builder();
         structBuilder.name(ctx.ID().getText());
-        structBuilder.typeId(parseInt(ctx.int_literal()));
+        structBuilder.typeId(parseInt(ctx.uint_literal()));
 
         Scoped_nameContext scopedName = ctx.scoped_name();
         if (scopedName != null)
@@ -192,7 +192,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
         if (ctx.EQUALS() != null)
         {
-            memberBuilder.defaultValue(parseInt(ctx.signed_int_literal()));
+            memberBuilder.defaultValue(parseInt(ctx.int_literal()));
         }
 
         super.visitMember(ctx);
@@ -238,7 +238,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         Case_memberContext ctx)
     {
         caseBuilder = new AstCaseNode.Builder()
-                .value(Integer.parseInt(ctx.int_literal().getText()));
+                .value(Integer.parseInt(ctx.uint_literal().getText()));
 
         super.visitCase_member(ctx);
 
@@ -377,7 +377,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     private static int parseInt(
-        Signed_int_literalContext ctx)
+        Int_literalContext ctx)
     {
         if (ctx == null)
         {
@@ -390,7 +390,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     private static int parseInt(
-        Int_literalContext ctx)
+        Uint_literalContext ctx)
     {
         if (ctx == null)
         {
