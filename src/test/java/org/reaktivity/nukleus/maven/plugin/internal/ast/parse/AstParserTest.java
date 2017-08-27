@@ -237,7 +237,7 @@ public class AstParserTest
                 .type(AstType.UINT8)
                 .unsignedType(AstType.INT32)
                 .name("field")
-                .defaultValue(0)
+                .defaultValue(12)
                 .build();
 
         assertEquals(expected, actual);

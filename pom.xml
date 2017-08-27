@@ -175,7 +175,7 @@
         <executions>
           <execution>
             <id>add-test-sources</id>
-            <phase>generate-test-sources</phase>
+            <phase>pre-integration-test</phase>
             <goals>
               <goal>add-test-source</goal>
             </goals>

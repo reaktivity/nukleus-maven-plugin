@@ -192,7 +192,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
         if (ctx.EQUALS() != null)
         {
-            memberBuilder.defaultValue(parseInt(ctx.int_literal()));
+            int defaultValue = ctx.int_literal() != null
+                    ? parseInt(ctx.int_literal())
+                    : parseInt(ctx.uint_literal());
+            memberBuilder.defaultValue(defaultValue);
         }
 
         super.visitMember(ctx);

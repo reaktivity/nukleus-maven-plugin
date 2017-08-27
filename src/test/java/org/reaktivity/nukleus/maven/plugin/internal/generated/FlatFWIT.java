@@ -29,7 +29,7 @@ public class FlatFWIT
     FlatFW flatRO = new FlatFW();
     MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
 
-    @Test
+    @Test //TODO: expected...
     public void shouldFailIfRequiredFixedMemberNotSet() throws Exception
     {
         flatRW.wrap(buffer, 0, 100)
@@ -39,7 +39,7 @@ public class FlatFWIT
                 .build();
     }
 
-    @Test
+    @Test //TODO: expected...
     public void shouldFailIfRequiredVarableMemberNotSet() throws Exception
     {
         flatRW.wrap(buffer, 0, 100)
@@ -48,7 +48,7 @@ public class FlatFWIT
                 .build();
     }
 
-    @Test
+    @Test //TODO: expected...
     public void shouldFailIfRequiredOctetsMemberNotSet() throws Exception
     {
         flatRW.wrap(buffer, 0, 100)
