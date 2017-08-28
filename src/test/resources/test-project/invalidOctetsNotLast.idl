@@ -13,36 +13,12 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-scope scope1
+scope invalidOctetsNotLast
 {
-    struct Flat
+    struct OctetsNotLast
     {
-        uint8 fixed1;
-        uint16 fixed2 = 222;
-        string string1;
-        int32 fixed3;
-        string string2;
-    }
-
-    struct Nested
-    {
-        uint64 fixed4 = 444;
-        scope1::Flat flat;
-        int64 fixed5;
-    }
-
-    struct FlatWithList
-    {
-        uint64 fixed1 = 111;
-        list<string> list1;
-        // the following causes compilation errors in the generated code:
-        //int16 fixed2;
-    }
-
-    struct FlatWithOctets
-    {
-        int64 fixed1 = 111;
         octets extension;
+        int64 fixed1;
     }
     
 }

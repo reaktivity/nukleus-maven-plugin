@@ -29,53 +29,131 @@ public class FlatFWIT
     FlatFW flatRO = new FlatFW();
     MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
 
-    @Test //TODO: expected...
-    public void shouldFailIfRequiredFixedMemberNotSet() throws Exception
-    {
-        flatRW.wrap(buffer, 0, 100)
-                .fixed2(10)
-                .variable1("value")
-                .extension(b -> b.reset())
-                .build();
-    }
-
-    @Test //TODO: expected...
-    public void shouldFailIfRequiredVarableMemberNotSet() throws Exception
-    {
-        flatRW.wrap(buffer, 0, 100)
-                .fixed1(10)
-                .extension(b -> b.reset())
-                .build();
-    }
-
-    @Test //TODO: expected...
-    public void shouldFailIfRequiredOctetsMemberNotSet() throws Exception
-    {
-        flatRW.wrap(buffer, 0, 100)
-                .fixed1(10)
-                .variable1("value")
-                .build();
-    }
-
     @Test
     public void shouldDefaultValues() throws Exception
     {
-        // Set an explicit value first in the same memory to make sure it really gets reset
+        // Set an explicit value first in the same memory to make sure it really
+        // gets set to the default value next time round
         flatRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(10)
                 .fixed2(111)
-                .variable1("value")
-                .extension(b -> b.reset())
+                .string1("value1")
+                .fixed3(33)
+                .string2("value2")
                 .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(111, flatRO.fixed2());
 
         flatRW.wrap(buffer, 0, 100)
-                .variable1("value")
-                .extension(b -> b.reset())
+                .fixed1(10)
+                .string1("value1")
+                .fixed3(33)
+                .string2("value2")
                 .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(222, flatRO.fixed2());
+    }
+
+    @Test // TODO (expected = IllegalStateException.class)
+    public void shouldFailToSetMemberFollowingUnsetRequiredMemberfixed1fixed2() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+                .fixed2(10);
+    }
+
+    @Test // TODO (expected = ...
+    public void shouldFailToSetMemberFollowingUnsetRequiredMemberfixed1string1() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+                .string1("value1");
+    }
+
+
+    @Test //TODO: expected...
+    public void shouldFailToSetMemberFollowingUnsetRequiredMemberfixed3() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+            .fixed1(10)
+            .fixed2(111)
+            .string1("value1")
+            .string2("value2");
+    }
+
+    @Test //TODO: expected...
+    public void shouldFailToSetMemberFollowingUnsetRequiredMemberstring2() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+            .fixed1(10)
+            .fixed2(111)
+            .string1("value1")
+            .fixed3(33)
+            .build();
+    }
+
+    @Test //TODO: expected...
+    public void shouldFailToBuildIfRequiredMemberNotSetfixed1() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+            .build();
+    }
+
+    @Test //TODO: expected...
+    public void shouldFailToBuildIfRequiredMemberNotSetstring1() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+            .fixed1(10)
+            .build();
+    }
+
+    @Test //TODO: expected...
+    public void shouldFailToBuildIfRequiredMemberNotSetfixed3() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+            .fixed1(10)
+            .fixed2(111)
+            .string1("value1")
+            .build();
+    }
+
+    @Test //TODO: expected...
+    public void shouldFailToBuildIfRequiredMemberNotSetstring2() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+            .fixed1(10)
+            .fixed2(111)
+            .string1("value1")
+            .fixed3(33)
+            .build();
+    }
+
+    @Test //TODO: expected...
+    public void shouldFailToBuildIfRequiredMemberNotSetextension() throws Exception
+    {
+        flatRW.wrap(buffer, 0, 100)
+            .fixed1(10)
+            .fixed2(111)
+            .string1("value1")
+            .fixed3(33)
+            .string2("value2")
+            .build();
+    }
+
+    @Test
+    public void shouldSetAllValues() throws Exception
+    {
+        flatRW.wrap(buffer, 0, buffer.capacity())
+                .fixed1(10)
+                .fixed2(111)
+                .string1("value1")
+                .fixed3(33)
+                .string2("value2")
+                .build();
+        flatRO.wrap(buffer,  0,  100);
+        assertEquals(10, flatRO.fixed1());
+        assertEquals(111, flatRO.fixed2());
+        assertEquals("value1", flatRO.string1().asString());
+        assertEquals(33, flatRO.fixed3());
+        assertEquals("value2", flatRO.string2().asString());
     }
 
 }

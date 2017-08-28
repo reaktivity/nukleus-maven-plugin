@@ -21,6 +21,7 @@ import java.io.File;
 
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -37,6 +38,43 @@ public class GenerateMojoTest
         GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
         assertNotNull(myMojo);
         myMojo.execute();
+    }
+
+    @Test // TODO: verify the appropriate warning message was locked to the build output
+    public void shouldNotGenerateInvalidStructOctetsNotLast()
+        throws Exception
+    {
+        File pom = new File("src/test/resources/test-project/pom.xml");
+        MavenProject project = rule.readMavenProject(new File("src/test/resources/test-project"));
+        GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
+        assertNotNull(myMojo);
+
+        PlexusConfiguration configuration = rule.extractPluginConfiguration("nukleus-maven-plugin", pom);
+        configuration.addChild("scopeNames", "invalidOctetsNotLast");
+        configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
+        configuration.addChild("inputDirectory", "src/test/resources/test-project");
+        configuration.addChild("outputDirectory", "target/generated-flyweights");
+        rule.configureMojo(myMojo, configuration);
+        myMojo.execute();
+    }
+
+    @Test // TODO: verify the appropriate warning message was locked to the build output
+          // TODO: currently this gives a NullPointerException
+    public void shouldNotGenerateInvalidStructOctetsNotLastNested()
+        throws Exception
+        {
+            File pom = new File("src/test/resources/test-project/pom.xml");
+            MavenProject project = rule.readMavenProject(new File("src/test/resources/test-project"));
+            GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
+            assertNotNull(myMojo);
+
+            PlexusConfiguration configuration = rule.extractPluginConfiguration("nukleus-maven-plugin", pom);
+            configuration.addChild("scopeNames", "invalidOctetsNotLastNested");
+            configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
+            configuration.addChild("inputDirectory", "src/test/resources/test-project");
+            configuration.addChild("outputDirectory", "target/generated-flyweights");
+            rule.configureMojo(myMojo, configuration);
+            myMojo.execute();
     }
 
 }
