@@ -131,6 +131,7 @@
           </includes>
           <excludes>
             <exclude>src/conf/**</exclude>
+            <exclude>src/test/java/org/reaktivity/nukleus/maven/plugin/internal/generated/experimental/*.java</exclude>
             <exclude>src/test/resources/**</exclude>
           </excludes>
           <mapping>

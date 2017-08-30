@@ -37,15 +37,14 @@ public class NestedFWIT
         nestedRW.wrap(buffer, 0, buffer.capacity())
                 .fixed4(14)
                 .flat(flat ->
-                {
                     flat
                     .fixed1(10)
                     .fixed2(20)
                     .string1("value1")
                     .fixed3(33)
                     .string2("value2")
-                    .build();
-                })
+                    .build()
+                )
                 .fixed5(55)
                 .build();
         nestedRO.wrap(buffer,  0,  100);
@@ -55,16 +54,14 @@ public class NestedFWIT
         nestedRW.wrap(buffer, 0, buffer.capacity())
         .fixed4(14)
         .flat(flat ->
-        {
             flat
             .fixed1(10)
             .fixed2(20)
             .string1("value1")
             .fixed3(33)
             .string2("value2")
-            .build();
-
-        })
+            .build()
+        )
         .fixed5(55)
         .build();
         nestedRO.wrap(buffer,  0,  100);

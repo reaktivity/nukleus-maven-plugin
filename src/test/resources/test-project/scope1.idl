@@ -20,7 +20,7 @@ scope scope1
         uint8 fixed1;
         uint16 fixed2 = 222;
         string string1;
-        int32 fixed3;
+        int32 fixed3; // TODO: = 333;
         string string2;
     }
 
@@ -34,14 +34,14 @@ scope scope1
     struct FlatWithList
     {
         uint64 fixed1 = 111;
+        string string1;
         list<string> list1;
-        // the following causes compilation errors in the generated code:
-        //int16 fixed2;
     }
 
     struct FlatWithOctets
     {
         int64 fixed1 = 111;
+        string string1;
         octets extension;
     }
     

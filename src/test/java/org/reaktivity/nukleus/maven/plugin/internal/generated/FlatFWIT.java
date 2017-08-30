@@ -36,22 +36,22 @@ public class FlatFWIT
         // gets set to the default value next time round
         flatRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(10)
-                .fixed2(111)
+                .fixed2(20)
                 .string1("value1")
-                .fixed3(33)
+                .fixed3(30)
                 .string2("value2")
                 .build();
         flatRO.wrap(buffer,  0,  100);
-        assertEquals(111, flatRO.fixed2());
+        assertEquals(20, flatRO.fixed2());
 
         flatRW.wrap(buffer, 0, 100)
                 .fixed1(10)
                 .string1("value1")
-                .fixed3(33)
                 .string2("value2")
                 .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(222, flatRO.fixed2());
+        assertEquals(333, flatRO.fixed3());
     }
 
     @Test // TODO (expected = IllegalStateException.class)
