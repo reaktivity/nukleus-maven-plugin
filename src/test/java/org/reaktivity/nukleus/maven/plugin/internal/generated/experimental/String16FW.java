@@ -42,23 +42,31 @@ public final class String16FW extends Flyweight {
   }
 
   public static final class Builder extends Flyweight.Builder<String16FW> {
+    private boolean valueSet = false;
+
     public Builder() {
       super(new String16FW());
     }
 
+    @Override
     public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit) {
+      checkLimit(offset + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH, maxLimit);
       super.wrap(buffer, offset, maxLimit);
       return this;
     }
 
     public Builder set(String16FW value) {
+      checkLimit(offset() + value.sizeof(), maxLimit());
       buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof());
+      valueSet = true;
       return this;
     }
 
     public Builder set(DirectBuffer srcBuffer, int srcOffset, int length) {
+      checkLimit(offset() + length + FIELD_SIZE_LENGTH, maxLimit());
       buffer().putShort(offset(), (short) length);
       buffer().putBytes(offset() + 2, srcBuffer, srcOffset, length);
+      valueSet = true;
       return this;
     }
 
@@ -66,9 +74,21 @@ public final class String16FW extends Flyweight {
       byte[] charBytes = value.getBytes(charset);
       MutableDirectBuffer buffer = buffer();
       int offset = offset();
+      checkLimit(offset + charBytes.length + FIELD_SIZE_LENGTH, maxLimit());
       buffer.putShort(offset, (short) charBytes.length);
       buffer.putBytes(offset + 2, charBytes);
+      valueSet = true;
       return this;
+    }
+
+    @Override
+    public String16FW build()
+    {
+      if (!valueSet)
+      {
+        buffer().putShort(offset(), (short) 0);
+      }
+      return super.build();
     }
   }
 }

@@ -62,7 +62,7 @@ public class String16FWIT
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetWhenExceedsMaxLimit()
+    public void shouldFailToSetUsingStringWhenExceedsMaxLimit()
     {
         buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
         try
@@ -76,9 +76,53 @@ public class String16FWIT
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
             assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
-                         0, buffer.getByte(2));
+                         0, buffer.getByte(12));
         }
     }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetUsingString16FWWhenExceedsMaxLimit()
+    {
+        buffer.setMemory(0,  buffer.capacity(), (byte) 0);
+        String16FW value = new String16FW.Builder()
+                .wrap(buffer, 0, 10)
+                .set("1", UTF_8)
+                .build();
+        try
+        {
+            stringRW.wrap(buffer, 10, 12)
+                .set(value);
+        }
+        finally
+        {
+            byte[] bytes = new byte[3];
+            buffer.getBytes(10, bytes);
+            // Make sure memory was not written beyond maxLimit
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+                         0, buffer.getByte(12));
+        }
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetUsingBufferWhenExceedsMaxLimit()
+    {
+        buffer.setMemory(0, buffer.capacity(), (byte) 0x00);
+        buffer.putStringWithoutLengthUtf8(0, "1");
+        try
+        {
+            stringRW.wrap(buffer, 10, 12)
+                .set(buffer, 0, 1);
+        }
+        finally
+        {
+            byte[] bytes = new byte[3];
+            buffer.getBytes(10, bytes);
+            // Make sure memory was not written beyond maxLimit
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+                         0, buffer.getByte(12));
+        }
+    }
+
 
     @Test(expected = NullPointerException.class)
     public void shouldFailToSetToNull() throws Exception
