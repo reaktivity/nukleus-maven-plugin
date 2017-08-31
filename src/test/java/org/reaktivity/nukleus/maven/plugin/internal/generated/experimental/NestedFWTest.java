@@ -28,7 +28,13 @@ public class NestedFWTest
 {
     private final NestedFW.Builder nestedRW = new NestedFW.Builder();
     private final NestedFW nestedRO = new NestedFW();
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xFF);
+        }
+    };
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();

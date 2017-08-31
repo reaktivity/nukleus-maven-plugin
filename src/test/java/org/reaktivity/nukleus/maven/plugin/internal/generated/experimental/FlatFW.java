@@ -132,23 +132,20 @@ public final class FlatFW extends Flyweight {
       return string1RW.wrap(buffer(), offset() + FIELD_OFFSET_STRING1, maxLimit());
     }
 
+
     public Builder string1(String value) {
       prepareToSetField(INDEX_STRING1);
-      string1RW.wrap(buffer(), offset() + FIELD_OFFSET_STRING1, maxLimit());
-      if (value == null) {
-        limit(offset() + FIELD_OFFSET_STRING1);
-      } else {
-        string1().set(value, StandardCharsets.UTF_8);
-        limit(string1().build().limit());
-      }
+      StringFW.Builder string1 = string1();
+      string1.set(value, StandardCharsets.UTF_8);
+      limit(string1().build().limit());
       return this;
     }
 
     public Builder string1(StringFW value) {
       prepareToSetField(INDEX_STRING1);
-      StringFW.Builder $string1 = string1();
-      $string1.set(value);
-      limit($string1.build().limit());
+      StringFW.Builder string1 = string1();
+      string1.set(value);
+      limit(string1.build().limit());
       return this;
     }
 
@@ -206,6 +203,10 @@ public final class FlatFW extends Flyweight {
     public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit) {
       fieldsSet.clear();
       super.wrap(buffer, offset, maxLimit);
+      if (offset + FIELD_OFFSET_STRING1 > maxLimit) {
+          final String msg = String.format("offset=%d, maxLimit=%d leaves insufficient space", offset, maxLimit);
+          throw new IndexOutOfBoundsException(msg);
+      }
       return this;
     }
 

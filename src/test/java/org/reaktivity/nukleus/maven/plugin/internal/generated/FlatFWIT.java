@@ -18,6 +18,8 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
@@ -28,6 +30,34 @@ public class FlatFWIT
     FlatFW.Builder flatRW = new FlatFW.Builder();
     FlatFW flatRO = new FlatFW();
     MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailWrapWithInsufficientLength()
+    {
+        flatRW.wrap(buffer, 10, 12);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailWhenSettingstring1ExceedsMaxLimit()
+    {
+        buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
+        try
+        {
+            flatRW.wrap(buffer, 10, 14)
+                    .fixed1(0x01)
+                    .fixed2(0x0101)
+                    .string1("1234");
+        }
+        finally
+        {
+            byte[] bytes = new byte[13];
+            buffer.getBytes(10, bytes);
+
+            // Make sure memory was not written beyond maxLimit
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+                         0, buffer.getByte(14));
+        }
+    }
 
     @Test
     public void shouldDefaultValues() throws Exception

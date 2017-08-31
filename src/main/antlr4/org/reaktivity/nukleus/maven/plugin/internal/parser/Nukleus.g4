@@ -87,14 +87,14 @@ integer_type
    : signed_integer_type
    | unsigned_integer_type
    ;
-   
+
 signed_integer_type
    : int8_type
    | int16_type
    | int32_type
    | int64_type
    ;
-   
+
 unsigned_integer_type
    : uint8_type
    | uint16_type
@@ -199,12 +199,12 @@ string16_type
    : KW_STRING16 LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
    | KW_STRING16
    ;
-   
+
 int_literal
    : negative_int_literal
    | uint_literal
    ;
-   
+
 negative_int_literal
    : '-' UNSIGNED_INTEGER_LITERAL
    ;
@@ -213,11 +213,10 @@ uint_literal
    : UNSIGNED_INTEGER_LITERAL
    | HEX_LITERAL
    ;
-    
+
 UNSIGNED_INTEGER_LITERAL
    : ('0' | '1' .. '9' '0' .. '9'*) INTEGER_TYPE_SUFFIX?
    ;
-
 
 HEX_LITERAL
    : '0' ('x' | 'X') HEX_DIGIT + INTEGER_TYPE_SUFFIX?
@@ -257,7 +256,7 @@ COLON
 COMMA
    : ','
    ;
-   
+
 EQUALS
    : '='
    ;

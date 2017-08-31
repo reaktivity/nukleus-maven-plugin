@@ -42,23 +42,29 @@ public final class StringFW extends Flyweight {
   }
 
   public static final class Builder extends Flyweight.Builder<StringFW> {
+    private boolean valueSet = false;
+
     public Builder() {
       super(new StringFW());
     }
 
+    @Override
     public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit) {
+      checkLimit(offset + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH, maxLimit);
       super.wrap(buffer, offset, maxLimit);
       return this;
     }
 
     public Builder set(StringFW value) {
       buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof());
+      valueSet = true;
       return this;
     }
 
     public Builder set(DirectBuffer srcBuffer, int srcOffset, int length) {
       buffer().putByte(offset(), (byte) length);
       buffer().putBytes(offset() + 1, srcBuffer, srcOffset, length);
+      valueSet = true;
       return this;
     }
 
@@ -66,9 +72,21 @@ public final class StringFW extends Flyweight {
       byte[] charBytes = value.getBytes(charset);
       MutableDirectBuffer buffer = buffer();
       int offset = offset();
+      checkLimit(offset + charBytes.length + 1, maxLimit());
       buffer.putByte(offset, (byte) charBytes.length);
       buffer.putBytes(offset + 1, charBytes);
+      valueSet = true;
       return this;
+    }
+
+    @Override
+    public StringFW build()
+    {
+        if (!valueSet)
+        {
+            buffer().putByte(offset(), (byte) 0);
+        }
+        return super.build();
     }
   }
 }

@@ -21,6 +21,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
@@ -29,9 +31,15 @@ import org.junit.rules.ExpectedException;
 
 public class FlatWithListFWTest
 {
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xFF);
+        }
+    };
     private final FlatWithListFW.Builder flatRW = new FlatWithListFW.Builder();
     private final FlatWithListFW flatRO = new FlatWithListFW();
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     private final StringFW.Builder stringRW = new StringFW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
 
@@ -60,6 +68,24 @@ public class FlatWithListFWTest
         AtomicInteger listSize = new AtomicInteger(0);
         flatRO.list1().forEach(s -> listSize.incrementAndGet());
         assertEquals(0, listSize.get());
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailWrapWithInsufficientLength()
+    {
+        flatRW.wrap(buffer, 10, 17);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailWhenSettingstring1ExceedsMaxLimit()
+    {
+        flatRW.wrap(buffer, 10, 18)
+                .fixed1(0x0101010101010101L)
+                .string1("1234");
+        byte[] bytes = new byte[13];
+        buffer.getBytes(10, bytes);
+        System.out.println(bytes);
+        System.out.println(DatatypeConverter.printHexBinary(bytes));
     }
 
     @Test

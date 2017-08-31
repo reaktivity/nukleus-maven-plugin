@@ -27,9 +27,15 @@ import org.junit.rules.ExpectedException;
 
 public class FlatWithOctetsFWTest
 {
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xFF);
+        }
+    };
     private final FlatWithOctetsFW.Builder flatRW = new FlatWithOctetsFW.Builder();
     private final FlatWithOctetsFW flatRO = new FlatWithOctetsFW();
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     private final StringFW.Builder stringRW = new StringFW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
 

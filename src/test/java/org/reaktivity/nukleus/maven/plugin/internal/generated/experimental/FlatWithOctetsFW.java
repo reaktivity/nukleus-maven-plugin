@@ -103,20 +103,17 @@ public final class FlatWithOctetsFW extends Flyweight {
 
     public Builder string1(String value) {
       prepareToSetField(INDEX_STRING1);
-      if (value == null) {
-        limit(offset() + FIELD_OFFSET_STRING1);
-      } else {
-        string1().set(value, StandardCharsets.UTF_8);
-        limit(string1().build().limit());
-      }
+      StringFW.Builder string1 = string1();
+      string1.set(value, StandardCharsets.UTF_8);
+      limit(string1.build().limit());
       return this;
     }
 
     public Builder string1(StringFW value) {
       prepareToSetField(INDEX_STRING1);
-      StringFW.Builder $string1 = string1();
-      $string1.set(value);
-      limit($string1.build().limit());
+      StringFW.Builder string1 = string1();
+      string1.set(value);
+      limit(string1.build().limit());
       return this;
     }
 
@@ -152,7 +149,6 @@ public final class FlatWithOctetsFW extends Flyweight {
     @Override
     public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit) {
       super.wrap(buffer, offset, maxLimit);
-      string1RW.wrap(buffer, offset + FIELD_OFFSET_STRING1, maxLimit);
       return this;
     }
 

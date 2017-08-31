@@ -103,40 +103,27 @@ public final class FlatWithListFW extends Flyweight {
 
     public Builder string1(String value) {
       prepareToSetField(INDEX_STRING1);
-      if (value == null) {
-        limit(offset() + FIELD_OFFSET_STRING1);
-      } else {
-        string1().set(value, StandardCharsets.UTF_8);
-        list1(string1().build().limit());
-        limit(string1().build().limit());
-      }
+      string1().set(value, StandardCharsets.UTF_8);
       return this;
     }
 
     public Builder string1(StringFW value) {
       prepareToSetField(INDEX_STRING1);
-      StringFW.Builder $string1 = string1();
-      $string1.set(value);
-      list1(string1().build().limit());
-      limit($string1.build().limit());
+      string1().set(value);
       return this;
     }
 
     public Builder string1(DirectBuffer buffer, int offset, int length) {
       prepareToSetField(INDEX_STRING1);
-      StringFW.Builder string1 = string1();
-      string1.set(buffer, offset, length);
-      list1(string1().build().limit());
-      limit(string1.build().limit());
+      string1().set(buffer, offset, length);
       return this;
-    }
-
-    private ListFW.Builder<StringFW.Builder, StringFW> list1(int offset) {
-      return list1RW.wrap(buffer(), offset, maxLimit());
     }
 
     public Builder list1(Consumer<ListFW.Builder<StringFW.Builder, StringFW>> mutator) {
       prepareToSetField(INDEX_LIST1);
+      int anchor = string1().build().limit();
+      list1RW.wrap(buffer(), anchor, maxLimit());
+      list1RW.limit(anchor);
       mutator.accept(list1RW);
       super.limit(list1RW.limit());
       return this;
@@ -146,7 +133,10 @@ public final class FlatWithListFW extends Flyweight {
     public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit) {
       fieldsSet.clear();
       super.wrap(buffer, offset, maxLimit);
-      string1RW.wrap(buffer, offset + FIELD_OFFSET_STRING1, maxLimit);
+      if (offset + FIELD_OFFSET_STRING1 > maxLimit) {
+          final String msg = String.format("offset=%d, maxLimit=%d leaves insufficient space", offset, maxLimit);
+          throw new IndexOutOfBoundsException(msg);
+      }
       return this;
     }
 
