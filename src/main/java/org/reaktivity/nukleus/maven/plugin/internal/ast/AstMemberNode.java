@@ -30,7 +30,7 @@ public final class AstMemberNode extends AstNode
     private final int size;
     private final String sizeName;
     private final AstType unsignedType;
-    private final Integer defaultValue;
+    private final Object defaultValue;
 
     private AstMemberNode(
         String name,
@@ -38,7 +38,7 @@ public final class AstMemberNode extends AstNode
         int size,
         String sizeName,
         AstType unsignedType,
-        Integer defaultValue)
+        Object defaultValue)
     {
         this.name = requireNonNull(name);
         this.types = unmodifiableList(requireNotEmpty(requireNonNull(types)));
@@ -85,7 +85,7 @@ public final class AstMemberNode extends AstNode
         return sizeName;
     }
 
-    public Integer defaultValue()
+    public Object defaultValue()
     {
         return defaultValue;
     }

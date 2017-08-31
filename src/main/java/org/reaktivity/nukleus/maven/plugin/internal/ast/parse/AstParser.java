@@ -407,13 +407,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
     private static int parseInt(String text)
     {
-        if (text.startsWith("0x"))
-        {
-            return Integer.parseInt(text.substring(2), 16);
-        }
-        else
-        {
-            return Integer.parseInt(text);
-        }
+        return Integer.decode(text);
     }
 }

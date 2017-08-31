@@ -27,9 +27,9 @@ import org.reaktivity.reaktor.internal.test.types.FlatFW;
 
 public class FlatFWIT
 {
-    FlatFW.Builder flatRW = new FlatFW.Builder();
-    FlatFW flatRO = new FlatFW();
-    MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+    private final FlatFW.Builder flatRW = new FlatFW.Builder();
+    private final FlatFW flatRO = new FlatFW();
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailWrapWithInsufficientLength()

@@ -74,13 +74,13 @@ public class FlatFWTest
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailWrapWithInsufficientLength()
+    public void shouldFailToWrapWithInsufficientLength()
     {
         flatRW.wrap(buffer, 10, 12);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailWhenSettingstring1ExceedsMaxLimit()
+    public void shouldFailToSetString1WhenExceedsMaxLimit()
     {
         buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
         try
@@ -101,7 +101,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToSetFixed2WhenFixed1IsNotSet() throws Exception
+    public void shouldFailToSetFixed2BeforeFixed1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed1");
@@ -110,7 +110,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToSetstring1Whenfixed1IsNotSet() throws Exception
+    public void shouldFailToSetString1BeforeFixed1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed1");
@@ -119,7 +119,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToSetString2Whenfixed1IsNotSet() throws Exception
+    public void shouldFailToSetString2BeforeFixed1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed1");
@@ -128,7 +128,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToSetstring2Whenstring1IsNotSet() throws Exception
+    public void shouldFailToSetString2BeforeString1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
@@ -138,7 +138,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToResetfixed1() throws Exception
+    public void shouldFailToResetFixed1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed1");
@@ -149,7 +149,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToResetstring1() throws Exception
+    public void shouldFailToResetString1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
@@ -162,7 +162,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToBuildIfRequiredMemberNotSetfixed1() throws Exception
+    public void shouldFailToBuildWhenFixed1NotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed1");
@@ -171,7 +171,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToBuildIfRequiredMemberNotSetstring1() throws Exception
+    public void shouldFailToBuildWhenString1NotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
@@ -181,7 +181,7 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldFailToBuildIfRequiredMemberNotSetstring2() throws Exception
+    public void shouldFailToBuildWhenString2NotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string2");

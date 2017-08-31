@@ -78,7 +78,7 @@ public class NestedFWTest
     }
 
     @Test
-    public void shouldFailToSetfixed2WhenFixed1IsNotSet() throws Exception
+    public void shouldFailToSetFixed2BeforeFixed1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed1");
@@ -91,7 +91,7 @@ public class NestedFWTest
     }
 
     @Test
-    public void shouldFailToSetfixed5WhenflatIsNotSet() throws Exception
+    public void shouldFailToSetFixed5BeforeFlat() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("flat");
@@ -100,7 +100,7 @@ public class NestedFWTest
     }
 
     @Test
-    public void shouldFailToResetflat() throws Exception
+    public void shouldFailToResetFlat() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("flat");
@@ -115,7 +115,7 @@ public class NestedFWTest
     }
 
     @Test
-    public void shouldFailToResetfixed4() throws Exception
+    public void shouldFailToResetFixed4() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed4");
@@ -126,7 +126,7 @@ public class NestedFWTest
     }
 
     @Test
-    public void shouldFailToBuildIfflatIsNotSet() throws Exception
+    public void shouldFailToBuildWhenFlatIsNotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("flat");
@@ -135,7 +135,7 @@ public class NestedFWTest
     }
 
     @Test
-    public void shouldFailToBuildIffixed5IsNotSet() throws Exception
+    public void shouldFailToBuildWthishenFixed5IsNotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed5");

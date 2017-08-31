@@ -23,9 +23,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class StringFWTest
 {
@@ -39,9 +37,6 @@ public class StringFWTest
     private final StringFW.Builder stringRW = new StringFW.Builder();
     private final StringFW stringRO = new StringFW();
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @Test
     public void shouldDefaultValues() throws Exception
     {
@@ -54,7 +49,7 @@ public class StringFWTest
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailWrapWithInsufficientLength()
+    public void shouldFailToWrapWithInsufficientLength()
     {
         stringRW.wrap(buffer, 10, 10);
     }
@@ -66,7 +61,7 @@ public class StringFWTest
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailWhenSettingValueExceedsMaxLimit()
+    public void shouldFailToSetWhenExceedsMaxLimit()
     {
         buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
         try
@@ -84,8 +79,27 @@ public class StringFWTest
         }
     }
 
+    @Test(expected = NullPointerException.class)
+    public void shouldFailToSetToNull() throws Exception
+    {
+        stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(null, UTF_8);
+    }
+
     @Test
-    public void shouldSetValueUsingString() throws Exception
+    public void shouldSetToEmptyString() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set("", UTF_8)
+                .build()
+                .limit();
+        stringRO.wrap(buffer,  0,  limit);
+        assertEquals(1, stringRO.sizeof());
+        assertEquals("", stringRO.asString());
+    }
+
+    @Test
+    public void shouldSetUsingString() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
                 .set("value1", UTF_8)
@@ -97,7 +111,7 @@ public class StringFWTest
     }
 
     @Test
-    public void shouldSetValuesUsingStringFW() throws Exception
+    public void shouldSetUsingStringFW() throws Exception
     {
         StringFW value = new StringFW.Builder()
                 .wrap(buffer, 50, buffer.capacity())
@@ -113,7 +127,7 @@ public class StringFWTest
     }
 
     @Test
-    public void shouldSetStringValuesUsingBuffer() throws Exception
+    public void shouldSetUsingBuffer() throws Exception
     {
         buffer.putStringWithoutLengthUtf8(50, "value1");
         int limit = stringRW.wrap(buffer, 0, 50)

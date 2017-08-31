@@ -207,7 +207,7 @@ public class AstParserTest
                 .build();
 
         assertEquals(expected, actual);
-        assertEquals(-12, actual.defaultValue().intValue());
+        assertEquals(-12, actual.defaultValue());
     }
 
     @Test

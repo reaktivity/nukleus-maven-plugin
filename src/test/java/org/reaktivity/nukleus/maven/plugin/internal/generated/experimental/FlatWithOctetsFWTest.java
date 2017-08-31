@@ -62,7 +62,7 @@ public class FlatWithOctetsFWTest
     }
 
     @Test
-    public void shouldFailToSetextensionWhenstring1IsNotSet() throws Exception
+    public void shouldFailToSetExtensionBeforeString1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
@@ -73,7 +73,7 @@ public class FlatWithOctetsFWTest
     }
 
     @Test
-    public void shouldFailToResetfixed1() throws Exception
+    public void shouldFailToResetFixed1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("fixed1");
@@ -84,7 +84,7 @@ public class FlatWithOctetsFWTest
     }
 
     @Test
-    public void shouldFailToResetstring1() throws Exception
+    public void shouldFailToResetString1() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
@@ -95,7 +95,7 @@ public class FlatWithOctetsFWTest
     }
 
     @Test
-    public void shouldFailToBuildIfstring1NotSet() throws Exception
+    public void shouldFailToBuildWhenString1NotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");

@@ -98,7 +98,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         TypeName unsignedType,
         int size,
         String sizeName,
-        Integer defaultValue)
+        Object defaultValue)
     {
         memberOffsetConstant.addMember(name, type, unsignedType);
         memberSizeConstant.addMember(name, type, unsignedType);
@@ -645,7 +645,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType,
             int size,
             String sizeName,
-            Integer defaultValue)
+            Object defaultValue)
         {
             // TODO: eliminate need for lookahead
             memberMutator.lookaheadMember(name, type, unsignedType);
@@ -1494,7 +1494,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
-                Integer defaultValue)
+                Object defaultValue)
             {
                 if (!type.isPrimitive())
                 {

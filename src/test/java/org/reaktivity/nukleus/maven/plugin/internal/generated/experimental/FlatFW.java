@@ -108,18 +108,10 @@ public final class FlatFW extends Flyweight {
       super(new FlatFW());
     }
 
-    private int fixed1() {
-      return buffer().getByte(offset() + FIELD_OFFSET_FIXED1) & 0xFF;
-    }
-
     public Builder fixed1(int value) {
       prepareToSetField(INDEX_FIXED1);
       buffer().putByte(offset() + FIELD_OFFSET_FIXED1, (byte)(value & 0xFF));
       return this;
-    }
-
-    private int fixed2() {
-      return buffer().getShort(offset() + FIELD_OFFSET_FIXED2, ByteOrder.BIG_ENDIAN) & 0xFFFF;
     }
 
     public Builder fixed2(int value) {
@@ -155,10 +147,6 @@ public final class FlatFW extends Flyweight {
       string1.set(buffer, offset, length);
       limit(string1.build().limit());
       return this;
-    }
-
-    private int fixed3() {
-      return buffer().getInt(string1().limit() + FIELD_OFFSET_FIXED3);
     }
 
     public Builder fixed3(int value) {

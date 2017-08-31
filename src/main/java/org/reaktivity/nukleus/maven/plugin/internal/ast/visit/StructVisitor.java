@@ -88,7 +88,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
         AstType memberUnsignedType = memberNode.unsignedType();
         int size = memberNode.size();
         String sizeName = memberNode.sizeName();
-        Integer defaultValue = memberNode.defaultValue();
+        Object defaultValue = memberNode.defaultValue();
 
         if (memberType == AstType.LIST)
         {
@@ -101,7 +101,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, defaultValue);
+            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, null);
         }
         else
         {
