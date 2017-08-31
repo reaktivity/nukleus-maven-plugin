@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.reaktivity.nukleus.maven.plugin.internal.generated;
+package org.reaktivity.nukleus.maven.plugin.internal.generated.experimental;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -24,9 +24,8 @@ import javax.xml.bind.DatatypeConverter;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 
-public class StringFWIT
+public class String16FWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -35,8 +34,8 @@ public class StringFWIT
             setMemory(0, capacity(), (byte) 0xF);
         }
     };
-    private final StringFW.Builder stringRW = new StringFW.Builder();
-    private final StringFW stringRO = new StringFW();
+    private final String16FW.Builder stringRW = new String16FW.Builder();
+    private final String16FW stringRO = new String16FW();
 
     @Test
     public void shouldDefaultValues() throws Exception
@@ -45,20 +44,20 @@ public class StringFWIT
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(1, stringRO.sizeof());
+        assertEquals(2, stringRO.sizeof());
 
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToWrapWithInsufficientLength()
     {
-        stringRW.wrap(buffer, 10, 10);
+        stringRW.wrap(buffer, 10, 11);
     }
 
     @Test
     public void shouldWrapWithSufficientLength()
     {
-        stringRW.wrap(buffer, 10, 11);
+        stringRW.wrap(buffer, 10, 12);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -67,16 +66,16 @@ public class StringFWIT
         buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
         try
         {
-            stringRW.wrap(buffer, 10, 11)
+            stringRW.wrap(buffer, 10, 12)
                 .set("1", UTF_8);
         }
         finally
         {
-            byte[] bytes = new byte[2];
+            byte[] bytes = new byte[3];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
             assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
-                         0, buffer.getByte(1));
+                         0, buffer.getByte(2));
         }
     }
 
@@ -95,7 +94,7 @@ public class StringFWIT
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(1, stringRO.sizeof());
+        assertEquals(2, stringRO.sizeof());
         assertEquals("", stringRO.asString());
     }
 
@@ -107,14 +106,14 @@ public class StringFWIT
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(7, stringRO.sizeof());
+        assertEquals(8, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
     }
 
     @Test
     public void shouldSetUsingStringFW() throws Exception
     {
-        StringFW value = new StringFW.Builder()
+        String16FW value = new String16FW.Builder()
                 .wrap(buffer, 50, buffer.capacity())
                 .set("value1", UTF_8)
                 .build();
@@ -123,7 +122,7 @@ public class StringFWIT
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(7, stringRO.sizeof());
+        assertEquals(8, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
     }
 
@@ -136,7 +135,7 @@ public class StringFWIT
             .build()
             .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(7, stringRO.sizeof());
+        assertEquals(8, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
     }
 
