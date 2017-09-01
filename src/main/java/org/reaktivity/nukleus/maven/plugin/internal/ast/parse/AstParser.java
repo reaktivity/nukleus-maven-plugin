@@ -39,6 +39,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int32_t
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
@@ -53,6 +54,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_literalContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
@@ -190,14 +192,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder = new AstMemberNode.Builder();
 
-        if (ctx.EQUALS() != null)
-        {
-            int defaultValue = ctx.int_literal() != null
-                    ? parseInt(ctx.int_literal())
-                    : parseInt(ctx.uint_literal());
-            memberBuilder.defaultValue(defaultValue);
-        }
-
         super.visitMember(ctx);
 
         AstMemberNode member = memberBuilder.build();
@@ -213,6 +207,22 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         return member;
+    }
+
+    @Override
+    public AstNode visitUint_member(
+        Uint_memberContext ctx)
+    {
+        memberBuilder.defaultValue(parseInt(ctx.uint_literal()));
+        return super.visitUint_member(ctx);
+    }
+
+    @Override
+    public AstNode visitInt_member(
+        Int_memberContext ctx)
+    {
+        memberBuilder.defaultValue(parseInt(ctx.int_literal()));
+        return super.visitInt_member(ctx);
     }
 
     @Override

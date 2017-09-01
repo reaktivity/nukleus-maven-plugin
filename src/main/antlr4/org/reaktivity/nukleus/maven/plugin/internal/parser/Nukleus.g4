@@ -169,8 +169,16 @@ member_list
 
 member
    : type_spec declarators SEMICOLON
-   | unsigned_integer_type declarator EQUALS uint_literal SEMICOLON
-   | signed_integer_type declarator EQUALS int_literal SEMICOLON
+   | uint_member SEMICOLON
+   | int_member SEMICOLON
+   ;
+   
+uint_member
+   : unsigned_integer_type declarator EQUALS uint_literal
+   ;
+   
+int_member 
+   : signed_integer_type declarator EQUALS int_literal
    ;
 
 union_type
@@ -201,12 +209,11 @@ string16_type
    ;
 
 int_literal
-   : negative_int_literal
-   | uint_literal
+   : MINUS ? uint_literal
    ;
-
-negative_int_literal
-   : '-' UNSIGNED_INTEGER_LITERAL
+   
+MINUS
+   : '-'
    ;
 
 uint_literal
