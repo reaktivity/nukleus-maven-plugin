@@ -45,13 +45,13 @@ public class FlatFWTest
     @Test
     public void shouldDefaultValues() throws Exception
     {
-        int limit2 = flatRW.wrap(buffer, 0, 100)
+        int limit = flatRW.wrap(buffer, 0, 100)
                 .fixed1(10)
                 .string1("value1")
                 .string2("value2")
                 .build()
                 .limit();
-        flatRO.wrap(buffer,  0,  100);
+        flatRO.wrap(buffer,  0, limit);
         assertEquals(222, flatRO.fixed2());
         assertEquals(333, flatRO.fixed3());
     }

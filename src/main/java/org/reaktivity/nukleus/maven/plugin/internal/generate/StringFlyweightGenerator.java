@@ -182,6 +182,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         private MethodSpec wrapMethod()
         {
             return methodBuilder("wrap")
+                    .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(stringType.nestedClass("Builder"))
                     .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
@@ -214,9 +215,10 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                     .addParameter(int.class, "srcOffset")
                     .addParameter(int.class, "length")
-                    .addStatement("checkLimit(offset() + length + FIELD_SIZE_LENGTH, maxLimit())")
-                    .addStatement("buffer().putByte(offset(), (byte) length)")
-                    .addStatement("buffer().putBytes(offset() + 1, srcBuffer, srcOffset, length)")
+                    .addStatement("int offset = offset()")
+                    .addStatement("checkLimit(offset + length + FIELD_SIZE_LENGTH, maxLimit())")
+                    .addStatement("buffer().putByte(offset, (byte) length)")
+                    .addStatement("buffer().putBytes(offset + 1, srcBuffer, srcOffset, length)")
                     .addStatement("valueSet = true")
                     .addStatement("return this")
                     .build();
@@ -243,6 +245,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         private MethodSpec buildMethod()
         {
             return methodBuilder("build")
+                    .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .beginControlFlow("if (!valueSet)")
                     .addStatement("buffer().putByte(offset(), (byte) 0)")

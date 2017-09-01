@@ -156,10 +156,18 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder.addMethod(constructor())
+                    .addField(fieldValueSet())
                     .addMethod(wrapMethod())
                     .addMethod(setMethod())
                     .addMethod(setDirectBufferMethod())
                     .addMethod(setStringMethod())
+                    .addMethod(buildMethod())
+                    .build();
+        }
+
+        private FieldSpec fieldValueSet()
+        {
+            return FieldSpec.builder(boolean.class, "valueSet", PRIVATE)
                     .build();
         }
 
@@ -174,11 +182,13 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec wrapMethod()
         {
             return methodBuilder("wrap")
+                    .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(stringType.nestedClass("Builder"))
                     .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
+                    .addStatement("checkLimit(offset + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH, maxLimit)")
                     .addStatement("super.wrap(buffer, offset, maxLimit)")
                     .addStatement("return this")
                     .build();
@@ -190,7 +200,9 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(stringType.nestedClass("Builder"))
                     .addParameter(stringType, "value")
+                    .addStatement("checkLimit(offset() + value.sizeof(), maxLimit())")
                     .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
+                    .addStatement("valueSet = true")
                     .addStatement("return this")
                     .build();
         }
@@ -203,8 +215,11 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                     .addParameter(int.class, "srcOffset")
                     .addParameter(int.class, "length")
-                    .addStatement("buffer().putShort(offset(), (short) length)")
-                    .addStatement("buffer().putBytes(offset() + 2, srcBuffer, srcOffset, length)")
+                    .addStatement("int offset = offset()")
+                    .addStatement("checkLimit(offset + length + FIELD_SIZE_LENGTH, maxLimit())")
+                    .addStatement("buffer().putShort(offset, (short) length)")
+                    .addStatement("buffer().putBytes(offset + 2, srcBuffer, srcOffset, length)")
+                    .addStatement("valueSet = true")
                     .addStatement("return this")
                     .build();
         }
@@ -219,9 +234,24 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .addStatement("byte[] charBytes = value.getBytes(charset)")
                     .addStatement("MutableDirectBuffer buffer = buffer()")
                     .addStatement("int offset = offset()")
+                    .addStatement("checkLimit(offset + charBytes.length + FIELD_SIZE_LENGTH, maxLimit())")
                     .addStatement("buffer.putShort(offset, (short) charBytes.length)")
                     .addStatement("buffer.putBytes(offset + 2, charBytes)")
+                    .addStatement("valueSet = true")
                     .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec buildMethod()
+        {
+            return methodBuilder("build")
+                    .addAnnotation(Override.class)
+                    .addModifiers(PUBLIC)
+                    .beginControlFlow("if (!valueSet)")
+                    .addStatement("buffer().putShort(offset(), (short) 0)")
+                    .endControlFlow()
+                    .addStatement("return super.build()")
+                    .returns(stringType)
                     .build();
         }
     }
