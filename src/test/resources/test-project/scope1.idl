@@ -44,5 +44,16 @@ scope scope1
         string string1;
         octets extension;
     }
-    
+
+    struct Integers
+    {
+        uint8  unsigned8  = 0xFF;
+        uint16 unsigned16 = 0xFFFF;
+        uint32 unsigned32 = 0x7FFFFFFF; // TODO: 0xFFFFFFFF;
+        uint64 unsigned64 = 0x7FFFFFFF; // TODO: 0xFFFFFFFFFFFFFFFF;
+        int8  signed8  =  -8;
+        int16 signed16 = -16;
+        int32 signed32 = -32;
+        int64 signed64 = -64;
+    }
 }

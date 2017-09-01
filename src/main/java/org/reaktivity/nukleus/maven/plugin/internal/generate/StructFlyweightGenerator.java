@@ -1518,8 +1518,22 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else
                     {
-                        builder.addStatement("$N($L)",
-                                name, defaultValue);
+                        TypeName publicType = (unsignedType != null) ? unsignedType : type;
+                        if (publicType == TypeName.BYTE)
+                        {
+                            builder.addStatement("$N((byte) $L)",
+                                    name, defaultValue);
+                        }
+                        else if (publicType == TypeName.SHORT)
+                        {
+                            builder.addStatement("$N((short) $L)",
+                                    name, defaultValue);
+                        }
+                        else
+                        {
+                            builder.addStatement("$N($L)",
+                                    name, defaultValue);
+                        }
                     }
                 }
                 return this;

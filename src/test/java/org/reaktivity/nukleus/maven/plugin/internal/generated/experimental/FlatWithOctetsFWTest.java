@@ -61,15 +61,26 @@ public class FlatWithOctetsFWTest
         assertEquals(111, flatRO.fixed1());
     }
 
-    @Test
-    public void shouldFailToSetExtensionBeforeString1() throws Exception
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetFixed1WithInsufficientSpace()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
-        flatRW.wrap(buffer, 0, 100)
-                .extension(b ->
-                {
-                });
+        flatRW.wrap(buffer, 10, 10)
+               .fixed1(10);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WithInsufficientSpaceToDefaultPriorField()
+    {
+        flatRW.wrap(buffer, 10, 11)
+                .string1("");
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WithInsufficientSpace()
+    {
+        flatRW.wrap(buffer, 10, 18)
+                .fixed1(10)
+                .string1("1234");
     }
 
     @Test

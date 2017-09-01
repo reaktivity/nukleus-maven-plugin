@@ -6,7 +6,9 @@ import static java.lang.String.format;
 import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.function.Consumer;
+
 import javax.annotation.Generated;
+
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -87,43 +89,56 @@ public final class FlatWithListFW extends Flyweight {
       super(new FlatWithListFW());
     }
 
-    protected long fixed1() {
-      return buffer().getLong(offset() + FIELD_OFFSET_FIXED1);
-    }
-
     public Builder fixed1(long value) {
-      prepareToSetField(INDEX_FIXED1);
+      checkFieldNotSet(INDEX_FIXED1);
+      checkFieldsSet(0, INDEX_FIXED1);
+      int newLimit = limit() + FIELD_SIZE_FIXED1;
+      checkLimit(newLimit, maxLimit());
       buffer().putLong(offset() + FIELD_OFFSET_FIXED1, value);
+      fieldsSet.set(INDEX_FIXED1);
+      limit(newLimit);
       return this;
     }
 
     private StringFW.Builder string1() {
-      return string1RW.wrap(buffer(), offset() + FIELD_OFFSET_STRING1, maxLimit());
+      checkFieldNotSet(INDEX_STRING1);
+      if (!fieldsSet.get(INDEX_FIXED1))
+      {
+        fixed1(DEFAULT_FIXED1);
+      }
+      checkFieldsSet(0, INDEX_STRING1);
+      return string1RW.wrap(buffer(), limit(),  maxLimit());
     }
 
     public Builder string1(String value) {
-      prepareToSetField(INDEX_STRING1);
-      string1().set(value, StandardCharsets.UTF_8);
+      StringFW.Builder string1 = string1();
+      string1.set(value, StandardCharsets.UTF_8);
+      fieldsSet.set(INDEX_STRING1);
+      limit(string1.build().limit());
       return this;
     }
 
     public Builder string1(StringFW value) {
-      prepareToSetField(INDEX_STRING1);
-      string1().set(value);
+      StringFW.Builder string1 = string1();
+      string1.set(value);
+      fieldsSet.set(INDEX_STRING1);
+      limit(string1.build().limit());
       return this;
     }
 
     public Builder string1(DirectBuffer buffer, int offset, int length) {
-      prepareToSetField(INDEX_STRING1);
-      string1().set(buffer, offset, length);
+      StringFW.Builder string1 = string1();
+      string1.set(buffer, offset, length);
+      fieldsSet.set(INDEX_STRING1);
+      limit(string1.build().limit());
       return this;
     }
 
     public Builder list1(Consumer<ListFW.Builder<StringFW.Builder, StringFW>> mutator) {
-      prepareToSetField(INDEX_LIST1);
-      int anchor = string1().build().limit();
-      list1RW.wrap(buffer(), anchor, maxLimit());
-      list1RW.limit(anchor);
+      checkFieldNotSet(INDEX_LIST1);
+      checkFieldsSet(0, INDEX_LIST1);
+      list1RW.wrap(buffer(), limit(), maxLimit());
+      list1RW.limit(limit());
       mutator.accept(list1RW);
       super.limit(list1RW.limit());
       return this;
@@ -133,49 +148,40 @@ public final class FlatWithListFW extends Flyweight {
     public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit) {
       fieldsSet.clear();
       super.wrap(buffer, offset, maxLimit);
-      if (offset + FIELD_OFFSET_STRING1 > maxLimit) {
-          final String msg = String.format("offset=%d, maxLimit=%d leaves insufficient space", offset, maxLimit);
-          throw new IndexOutOfBoundsException(msg);
-      }
+      limit(offset);
       return this;
     }
 
     @Override
     public FlatWithListFW build()
     {
-        setDefaults();
-        for (int i=0; i < FIELD_COUNT; i++) {
-            if (!fieldsSet.get(i))
-            {
-                throw new IllegalStateException(format("Required field \"%s\" is not set", FIELD_NAMES[i]));
-            }
-        }
-        fieldsSet.clear();
-        return super.build();
-    }
-
-    private void prepareToSetField(int index) {
-        if (fieldsSet.get(index))
-        {
-            throw new IllegalStateException(format("Field \"%s\" has already been set", FIELD_NAMES[index]));
-        }
-        for (int i=0; i < index; i++) {
-            if (!fieldsSet.get(i) && !FIELDS_WITH_DEFAULTS.get(i)) {
-                throw new IllegalStateException(format("Required field \"%s\" is not set", FIELD_NAMES[i]));
-            }
-        }
-        fieldsSet.set(index);
-    }
-
-    private void setDefaults()
-    {
-        if (!fieldsSet.get(INDEX_FIXED1)) {
-            fixed1(DEFAULT_FIXED1);
-        }
         if (!fieldsSet.get(INDEX_LIST1)) {
             list1(b -> { });
         }
+        return super.build();
+    }
 
+    private void checkFieldNotSet(int index) {
+      if (fieldsSet.get(index))
+      {
+        throw new IllegalStateException(format("Field \"%s\" has already been set", FIELD_NAMES[index]));
+      }
+    }
+
+    private void checkFieldsSet(
+        int fromIndex,
+        int toIndex)
+    {
+      int fieldNotSet = fromIndex - 1;
+      do
+      {
+        fieldNotSet = fieldsSet.nextClearBit(fieldNotSet + 1);
+      } while (fieldNotSet < toIndex && FIELDS_WITH_DEFAULTS.get(fieldNotSet));
+
+      if (fieldNotSet < toIndex)
+      {
+        throw new IllegalStateException(format("Required field \"%s\" is not set", FIELD_NAMES[fieldNotSet]));
+      }
     }
   }
 }

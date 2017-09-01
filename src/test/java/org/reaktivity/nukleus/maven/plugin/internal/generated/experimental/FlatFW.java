@@ -110,38 +110,45 @@ public final class FlatFW extends Flyweight {
 
     public Builder fixed1(int value) {
       checkFieldNotSet(INDEX_FIXED1);
-      checkRequiredFieldsSet(0, INDEX_FIXED1);
-      buffer().putByte(offset() + FIELD_OFFSET_FIXED1, (byte)(value & 0xFF));
+      checkFieldsSet(0, INDEX_FIXED1);
+      int newLimit = limit() + FIELD_SIZE_FIXED1;
+      checkLimit(newLimit, maxLimit());
+      buffer().putByte(limit(), (byte)(value & 0xFF));
       fieldsSet.set(INDEX_FIXED1);
+      limit(newLimit);
       return this;
     }
 
     public Builder fixed2(int value) {
       checkFieldNotSet(INDEX_FIXED2);
-      checkRequiredFieldsSet(0, INDEX_FIXED2);
-      buffer().putShort(offset() + FIELD_OFFSET_FIXED2, (short)(value & 0xFFFF), ByteOrder.BIG_ENDIAN);
+      checkFieldsSet(0, INDEX_FIXED2);
+      int newLimit = limit() + FIELD_SIZE_FIXED2;
+      checkLimit(newLimit, maxLimit());
+      buffer().putShort(limit(), (short)(value & 0xFFFF), ByteOrder.BIG_ENDIAN);
       fieldsSet.set(INDEX_FIXED2);
+      limit(newLimit);
       return this;
     }
 
     private StringFW.Builder string1() {
-      return string1RW.wrap(buffer(), offset() + FIELD_OFFSET_STRING1, maxLimit());
+      checkFieldNotSet(INDEX_STRING1);
+      if (!fieldsSet.get(INDEX_FIXED2))
+      {
+        fixed2(DEFAULT_FIXED2);
+      }
+      checkFieldsSet(0, INDEX_STRING1);
+      return string1RW.wrap(buffer(), limit(),  maxLimit());
     }
 
-
     public Builder string1(String value) {
-      checkFieldNotSet(INDEX_STRING1);
-      checkRequiredFieldsSet(0, INDEX_STRING1);
       StringFW.Builder string1 = string1();
       string1.set(value, StandardCharsets.UTF_8);
       fieldsSet.set(INDEX_STRING1);
-      limit(string1().build().limit());
+      limit(string1.build().limit());
       return this;
     }
 
     public Builder string1(StringFW value) {
-      checkFieldNotSet(INDEX_STRING1);
-      checkRequiredFieldsSet(0, INDEX_STRING1);
       StringFW.Builder string1 = string1();
       string1.set(value);
       fieldsSet.set(INDEX_STRING1);
@@ -150,8 +157,6 @@ public final class FlatFW extends Flyweight {
     }
 
     public Builder string1(DirectBuffer buffer, int offset, int length) {
-      checkFieldNotSet(INDEX_STRING1);
-      checkRequiredFieldsSet(0, INDEX_STRING1);
       StringFW.Builder string1 = string1();
       string1.set(buffer, offset, length);
       fieldsSet.set(INDEX_STRING1);
@@ -160,21 +165,27 @@ public final class FlatFW extends Flyweight {
     }
 
     public Builder fixed3(int value) {
-      checkFieldNotSet(INDEX_FIXED3);
-      checkRequiredFieldsSet(0, INDEX_FIXED3);
-      buffer().putInt(string1().build().limit() + FIELD_OFFSET_FIXED3, value);
-      fieldsSet.set(INDEX_FIXED3);
+        checkFieldNotSet(INDEX_FIXED3);
+        checkFieldsSet(0, INDEX_FIXED3);
+        int newLimit = limit() + FIELD_SIZE_FIXED3;
+        checkLimit(newLimit, maxLimit());
+        buffer().putInt(limit(), value);
+        fieldsSet.set(INDEX_FIXED3);
+        limit(newLimit);
       return this;
     }
 
     private StringFW.Builder string2() {
-      int anchor = string1().build().limit() + FIELD_OFFSET_STRING2;
-      return string2RW.wrap(buffer(), anchor, maxLimit());
+      checkFieldNotSet(INDEX_STRING2);
+      if (!fieldsSet.get(INDEX_FIXED3))
+      {
+        fixed3(DEFAULT_FIXED3);
+      }
+      checkFieldsSet(0, INDEX_STRING2);
+      return string2RW.wrap(buffer(), limit(),  maxLimit());
     }
 
     public Builder string2(String value) {
-      checkFieldNotSet(INDEX_STRING2);
-      checkRequiredFieldsSet(0, INDEX_STRING2);
       StringFW.Builder string2 = string2();
       string2.set(value, StandardCharsets.UTF_8);
       fieldsSet.set(INDEX_STRING2);
@@ -183,8 +194,6 @@ public final class FlatFW extends Flyweight {
     }
 
     public Builder string2(StringFW value) {
-      checkFieldNotSet(INDEX_STRING2);
-      checkRequiredFieldsSet(0, INDEX_STRING2);
       StringFW.Builder string2 = string2();
       string2.set(value);
       fieldsSet.set(INDEX_STRING2);
@@ -193,8 +202,6 @@ public final class FlatFW extends Flyweight {
     }
 
     public Builder string2(DirectBuffer buffer, int offset, int length) {
-      checkFieldNotSet(INDEX_STRING2);
-      checkRequiredFieldsSet(0, INDEX_STRING2);
       StringFW.Builder string2 = string2();
       string2.set(buffer, offset, length);
       fieldsSet.set(INDEX_STRING2);
@@ -206,25 +213,14 @@ public final class FlatFW extends Flyweight {
     public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit) {
       fieldsSet.clear();
       super.wrap(buffer, offset, maxLimit);
-      if (offset + FIELD_OFFSET_STRING1 > maxLimit) {
-          final String msg = String.format("offset=%d, maxLimit=%d leaves insufficient space", offset, maxLimit);
-          throw new IndexOutOfBoundsException(msg);
-      }
+      limit(offset);
       return this;
     }
 
     @Override
     public FlatFW build()
     {
-      checkRequiredFieldsSet(0, FIELD_COUNT);
-
-      if (!fieldsSet.get(INDEX_FIXED2)) {
-          fixed2(DEFAULT_FIXED2);
-      }
-      if (!fieldsSet.get(INDEX_FIXED3)) {
-          fixed3(DEFAULT_FIXED3);
-      }
-
+      checkFieldsSet(0, FIELD_COUNT);
       fieldsSet.clear();
       return super.build();
     }
@@ -236,7 +232,7 @@ public final class FlatFW extends Flyweight {
       }
     }
 
-    private void checkRequiredFieldsSet(
+    private void checkFieldsSet(
         int fromIndex,
         int toIndex)
     {

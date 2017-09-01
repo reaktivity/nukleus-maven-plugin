@@ -21,8 +21,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
@@ -49,17 +47,7 @@ public class FlatWithListFWTest
     @Test
     public void shouldDefaultValues() throws Exception
     {
-        // Set an explicit value first in the same memory to make sure it really
-        // gets set to the default value next time round
-        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
-                .fixed1(10)
-                .string1("value1")
-                .build()
-                .limit();
-        flatRO.wrap(buffer,  0,  limit);
-        assertEquals(10, flatRO.fixed1());
-
-        limit = flatRW.wrap(buffer, 0, 100)
+        int limit = flatRW.wrap(buffer, 0, 100)
                 .string1("value1")
                 .build()
                 .limit();
@@ -71,21 +59,25 @@ public class FlatWithListFWTest
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWithInsufficientLength()
+    public void shouldFailToSetFixed1WithInsufficientSpace()
     {
-        flatRW.wrap(buffer, 10, 17);
+        flatRW.wrap(buffer, 10, 10)
+               .fixed1(10);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetString1WhenExceedsMaxLimit()
+    public void shouldFailToSetString1WithInsufficientSpaceToDefaultPriorField()
+    {
+        flatRW.wrap(buffer, 10, 11)
+                .string1("");
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WithInsufficientSpace()
     {
         flatRW.wrap(buffer, 10, 18)
-                .fixed1(0x0101010101010101L)
+                .fixed1(10)
                 .string1("1234");
-        byte[] bytes = new byte[13];
-        buffer.getBytes(10, bytes);
-        System.out.println(bytes);
-        System.out.println(DatatypeConverter.printHexBinary(bytes));
     }
 
     @Test

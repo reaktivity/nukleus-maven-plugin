@@ -19,8 +19,6 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
@@ -47,20 +45,6 @@ public class FlatFWTest
     @Test
     public void shouldDefaultValues() throws Exception
     {
-        // Set an explicit value first in the same memory to make sure it really
-        // gets set to the default value next time round
-        int limit1 = flatRW.wrap(buffer, 0, buffer.capacity())
-                .fixed1(10)
-                .fixed2(20)
-                .string1("value1")
-                .fixed3(30)
-                .string2("value2")
-                .build()
-                .limit();
-        flatRO.wrap(buffer,  0,  100);
-        assertEquals(20, flatRO.fixed2());
-        assertEquals(30, flatRO.fixed3());
-
         int limit2 = flatRW.wrap(buffer, 0, 100)
                 .fixed1(10)
                 .string1("value1")
@@ -70,34 +54,48 @@ public class FlatFWTest
         flatRO.wrap(buffer,  0,  100);
         assertEquals(222, flatRO.fixed2());
         assertEquals(333, flatRO.fixed3());
-        assertEquals(limit1, limit2);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWithInsufficientLength()
+    public void shouldFailToSetFixed1WithInsufficientSpace()
     {
-        flatRW.wrap(buffer, 10, 12);
+        flatRW.wrap(buffer, 10, 10)
+               .fixed1(10);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetFixed2WithInsufficientSpace()
+    {
+        flatRW.wrap(buffer, 10, 12)
+                .fixed1(10)
+                .fixed2(20);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WhenDefaultingFixed2ExceedsMaxLimit()
+    {
+        flatRW.wrap(buffer, 10, 12)
+                .fixed1(10)
+                .string1("");
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetString1WhenExceedsMaxLimit()
     {
-        buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
-        try
-        {
-            flatRW.wrap(buffer, 10, 14)
-                    .fixed1(0x01)
-                    .fixed2(0x0101)
-                    .string1("1234");
-        }
-        finally
-        {
-            byte[] bytes = new byte[13];
-            buffer.getBytes(10, bytes);
-            // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
-                         0, buffer.getByte(14));
-        }
+        flatRW.wrap(buffer, 10, 14)
+                .fixed1(0x01)
+                .fixed2(0x0101)
+                .string1("1234");
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetFixed3WithInsufficientSpace()
+    {
+        flatRW.wrap(buffer, 10, 15)
+                .fixed1(10)
+                .fixed2(20)
+                .string1("")
+                .fixed3(30);
     }
 
     @Test
