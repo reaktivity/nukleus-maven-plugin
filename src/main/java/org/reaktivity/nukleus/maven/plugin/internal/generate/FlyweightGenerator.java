@@ -276,7 +276,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec buildMethod()
         {
             return methodBuilder("build")
-                      .addModifiers(PUBLIC, FINAL)
+                      .addModifiers(PUBLIC)
                       .returns(typeVarT)
                       .addStatement("flyweight.wrap(buffer, offset, limit)")
                       .addStatement("return flyweight")
