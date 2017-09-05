@@ -31,6 +31,7 @@ public final class AstMemberNode extends AstNode
     private final String sizeName;
     private final AstType unsignedType;
     private final Object defaultValue;
+    private boolean usedAsSize;
 
     private AstMemberNode(
         String name,
@@ -124,6 +125,16 @@ public final class AstMemberNode extends AstNode
         String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
         return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s, defaultValue=%s]",
                 name, size, types, unsignedType, defaultValue);
+    }
+
+    public void usedAsSize(boolean value)
+    {
+        usedAsSize = value;
+    }
+
+    public boolean usedAsSize()
+    {
+        return usedAsSize;
     }
 
     private static <T extends Collection<?>> T requireNotEmpty(

@@ -15,12 +15,14 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
+import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public final class AstStructNode extends AstNode
 {
@@ -132,6 +134,30 @@ public final class AstStructNode extends AstNode
             // TODO: validate member.sizeName() if non-null (must be prior to this field in the structure
             // and must be one of the uint types) and mark the referenced field as "used for size"
             // so code generator can stash its value in its setter
+            if (member.sizeName() != null)
+            {
+                final String target = member.sizeName();
+                Optional<AstMemberNode> sizeField = members.stream().filter(n -> target.equals(n.name())).findFirst();
+                if (sizeField.isPresent())
+                {
+                    AstMemberNode size = sizeField.get();
+                    if (size.unsignedType() == null)
+                    {
+                        throw new IllegalArgumentException(format(
+                                "Size field \"%s\" for field \"%s\" must be an unsigned integer type",
+                                member.sizeName(), member.name()));
+                    }
+                    else
+                    {
+                        size.usedAsSize(true);
+                    }
+                }
+                else
+                {
+                    throw new IllegalArgumentException(format("Size field \"%s\" not found for field \"%s\"",
+                            member.sizeName(), member.name()));
+                }
+            }
             this.members.add(member);
             return this;
         }

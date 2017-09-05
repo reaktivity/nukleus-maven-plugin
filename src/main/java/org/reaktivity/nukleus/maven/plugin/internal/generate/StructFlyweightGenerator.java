@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static java.lang.String.format;
 import static java.util.Collections.unmodifiableMap;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -99,6 +100,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         TypeName unsignedType,
         int size,
         String sizeName,
+        boolean usedAsSize,
         Object defaultValue)
     {
         memberOffsetConstant.addMember(name, type, unsignedType);
@@ -109,7 +111,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         limitMethod.addMember(name, type, unsignedType);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName);
         toStringMethod.addMember(name, type, unsignedType);
-        builderClass.addMember(name, type, unsignedType, size, sizeName, defaultValue);
+        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, defaultValue);
 
         return this;
     }
@@ -647,13 +649,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType,
             int size,
             String sizeName,
+            boolean usedAsSize,
             Object defaultValue)
         {
-            memberConstant.addMember(name, type, unsignedType, defaultValue);
-            memberField.addMember(name, type, unsignedType);
+            memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
+            memberField.addMember(name, type, unsignedType, usedAsSize);
             memberAccessor.addMember(name, type, unsignedType, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
-            memberMutator.addMember(name, type, unsignedType, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
-            if (defaultValue != null || type instanceof ClassName && !isStringType((ClassName) type))
+            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, priorDefaulted,
+                    priorDefaultedIsPrimitive);
+            if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
                 priorDefaultedIsPrimitive = type.isPrimitive();
@@ -758,6 +762,44 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .build();
         }
 
+        private static String defaultName(
+            String fieldName)
+        {
+            return String.format("DEFAULT_%s", constant(fieldName));
+        }
+
+        private static String initCap(String value)
+        {
+            return Character.toUpperCase(value.charAt(0)) + value.substring(1);
+        }
+
+        private static boolean isImplicitlyDefaulted(
+            TypeName type,
+            int size,
+            String sizeName)
+        {
+            boolean result = false;
+            if (type instanceof ClassName && !isStringType((ClassName) type))
+            {
+                ClassName classType = (ClassName) type;
+                if ("OctetsFW".equals(classType.simpleName()))
+                {
+                    result = (size == -1 && sizeName == null);
+                }
+                else
+                {
+                    result = true;
+                }
+            }
+            return result;
+        }
+
+        private static String value(
+            String fieldName)
+        {
+            return String.format("value%s", initCap(fieldName));
+        }
+
         private static final class MemberConstantGenerator extends ClassSpecMixinGenerator
         {
             private int nextIndex;
@@ -775,6 +817,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
+                int size,
+                String sizeName,
                 Object defaultValue)
             {
                 builder.addField(
@@ -791,7 +835,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                      .build());
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
-                else if (type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName()))
+                else if (type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName())
+                        && size < 0 && sizeName == null)
                 {
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
@@ -842,9 +887,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             public MemberFieldGenerator addMember(
                 String name,
                 TypeName type,
-                TypeName unsignedType)
+                TypeName unsignedType,
+                boolean usedAsSize)
             {
-                if (!type.isPrimitive())
+                if (usedAsSize)
+                {
+                    TypeName publicType = unsignedType != null ? unsignedType : type;
+                    builder.addField(FieldSpec.builder(publicType, value(name), PRIVATE)
+                            .build());
+                }
+                else if (!type.isPrimitive())
                 {
                     String fieldRW = String.format("%sRW", name);
 
@@ -960,7 +1012,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (sizeName != null)
                     {
-                        code.addStatement("int newLimit = limit() + value$L", name);
+                        code.addStatement("int newLimit = limit() + $L", value(sizeName));
                     }
                     code.addStatement("checkLimit(newLimit, maxLimit())");
                     code.addStatement("return $L.wrap(buffer(), limit(), newLimit).reset()", fieldRW);
@@ -1038,6 +1090,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
+                boolean usedAsSize,
                 int size,
                 String sizeName,
                 String priorDefaulted,
@@ -1045,7 +1098,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 if (type.isPrimitive())
                 {
-                    addPrimitiveMember(name, type, unsignedType, priorDefaulted, priorDefaultedIsPrimitive);
+                    addPrimitiveMember(name, type, unsignedType, usedAsSize, priorDefaulted, priorDefaultedIsPrimitive);
                 }
                 else
                 {
@@ -1064,6 +1117,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
+                boolean usedAsSize,
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
@@ -1122,8 +1176,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 code.add(";\n$]")
                     .addStatement("fieldsSet.set($L)", index(name))
-                    .addStatement("limit(newLimit)")
-                    .addStatement("return this");
+                    .addStatement("limit(newLimit)");
+                if (usedAsSize)
+                {
+                    code.addStatement("$L = value", value(name));
+                }
+                code.addStatement("return this");
 
                 builder.addMethod(methodBuilder(name)
                         .addModifiers(PUBLIC)
@@ -1241,10 +1299,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.addStatement("int expectedLimit = $L.maxLimit()", name)
                         .addStatement("int actualLimit = $L.build().limit()", name)
                         .beginControlFlow("if (actualLimit != expectedLimit)")
-                        .addStatement("throw new IllegalStateException(format($S, name, actualLimit, expectedLimit)",
-                            "Only %d out of %d bytes have been set for field \"%s\"")
+                        .addStatement("throw new IllegalStateException(String.format($S, actualLimit, expectedLimit))",
+                            format("Only %%d out of %%d bytes have been set for field \"%s\"", name))
                         .endControlFlow();
-                    code.addStatement("limit($L.maxLimit())");
+                    code.addStatement("limit($L.maxLimit())", name);
                 }
                 else
                 {
@@ -1264,10 +1322,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code2.addStatement("$T $L = $L()", builderType, name, name);
                     if (size >= 0 || sizeName != null)
                     {
-                        code2.addStatement("int fieldSize = $L.maxLimit()", name)
+                        code2.addStatement("int fieldSize = $L.maxLimit() - $L.offset()", name, name)
                              .beginControlFlow("if (length != fieldSize)")
-                             .addStatement("throw new IllegalArgumentException(format($S, name, length, fieldSize)",
-                                "Invalid length %d for field \"%s\", expected %d")
+                             .addStatement("throw new IllegalArgumentException(String.format($S, length, fieldSize))",
+                                format("Invalid length %%d for field \"%s\", expected %%d", name))
                              .endControlFlow();
                     }
                     code2.addStatement("$L.set(buffer, offset, length)", name)
@@ -1460,12 +1518,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     {
         String name = classType.simpleName();
         return ("StringFW".equals(name) || "String16FW".equals(name));
-    }
-
-    private static String defaultName(
-        String fieldName)
-    {
-        return String.format("DEFAULT_%s", constant(fieldName));
     }
 
     private static String index(
