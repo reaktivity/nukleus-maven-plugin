@@ -49,6 +49,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Specifi
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Type_idContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_typeContext;
@@ -163,7 +164,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         structBuilder = new AstStructNode.Builder();
         structBuilder.name(ctx.ID().getText());
-        structBuilder.typeId(parseInt(ctx.uint_literal()));
 
         Scoped_nameContext scopedName = ctx.scoped_name();
         if (scopedName != null)
@@ -387,6 +387,17 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             memberBuilder.type(AstType.dynamicType(ctx.getText()));
         }
         return super.visitScoped_name(ctx);
+    }
+
+    @Override
+    public AstNode visitType_id(
+        Type_idContext ctx)
+    {
+        if (structBuilder != null)
+        {
+            structBuilder.typeId(parseInt(ctx.uint_literal()));
+        }
+        return super.visitType_id(ctx);
     }
 
     private static int parseInt(

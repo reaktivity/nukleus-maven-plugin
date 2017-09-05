@@ -160,9 +160,13 @@ enum_value
    ;
 
 struct_type
-   : KW_STRUCT ID (KW_EXTENDS scoped_name)? (LEFT_SQUARE_BRACKET uint_literal RIGHT_SQUARE_BRACKET)? LEFT_BRACE member_list RIGHT_BRACE
+   : KW_STRUCT ID (KW_EXTENDS scoped_name)? (LEFT_SQUARE_BRACKET type_id RIGHT_SQUARE_BRACKET)? LEFT_BRACE member_list RIGHT_BRACE
    ;
 
+type_id
+   : uint_literal
+   ;
+   
 member_list
    : member *
    ;
@@ -194,18 +198,18 @@ case_member
    ;
 
 list_type
-   : KW_LIST LEFT_ANG_BRACKET simple_type_spec COMMA positive_int_const RIGHT_ANG_BRACKET
-   | KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
+   : /* KW_LIST LEFT_ANG_BRACKET simple_type_spec COMMA positive_int_const RIGHT_ANG_BRACKET
+   | */ KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
    ;
 
 string_type
-   : KW_STRING LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
-   | KW_STRING
+   : /* KW_STRING LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
+   | */ KW_STRING
    ;
 
 string16_type
-   : KW_STRING16 LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
-   | KW_STRING16
+   : /* KW_STRING16 LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
+   | */ KW_STRING16
    ;
 
 int_literal
