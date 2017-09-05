@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.reaktivity.nukleus.maven.plugin.internal.generated.experimental;
+package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -26,8 +26,10 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.FlatWithListFW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 
-public class FlatWithListFWTest
+public class FlatWithListFWIT
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -49,6 +51,8 @@ public class FlatWithListFWTest
     {
         int limit = flatRW.wrap(buffer, 0, 100)
                 .string1("value1")
+                .list1(b ->
+                       { })
                 .build()
                 .limit();
         flatRO.wrap(buffer,  0,  limit);
@@ -148,6 +152,8 @@ public class FlatWithListFWTest
                .set("value1", UTF_8)
                .build();
         builder.string1(value)
+                .list1(b ->
+                       { })
                .build();
         flatRO.wrap(buffer,  0,  builder.limit());
         assertEquals(10, flatRO.fixed1());
@@ -161,6 +167,8 @@ public class FlatWithListFWTest
         int limit = flatRW.wrap(buffer, 0, buffer.capacity())
             .fixed1(10)
             .string1(valueBuffer, 0, 6)
+            .list1(b ->
+            { })
             .build()
             .limit();
         flatRO.wrap(buffer,  0,  limit);

@@ -20,7 +20,7 @@ scope scope1
         uint8 fixed1;
         uint16 fixed2 = 222;
         string string1;
-        int32 fixed3; // TODO: = 333;
+        int32 fixed3 = 333;
         string string2;
     }
 
@@ -56,4 +56,12 @@ scope scope1
         int32 signed32 = -32;
         int64 signed64 = -64;
     }
+
+/*
+    struct NestedAllDefaulting
+    {
+        uint8 fixed1 = 11;
+        Integers integers;
+    }
+*/
 }

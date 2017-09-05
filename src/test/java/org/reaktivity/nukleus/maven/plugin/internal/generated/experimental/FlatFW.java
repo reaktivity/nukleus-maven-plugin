@@ -84,12 +84,12 @@ public final class FlatFW extends Flyweight {
     private static final int INDEX_FIXED3 = 3;
     private static final int INDEX_STRING2 = 4;
 
-    private static final BitSet FIELDS_WITH_DEFAULTS = new BitSet(FIELD_COUNT);
-
-    static {
-        FIELDS_WITH_DEFAULTS.set(INDEX_FIXED2);
-        FIELDS_WITH_DEFAULTS.set(INDEX_FIXED3);
-    }
+    private static final BitSet FIELDS_WITH_DEFAULTS = new BitSet(FIELD_COUNT) {
+        {
+            set(INDEX_FIXED2);
+            set(INDEX_FIXED3);
+        }
+    };
 
     private static final String[] FIELD_NAMES = new String[]
     {

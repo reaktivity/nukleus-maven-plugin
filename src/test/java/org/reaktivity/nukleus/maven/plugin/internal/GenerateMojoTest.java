@@ -41,7 +41,7 @@ public class GenerateMojoTest
         myMojo.execute();
     }
 
-    @Test // TODO: verify the appropriate warning message was locked to the build output
+    @Test // TODO: condition not being validated
     public void shouldNotGenerateInvalidStructOctetsNotLast()
         throws Exception
     {
@@ -59,7 +59,7 @@ public class GenerateMojoTest
         myMojo.execute();
     }
 
-    @Test // TODO: verify the appropriate warning message was locked to the build output
+    @Test // TODO: verify the appropriate warning message was logged to the build output
     @Ignore("TODO: currently this gives a NullPointerException")
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()
         throws Exception

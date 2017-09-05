@@ -87,31 +87,36 @@ public final class NestedFW extends Flyweight {
     }
 
     public Builder fixed4(long value) {
-      prepareToSetField(INDEX_FIXED4);
+      checkFieldNotSet(INDEX_FIXED4);
+      checkFieldsSet(0, INDEX_FIXED4);
+      int newLimit = limit() + FIELD_SIZE_FIXED4;
+      checkLimit(newLimit, maxLimit());
       buffer().putLong(offset() + FIELD_OFFSET_FIXED4, value);
+      fieldsSet.set(INDEX_FIXED4);
+      limit(newLimit);
       return this;
     }
 
-    private FlatFW.Builder flat() {
-      return flatRW;
-    }
-
     public Builder flat(Consumer<FlatFW.Builder> mutator) {
-      prepareToSetField(INDEX_FLAT);
-      FlatFW.Builder flat = flatRW.wrap(buffer(), offset() + FIELD_OFFSET_FLAT, maxLimit());
+      checkFieldNotSet(INDEX_FLAT);
+      if (!fieldsSet.get(INDEX_FIXED4)) {
+        fixed4(DEFAULT_FIXED4);
+      }
+      checkFieldsSet(0, INDEX_FLAT);
+      FlatFW.Builder flat = flatRW.wrap(buffer(), limit(),  maxLimit());
       mutator.accept(flat);
       limit(flat.build().limit());
       return this;
     }
 
-    protected long fixed5() {
-      return buffer().getLong(flatRW.limit() + FIELD_OFFSET_FIXED5);
-    }
-
     public Builder fixed5(long value) {
-      prepareToSetField(INDEX_FIXED5);
-      buffer().putLong(flat().limit() + FIELD_OFFSET_FIXED5, value);
-      limit(flat().limit() + FIELD_OFFSET_FIXED5 + FIELD_SIZE_FIXED5);
+      checkFieldNotSet(INDEX_FIXED5);
+      checkFieldsSet(0, INDEX_FIXED5);
+      int newLimit = limit() + FIELD_SIZE_FIXED5;
+      checkLimit(newLimit, maxLimit());
+      buffer().putLong(limit(), value);
+      fieldsSet.set(INDEX_FIXED5);
+      limit(newLimit);
       return this;
     }
 
@@ -123,37 +128,33 @@ public final class NestedFW extends Flyweight {
     }
 
     @Override
-    public NestedFW build()
-    {
-        setDefaults();
-        for (int i=0; i < FIELD_COUNT; i++) {
-            if (!fieldsSet.get(i))
-            {
-                throw new IllegalStateException(format("Required field \"%s\" is not set", FIELD_NAMES[i]));
-            }
-        }
-        fieldsSet.clear();
-        return super.build();
+    public NestedFW build() {
+      checkFieldsSet(0, FIELD_COUNT);
+      fieldsSet.clear();
+      return super.build();
     }
 
-    private void prepareToSetField(int index) {
-        if (fieldsSet.get(index))
-        {
-            throw new IllegalStateException(format("Field \"%s\" has already been set", FIELD_NAMES[index]));
-        }
-        for (int i=0; i < index; i++) {
-            if (!fieldsSet.get(i) && !FIELDS_WITH_DEFAULTS.get(i)) {
-                throw new IllegalStateException(format("Required field \"%s\" is not set", FIELD_NAMES[i]));
-            }
-        }
-        fieldsSet.set(index);
+    private void checkFieldNotSet(int index) {
+      if (fieldsSet.get(index))
+      {
+        throw new IllegalStateException(format("Field \"%s\" has already been set", FIELD_NAMES[index]));
+      }
     }
 
-    private void setDefaults()
+    private void checkFieldsSet(
+        int fromIndex,
+        int toIndex)
     {
-        if (!fieldsSet.get(INDEX_FIXED4)) {
-            fixed4(DEFAULT_FIXED4);
-        }
+      int fieldNotSet = fromIndex - 1;
+      do
+      {
+        fieldNotSet = fieldsSet.nextClearBit(fieldNotSet + 1);
+      } while (fieldNotSet < toIndex && FIELDS_WITH_DEFAULTS.get(fieldNotSet));
+
+      if (fieldNotSet < toIndex)
+      {
+        throw new IllegalStateException(format("Required field \"%s\" is not set", FIELD_NAMES[fieldNotSet]));
+      }
     }
   }
 }

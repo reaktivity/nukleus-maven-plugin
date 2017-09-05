@@ -17,19 +17,32 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.FlatWithOctetsFW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 
 public class FlatWithOctetsFWIT
 {
-    FlatWithOctetsFW.Builder flatRW = new FlatWithOctetsFW.Builder();
-    FlatWithOctetsFW flatRO = new FlatWithOctetsFW();
-    MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xFF);
+        }
+    };
+    private final FlatWithOctetsFW.Builder flatRW = new FlatWithOctetsFW.Builder();
+    private final FlatWithOctetsFW flatRO = new FlatWithOctetsFW();
+    private final StringFW.Builder stringRW = new StringFW.Builder();
+    private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldDefaultValues() throws Exception
@@ -38,21 +51,67 @@ public class FlatWithOctetsFWIT
         // gets set to the default value next time round
         flatRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(10)
-                .extension(b -> b.reset())
+                .string1("value1")
                 .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(10, flatRO.fixed1());
 
         flatRW.wrap(buffer, 0, 100)
-                .extension(b -> b.reset())
+                .string1("value1")
                 .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(111, flatRO.fixed1());
     }
 
-    @Test //TODO: expected...
-    public void shouldFailToBuildIfRequiredMemberNotSetextension() throws Exception
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetFixed1WithInsufficientSpace()
     {
+        flatRW.wrap(buffer, 10, 10)
+               .fixed1(10);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WithInsufficientSpaceToDefaultPriorField()
+    {
+        flatRW.wrap(buffer, 10, 11)
+                .string1("");
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WithInsufficientSpace()
+    {
+        flatRW.wrap(buffer, 10, 18)
+                .fixed1(10)
+                .string1("1234");
+    }
+
+    @Test
+    public void shouldFailToResetFixed1() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed1");
+        flatRW.wrap(buffer, 0, 100)
+            .fixed1(10)
+            .fixed1(101)
+            .build();
+    }
+
+    @Test
+    public void shouldFailToResetString1() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("string1");
+        flatRW.wrap(buffer, 0, 100)
+            .string1("value1")
+            .string1("another value")
+            .build();
+    }
+
+    @Test
+    public void shouldFailToBuildWhenString1NotSet() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
             .build();
     }
@@ -60,20 +119,65 @@ public class FlatWithOctetsFWIT
     @Test
     public void shouldSetAllValues() throws Exception
     {
-        final byte[] extensionValue = "asdf".getBytes(UTF_8);
-        flatRW.wrap(buffer, 0, buffer.capacity())
+        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(10)
-                .extension(b -> b.reset().put(extensionValue))
-                .build();
-        flatRO.wrap(buffer,  0,  100);
+                .string1("value1")
+                .extension(b -> b.put("octetsValue".getBytes(UTF_8)))
+                .build()
+                .limit();
+        flatRO.wrap(buffer,  0,  limit);
         assertEquals(10, flatRO.fixed1());
-        byte[] extension = flatRO.extension().get((buffer, offset, maxLimit) ->
-        {
-            byte[] result = new byte[extensionValue.length];
-            buffer.getBytes(offset, result);
-            return result;
-        });
-        assertArrayEquals(extensionValue, extension);
+        assertEquals("value1", flatRO.string1().asString());
+        final String octetsValue = flatRO.extension().get(
+                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+        assertEquals("octetsValue", octetsValue);
+    }
+
+    @Test
+    public void shouldSetOctetsValuesUsingBuffer() throws Exception
+    {
+        valueBuffer.putStringWithoutLengthUtf8(0, "octetsValue");
+        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
+                .fixed1(10)
+                .string1("value1")
+                .extension(valueBuffer, 0, "octetsValue".length())
+                .build()
+                .limit();
+        flatRO.wrap(buffer,  0,  limit);
+        assertEquals(10, flatRO.fixed1());
+        assertEquals("value1", flatRO.string1().asString());
+        final String octetsValue = flatRO.extension().get(
+                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+        assertEquals("octetsValue", octetsValue);
+    }
+
+    @Test
+    public void shouldSetStringValuesUsingStringFW() throws Exception
+    {
+        FlatWithOctetsFW.Builder builder = flatRW.wrap(buffer, 0, buffer.capacity());
+        builder.fixed1(10);
+        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+               .set("value1", UTF_8)
+               .build();
+        builder.string1(value)
+               .build();
+        flatRO.wrap(buffer,  0,  builder.limit());
+        assertEquals(10, flatRO.fixed1());
+        assertEquals("value1", flatRO.string1().asString());
+    }
+
+    @Test
+    public void shouldSetStringValuesUsingBuffer() throws Exception
+    {
+        valueBuffer.putStringWithoutLengthUtf8(0, "value1");
+        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
+            .fixed1(10)
+            .string1(valueBuffer, 0, 6)
+            .build()
+            .limit();
+        flatRO.wrap(buffer,  0,  limit);
+        assertEquals(10, flatRO.fixed1());
+        assertEquals("value1", flatRO.string1().asString());
     }
 
 }

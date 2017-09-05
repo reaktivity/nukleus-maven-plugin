@@ -129,6 +129,9 @@ public final class AstStructNode extends AstNode
 
         public Builder member(AstMemberNode member)
         {
+            // TODO: validate member.sizeName() if non-null (must be prior to this field in the structure
+            // and must be one of the uint types) and mark the referenced field as "used for size"
+            // so code generator can stash its value in its setter
             this.members.add(member);
             return this;
         }

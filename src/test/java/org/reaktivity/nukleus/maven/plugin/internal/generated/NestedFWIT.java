@@ -20,104 +20,159 @@ import static org.junit.Assert.assertEquals;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.NestedFW;
 
 public class NestedFWIT
 {
-    NestedFW.Builder nestedRW = new NestedFW.Builder();
-    NestedFW nestedRO = new NestedFW();
-    MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+    private final NestedFW.Builder nestedRW = new NestedFW.Builder();
+    private final NestedFW nestedRO = new NestedFW();
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xFF);
+        }
+    };
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldDefaultValues() throws Exception
     {
         // Set an explicit value first in the same memory to make sure it really
         // gets set to the default value next time round
-        nestedRW.wrap(buffer, 0, buffer.capacity())
-                .fixed4(14)
-                .flat(flat ->
-                    flat
+        int limit1 = nestedRW.wrap(buffer, 0, buffer.capacity())
+                .fixed4(40)
+                .flat(flat -> flat
                     .fixed1(10)
                     .fixed2(20)
                     .string1("value1")
-                    .fixed3(33)
+                    .fixed3(30)
                     .string2("value2")
-                    .build()
-                )
-                .fixed5(55)
-                .build();
-        nestedRO.wrap(buffer,  0,  100);
-        assertEquals(14, nestedRO.fixed4());
+                 )
+                .fixed5(50)
+                .build()
+                .limit();
+        nestedRO.wrap(buffer,  0,  limit1);
+        assertEquals(40, nestedRO.fixed4());
         assertEquals(20, nestedRO.flat().fixed2());
 
-        nestedRW.wrap(buffer, 0, buffer.capacity())
-        .fixed4(14)
-        .flat(flat ->
-            flat
-            .fixed1(10)
-            .fixed2(20)
-            .string1("value1")
-            .fixed3(33)
-            .string2("value2")
-            .build()
-        )
-        .fixed5(55)
-        .build();
-        nestedRO.wrap(buffer,  0,  100);
+        int limit2 = nestedRW.wrap(buffer, 0, 100)
+                .flat(flat -> flat
+                    .fixed1(10)
+                    .string1("value1")
+                    //.fixed3(30)
+                    .string2("value2")
+                )
+                .fixed5(50)
+                .build()
+                .limit();
+        nestedRO.wrap(buffer,  0,  limit2);
         assertEquals(444, nestedRO.fixed4());
         assertEquals(222, nestedRO.flat().fixed2());
+        assertEquals(333, nestedRO.flat().fixed3());
+        assertEquals(limit1, limit2);
     }
 
-    @Test // TODO (expected = UnsupportedOperationException.class)
-    public void shouldFailToSetMemberFollowingUnsetRequiredMemberflatfixed5() throws Exception
+    @Test
+    public void shouldFailToSetFixed2BeforeFixed1() throws Exception
     {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed1");
         nestedRW.wrap(buffer, 0, 100)
-                .fixed5(10);
+                .flat(flat -> flat
+                    .fixed2(10)
+                )
+                .build()
+                .limit();
     }
 
-    @Test //TODO: expected...
-    public void shouldFailToBuildIfRequiredMemberNotSetflat() throws Exception
+    @Test
+    public void shouldFailToSetFixed5BeforeFlatFixed1() throws Exception
     {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed1");
+        nestedRW.wrap(buffer, 0, 100)
+                .fixed5(50);
+    }
+
+    @Test
+    public void shouldFailToResetFlat() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("flat");
+        nestedRW.wrap(buffer, 0, 100)
+            .flat(flat -> flat
+                .fixed1(10)
+                .string1("value1")
+                .string2("value2")
+            )
+            .flat(flat ->
+            { })
+            .build();
+    }
+
+    @Test
+    public void shouldFailToResetFixed4() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed4");
+        nestedRW.wrap(buffer, 0, 100)
+            .fixed4(40)
+            .fixed4(4)
+            .build();
+    }
+
+    @Test
+    public void shouldFailToBuildWhenFlatIsNotSet() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("flat");
         nestedRW.wrap(buffer, 0, 100)
             .build();
     }
 
-    @Test //TODO: expected...
-    public void shouldFailToBuildIfRequiredMemberNotSetfixed5() throws Exception
+    @Test
+    public void shouldFailToBuildWhenFixed5IsNotSet() throws Exception
     {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed5");
         nestedRW.wrap(buffer, 0, 100)
-            .flat(flat ->
-            {
-                flat
+            .flat(flat -> flat
                 .fixed1(10)
                 .string1("value1")
-                .fixed3(33)
                 .string2("value2")
-                .build();
-            })
+            )
             .build();
     }
 
     @Test
     public void shouldSetAllValues() throws Exception
     {
-        nestedRW.wrap(buffer, 0, buffer.capacity())
-        .fixed4(14)
-        .flat(flat ->
-        {
-            flat
-            .fixed1(10)
-            .fixed2(20)
-            .string1("value1")
-            .fixed3(33)
-            .string2("value2");
-        })
-        .fixed5(55)
-        .build();
-        nestedRO.wrap(buffer,  0,  100);
-        assertEquals(14, nestedRO.fixed4());
+        int limit = nestedRW.wrap(buffer, 0, buffer.capacity())
+                .fixed4(40)
+                .flat(flat -> flat
+                    .fixed1(10)
+                    .fixed2(20)
+                    .string1("value1")
+                    .fixed3(30)
+                    .string2("value2")
+                 )
+                .fixed5(50)
+                .build()
+                .limit();
+        nestedRO.wrap(buffer,  0,  limit);
+        assertEquals(40, nestedRO.fixed4());
+        assertEquals(10, nestedRO.flat().fixed1());
         assertEquals(20, nestedRO.flat().fixed2());
+        assertEquals("value1", nestedRO.flat().string1().asString());
+        assertEquals(30, nestedRO.flat().fixed3());
+        assertEquals("value2", nestedRO.flat().string2().asString());
+        assertEquals(50, nestedRO.fixed5());
     }
 
 }

@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.IntegersFW;
 
-public class IntegerIT
+public class IntegerFWIT
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -47,17 +47,17 @@ public class IntegerIT
                 .build()
                 .limit();
         integersRO.wrap(buffer,  0,  limit);
-        assertEquals(8, integersRO.unsigned8());
-        assertEquals(16, integersRO.unsigned16());
-        assertEquals(32, integersRO.unsigned32());
-        assertEquals(64, integersRO.unsigned64());
+        assertEquals(0xFF, integersRO.unsigned8());
+        assertEquals(0xFFFF, integersRO.unsigned16());
+        assertEquals(0x7FFFFFFF, integersRO.unsigned32());
+        assertEquals(0x7FFFFFFF, integersRO.unsigned64());
         assertEquals(-8, integersRO.signed8());
         assertEquals(-16, integersRO.signed16());
         assertEquals(-32, integersRO.signed32());
         assertEquals(-64, integersRO.signed64());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void shouldSetUnsigned8ToMaximumValue()
     {
         int limit = integersRW.wrap(buffer, 0, buffer.capacity())
@@ -65,10 +65,10 @@ public class IntegerIT
                .build()
                .limit();
         integersRO.wrap(buffer,  0,  limit);
-        assertEquals(255, integersRO.unsigned8());
+        assertEquals(0xFF, integersRO.unsigned8());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void shouldSetUnsigned8ToMinimumValue()
     {
         int limit = integersRW.wrap(buffer, 0, buffer.capacity())
@@ -86,7 +86,7 @@ public class IntegerIT
                .unsigned8(10);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetUnsigned8WithValueTooHigh()
     {
         integersRW.wrap(buffer, 0, buffer.capacity())
@@ -111,7 +111,7 @@ public class IntegerIT
             .build();
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void shouldSetUnsigned16ToMaximumValue()
     {
         int limit = integersRW.wrap(buffer, 0, buffer.capacity())
@@ -119,10 +119,10 @@ public class IntegerIT
                .build()
                .limit();
         integersRO.wrap(buffer,  0,  limit);
-        assertEquals(255, integersRO.unsigned16());
+        assertEquals(0xFFFF, integersRO.unsigned16());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void shouldSetUnsigned16ToMinimumValue()
     {
         int limit = integersRW.wrap(buffer, 0, buffer.capacity())
@@ -140,7 +140,7 @@ public class IntegerIT
                .unsigned16(10);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetUnsigned16WithValueTooHigh()
     {
         integersRW.wrap(buffer, 0, buffer.capacity())

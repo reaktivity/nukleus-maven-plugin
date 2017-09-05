@@ -133,12 +133,12 @@ public final class FlatWithOctetsFW extends Flyweight {
     }
 
     private OctetsFW.Builder extension() {
+      checkFieldNotSet(INDEX_EXTENSION);
+      checkFieldsSet(0, INDEX_EXTENSION);
       return extensionRW.wrap(buffer(), limit(), maxLimit()).reset();
     }
 
     public Builder extension(Consumer<OctetsFW.Builder> mutator) {
-      checkFieldNotSet(INDEX_EXTENSION);
-      checkFieldsSet(0, INDEX_EXTENSION);
       OctetsFW.Builder extension = extension();
       mutator.accept(extension);
       limit(extension.build().limit());
@@ -146,10 +146,8 @@ public final class FlatWithOctetsFW extends Flyweight {
     }
 
     public Builder extension(DirectBuffer buffer, int offset, int length) {
-      checkFieldNotSet(INDEX_EXTENSION);
-      checkFieldsSet(0, INDEX_EXTENSION);
       OctetsFW.Builder extension = extension();
-      extensionRW.set(buffer, offset, length);
+      extension.set(buffer, offset, length);
       limit(extension.build().limit());
       return this;
     }
