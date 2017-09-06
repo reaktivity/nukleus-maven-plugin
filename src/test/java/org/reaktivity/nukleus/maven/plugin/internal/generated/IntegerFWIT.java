@@ -147,9 +147,11 @@ public class IntegerFWIT
                .unsigned16(0xFFFF + 1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldFailToSetUnsigned16WithValueTooLow()
     {
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("unsigned16");
         integersRW.wrap(buffer, 0, buffer.capacity())
                .unsigned16(-1);
     }

@@ -1065,6 +1065,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private static final class MemberMutatorGenerator extends ClassSpecMixinGenerator
         {
             private static final Map<TypeName, String> PUTTER_NAMES;
+            private static final Map<TypeName, String[]> SIGNED_INT_RANGES;
+            private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
 
             static
             {
@@ -1077,6 +1079,20 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 putterNames.put(TypeName.DOUBLE, "putDouble");
                 putterNames.put(TypeName.LONG, "putLong");
                 PUTTER_NAMES = unmodifiableMap(putterNames);
+
+                Map<TypeName, String[]> signed = new HashMap<>();
+                signed.put(TypeName.BYTE, new String[]{"Byte.MIN_VALUE", "Byte.MAX_VALUE"});
+                signed.put(TypeName.SHORT, new String[]{"Short.MIN_VALUE", "Short.MAX_VALUE"});
+                signed.put(TypeName.INT, new String[]{"Integer.MIN_VALUE", "Integer.MAX_VALUE"});
+                signed.put(TypeName.LONG, new String[]{"Long.MIN_VALUE", "Long.MAX_VALUE"});
+                SIGNED_INT_RANGES = unmodifiableMap(signed);
+
+                Map<TypeName, String[]> unsigned = new HashMap<>();
+                unsigned.put(TypeName.BYTE, new String[]{"0", "0XFF"});
+                unsigned.put(TypeName.SHORT, new String[]{"0", "0xFFFF"});
+                unsigned.put(TypeName.INT, new String[]{"0", "0xFFFFFFFFL"});
+                unsigned.put(TypeName.LONG, new String[]{"0L", "Long.MAX_VALUE"});
+                UNSIGNED_INT_RANGES = unmodifiableMap(unsigned);
             }
 
             private MemberMutatorGenerator(
@@ -1130,6 +1146,24 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName publicType = (unsignedType != null) ? unsignedType : type;
                 CodeBlock.Builder code = CodeBlock.builder();
                 code.addStatement("checkFieldNotSet($L)", index(name));
+                String[] range;
+                if (unsignedType == null)
+                {
+                    range = SIGNED_INT_RANGES.get(type);
+                }
+                else
+                {
+                    range = UNSIGNED_INT_RANGES.get(type);
+                }
+                code.beginControlFlow("if (value < $L)", range[0])
+                    .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                            format("Value %%d too low for field \"%s\"", name))
+                    .endControlFlow()
+                    .beginControlFlow("if (value > $L)", range[1])
+                    .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                            format("Value %%d too high for field \"%s\"", name))
+                    .endControlFlow();
+
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
