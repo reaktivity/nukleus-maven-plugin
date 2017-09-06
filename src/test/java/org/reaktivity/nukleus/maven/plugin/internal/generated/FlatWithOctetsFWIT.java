@@ -80,6 +80,47 @@ public class FlatWithOctetsFWIT
                 .string1("1234");
     }
 
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetOctets1WithInsufficientSpace()
+    {
+        flatWithOctetsRW.wrap(buffer, 10, 16)
+                .octets1(b -> b.put("1234567890".getBytes(UTF_8)));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetOctets1WithValueLongerThanSize()
+    {
+        flatWithOctetsRW.wrap(buffer, 0, 100)
+                .octets1(b -> b.put("12345678901".getBytes(UTF_8)));
+    }
+
+    @Test
+    public void shouldFailToSetOctets1WithValueShorterThanSize()
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("9 out of 10");
+        flatWithOctetsRW.wrap(buffer, 0, 100)
+                .octets1(b -> b.put("123456789".getBytes(UTF_8)));
+    }
+
+    @Test
+    public void shouldFailToSetOctets1WithValueLongerThanSizeUsingBuffer()
+    {
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("10");
+        flatWithOctetsRW.wrap(buffer, 0, 100)
+                .octets1(asBuffer("12345678901"), 0, 11);
+    }
+
+    @Test
+    public void shouldFailToSetOctets1WithValueShorterThanSizeUsingBuffer()
+    {
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("octets1");
+        flatWithOctetsRW.wrap(buffer, 0, 100)
+                .octets1(asBuffer("123456789"), 0, 9);
+    }
+
     @Test
     public void shouldFailToResetFixed1() throws Exception
     {

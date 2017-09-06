@@ -61,7 +61,7 @@ public class GenerateMojoTest
     }
 
     @Test(expected = ParseCancellationException.class)
-    @Ignore("TODO: currently this gives a NullPointerException")
+    @Ignore("TODO: validate this in the grammar by defining unbounded_struct_type")
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()
         throws Exception
         {

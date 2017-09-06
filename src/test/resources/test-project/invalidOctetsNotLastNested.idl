@@ -23,7 +23,7 @@ scope invalidOctetsNotLastNested
 
     struct OctetsNotLastNested
     {
-        child child;
+        invalidOctetsNotLastNested::Child child;
         int64 fixed1;
     }
     

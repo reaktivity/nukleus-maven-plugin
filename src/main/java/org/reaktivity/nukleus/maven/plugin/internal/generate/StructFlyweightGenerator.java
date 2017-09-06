@@ -1333,7 +1333,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.addStatement("int expectedLimit = $L.maxLimit()", name)
                         .addStatement("int actualLimit = $L.build().limit()", name)
                         .beginControlFlow("if (actualLimit != expectedLimit)")
-                        .addStatement("throw new IllegalStateException(String.format($S, actualLimit, expectedLimit))",
+                        .addStatement("throw new IllegalStateException(String.format($S, " +
+                                      "actualLimit - limit(), expectedLimit - limit()))",
                             format("Only %%d out of %%d bytes have been set for field \"%s\"", name))
                         .endControlFlow();
                     code.addStatement("limit($L.maxLimit())", name);

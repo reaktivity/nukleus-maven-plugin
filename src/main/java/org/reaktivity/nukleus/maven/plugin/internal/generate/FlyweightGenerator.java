@@ -338,7 +338,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                       .addParameter(int.class, "maxLimit")
                       .addStatement("this.buffer = buffer")
                       .addStatement("this.offset = offset")
-                      .addStatement("this.limit = maxLimit")
+                      .addStatement("this.limit = offset")
                       .addStatement("this.maxLimit = maxLimit")
                       .addStatement("return this")
                       .build();

@@ -46,6 +46,12 @@ scope scope1
         octets[fixed1] octets2;
         octets extension;
     }
+    
+    union Union8 switch (uint8)
+    {
+        case 1: octets[4] octets4;
+        case 2: octets[16] octets16;
+    }
 
     struct Integers
     {

@@ -28,6 +28,8 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 
 public class StringFWIT
 {
+    private static final int LENGTH_SIZE = 1;
+
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -39,13 +41,14 @@ public class StringFWIT
     private final StringFW stringRO = new StringFW();
 
     @Test
-    public void shouldDefaultValues() throws Exception
+    public void shouldDefaultToEmpty() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(1, stringRO.sizeof());
+        assertEquals(LENGTH_SIZE, stringRO.limit());
+        assertEquals(LENGTH_SIZE, stringRO.sizeof());
 
     }
 
@@ -58,7 +61,7 @@ public class StringFWIT
     @Test
     public void shouldWrapWithSufficientLength()
     {
-        stringRW.wrap(buffer, 10, 11);
+        stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -67,16 +70,16 @@ public class StringFWIT
         buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
         try
         {
-            stringRW.wrap(buffer, 10, 11)
+            stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)
                 .set("1", UTF_8);
         }
         finally
         {
-            byte[] bytes = new byte[2];
+            byte[] bytes = new byte[1 + LENGTH_SIZE];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
             assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
-                         0, buffer.getByte(11));
+                         0, buffer.getByte(10 + LENGTH_SIZE));
         }
     }
 
@@ -84,22 +87,18 @@ public class StringFWIT
     public void shouldFailToSetUsingStringFWWhenExceedsMaxLimit()
     {
         buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
-        StringFW value = new StringFW.Builder()
-                .wrap(buffer, 0, 10)
-                .set("1", UTF_8)
-                .build();
         try
         {
-            stringRW.wrap(buffer, 10, 11)
-                .set(value);
+            stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)
+                .set(asStringFW("1"));
         }
         finally
         {
-            byte[] bytes = new byte[2];
+            byte[] bytes = new byte[1 + LENGTH_SIZE];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
             assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
-                         0, buffer.getByte(11));
+                         0, buffer.getByte(10 + LENGTH_SIZE));
         }
     }
 
@@ -110,16 +109,16 @@ public class StringFWIT
         buffer.putStringWithoutLengthUtf8(0, "1");
         try
         {
-            stringRW.wrap(buffer, 10, 11)
+            stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)
                 .set(buffer, 0, 1);
         }
         finally
         {
-            byte[] bytes = new byte[2];
+            byte[] bytes = new byte[1 + LENGTH_SIZE];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
             assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
-                         0, buffer.getByte(11));
+                         0, buffer.getByte(10 + LENGTH_SIZE));
         }
     }
 
@@ -138,7 +137,8 @@ public class StringFWIT
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(1, stringRO.sizeof());
+        assertEquals(LENGTH_SIZE, stringRO.limit());
+        assertEquals(LENGTH_SIZE, stringRO.sizeof());
         assertEquals("", stringRO.asString());
     }
 
@@ -150,37 +150,48 @@ public class StringFWIT
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(7, stringRO.sizeof());
+        assertEquals(6 + LENGTH_SIZE, stringRO.limit());
+        assertEquals(6 + LENGTH_SIZE, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
     }
 
     @Test
     public void shouldSetUsingStringFW() throws Exception
     {
-        StringFW value = new StringFW.Builder()
-                .wrap(buffer, 50, buffer.capacity())
-                .set("value1", UTF_8)
-                .build();
         int limit = stringRW.wrap(buffer, 0, 50)
-                .set(value)
+                .set(asStringFW("value1"))
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(7, stringRO.sizeof());
+        assertEquals(6 + LENGTH_SIZE, stringRO.limit());
+        assertEquals(6 + LENGTH_SIZE, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
     }
 
     @Test
     public void shouldSetUsingBuffer() throws Exception
     {
-        buffer.putStringWithoutLengthUtf8(50, "value1");
         int limit = stringRW.wrap(buffer, 0, 50)
-            .set(buffer, 50, 6)
+            .set(asBuffer("value1"), 0, 6)
             .build()
             .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(7, stringRO.sizeof());
+        assertEquals(6 + LENGTH_SIZE, stringRO.limit());
+        assertEquals(6 + LENGTH_SIZE, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
+    }
+
+    private static MutableDirectBuffer asBuffer(String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(value.length()));
+        buffer.putStringWithoutLengthUtf8(0, value);
+        return buffer;
+    }
+
+    private static StringFW asStringFW(String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new StringFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 
 }
