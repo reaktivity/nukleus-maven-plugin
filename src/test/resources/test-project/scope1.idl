@@ -40,7 +40,7 @@ scope scope1
 
     struct FlatWithOctets
     {
-        uint16 fixed1 = 11;
+        uint32 fixed1 = 11;
         octets[10] octets1;
         string string1;
         octets[fixed1] octets2;

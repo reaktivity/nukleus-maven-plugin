@@ -520,7 +520,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (sizeName != null)
                     {
-                        builder.addStatement("$LRO.wrap(buffer, $LRO.limit() + $L, $LRO.limit() + $L + $L())",
+                        builder.addStatement("$LRO.wrap(buffer, $LRO.limit() + $L, $LRO.limit() + $L + (int) $L())",
                                 name, anchorName, offset(name), anchorName, offset(name), sizeName);
                     }
                     else
@@ -538,7 +538,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (sizeName != null)
                     {
-                        builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + $L())",
+                        builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + (int) $L())",
                                 name, offset(name), offset(name), sizeName);
                     }
                     else
@@ -1012,7 +1012,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (sizeName != null)
                     {
-                        code.addStatement("int newLimit = limit() + $L", value(sizeName));
+                        code.addStatement("int newLimit = limit() + (int) $L", value(sizeName));
                     }
                     code.addStatement("checkLimit(newLimit, maxLimit())");
                     code.addStatement("return $L.wrap(buffer(), limit(), newLimit).reset()", fieldRW);
