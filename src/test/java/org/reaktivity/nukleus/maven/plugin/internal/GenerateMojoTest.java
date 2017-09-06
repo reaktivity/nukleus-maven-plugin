@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
@@ -41,7 +42,7 @@ public class GenerateMojoTest
         myMojo.execute();
     }
 
-    @Test // TODO: condition not being validated
+    @Test(expected = ParseCancellationException.class)
     public void shouldNotGenerateInvalidStructOctetsNotLast()
         throws Exception
     {
@@ -59,7 +60,7 @@ public class GenerateMojoTest
         myMojo.execute();
     }
 
-    @Test // TODO: verify the appropriate warning message was logged to the build output
+    @Test(expected = ParseCancellationException.class)
     @Ignore("TODO: currently this gives a NullPointerException")
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()
         throws Exception

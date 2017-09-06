@@ -52,19 +52,12 @@ type_spec
 
 simple_type_spec
    : base_type_spec
-   | template_type_spec
    | scoped_name
    ;
 
 base_type_spec
    : integer_type
    | octets_type
-   | string_type
-   | string16_type
-   ;
-
-template_type_spec
-   : list_type
    | string_type
    | string16_type
    ;
@@ -136,7 +129,10 @@ uint64_type
 
 octets_type
    : KW_OCTETS LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | KW_OCTETS
+   ;
+
+unbounded_octets_type
+   : KW_OCTETS
    ;
 
 enum_type
@@ -168,7 +164,7 @@ type_id
    ;
    
 member_list
-   : member *
+   : member * unbounded_member?
    ;
 
 member
@@ -184,6 +180,19 @@ uint_member
 int_member 
    : signed_integer_type declarator EQUALS int_literal
    ;
+   
+unbounded_member
+   : unbounded_list_member
+   | unbounded_octets_member
+   ;
+   
+unbounded_octets_member
+   : unbounded_octets_type declarators SEMICOLON
+   ;
+   
+unbounded_list_member
+   : unbounded_list_type declarators SEMICOLON
+   ;
 
 union_type
    : KW_UNION ID KW_SWITCH LEFT_BRACKET KW_UINT8 RIGHT_BRACKET LEFT_BRACE case_list RIGHT_BRACE
@@ -197,9 +206,14 @@ case_member
    : KW_CASE uint_literal COLON member
    ;
 
-list_type
-   : /* KW_LIST LEFT_ANG_BRACKET simple_type_spec COMMA positive_int_const RIGHT_ANG_BRACKET
-   | */ KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
+/* Bounded list type, not yet supported:
+list_type 
+   : KW_LIST LEFT_ANG_BRACKET simple_type_spec COMMA positive_int_const RIGHT_ANG_BRACKET
+   ;
+*/
+   
+unbounded_list_type
+   : KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
    ;
 
 string_type

@@ -40,7 +40,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int64_t
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_memberContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
@@ -56,6 +55,9 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_list_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
@@ -193,6 +195,29 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         memberBuilder = new AstMemberNode.Builder();
 
         super.visitMember(ctx);
+
+        AstMemberNode member = memberBuilder.build();
+        memberBuilder = null;
+
+        if (caseBuilder != null)
+        {
+            caseBuilder.member(member);
+        }
+        else if (structBuilder != null)
+        {
+            structBuilder.member(member);
+        }
+
+        return member;
+    }
+
+    @Override
+    public AstMemberNode visitUnbounded_member(
+        Unbounded_memberContext ctx)
+    {
+        memberBuilder = new AstMemberNode.Builder();
+
+        super.visitUnbounded_member(ctx);
 
         AstMemberNode member = memberBuilder.build();
         memberBuilder = null;
@@ -371,11 +396,18 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitList_type(
-        List_typeContext ctx)
+    public AstNode visitUnbounded_octets_type(Unbounded_octets_typeContext ctx)
+    {
+        memberBuilder.type(AstType.OCTETS);
+        return super.visitUnbounded_octets_type(ctx);
+    }
+
+    @Override
+    public AstNode visitUnbounded_list_type(
+        Unbounded_list_typeContext ctx)
     {
         memberBuilder.type(AstType.LIST);
-        return super.visitList_type(ctx);
+        return super.visitUnbounded_list_type(ctx);
     }
 
     @Override

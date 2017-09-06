@@ -34,6 +34,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_ty
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 
 public class AstParserTest
 {
@@ -116,6 +117,38 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseStructWithListMember()
+    {
+        NukleusParser parser = newParser("struct Person { string lastName; list<string> foreNames; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("Person")
+                .member(new AstMemberNode.Builder().type(AstType.STRING).name("lastName").build())
+                .member(new AstMemberNode.Builder().type(AstType.LIST).type(AstType.STRING).name("foreNames").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseStructWithUnboundedOctetsMember()
+    {
+        NukleusParser parser = newParser("struct Frame { string source; octets extension; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("Frame")
+                .member(new AstMemberNode.Builder().type(AstType.STRING).name("source").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).name("extension").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseStructWithString16Members()
     {
         NukleusParser parser = newParser("struct Person { string16 firstName; string16 lastName; }");
@@ -144,6 +177,22 @@ public class AstParserTest
                 .build();
 
         assertEquals(expected, actual);
+    }
+
+    @Test(expected = ParseCancellationException.class)
+    public void shouldNotParseStructWithUnboundedListMemberNotLast()
+    {
+        NukleusParser parser = newParser("struct s {list<uint8> field1; uint8 field2;");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+    }
+
+    @Test(expected = ParseCancellationException.class)
+    public void shouldNotParseStructWithUnboundedOctetsMemberNotLast()
+    {
+        NukleusParser parser = newParser("struct s {octets field1; uint8 field2;");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
     }
 
     @Test
@@ -366,8 +415,8 @@ public class AstParserTest
     public void shouldParseListMember()
     {
         NukleusParser parser = newParser("list<string> field;");
-        MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        Unbounded_memberContext ctx = parser.unbounded_member();
+        AstMemberNode actual = new AstParser().visitUnbounded_member(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.LIST)
@@ -382,8 +431,8 @@ public class AstParserTest
     public void shouldParseListMemberString16()
     {
         NukleusParser parser = newParser("list<string16> field;");
-        MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        Unbounded_memberContext ctx = parser.unbounded_member();
+        AstMemberNode actual = new AstParser().visitUnbounded_member(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.LIST)
