@@ -147,6 +147,57 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseOctetsWithUint16SizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint16 size; octets[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(AstType.INT32)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseOctetsWithUint32SizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint32 size; octets[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT32).unsignedType(AstType.INT64)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseOctetsWithUint64SizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint64 size; octets[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseInt64Member()
     {
         NukleusParser parser = newParser("int64 field;");

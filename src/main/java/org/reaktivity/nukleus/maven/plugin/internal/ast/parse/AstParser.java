@@ -310,7 +310,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint64_type(
         Uint64_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT64);
+        memberBuilder.type(AstType.UINT64).unsignedType(AstType.INT64);
         return super.visitUint64_type(ctx);
     }
 
