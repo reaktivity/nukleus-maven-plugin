@@ -652,6 +652,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             boolean usedAsSize,
             Object defaultValue)
         {
+            if (usedAsSize)
+            {
+                defaultValue = 0;
+            }
             memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
             memberField.addMember(name, type, unsignedType, usedAsSize);
             memberAccessor.addMember(name, type, unsignedType, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
@@ -794,10 +798,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             return result;
         }
 
-        private static String value(
+        private static String dynamicOffset(
             String fieldName)
         {
-            return String.format("value%s", initCap(fieldName));
+            return String.format("dynamicOffset%s", initCap(fieldName));
         }
 
         private static final class MemberConstantGenerator extends ClassSpecMixinGenerator
@@ -893,7 +897,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (usedAsSize)
                 {
                     TypeName publicType = unsignedType != null ? unsignedType : type;
-                    builder.addField(FieldSpec.builder(publicType, value(name), PRIVATE)
+                    builder.addField(FieldSpec.builder(publicType, dynamicOffset(name), PRIVATE)
                             .build());
                 }
                 else if (!type.isPrimitive())
@@ -1004,16 +1008,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name));
 
-                if (size >= 0 || sizeName != null)
+                if (size >= 0)
                 {
-                    if (size >= 0)
-                    {
-                        code.addStatement("int newLimit = limit() + $L", size);
-                    }
-                    else if (sizeName != null)
-                    {
-                        code.addStatement("int newLimit = limit() + (int) $L", value(sizeName));
-                    }
+                    code.addStatement("int newLimit = limit() + $L", size);
                     code.addStatement("checkLimit(newLimit, maxLimit())");
                     code.addStatement("return $L.wrap(buffer(), limit(), newLimit)", fieldRW);
                 }
@@ -1145,7 +1142,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 TypeName publicType = (unsignedType != null) ? unsignedType : type;
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("checkFieldNotSet($L)", index(name));
+                if (!usedAsSize)
+                {
+                    code.addStatement("checkFieldNotSet($L)", index(name));
+                }
                 String[] range;
                 if (unsignedType == null)
                 {
@@ -1208,17 +1208,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.add("value)");
                 }
-                code.add(";\n$]")
-                    .addStatement("fieldsSet.set($L)", index(name))
-                    .addStatement("limit(newLimit)");
+                code.add(";\n$]");
                 if (usedAsSize)
                 {
-                    code.addStatement("$L = value", value(name));
+                    code.addStatement("$L = limit()", dynamicOffset(name));
                 }
-                code.addStatement("return this");
+                code.addStatement("fieldsSet.set($L)", index(name))
+                    .addStatement("limit(newLimit)")
+                    .addStatement("return this");
 
                 builder.addMethod(methodBuilder(name)
-                        .addModifiers(PUBLIC)
+                        .addModifiers(usedAsSize ? PRIVATE : PUBLIC)
                         .addParameter(publicType, "value")
                         .returns(thisType)
                         .addCode(code.build())
@@ -1328,16 +1328,24 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 CodeBlock.Builder code = CodeBlock.builder();
                 code.addStatement("$T $L = $L()", builderType, name, name)
                     .addStatement("mutator.accept($L)", name);
-                if (size >= 0 || sizeName != null)
+                if (size >= 0)
                 {
                     code.addStatement("int expectedLimit = $L.maxLimit()", name)
                         .addStatement("int actualLimit = $L.build().limit()", name)
                         .beginControlFlow("if (actualLimit != expectedLimit)")
                         .addStatement("throw new IllegalStateException(String.format($S, " +
                                       "actualLimit - limit(), expectedLimit - limit()))",
-                            format("Only %%d out of %%d bytes have been set for field \"%s\"", name))
+                            format("%%d instead of %%d bytes have been set for field \"%s\"", name))
                         .endControlFlow();
                     code.addStatement("limit($L.maxLimit())", name);
+                }
+                else if (sizeName != null)
+                {
+                    code.addStatement("int newLimit = $L.build().limit()", name)
+                        .addStatement("int size = newLimit - limit()")
+                        .addStatement("limit($L)", dynamicOffset(sizeName))
+                        .addStatement("$L(size)", sizeName)
+                        .addStatement("limit(newLimit)");
                 }
                 else
                 {
@@ -1355,7 +1363,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                     CodeBlock.Builder code2 = CodeBlock.builder();
                     code2.addStatement("$T $L = $L()", builderType, name, name);
-                    if (size >= 0 || sizeName != null)
+                    if (size >= 0)
                     {
                         code2.addStatement("int fieldSize = $L.maxLimit() - limit()", name)
                              .beginControlFlow("if (length != fieldSize)")
@@ -1363,9 +1371,20 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                 format("Invalid length %%d for field \"%s\", expected %%d", name))
                              .endControlFlow();
                     }
-                    code2.addStatement("$L.set(buffer, offset, length)", name)
-                         .addStatement("limit($L.build().limit())", name)
-                         .addStatement("fieldsSet.set($L)", index(name))
+                    code2.addStatement("$L.set(buffer, offset, length)", name);
+                    if (sizeName != null)
+                    {
+                        code2.addStatement("int newLimit = $L.build().limit()", name)
+                             .addStatement("int size = newLimit - limit()")
+                             .addStatement("limit($L)", dynamicOffset(sizeName))
+                             .addStatement("$L(size)", sizeName)
+                             .addStatement("limit(newLimit)");
+                    }
+                    else
+                    {
+                        code2.addStatement("limit($L.build().limit())", name);
+                    }
+                    code2.addStatement("fieldsSet.set($L)", index(name))
                          .addStatement("return this");
 
                     builder.addMethod(methodBuilder(name)

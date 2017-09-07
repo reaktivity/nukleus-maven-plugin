@@ -56,6 +56,19 @@ public class FlatWithOctetsFWIT
         assertEquals(11, flatWithOctetsRO.fixed1());
     }
 
+    @Test
+    public void shouldAutomaticallySetLength() throws Exception
+    {
+        int limit = flatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
+                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+                .string1("value1")
+                .octets2(b -> b.put("123456".getBytes(UTF_8)))
+                .build()
+                .limit();
+        flatWithOctetsRO.wrap(buffer,  0,  limit);
+        assertEquals(6, flatWithOctetsRO.length());
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetFixed1WithInsufficientSpace()
     {
@@ -74,9 +87,8 @@ public class FlatWithOctetsFWIT
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetString1WithInsufficientSpace()
     {
-        flatWithOctetsRW.wrap(buffer, 10, 16)
+        flatWithOctetsRW.wrap(buffer, 10, 18)
                 .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-                .fixed1(10)
                 .string1("1234");
     }
 
@@ -98,7 +110,7 @@ public class FlatWithOctetsFWIT
     public void shouldFailToSetOctets1WithValueShorterThanSize()
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("9 out of 10");
+        expectedException.expectMessage("9 instead of 10");
         flatWithOctetsRW.wrap(buffer, 0, 100)
                 .octets1(b -> b.put("123456789".getBytes(UTF_8)));
     }
@@ -118,6 +130,7 @@ public class FlatWithOctetsFWIT
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage("octets1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
+                .fixed1(0)
                 .octets1(asBuffer("123456789"), 0, 9);
     }
 
@@ -160,6 +173,17 @@ public class FlatWithOctetsFWIT
         expectedException.expectMessage("string1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+            .build();
+    }
+
+    @Test
+    public void shouldFailToBuildWhenOctets2NotSet() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("octets2");
+        flatWithOctetsRW.wrap(buffer, 0, 100)
+            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+            .string1("value1")
             .build();
     }
 

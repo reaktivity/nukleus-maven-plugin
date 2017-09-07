@@ -48,8 +48,9 @@ scope scope1
         {
             uint32 fixed1 = 11;
             octets[10] octets1;
+            uint16 length;
             string string1;
-            octets[fixed1] octets2;
+            octets[length] octets2;
             octets extension;
         }
         
