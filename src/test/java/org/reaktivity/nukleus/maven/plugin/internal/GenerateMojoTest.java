@@ -60,6 +60,24 @@ public class GenerateMojoTest
         myMojo.execute();
     }
 
+    @Test // TODO: (expected = ParseCancellationException.class)
+    public void shouldNotGenerateUnrecognizedType()
+        throws Exception
+    {
+        File pom = new File("src/test/resources/test-project/pom.xml");
+        MavenProject project = rule.readMavenProject(new File("src/test/resources/test-project"));
+        GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
+        assertNotNull(myMojo);
+
+        PlexusConfiguration configuration = rule.extractPluginConfiguration("nukleus-maven-plugin", pom);
+        configuration.addChild("scopeNames", "invalidUnrecognizedType");
+        configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
+        configuration.addChild("inputDirectory", "src/test/resources/test-project");
+        configuration.addChild("outputDirectory", "target/generated-flyweights");
+        rule.configureMojo(myMojo, configuration);
+        myMojo.execute();
+    }
+
     @Test(expected = ParseCancellationException.class)
     @Ignore("TODO: validate this in the grammar by defining unbounded_struct_type")
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()

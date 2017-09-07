@@ -17,9 +17,13 @@ scope scope1
 {
 
     scope inner {
-        struct Flat
+        struct FlatParent
         {
-            uint8 fixed1;
+            uint64 fixed1;
+        }
+    
+        struct Flat extends scope1::inner::FlatParent
+        {
             uint16 fixed2 = 222;
             string string1;
             int32 fixed3 = 333;
@@ -71,6 +75,13 @@ scope scope1
         {
             uint8 fixed1 = 11;
             scope1::inner::Integers integers;
+        }
+
+        enum Roll
+        {
+            EGG,
+            SPRING,
+            FORWARD
         }
 
     }

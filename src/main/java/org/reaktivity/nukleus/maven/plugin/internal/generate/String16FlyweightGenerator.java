@@ -156,8 +156,8 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
 
         public TypeSpec build()
         {
-            return classBuilder.addMethod(constructor())
-                    .addField(fieldValueSet())
+            return classBuilder.addField(fieldValueSet())
+                    .addMethod(constructor())
                     .addMethod(wrapMethod())
                     .addMethod(setMethod())
                     .addMethod(setDirectBufferMethod())
