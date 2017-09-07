@@ -23,7 +23,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.NestedFW;
+import org.reaktivity.reaktor.internal.test.types.inner.NestedFW;
 
 public class NestedFWIT
 {

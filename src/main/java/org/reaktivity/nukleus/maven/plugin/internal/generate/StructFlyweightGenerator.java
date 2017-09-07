@@ -1015,11 +1015,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("int newLimit = limit() + (int) $L", value(sizeName));
                     }
                     code.addStatement("checkLimit(newLimit, maxLimit())");
-                    code.addStatement("return $L.wrap(buffer(), limit(), newLimit).reset()", fieldRW);
+                    code.addStatement("return $L.wrap(buffer(), limit(), newLimit)", fieldRW);
                 }
                 else
                 {
-                    code.addStatement("return $L.wrap(buffer(), limit(), maxLimit()).reset()", fieldRW);
+                    code.addStatement("return $L.wrap(buffer(), limit(), maxLimit())", fieldRW);
                 }
                 builder.addMethod(methodBuilder(name)
                         .addModifiers(PRIVATE)
@@ -1357,7 +1357,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code2.addStatement("$T $L = $L()", builderType, name, name);
                     if (size >= 0 || sizeName != null)
                     {
-                        code2.addStatement("int fieldSize = $L.maxLimit() - $L.offset()", name, name)
+                        code2.addStatement("int fieldSize = $L.maxLimit() - limit()", name)
                              .beginControlFlow("if (length != fieldSize)")
                              .addStatement("throw new IllegalArgumentException(String.format($S, length, fieldSize))",
                                 format("Invalid length %%d for field \"%s\", expected %%d", name))

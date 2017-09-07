@@ -24,7 +24,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.UnionOctetsFW;
+import org.reaktivity.reaktor.internal.test.types.inner.UnionOctetsFW;
 
 public class UnionOctetsFWIT
 {

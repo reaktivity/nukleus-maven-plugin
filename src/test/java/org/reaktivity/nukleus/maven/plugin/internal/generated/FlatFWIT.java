@@ -24,7 +24,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.FlatFW;
+import org.reaktivity.reaktor.internal.test.types.inner.FlatFW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 
 public class FlatFWIT
