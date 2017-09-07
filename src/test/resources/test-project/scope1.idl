@@ -47,7 +47,7 @@ scope scope1
         octets extension;
     }
     
-    union Union8 switch (uint8)
+    union UnionOctets switch (uint8)
     {
         case 1: octets[4] octets4;
         case 2: octets[16] octets16;
