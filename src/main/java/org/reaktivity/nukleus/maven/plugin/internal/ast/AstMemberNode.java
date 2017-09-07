@@ -94,7 +94,7 @@ public final class AstMemberNode extends AstNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, unsignedType, sizeName, size);
+        return Objects.hash(name, types, unsignedType, sizeName, size, defaultValue);
     }
 
     @Override
