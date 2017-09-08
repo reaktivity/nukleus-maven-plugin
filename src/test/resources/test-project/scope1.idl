@@ -84,6 +84,15 @@ scope scope1
             SPRING,
             FORWARD
         }
+        
+        struct PotentialNameConflicts
+        {
+           string value;
+           int32 newLimit;
+           string buffer;
+           octets[10] offset; 
+           string limit;
+        }
 
     }
 }

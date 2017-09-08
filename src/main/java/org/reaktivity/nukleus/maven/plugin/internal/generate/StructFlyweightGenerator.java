@@ -33,11 +33,14 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UN
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
@@ -54,6 +57,11 @@ import com.squareup.javapoet.TypeSpec;
 
 public final class StructFlyweightGenerator extends ClassSpecGenerator
 {
+    private static final Set<String> RESERVED_METHOD_NAMES = new HashSet<>(Arrays.asList(new String[]
+    {
+        "offset", "buffer", "limit", "sizeof", "maxLimit", "wrap", "checkLimit", "build"
+    }));
+
     private final String baseName;
     private final TypeSpec.Builder builder;
     private final TypeIdGenerator typeId;
@@ -374,7 +382,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 if (DIRECT_BUFFER_TYPE.equals(type))
                 {
-                    MethodSpec.Builder consumerMethod = methodBuilder(name)
+                    MethodSpec.Builder consumerMethod = methodBuilder(methodName(name))
                             .addModifiers(PUBLIC)
                             .addParameter(IntBinaryOperator.class, "accessor")
                             .returns(type);
@@ -400,7 +408,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 anchorType = type;
             }
 
-            builder.addMethod(methodBuilder(name)
+            builder.addMethod(methodBuilder(methodName(name))
                     .addModifiers(PUBLIC)
                     .returns(publicType)
                     .addCode(codeBlock.build())
@@ -455,20 +463,22 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     if (TypeNames.DIRECT_BUFFER_TYPE.equals(anchorType))
                     {
-                        builder.addStatement("return $L().capacity() + $L + $L", anchorName, offset(lastName), size(lastName));
+                        builder.addStatement("return $L().capacity() + $L + $L", methodName(anchorName),
+                                offset(lastName), size(lastName));
                     }
                     else
                     {
-                        builder.addStatement("return $L().limit() + $L + $L", anchorName, offset(lastName), size(lastName));
+                        builder.addStatement("return $L().limit() + $L + $L", methodName(anchorName),
+                                offset(lastName), size(lastName));
                     }
                 }
                 else if (TypeNames.DIRECT_BUFFER_TYPE.equals(lastType))
                 {
-                    builder.addStatement("return offset() + $L + $L().capacity()", offset(lastName), lastName);
+                    builder.addStatement("return offset() + $L + $L().capacity()", offset(lastName), methodName(lastName));
                 }
                 else
                 {
-                    builder.addStatement("return $L().limit()", lastName);
+                    builder.addStatement("return $L().limit()", methodName(lastName));
                 }
             }
             else
@@ -1018,7 +1028,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("return $L.wrap(buffer(), limit(), maxLimit())", fieldRW);
                 }
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PRIVATE)
                         .returns(builderType)
                         .addCode(code.build())
@@ -1051,7 +1061,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name))
                     .addStatement("return $L.wrap(buffer(), limit(), maxLimit())", fieldRW);
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PRIVATE)
                         .returns(builderType)
                         .addCode(code.build())
@@ -1217,7 +1227,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("limit(newLimit)")
                     .addStatement("return this");
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(usedAsSize ? PRIVATE : PUBLIC)
                         .addParameter(publicType, "value")
                         .returns(thisType)
@@ -1246,7 +1256,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 else
                 {
                     // TODO: throw exception? I don't think we should ever get here
-                    builder.addMethod(methodBuilder(name)
+                    builder.addMethod(methodBuilder(methodName(name))
                             .addModifiers(PUBLIC)
                             .returns(thisType)
                             .addParameter(type, "value")
@@ -1301,13 +1311,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.endControlFlow();
                     }
                     code.addStatement("checkFieldsSet(0, $L)", index(name))
-                        .addStatement("$T $L = $LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
-                        .addStatement("mutator.accept($L)", name)
-                        .addStatement("limit($L.build().limit())", name)
+                        .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                        .addStatement("mutator.accept($LRW)", name)
+                        .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("fieldsSet.set($L)", index(name))
                         .addStatement("return this");
 
-                    builder.addMethod(methodBuilder(name)
+                    builder.addMethod(methodBuilder(methodName(name))
                             .addModifiers(PUBLIC)
                             .returns(thisType)
                             .addParameter(mutatorType, "mutator")
@@ -1326,35 +1336,35 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 ClassName builderType = className.nestedClass("Builder");
                 TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("$T $L = $L()", builderType, name, name)
-                    .addStatement("mutator.accept($L)", name);
+                code.addStatement("$T $LRW = $L()", builderType, name, methodName(name))
+                    .addStatement("mutator.accept($LRW)", name);
                 if (size >= 0)
                 {
-                    code.addStatement("int expectedLimit = $L.maxLimit()", name)
-                        .addStatement("int actualLimit = $L.build().limit()", name)
+                    code.addStatement("int expectedLimit = $LRW.maxLimit()", name)
+                        .addStatement("int actualLimit = $LRW.build().limit()", name)
                         .beginControlFlow("if (actualLimit != expectedLimit)")
                         .addStatement("throw new IllegalStateException(String.format($S, " +
                                       "actualLimit - limit(), expectedLimit - limit()))",
                             format("%%d instead of %%d bytes have been set for field \"%s\"", name))
                         .endControlFlow();
-                    code.addStatement("limit($L.maxLimit())", name);
+                    code.addStatement("limit($LRW.maxLimit())", name);
                 }
                 else if (sizeName != null)
                 {
-                    code.addStatement("int newLimit = $L.build().limit()", name)
-                        .addStatement("int size = newLimit - limit()")
+                    code.addStatement("int newLimit = $LRW.build().limit()", name)
+                        .addStatement("int size$$ = newLimit - limit()")
                         .addStatement("limit($L)", dynamicOffset(sizeName))
-                        .addStatement("$L(size)", sizeName)
+                        .addStatement("$L(size$$)", sizeName)
                         .addStatement("limit(newLimit)");
                 }
                 else
                 {
-                    code.addStatement("limit($L.build().limit())", name);
+                    code.addStatement("limit($LRW.build().limit())", name);
                 }
                 code.addStatement("fieldsSet.set($L)", index(name))
                     .addStatement("return this");
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .returns(thisType)
                         .addParameter(mutatorType, "mutator")
@@ -1362,32 +1372,32 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .build());
 
                     CodeBlock.Builder code2 = CodeBlock.builder();
-                    code2.addStatement("$T $L = $L()", builderType, name, name);
+                    code2.addStatement("$T $LRW = $L()", builderType, name, methodName(name));
                     if (size >= 0)
                     {
-                        code2.addStatement("int fieldSize = $L.maxLimit() - limit()", name)
+                        code2.addStatement("int fieldSize = $LRW.maxLimit() - limit()", name)
                              .beginControlFlow("if (length != fieldSize)")
                              .addStatement("throw new IllegalArgumentException(String.format($S, length, fieldSize))",
                                 format("Invalid length %%d for field \"%s\", expected %%d", name))
                              .endControlFlow();
                     }
-                    code2.addStatement("$L.set(buffer, offset, length)", name);
+                    code2.addStatement("$LRW.set(buffer, offset, length)", name);
                     if (sizeName != null)
                     {
-                        code2.addStatement("int newLimit = $L.build().limit()", name)
-                             .addStatement("int size = newLimit - limit()")
+                        code2.addStatement("int newLimit = $LRW.build().limit()", name)
+                             .addStatement("int size$$ = newLimit - limit()")
                              .addStatement("limit($L)", dynamicOffset(sizeName))
-                             .addStatement("$L(size)", sizeName)
+                             .addStatement("$L(size$$)", sizeName)
                              .addStatement("limit(newLimit)");
                     }
                     else
                     {
-                        code2.addStatement("limit($L.build().limit())", name);
+                        code2.addStatement("limit($LRW.build().limit())", name);
                     }
                     code2.addStatement("fieldsSet.set($L)", index(name))
                          .addStatement("return this");
 
-                    builder.addMethod(methodBuilder(name)
+                    builder.addMethod(methodBuilder(methodName(name))
                             .addModifiers(PUBLIC)
                             .returns(thisType)
                             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
@@ -1402,38 +1412,38 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name)
             {
                 ClassName builderType = className.nestedClass("Builder");
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .returns(thisType)
                         .addParameter(String.class, "value")
-                        .addStatement("$T $L = $L()", builderType, name, name)
-                        .addStatement("$L.set(value, $T.UTF_8)", name, StandardCharsets.class)
+                        .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
+                        .addStatement("$LRW.set(value, $T.UTF_8)", name, StandardCharsets.class)
                         .addStatement("fieldsSet.set($L)", index(name))
-                        .addStatement("limit($L.build().limit())", name)
+                        .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .returns(thisType)
                         .addParameter(className, "value")
-                        .addStatement("$T $L = $L()", builderType, name, name)
-                        .addStatement("$L.set(value)", name)
+                        .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
+                        .addStatement("$LRW.set(value)", name)
                         .addStatement("fieldsSet.set($L)", index(name))
-                        .addStatement("limit($L.build().limit())", name)
+                        .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .returns(thisType)
                         .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                         .addParameter(int.class, "offset")
                         .addParameter(int.class, "length")
-                        .addStatement("$T $L = $L()", builderType, name, name)
-                        .addStatement("$L.set(buffer, offset, length)", name)
+                        .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
+                        .addStatement("$LRW.set(buffer, offset, length)", name)
                         .addStatement("fieldsSet.set($L)", index(name))
-                        .addStatement("limit($L.build().limit())", name)
+                        .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
             }
@@ -1442,7 +1452,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name)
             {
                 // TODO: revise/remove this once I understand when/if this would get called
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .addParameter(IntUnaryOperator.class, "mutator")
                         .addParameter(IntConsumer.class, "error")
@@ -1457,7 +1467,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .addParameter(IntUnaryOperator.class, "mutator")
                         .returns(thisType)
@@ -1469,7 +1479,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .addParameter(DIRECT_BUFFER_TYPE, "value")
                         .addParameter(int.class, "offset")
@@ -1480,7 +1490,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .addParameter(DIRECT_BUFFER_TYPE, "value")
                         .returns(thisType)
@@ -1489,7 +1499,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .addParameter(BYTE_ARRAY, "value")
                         .addParameter(int.class, "offset")
@@ -1500,7 +1510,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .addParameter(BYTE_ARRAY, "value")
                         .returns(thisType)
@@ -1509,7 +1519,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("return this")
                         .build());
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .addParameter(String.class, "value")
                         .returns(thisType)
@@ -1551,13 +1561,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.endControlFlow();
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name))
-                    .addStatement("$T $L = $LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
-                    .addStatement("mutator.accept($L)", name)
-                    .addStatement("limit($L.build().limit())", name)
+                    .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                    .addStatement("mutator.accept($LRW)", name)
+                    .addStatement("limit($LRW.build().limit())", name)
                     .addStatement("fieldsSet.set($L)", index(name))
                     .addStatement("return this");
 
-                builder.addMethod(methodBuilder(name)
+                builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .returns(thisType)
                         .addParameter(mutatorType, "mutator")
@@ -1596,5 +1606,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         String fieldName)
     {
         return fieldName.replaceAll("([^_A-Z])([A-Z])", "$1_$2").toUpperCase();
+    }
+
+    private static String methodName(String name)
+    {
+        return RESERVED_METHOD_NAMES.contains(name) ? name + "$" : name;
     }
 }
