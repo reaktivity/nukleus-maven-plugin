@@ -805,6 +805,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     result = true;
                 }
             }
+            if (type instanceof ParameterizedTypeName)
+            {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                if ("ListFW".equals(parameterizedType.rawType.simpleName()))
+                {
+                    result = true;
+                }
+            }
             return result;
         }
 
@@ -849,8 +857,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                      .build());
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
-                else if (type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName())
-                        && size < 0 && sizeName == null)
+                else if ((type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName())
+                           && size < 0 && sizeName == null)
+                          || (type instanceof ParameterizedTypeName && "ListFW".equals(
+                                  ((ParameterizedTypeName) type).rawType.simpleName()))
+                        )
                 {
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }

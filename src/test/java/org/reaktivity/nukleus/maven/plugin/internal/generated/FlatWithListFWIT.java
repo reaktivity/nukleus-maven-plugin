@@ -54,8 +54,6 @@ public class FlatWithListFWIT
     {
         int limit = flatRW.wrap(buffer, 0, 100)
                 .string1("value1")
-                .list1(b ->
-                       { })
                 .build()
                 .limit();
         flatRO.wrap(buffer,  0,  limit);
