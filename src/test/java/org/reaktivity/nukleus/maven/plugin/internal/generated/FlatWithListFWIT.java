@@ -19,6 +19,9 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.agrona.MutableDirectBuffer;
@@ -26,8 +29,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.FlatWithListFW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.FlatWithListFW;
 
 public class FlatWithListFWIT
 {
@@ -113,8 +116,30 @@ public class FlatWithListFWIT
         expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
             .string1("value1")
-            .string1("another value")
-            .build();
+            .string1("another value");
+    }
+
+    @Test
+    public void shouldFailToResetList1() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("list1");
+        flatRW.wrap(buffer, 0, 100)
+            .string1("value1")
+            .list1(b -> b.item(i -> i.set("listItem1", UTF_8)))
+            .list1(b -> b.item(i -> i.set("updatedListItem1", UTF_8)));
+    }
+
+    @Test
+    public void shouldFailToSetList1AfterSettingList1Items() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("list1");
+        flatRW.wrap(buffer, 0, 100)
+            .string1("value1")
+            .list1Item(b -> b.set("item1", UTF_8))
+            .list1(b ->
+                   { });
     }
 
     @Test
@@ -124,6 +149,25 @@ public class FlatWithListFWIT
         expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
             .build();
+    }
+
+    @Test
+    public void shouldAddList1Items() throws Exception
+    {
+        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
+                .fixed1(10)
+                .string1("value1")
+                .list1Item(b -> b.set("item1", UTF_8))
+                .list1Item(b -> b.set("item2", UTF_8))
+                .list1Item(b -> b.set("item3", UTF_8))
+                .build()
+                .limit();
+        flatRO.wrap(buffer,  0,  limit);
+        assertEquals(10, flatRO.fixed1());
+        assertEquals("value1", flatRO.string1().asString());
+        final List<String> listValues = new ArrayList<>();
+        flatRO.list1().forEach((s) -> listValues.add(s.asString()));
+        assertEquals(Arrays.asList("item1", "item2", "item3"), listValues);
     }
 
     @Test

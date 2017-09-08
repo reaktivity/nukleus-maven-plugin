@@ -1573,6 +1573,40 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(mutatorType, "mutator")
                         .addCode(code.build())
                         .build());
+
+                if ("ListFW".equals(rawType.simpleName()))
+                {
+                    // Add a method to append list items
+                    code = CodeBlock.builder();
+                    if (priorFieldIfDefaulted != null)
+                    {
+                        code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                        if (priorDefaultedIsPrimitive)
+                        {
+                            code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                        }
+                        else
+                        {
+                            //  Attempt to default the entire object. This will fail if it has any required fields.
+                            code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
+                        }
+                        code.endControlFlow();
+                    }
+                    code.addStatement("checkFieldsSet(0, $L)", index(name))
+                        .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                        .addStatement("$LRW.item(mutator)", name)
+                        .addStatement("limit($LRW.build().limit())", name)
+                        .addStatement("fieldsSet.set($L)", index(name))
+                        .addStatement("return this");
+
+                    TypeName itemMutatorType = ParameterizedTypeName.get(consumerType, itemBuilderType);
+                    builder.addMethod(methodBuilder(methodName(name + "Item"))
+                            .addModifiers(PUBLIC)
+                            .returns(thisType)
+                            .addParameter(itemMutatorType, "mutator")
+                            .addCode(code.build())
+                            .build());
+                }
             }
         }
     }
