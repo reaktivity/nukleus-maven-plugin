@@ -28,7 +28,7 @@ import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 
-public class FlatWithOctetsFWIT
+public class FlatWithOctetsFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {

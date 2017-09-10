@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.PotentialNameConflictsFW;
 
-public class PotentialNameConflitsFWIT
+public class PotentialNameConflitsFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {

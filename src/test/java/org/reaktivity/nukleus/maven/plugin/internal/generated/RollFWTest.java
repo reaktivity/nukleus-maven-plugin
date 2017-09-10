@@ -27,7 +27,7 @@ import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.Roll;
 import org.reaktivity.reaktor.internal.test.types.inner.RollFW;
 
-public class RollFWIT
+public class RollFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {

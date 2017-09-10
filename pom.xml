@@ -131,7 +131,6 @@
           </includes>
           <excludes>
             <exclude>src/conf/**</exclude>
-            <exclude>src/test/java/org/reaktivity/nukleus/maven/plugin/internal/generated/experimental/*.java</exclude>
             <exclude>src/test/resources/**</exclude>
           </excludes>
           <mapping>
@@ -193,43 +192,40 @@
         <version>3.1</version>
         <executions>
           <execution>
-            <id>default-testCompile</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <testExcludes>
-                <testExclude>**/*IT.java</testExclude>
-              </testExcludes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>ITCompile</id>
-            <phase>pre-integration-test</phase>
+            <id>GeneratorCompile</id>
+            <phase>generate-test-sources</phase>
             <goals>
               <goal>testCompile</goal>
             </goals>
             <configuration>
               <testIncludes>
-                <testInclude>**/*IT.java</testInclude>
+                <testInclude>**/Generator.java</testInclude>
               </testIncludes>
             </configuration>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.19.1</version>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.6.0</version>
         <executions>
           <execution>
+            <id>Generate</id>
+            <phase>generate-test-sources</phase>
             <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
+              <goal>java</goal>
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <mainClass>org.reaktivity.nukleus.maven.plugin.internal.generator.Generator</mainClass>
+          <classpathScope>test</classpathScope>
+          <additionalClasspathElements>
+            <additionalClasspathElement>${project.build.directory}/test-classes</additionalClasspathElement>
+          </additionalClasspathElements>
+          <testSourceRoot>${project.build.directory}/generated-flyweights</testSourceRoot>
+        </configuration>
       </plugin>
     </plugins>
   </build>

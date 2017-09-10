@@ -32,16 +32,6 @@ public class GenerateMojoTest
     @Rule
     public MojoRule rule = new MojoRule();
 
-    @Test
-    public void shouldGenerate()
-        throws Exception
-    {
-        MavenProject project = rule.readMavenProject(new File("src/test/resources/test-project"));
-        GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
-        assertNotNull(myMojo);
-        myMojo.execute();
-    }
-
     @Test(expected = ParseCancellationException.class)
     public void shouldNotGenerateInvalidStructOctetsNotLast()
         throws Exception

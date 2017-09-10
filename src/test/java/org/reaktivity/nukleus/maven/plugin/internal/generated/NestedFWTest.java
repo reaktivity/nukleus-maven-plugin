@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.NestedFW;
 
-public class NestedFWIT
+public class NestedFWTest
 {
     private final NestedFW.Builder nestedRW = new NestedFW.Builder();
     private final NestedFW nestedRO = new NestedFW();

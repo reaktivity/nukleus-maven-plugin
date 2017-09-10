@@ -27,7 +27,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.OctetsFW;
 
-public class OctetsFWIT
+public class OctetsFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {

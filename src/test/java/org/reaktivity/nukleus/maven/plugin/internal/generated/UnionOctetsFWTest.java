@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.UnionOctetsFW;
 
-public class UnionOctetsFWIT
+public class UnionOctetsFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {

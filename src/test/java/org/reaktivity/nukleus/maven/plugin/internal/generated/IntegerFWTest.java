@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.IntegersFW;
 
-public class IntegerFWIT
+public class IntegerFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {

@@ -26,7 +26,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.String16FW;
 
-public class String16FWIT
+public class String16FWTest
 {
     private static final int LENGTH_SIZE = 2;
 
