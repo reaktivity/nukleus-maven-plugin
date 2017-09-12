@@ -15,14 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal;
 
-import static org.junit.Assert.assertNotNull;
-
-import java.io.File;
-
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.apache.maven.plugin.testing.MojoRule;
-import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,42 +23,28 @@ import org.junit.Test;
 public class GenerateMojoTest
 {
     @Rule
-    public MojoRule rule = new MojoRule();
+    public GenerateMojoRule rule = new GenerateMojoRule();
 
     @Test(expected = ParseCancellationException.class)
     public void shouldNotGenerateInvalidStructOctetsNotLast()
         throws Exception
     {
-        File pom = new File("src/test/resources/test-project/pom.xml");
-        MavenProject project = rule.readMavenProject(new File("src/test/resources/test-project"));
-        GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
-        assertNotNull(myMojo);
-
-        PlexusConfiguration configuration = rule.extractPluginConfiguration("nukleus-maven-plugin", pom);
-        configuration.addChild("scopeNames", "invalidOctetsNotLast");
-        configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
-        configuration.addChild("inputDirectory", "src/test/resources/test-project");
-        configuration.addChild("outputDirectory", "target/generated-test-sources/test-reaktivity");
-        rule.configureMojo(myMojo, configuration);
-        myMojo.execute();
+        rule.scopeNames("invalidOctetsNotLast")
+            .packageName("org.reaktivity.reaktor.internal.test.types")
+            .inputDirectory("src/test/resources/test-project")
+            .outputDirectory("target/generated-test-sources/test-reaktivity")
+            .execute();
     }
 
     @Test // TODO: (expected = ParseCancellationException.class)
     public void shouldNotGenerateUnrecognizedType()
         throws Exception
     {
-        File pom = new File("src/test/resources/test-project/pom.xml");
-        MavenProject project = rule.readMavenProject(new File("src/test/resources/test-project"));
-        GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
-        assertNotNull(myMojo);
-
-        PlexusConfiguration configuration = rule.extractPluginConfiguration("nukleus-maven-plugin", pom);
-        configuration.addChild("scopeNames", "invalidUnrecognizedType");
-        configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
-        configuration.addChild("inputDirectory", "src/test/resources/test-project");
-        configuration.addChild("outputDirectory", "target/generated-test-sources/test-reaktivity");
-        rule.configureMojo(myMojo, configuration);
-        myMojo.execute();
+        rule.scopeNames("invalidUnrecognizedType")
+            .packageName("org.reaktivity.reaktor.internal.test.types")
+            .inputDirectory("src/test/resources/test-project")
+            .outputDirectory("target/generated-test-sources/test-reaktivity")
+            .execute();
     }
 
     @Test(expected = ParseCancellationException.class)
@@ -73,18 +52,10 @@ public class GenerateMojoTest
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()
         throws Exception
         {
-            File pom = new File("src/test/resources/test-project/pom.xml");
-            MavenProject project = rule.readMavenProject(new File("src/test/resources/test-project"));
-            GenerateMojo myMojo = (GenerateMojo) rule.lookupConfiguredMojo(project, "generate");
-            assertNotNull(myMojo);
-
-            PlexusConfiguration configuration = rule.extractPluginConfiguration("nukleus-maven-plugin", pom);
-            configuration.addChild("scopeNames", "invalidOctetsNotLastNested");
-            configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
-            configuration.addChild("inputDirectory", "src/test/resources/test-project");
-            configuration.addChild("outputDirectory", "target/generated-test-sources/test-reaktivity");
-            rule.configureMojo(myMojo, configuration);
-            myMojo.execute();
+            rule.scopeNames("invalidOctetsNotLastNested")
+                .packageName("org.reaktivity.reaktor.internal.test.types")
+                .inputDirectory("src/test/resources/test-project")
+                .outputDirectory("target/generated-test-sources/test-reaktivity")
+                .execute();
     }
-
 }
