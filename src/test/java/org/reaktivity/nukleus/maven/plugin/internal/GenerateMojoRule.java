@@ -31,6 +31,12 @@ public class GenerateMojoRule extends MojoRule
     private PlexusConfiguration configuration;
     private GenerateMojo mojo;
 
+    public GenerateMojoRule() throws Exception
+    {
+        File pom = new File("src/test/resources/test-project/pom.xml");
+        configuration = extractPluginConfiguration("nukleus-maven-plugin", pom);
+    }
+
     GenerateMojoRule scopeNames(String scopeNames)
     {
         configuration.addChild("scopeNames", scopeNames);
@@ -55,8 +61,9 @@ public class GenerateMojoRule extends MojoRule
         return this;
     }
 
-    public void execute() throws Exception
+    public void generate() throws Exception
     {
+        configureMojo(mojo, configuration);
         mojo.execute();
     }
 
@@ -71,12 +78,10 @@ public class GenerateMojoRule extends MojoRule
             @Override
             public void evaluate() throws Throwable
             {
-                File pom = new File("src/test/resources/test-project/pom.xml");
                 MavenProject project = readMavenProject(new File("src/test/resources/test-project"));
                 mojo = (GenerateMojo) lookupConfiguredMojo(project, "generate");
                 assertNotNull(mojo);
-                PlexusConfiguration configuration = extractPluginConfiguration("nukleus-maven-plugin", pom);
-                configureMojo(mojo, configuration);
+                base.evaluate();
             }
 
         };

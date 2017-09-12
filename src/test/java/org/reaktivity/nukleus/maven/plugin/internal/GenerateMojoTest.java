@@ -23,28 +23,29 @@ import org.junit.Test;
 public class GenerateMojoTest
 {
     @Rule
-    public GenerateMojoRule rule = new GenerateMojoRule();
+    public GenerateMojoRule generator = new GenerateMojoRule()
+            .packageName("org.reaktivity.reaktor.internal.test.types")
+            .inputDirectory("src/test/resources/test-project")
+            .outputDirectory("target/generated-test-sources/test-reaktivity");
+
+    public GenerateMojoTest() throws Exception
+    {
+    }
 
     @Test(expected = ParseCancellationException.class)
     public void shouldNotGenerateInvalidStructOctetsNotLast()
         throws Exception
     {
-        rule.scopeNames("invalidOctetsNotLast")
-            .packageName("org.reaktivity.reaktor.internal.test.types")
-            .inputDirectory("src/test/resources/test-project")
-            .outputDirectory("target/generated-test-sources/test-reaktivity")
-            .execute();
+        generator.scopeNames("invalidOctetsNotLast")
+            .generate();
     }
 
     @Test // TODO: (expected = ParseCancellationException.class)
     public void shouldNotGenerateUnrecognizedType()
         throws Exception
     {
-        rule.scopeNames("invalidUnrecognizedType")
-            .packageName("org.reaktivity.reaktor.internal.test.types")
-            .inputDirectory("src/test/resources/test-project")
-            .outputDirectory("target/generated-test-sources/test-reaktivity")
-            .execute();
+        generator.scopeNames("invalidUnrecognizedType")
+            .generate();
     }
 
     @Test(expected = ParseCancellationException.class)
@@ -52,10 +53,7 @@ public class GenerateMojoTest
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()
         throws Exception
         {
-            rule.scopeNames("invalidOctetsNotLastNested")
-                .packageName("org.reaktivity.reaktor.internal.test.types")
-                .inputDirectory("src/test/resources/test-project")
-                .outputDirectory("target/generated-test-sources/test-reaktivity")
-                .execute();
+            generator.scopeNames("invalidOctetsNotLastNested")
+                .generate();
     }
 }
