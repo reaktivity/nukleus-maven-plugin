@@ -317,7 +317,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName type,
             TypeName unsignedType)
         {
-            TypeName publicType = (unsignedType != null) ? unsignedType : type;
+            TypeName generateType = (unsignedType != null) ? unsignedType : type;
 
             CodeBlock.Builder codeBlock = CodeBlock.builder();
 
@@ -331,9 +331,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 codeBlock.add("$[").add("return ");
 
-                if (publicType != type)
+                if (generateType != type)
                 {
-                    codeBlock.add("($T)(", publicType);
+                    codeBlock.add("($T)(", generateType);
                 }
 
                 if (anchorName != null)
@@ -352,7 +352,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     codeBlock.add("buffer().$L(offset() + $L", getterName, offset(name));
                 }
 
-                if (publicType != type)
+                if (generateType != type)
                 {
                     if (type == TypeName.BYTE)
                     {
@@ -410,7 +410,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
             builder.addMethod(methodBuilder(methodName(name))
                     .addModifiers(PUBLIC)
-                    .returns(publicType)
+                    .returns(generateType)
                     .addCode(codeBlock.build())
                     .build());
 
@@ -850,9 +850,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 fieldNames.add(name);
                 if (defaultValue != null)
                 {
-                    TypeName publicType = (unsignedType != null) ? unsignedType : type;
+                    TypeName generateType = (unsignedType != null) ? unsignedType : type;
                     builder.addField(
-                            FieldSpec.builder(publicType, defaultName(name), PRIVATE, STATIC, FINAL)
+                            FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
                                      .initializer(defaultValue.toString())
                                      .build());
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
@@ -917,8 +917,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 if (usedAsSize)
                 {
-                    TypeName publicType = unsignedType != null ? unsignedType : type;
-                    builder.addField(FieldSpec.builder(publicType, dynamicOffset(name), PRIVATE)
+                    TypeName generateType = unsignedType != null ? unsignedType : type;
+                    builder.addField(FieldSpec.builder(generateType, dynamicOffset(name), PRIVATE)
                             .build());
                 }
                 else if (!type.isPrimitive())
@@ -1161,7 +1161,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     throw new IllegalStateException("member type not supported: " + type);
                 }
 
-                TypeName publicType = (unsignedType != null) ? unsignedType : type;
+                TypeName generateType = (unsignedType != null) ? unsignedType : type;
                 CodeBlock.Builder code = CodeBlock.builder();
                 if (!usedAsSize)
                 {
@@ -1204,7 +1204,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .add("$[")
                     .add("buffer().$L(limit(), ", putterName);
-                if (publicType != type)
+                if (generateType != type)
                 {
                     code.add("($T)", type);
 
@@ -1240,7 +1240,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(usedAsSize ? PRIVATE : PUBLIC)
-                        .addParameter(publicType, "value")
+                        .addParameter(generateType, "value")
                         .returns(thisType)
                         .addCode(code.build())
                         .build());

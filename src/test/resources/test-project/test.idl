@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-scope scope1
+scope test
 {
 
     scope inner {
@@ -22,7 +22,7 @@ scope scope1
             uint64 fixed1;
         }
     
-        struct Flat extends scope1::inner::FlatParent
+        struct Flat extends test::inner::FlatParent
         {
             uint16 fixed2 = 222;
             string string1;
@@ -33,7 +33,7 @@ scope scope1
         struct Nested
         {
             uint64 fixed4 = 444;
-            scope1::inner::Flat flat;
+            test::inner::Flat flat;
             int64 fixed5;
         }
     
@@ -75,7 +75,7 @@ scope scope1
         struct NestedAllDefaulting
         {
             uint8 fixed1 = 11;
-            scope1::inner::Integers integers;
+            test::inner::Integers integers;
         }
 
         enum Roll

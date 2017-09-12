@@ -18,7 +18,7 @@
         <artifactId>nukleus-maven-plugin</artifactId>
         <version>anything</version>
         <configuration>
-          <scopeNames>scope1</scopeNames>
+          <scopeNames>test</scopeNames>
           <packageName>org.reaktivity.reaktor.internal.test.types</packageName>
           <inputDirectory>.</inputDirectory>
           <outputDirectory>../../../../target/generated-test-sources/test-reaktivity</outputDirectory>
