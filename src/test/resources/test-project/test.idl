@@ -22,7 +22,7 @@ scope test
             uint64 fixed1;
         }
     
-        struct Flat extends test::inner::FlatParent
+        struct Flat extends test::inner::FlatParent [0x10000001]
         {
             uint16 fixed2 = 222;
             string string1;

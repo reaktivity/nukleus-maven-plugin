@@ -45,6 +45,20 @@ public class FlatFWTest
     public ExpectedException expectedException = ExpectedException.none();
 
     @Test
+    public void shouldProvideTypeId() throws Exception
+    {
+        int limit = flatRW.wrap(buffer, 0, 100)
+                .fixed1(10)
+                .string1("value1")
+                .string2("value2")
+                .build()
+                .limit();
+        flatRO.wrap(buffer,  0,  limit);
+        assertEquals(0x10000001, flatRO.TYPE_ID);
+        assertEquals(0x10000001, flatRO.typeId());
+    }
+
+    @Test
     public void shouldDefaultValues() throws Exception
     {
         int limit = flatRW.wrap(buffer, 0, 100)
