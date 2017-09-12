@@ -174,14 +174,13 @@
         <version>3.0.0</version>
         <executions>
           <execution>
-            <id>add-test-sources</id>
-            <phase>pre-integration-test</phase>
+            <phase>test-compile</phase>
             <goals>
               <goal>add-test-source</goal>
             </goals>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-flyweights</source>
+                <source>${project.build.directory}/generated-test-sources/test-reaktivity</source>
               </sources>
             </configuration>
           </execution>
@@ -211,7 +210,6 @@
         <version>1.6.0</version>
         <executions>
           <execution>
-            <id>Generate</id>
             <phase>generate-test-sources</phase>
             <goals>
               <goal>java</goal>
@@ -224,7 +222,7 @@
           <additionalClasspathElements>
             <additionalClasspathElement>${project.build.directory}/test-classes</additionalClasspathElement>
           </additionalClasspathElements>
-          <testSourceRoot>${project.build.directory}/generated-flyweights</testSourceRoot>
+          <testSourceRoot>${project.build.directory}/generated-test-sources/test-reaktivity</testSourceRoot>
         </configuration>
       </plugin>
     </plugins>

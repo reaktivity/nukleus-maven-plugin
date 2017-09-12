@@ -45,7 +45,7 @@ public class GenerateMojoTest
         configuration.addChild("scopeNames", "invalidOctetsNotLast");
         configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
         configuration.addChild("inputDirectory", "src/test/resources/test-project");
-        configuration.addChild("outputDirectory", "target/generated-flyweights");
+        configuration.addChild("outputDirectory", "target/generated-test-sources/test-reaktivity");
         rule.configureMojo(myMojo, configuration);
         myMojo.execute();
     }
@@ -63,7 +63,7 @@ public class GenerateMojoTest
         configuration.addChild("scopeNames", "invalidUnrecognizedType");
         configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
         configuration.addChild("inputDirectory", "src/test/resources/test-project");
-        configuration.addChild("outputDirectory", "target/generated-flyweights");
+        configuration.addChild("outputDirectory", "target/generated-test-sources/test-reaktivity");
         rule.configureMojo(myMojo, configuration);
         myMojo.execute();
     }
@@ -82,7 +82,7 @@ public class GenerateMojoTest
             configuration.addChild("scopeNames", "invalidOctetsNotLastNested");
             configuration.addChild("packageName", "org.reaktivity.reaktor.internal.test.types");
             configuration.addChild("inputDirectory", "src/test/resources/test-project");
-            configuration.addChild("outputDirectory", "target/generated-flyweights");
+            configuration.addChild("outputDirectory", "target/generated-test-sources/test-reaktivity");
             rule.configureMojo(myMojo, configuration);
             myMojo.execute();
     }

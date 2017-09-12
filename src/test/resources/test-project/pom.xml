@@ -21,7 +21,7 @@
           <scopeNames>scope1</scopeNames>
           <packageName>org.reaktivity.reaktor.internal.test.types</packageName>
           <inputDirectory>.</inputDirectory>
-          <outputDirectory>../../../../target/generated-flyweights</outputDirectory>
+          <outputDirectory>../../../../target/generated-test-sources/test-reaktivity</outputDirectory>
         </configuration>
         <executions>
           <execution>
