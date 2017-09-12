@@ -54,7 +54,7 @@ public class FlatFWTest
                 .build()
                 .limit();
         flatRO.wrap(buffer,  0,  limit);
-        assertEquals(0x10000001, flatRO.TYPE_ID);
+        assertEquals(0x10000001, FlatFW.TYPE_ID);
         assertEquals(0x10000001, flatRO.typeId());
     }
 
