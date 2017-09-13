@@ -45,9 +45,12 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Specifi
 
 class Parser
 {
-    private Consumer<String> error;
-    private Consumer<String> warn;
-    private Consumer<String> debug;
+    private static final Consumer<String> NO_OP = (s) ->
+    { };
+
+    private Consumer<String> error = System.err::println;
+    private Consumer<String> warn = NO_OP;
+    private Consumer<String> debug = NO_OP;
 
     Parser()
     {
