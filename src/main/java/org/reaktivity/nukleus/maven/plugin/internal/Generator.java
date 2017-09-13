@@ -26,6 +26,7 @@ import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
@@ -47,18 +48,17 @@ public class Generator
     private File outputDirectory = new File("target/generated-test-sources/test-reaktivity");
     private String packageName = "org.reaktivity.reaktor.internal.test.types";
 
-    private Parser parser = new Parser()
-            .debug(System.out::println)
-            .error(System.out::println)
-            .warn(System.out::println);
+    private Parser parser = new Parser();
 
     public static void main(
         String[] args) throws IOException
     {
         Generator generator = new Generator();
-        if (args.length > 0)
+        generator.error(System.out::println)
+                 .warn(System.out::println);
+        if (args.length > 0 && args[0].equals("-v"))
         {
-            generator.setOutputDirectory(new File(args[0]));
+            generator.debug(System.out::println);
         }
         generator.generate();
     }
@@ -101,25 +101,43 @@ public class Generator
             }
     }
 
-    public void setScopeNames(
+    Generator debug(Consumer<String> debug)
+    {
+        parser.debug(debug);
+        return this;
+    }
+
+    Generator error(Consumer<String> error)
+    {
+        parser.error(error);
+        return this;
+    }
+
+    Generator warn(Consumer<String> warn)
+    {
+        parser.warn(warn);
+        return this;
+    }
+
+    void setScopeNames(
         String scopeNames)
     {
         this.scopeNames = scopeNames;
     }
 
-    public void setPackageName(
+    void setPackageName(
         String packageName)
     {
         this.packageName = packageName;
     }
 
-    public void setInputDirectory(
+    void setInputDirectory(
         File inputDirectory)
     {
         this.inputDirectory = inputDirectory;
     }
 
-    public void setOutputDirectory(
+    void setOutputDirectory(
         File outputDirectory)
     {
         this.outputDirectory = outputDirectory;
