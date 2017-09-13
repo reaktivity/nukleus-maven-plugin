@@ -26,6 +26,8 @@ public abstract class TypeSpecGenerator<T extends TypeName>
 {
     protected static final AnnotationSpec GENERATED_ANNOTATION =
             AnnotationSpec.builder(Generated.class).addMember("value", "$S", "reaktivity").build();
+    protected static final AnnotationSpec SUPPRESS_WARNINGS_SERIAL =
+            AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "serial").build();
 
     protected final T thisName;
     protected final ClassName thisRawName;

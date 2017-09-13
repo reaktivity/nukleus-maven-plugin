@@ -713,7 +713,9 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
                         builder.addMethod(methodBuilder(name)
                                 .addModifiers(PRIVATE)
-                                .addStatement("return $LRW.wrap(buffer(), offset() + $L, $L)", name, offset(name), limit)
+                                .addStatement("int newLimit = $L", limit)
+                                .addStatement("checkLimit(newLimit, maxLimit())")
+                                .addStatement("return $LRW.wrap(buffer(), offset() + $L, newLimit)", name, offset(name))
                                 .returns(builderType)
                                 .build());
 

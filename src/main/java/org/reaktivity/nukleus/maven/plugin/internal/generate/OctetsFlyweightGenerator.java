@@ -24,6 +24,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -173,6 +174,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
         private MethodSpec resetMethod()
         {
             return methodBuilder("reset")
+                    .addAnnotation(AnnotationSpec.builder(Deprecated.class).build())
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addStatement("limit(offset())")
@@ -186,8 +188,10 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(octetsType, "value")
+                    .addStatement("int newLimit = offset() + value.sizeof()")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
-                    .addStatement("limit(offset() + value.sizeof())")
+                    .addStatement("limit(newLimit)")
                     .addStatement("return this")
                     .build();
         }
@@ -200,8 +204,10 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "value")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "length")
+                    .addStatement("int newLimit = offset() + length")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putBytes(offset(), value, offset, length)")
-                    .addStatement("limit(offset() + length)")
+                    .addStatement("limit(newLimit)")
                     .addStatement("return this")
                     .build();
         }
@@ -212,8 +218,10 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(byte[].class, "value")
+                    .addStatement("int newLimit = offset() + value.length")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putBytes(offset(), value)")
-                    .addStatement("limit(offset() + value.length)")
+                    .addStatement("limit(newLimit)")
                     .addStatement("return this")
                     .build();
         }
@@ -225,6 +233,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(visitorType, "visitor")
                     .addStatement("int length = visitor.visit(buffer(), offset(), maxLimit())")
+                    .addStatement("checkLimit(offset() + length, maxLimit())")
                     .addStatement("limit(offset() + length)")
                     .addStatement("return this")
                     .build();
@@ -237,6 +246,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(visitorType, "visitor")
                     .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
+                    .addStatement("checkLimit(limit() + length, maxLimit())")
                     .addStatement("limit(limit() + length)")
                     .addStatement("return this")
                     .build();
@@ -248,8 +258,10 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(octetsType, "value")
+                    .addStatement("int newLimit = limit() + value.sizeof()")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putBytes(limit(), value.buffer(), value.offset(), value.sizeof())")
-                    .addStatement("limit(limit() + value.sizeof())")
+                    .addStatement("limit(newLimit)")
                     .addStatement("return this")
                     .build();
         }
@@ -262,8 +274,10 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "value")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "length")
+                    .addStatement("int newLimit = limit() + length")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putBytes(limit(), value, offset, length)")
-                    .addStatement("limit(limit() + length)")
+                    .addStatement("limit(newLimit)")
                     .addStatement("return this")
                     .build();
         }
@@ -274,8 +288,10 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(octetsType.nestedClass("Builder"))
                     .addParameter(byte[].class, "value")
+                    .addStatement("int newLimit = limit() + value.length")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putBytes(limit(), value)")
-                    .addStatement("limit(limit() + value.length)")
+                    .addStatement("limit(newLimit)")
                     .addStatement("return this")
                     .build();
         }

@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static java.lang.String.format;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -151,10 +152,18 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         public TypeSpec build()
         {
-            return classBuilder.addMethod(constructor())
+            return classBuilder.addField(fieldValueSet())
+                    .addMethod(constructor())
                     .addMethod(wrapMethod())
                     .addMethod(setMethod())
                     .addMethod(setEnumMethod())
+                    .addMethod(buildMethod())
+                    .build();
+        }
+
+        private FieldSpec fieldValueSet()
+        {
+            return FieldSpec.builder(boolean.class, "valueSet", PRIVATE)
                     .build();
         }
 
@@ -185,7 +194,11 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(enumName.nestedClass("Builder"))
                     .addParameter(enumName, "value")
+                    .addStatement("int newLimit = offset() + value.sizeof()")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
+                    .addStatement("limit(newLimit)")
+                    .addStatement("valueSet = true")
                     .addStatement("return this")
                     .build();
         }
@@ -198,8 +211,26 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(enumTypeName, "value")
                     .addStatement("MutableDirectBuffer buffer = buffer()")
                     .addStatement("int offset = offset()")
+                    .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer.putByte(offset, (byte) value.ordinal())")
+                    .addStatement("limit(newLimit)")
+                    .addStatement("valueSet = true")
                     .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec buildMethod()
+        {
+            return methodBuilder("build")
+                    .addAnnotation(Override.class)
+                    .addModifiers(PUBLIC)
+                    .beginControlFlow("if (!valueSet)")
+                    .addStatement("throw new IllegalStateException($S)",
+                                  format("%s not set", enumTypeName.simpleName()))
+                    .endControlFlow()
+                    .addStatement("return super.build()")
+                    .returns(enumName)
                     .build();
         }
     }

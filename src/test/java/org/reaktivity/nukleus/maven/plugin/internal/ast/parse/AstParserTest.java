@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
@@ -33,6 +34,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_ty
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 
 public class AstParserTest
 {
@@ -115,6 +117,38 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseStructWithListMember()
+    {
+        NukleusParser parser = newParser("struct Person { string lastName; list<string> foreNames; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("Person")
+                .member(new AstMemberNode.Builder().type(AstType.STRING).name("lastName").build())
+                .member(new AstMemberNode.Builder().type(AstType.LIST).type(AstType.STRING).name("foreNames").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseStructWithUnboundedOctetsMember()
+    {
+        NukleusParser parser = newParser("struct Frame { string source; octets extension; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("Frame")
+                .member(new AstMemberNode.Builder().type(AstType.STRING).name("source").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).name("extension").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseStructWithString16Members()
     {
         NukleusParser parser = newParser("struct Person { string16 firstName; string16 lastName; }");
@@ -145,6 +179,73 @@ public class AstParserTest
         assertEquals(expected, actual);
     }
 
+    @Test(expected = ParseCancellationException.class)
+    public void shouldNotParseStructWithUnboundedListMemberNotLast()
+    {
+        NukleusParser parser = newParser("struct s {list<uint8> field1; uint8 field2;");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+    }
+
+    @Test(expected = ParseCancellationException.class)
+    public void shouldNotParseStructWithUnboundedOctetsMemberNotLast()
+    {
+        NukleusParser parser = newParser("struct s {octets field1; uint8 field2;");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+    }
+
+    @Test
+    public void shouldParseOctetsWithUint16SizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint16 size; octets[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(AstType.INT32)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseOctetsWithUint32SizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint32 size; octets[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT32).unsignedType(AstType.INT64)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseOctetsWithUint64SizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint64 size; octets[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
     @Test
     public void shouldParseInt64Member()
     {
@@ -161,6 +262,55 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseInt64MemberWithPositiveDefaultValue()
+    {
+        NukleusParser parser = newParser("int64 field = 123;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.INT64)
+                .name("field")
+                .defaultValue(123)
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseStructWithSomeMembersWithDefaultValues()
+    {
+        NukleusParser parser = newParser("struct Person { int16 field1; int16 field2 = -123; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("Person")
+                .member(new AstMemberNode.Builder().type(AstType.INT16).name("field1").build())
+                .member(new AstMemberNode.Builder().type(AstType.INT16).name("field2").defaultValue(-123).build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseInt64MemberWithNegativeDefaultValue()
+    {
+        NukleusParser parser = newParser("int64 field = -12;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.INT64)
+                .name("field")
+                .defaultValue(-12)
+                .build();
+
+        assertEquals(expected, actual);
+        assertEquals(-12, actual.defaultValue());
+    }
+
+    @Test
     public void shouldParseUint8Member()
     {
         NukleusParser parser = newParser("uint8 field;");
@@ -174,6 +324,30 @@ public class AstParserTest
                 .build();
 
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseUint8MemberWithPositiveDefaultValue()
+    {
+        NukleusParser parser = newParser("uint8 field = 12;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.UINT8)
+                .unsignedType(AstType.INT32)
+                .name("field")
+                .defaultValue(12)
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test(expected = ParseCancellationException.class)
+    public void shouldNotParseUint8MemberWithNegativeDefaultValue()
+    {
+        NukleusParser parser = newParser("uint8 field = -1;");
+        parser.member();
     }
 
     @Test
@@ -207,6 +381,21 @@ public class AstParserTest
         assertEquals(expected, actual);
     }
 
+    // @Test TODO: not yet supported
+    public void shouldParseStringMemberWithLength()
+    {
+        NukleusParser parser = newParser("string<10> field;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.STRING)
+                .name("field")
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
     @Test
     public void shouldParseString16Member()
     {
@@ -226,8 +415,8 @@ public class AstParserTest
     public void shouldParseListMember()
     {
         NukleusParser parser = newParser("list<string> field;");
-        MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        Unbounded_memberContext ctx = parser.unbounded_member();
+        AstMemberNode actual = new AstParser().visitUnbounded_member(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.LIST)
@@ -242,8 +431,8 @@ public class AstParserTest
     public void shouldParseListMemberString16()
     {
         NukleusParser parser = newParser("list<string16> field;");
-        MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        Unbounded_memberContext ctx = parser.unbounded_member();
+        AstMemberNode actual = new AstParser().visitUnbounded_member(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.LIST)
