@@ -34,7 +34,7 @@ definition
 
 positive_int_const
    : HEX_LITERAL
-   | INTEGER_LITERAL
+   | UNSIGNED_INTEGER_LITERAL
    ;
 
 type_decl
@@ -52,19 +52,12 @@ type_spec
 
 simple_type_spec
    : base_type_spec
-   | template_type_spec
    | scoped_name
    ;
 
 base_type_spec
    : integer_type
    | octets_type
-   | string_type
-   | string16_type
-   ;
-
-template_type_spec
-   : list_type
    | string_type
    | string16_type
    ;
@@ -84,11 +77,19 @@ declarator
    ;
 
 integer_type
+   : signed_integer_type
+   | unsigned_integer_type
+   ;
+
+signed_integer_type
    : int8_type
    | int16_type
    | int32_type
    | int64_type
-   | uint8_type
+   ;
+
+unsigned_integer_type
+   : uint8_type
    | uint16_type
    | uint32_type
    | uint64_type
@@ -128,7 +129,10 @@ uint64_type
 
 octets_type
    : KW_OCTETS LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | KW_OCTETS
+   ;
+
+unbounded_octets_type
+   : KW_OCTETS
    ;
 
 enum_type
@@ -152,15 +156,42 @@ enum_value
    ;
 
 struct_type
-   : KW_STRUCT ID (KW_EXTENDS scoped_name)? (LEFT_SQUARE_BRACKET int_literal RIGHT_SQUARE_BRACKET)? LEFT_BRACE member_list RIGHT_BRACE
+   : KW_STRUCT ID (KW_EXTENDS scoped_name)? (LEFT_SQUARE_BRACKET type_id RIGHT_SQUARE_BRACKET)? LEFT_BRACE member_list RIGHT_BRACE
    ;
 
+type_id
+   : uint_literal
+   ;
+   
 member_list
-   : member *
+   : member * unbounded_member?
    ;
 
 member
    : type_spec declarators SEMICOLON
+   | uint_member SEMICOLON
+   | int_member SEMICOLON
+   ;
+   
+uint_member
+   : unsigned_integer_type declarator EQUALS uint_literal
+   ;
+   
+int_member 
+   : signed_integer_type declarator EQUALS int_literal
+   ;
+   
+unbounded_member
+   : unbounded_list_member
+   | unbounded_octets_member
+   ;
+   
+unbounded_octets_member
+   : unbounded_octets_type declarators SEMICOLON
+   ;
+   
+unbounded_list_member
+   : unbounded_list_type declarators SEMICOLON
    ;
 
 union_type
@@ -172,33 +203,45 @@ case_list
    ;
 
 case_member
-   : KW_CASE int_literal COLON member
+   : KW_CASE uint_literal COLON member
    ;
 
-list_type
+/* Bounded list type, not yet supported:
+list_type 
    : KW_LIST LEFT_ANG_BRACKET simple_type_spec COMMA positive_int_const RIGHT_ANG_BRACKET
-   | KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
+   ;
+*/
+   
+unbounded_list_type
+   : KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
    ;
 
 string_type
-   : KW_STRING LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
-   | KW_STRING
+   : /* KW_STRING LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
+   | */ KW_STRING
    ;
 
 string16_type
-   : KW_STRING16 LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
-   | KW_STRING16
+   : /* KW_STRING16 LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
+   | */ KW_STRING16
    ;
 
 int_literal
-   : INTEGER_LITERAL
+   : MINUS ? uint_literal
+   ;
+   
+MINUS
+   : '-'
+   ;
+
+uint_literal
+   : UNSIGNED_INTEGER_LITERAL
    | HEX_LITERAL
    ;
 
-INTEGER_LITERAL
+UNSIGNED_INTEGER_LITERAL
    : ('0' | '1' .. '9' '0' .. '9'*) INTEGER_TYPE_SUFFIX?
    ;
-
 
 HEX_LITERAL
    : '0' ('x' | 'X') HEX_DIGIT + INTEGER_TYPE_SUFFIX?
@@ -237,6 +280,10 @@ COLON
 
 COMMA
    : ','
+   ;
+
+EQUALS
+   : '='
    ;
 
 

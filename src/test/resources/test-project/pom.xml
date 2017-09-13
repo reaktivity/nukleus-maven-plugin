@@ -1,0 +1,38 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.reaktivity</groupId>
+  <artifactId>test-mojo</artifactId>
+  <version>anything</version>
+  <name>Mojo Testing</name>
+  <description>Project for testing nukleus-maven-plugin mojos</description>
+  <url>https://github.com/reaktivity/reaktor.java</url>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.reaktivity</groupId>
+        <artifactId>nukleus-maven-plugin</artifactId>
+        <version>anything</version>
+        <configuration>
+          <scopeNames>test</scopeNames>
+          <packageName>org.reaktivity.reaktor.internal.test.types</packageName>
+          <inputDirectory>.</inputDirectory>
+          <outputDirectory>../../../../target/generated-test-sources/test-reaktivity</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
+
