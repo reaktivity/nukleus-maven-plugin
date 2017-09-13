@@ -55,6 +55,9 @@ public final class GenerateMojo extends AbstractMojo
     protected void executeImpl() throws IOException
     {
         Generator generator = new Generator();
+        generator.debug(getLog()::debug);
+        generator.error(getLog()::error);
+        generator.warn(getLog()::warn);
         generator.setPackageName(packageName);
         generator.setInputDirectory(inputDirectory);
         generator.setOutputDirectory(outputDirectory);
