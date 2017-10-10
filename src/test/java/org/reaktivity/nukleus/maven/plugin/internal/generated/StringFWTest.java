@@ -19,8 +19,7 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
-import javax.xml.bind.DatatypeConverter;
-
+import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
@@ -78,7 +77,7 @@ public class StringFWTest
             byte[] bytes = new byte[1 + LENGTH_SIZE];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(10 + LENGTH_SIZE));
         }
     }
@@ -97,7 +96,7 @@ public class StringFWTest
             byte[] bytes = new byte[1 + LENGTH_SIZE];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(10 + LENGTH_SIZE));
         }
     }
@@ -117,7 +116,7 @@ public class StringFWTest
             byte[] bytes = new byte[1 + LENGTH_SIZE];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(10 + LENGTH_SIZE));
         }
     }
