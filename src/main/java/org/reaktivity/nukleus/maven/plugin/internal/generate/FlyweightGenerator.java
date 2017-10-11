@@ -46,8 +46,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
     {
         super(flyweightType);
 
-        this.classBuilder = classBuilder(thisName).addModifiers(PUBLIC, ABSTRACT)
-                .addAnnotation(GENERATED_ANNOTATION);
+        this.classBuilder = classBuilder(thisName).addModifiers(PUBLIC, ABSTRACT);
         this.builderClassBuilder = new BuilderClassBuilder(thisName);
     }
 

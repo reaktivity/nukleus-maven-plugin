@@ -54,8 +54,7 @@ public final class ListFlyweightGenerator extends ParameterizedTypeSpecGenerator
         TypeVariableName itemType = typeVarT.withBounds(flyweightType);
 
         this.classBuilder = classBuilder(thisRawName).superclass(flyweightType)
-                .addTypeVariable(itemType).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(GENERATED_ANNOTATION);
+                .addTypeVariable(itemType).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
     }
 

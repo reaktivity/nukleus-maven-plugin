@@ -69,8 +69,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         super(unionName);
 
         this.baseName = baseName;
-        this.builder = classBuilder(unionName).superclass(flyweightName).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(GENERATED_ANNOTATION);
+        this.builder = classBuilder(unionName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
         this.memberKindConstant = new KindConstantGenerator(unionName, builder);
         this.memberSizeConstant = new MemberSizeConstantGenerator(unionName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(unionName, builder);
