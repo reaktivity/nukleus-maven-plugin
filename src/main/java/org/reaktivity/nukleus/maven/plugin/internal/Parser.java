@@ -29,8 +29,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
@@ -121,8 +122,8 @@ class Parser
     {
         try (InputStream input = resource.openStream())
         {
-            ANTLRInputStream ais = new ANTLRInputStream(input);
-            NukleusLexer lexer = new NukleusLexer(ais);
+            CharStream chars = CharStreams.fromStream(input);
+            NukleusLexer lexer = new NukleusLexer(chars);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             NukleusParser parser = new NukleusParser(tokens);
             parser.setErrorHandler(new BailErrorStrategy());

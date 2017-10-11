@@ -38,8 +38,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     {
         super(enumTypeName);
 
-        this.builder = enumBuilder(enumTypeName).addModifiers(PUBLIC)
-                .addAnnotation(GENERATED_ANNOTATION);
+        this.builder = enumBuilder(enumTypeName).addModifiers(PUBLIC);
         this.nameConstant = new NameConstantGenerator(enumTypeName, builder);
         this.valueOfMethod = new ValueOfMethodGenerator(enumTypeName);
     }

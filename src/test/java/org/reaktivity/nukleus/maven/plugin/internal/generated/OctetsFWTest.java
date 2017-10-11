@@ -20,8 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import javax.xml.bind.DatatypeConverter;
-
+import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
@@ -71,7 +70,7 @@ public class OctetsFWTest
             byte[] bytes = new byte[2];
             buffer.getBytes(10, bytes);
             // Memory does get written beyond maxLimit in this case because the visitor violated the contract
-            assertNotEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertNotEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(11));
         }
     }
@@ -90,7 +89,7 @@ public class OctetsFWTest
             byte[] bytes = new byte[2];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(11));
         }
     }
@@ -109,7 +108,7 @@ public class OctetsFWTest
             byte[] bytes = new byte[2];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(11));
         }
     }
@@ -171,7 +170,7 @@ public class OctetsFWTest
             byte[] bytes = new byte[2];
             buffer.getBytes(10, bytes);
             // Memory does get written beyond maxLimit in this case because the visitor violated the contract
-            assertNotEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertNotEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(11));
         }
     }
@@ -191,7 +190,7 @@ public class OctetsFWTest
             byte[] bytes = new byte[2];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(11));
         }
     }
@@ -211,7 +210,7 @@ public class OctetsFWTest
             byte[] bytes = new byte[2];
             buffer.getBytes(10, bytes);
             // Make sure memory was not written beyond maxLimit
-            assertEquals("Buffer shows memory was written beyond maxLimit: " + DatatypeConverter.printHexBinary(bytes),
+            assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(11));
         }
     }

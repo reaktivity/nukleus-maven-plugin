@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -91,6 +93,15 @@ public class Generator
             typeSpecs.add(new ListFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
             System.out.println("Generating to " + outputDirectory);
+
+            if (outputDirectory.exists())
+            {
+                Files.walk(outputDirectory.toPath())
+                     .map(Path::toFile)
+                     .filter(File::isFile)
+                     .forEach(f -> f.setWritable(true));
+            }
+
             for (TypeSpecGenerator<?> typeSpec : typeSpecs)
             {
                 JavaFile sourceFile = JavaFile.builder(typeSpec.className().packageName(), typeSpec.generate())
@@ -98,6 +109,14 @@ public class Generator
                         .skipJavaLangImports(true)
                         .build();
                 sourceFile.writeTo(outputDirectory);
+            }
+
+            if (outputDirectory.exists())
+            {
+                Files.walk(outputDirectory.toPath())
+                     .map(Path::toFile)
+                     .filter(File::isFile)
+                     .forEach(f -> f.setWritable(false));
             }
     }
 

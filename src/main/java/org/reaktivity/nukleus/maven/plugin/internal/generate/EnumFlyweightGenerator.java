@@ -48,8 +48,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         super(enumName);
 
         this.enumTypeName = enumTypeName;
-        this.classBuilder = classBuilder(thisName).superclass(flyweightName).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(GENERATED_ANNOTATION);
+        this.classBuilder = classBuilder(thisName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName);
     }
 

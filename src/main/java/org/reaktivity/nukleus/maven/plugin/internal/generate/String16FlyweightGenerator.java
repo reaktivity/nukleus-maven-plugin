@@ -46,8 +46,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
     {
         super(flyweightType.peerClass("String16FW"));
 
-        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(GENERATED_ANNOTATION);
+        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
     }
 

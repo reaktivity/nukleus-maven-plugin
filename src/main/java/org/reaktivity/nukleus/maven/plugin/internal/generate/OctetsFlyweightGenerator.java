@@ -44,8 +44,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
         super(flyweightType.peerClass("OctetsFW"));
 
         this.visitorRawType = flyweightType.nestedClass("Visitor");
-        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL)
-                .addAnnotation(GENERATED_ANNOTATION);
+        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
     }
 
