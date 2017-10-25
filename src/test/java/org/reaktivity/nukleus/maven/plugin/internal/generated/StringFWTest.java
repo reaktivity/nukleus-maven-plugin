@@ -121,11 +121,26 @@ public class StringFWTest
         }
     }
 
-    @Test(expected = NullPointerException.class)
-    public void shouldFailToSetToNull() throws Exception
+    @Test
+    public void shouldSetToNull() throws Exception
     {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(null, UTF_8)
+                .build()
+                .limit();
+        assertEquals(1, limit);
+        stringRO.wrap(buffer,  0,  limit);
+        assertEquals(LENGTH_SIZE, stringRO.limit());
+        assertEquals(LENGTH_SIZE, stringRO.sizeof());
+        assertEquals(null, stringRO.asString());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToBuildLargeString() throws Exception
+    {
+        String str = String.format("%270s", "0");
         stringRW.wrap(buffer, 0, buffer.capacity())
-                .set(null, UTF_8);
+                .set(str, UTF_8);
     }
 
     @Test
