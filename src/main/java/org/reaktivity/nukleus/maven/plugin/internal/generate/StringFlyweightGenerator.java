@@ -277,7 +277,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .beginControlFlow("if (!valueSet)")
-                    .addStatement("set(\"\", $T.UTF_8)", StandardCharsets.class)
+                    .addStatement("set(null, $T.UTF_8)", StandardCharsets.class)
                     .endControlFlow()
                     .addStatement("return super.build()")
                     .returns(stringType)
