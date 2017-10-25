@@ -162,6 +162,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addMethod(setMethod())
                     .addMethod(setDirectBufferMethod())
                     .addMethod(setStringMethod())
+                    .addMethod(checkLengthMethod())
                     .addMethod(buildMethod())
                     .build();
         }
@@ -218,10 +219,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                     .addParameter(int.class, "srcOffset")
                     .addParameter(int.class, "length")
-                    .beginControlFlow("if (length >= 255)")
-                    .addStatement("throw new IllegalArgumentException("+
-                            "String.format(\"length '%d' too big for String field (length < 255)\", length))")
-                    .endControlFlow()
+                    .addStatement("checkLength(length)")
                     .addStatement("int offset = offset()")
                     .addStatement("int newLimit = offset + length + FIELD_SIZE_LENGTH")
                     .addStatement("checkLimit(newLimit, maxLimit())")
@@ -246,11 +244,8 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("buffer().putByte(offset(), (byte) -1)")
                     .addStatement("limit(newLimit)")
                     .nextControlFlow("else")
-                    .beginControlFlow("if (value.length() >= 255)")
-                    .addStatement("throw new IllegalArgumentException("+
-                            "String.format(\"Value '%s' too big for String field (length < 255)\", value))")
-                    .endControlFlow()
                     .addStatement("byte[] charBytes = value.getBytes(charset)")
+                    .addStatement("checkLength(charBytes.length)")
                     .addStatement("int newLimit = offset() + FIELD_SIZE_LENGTH + charBytes.length")
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putByte(offset(), (byte) charBytes.length)")
@@ -259,6 +254,20 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .endControlFlow()
                     .addStatement("valueSet = true")
                     .addStatement("return this")
+                    .build();
+        }
+
+        private MethodSpec checkLengthMethod()
+        {
+            return methodBuilder("checkLength")
+                    .addModifiers(PRIVATE)
+                    .addParameter(int.class, "length")
+                    .addStatement("final int maxLength = 254")
+                    .beginControlFlow("if (length > maxLength)")
+                    .addStatement(
+                            "final String msg = String.format(\"length=%d is beyond maximum length=%d\", length, maxLength)")
+                    .addStatement("throw new IllegalArgumentException(msg)")
+                    .endControlFlow()
                     .build();
         }
 
