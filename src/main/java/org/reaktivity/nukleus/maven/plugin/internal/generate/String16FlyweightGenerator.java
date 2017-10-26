@@ -260,7 +260,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec checkLengthMethod()
         {
             return methodBuilder("checkLength")
-                    .addModifiers(PRIVATE)
+                    .addModifiers(PRIVATE, STATIC)
                     .addParameter(int.class, "length")
                     .addStatement("final int maxLength = 65534")
                     .beginControlFlow("if (length > maxLength)")
