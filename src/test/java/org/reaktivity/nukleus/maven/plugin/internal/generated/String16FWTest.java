@@ -29,7 +29,7 @@ public class String16FWTest
 {
     private static final int LENGTH_SIZE = 2;
 
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100000))
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
@@ -121,11 +121,34 @@ public class String16FWTest
         }
     }
 
-    @Test(expected = NullPointerException.class)
-    public void shouldFailToSetToNull() throws Exception
+    @Test
+    public void shouldSetToNull() throws Exception
     {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                            .set(null, UTF_8)
+                            .build()
+                            .limit();
+        assertEquals(2, limit);
+        stringRO.wrap(buffer,  0,  limit);
+        assertEquals(LENGTH_SIZE, stringRO.limit());
+        assertEquals(LENGTH_SIZE, stringRO.sizeof());
+        assertEquals(null, stringRO.asString());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToBuildLargeString() throws Exception
+    {
+        String str = String.format("%65535s", "0");
         stringRW.wrap(buffer, 0, buffer.capacity())
-                .set(null, UTF_8);
+                .set(str, UTF_8);
+    }
+
+    @Test
+    public void shouldBuildLargeString() throws Exception
+    {
+        String str = String.format("%65534s", "0");
+        stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(str, UTF_8);
     }
 
     @Test

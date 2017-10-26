@@ -269,8 +269,8 @@ public class FlatFWTest
         assertEquals("value2", flatRO.string2().asString());
     }
 
-    @Test(expected = NullPointerException.class)
-    public void shouldFailSetStringValuesToNull() throws Exception
+    @Test
+    public void shouldSetStringValuesToNull() throws Exception
     {
         flatRW.wrap(buffer, 0, buffer.capacity())
             .fixed1(10)
