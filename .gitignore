@@ -11,5 +11,3 @@ buildNumber.properties
 .project
 .settings/
 .checkstyle
-.idea/
-*.iml
