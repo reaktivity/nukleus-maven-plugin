@@ -897,20 +897,22 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 if ("StringFW".equals(className.simpleName()) || "String16FW".equals(className.simpleName()))
                 {
                     CodeBlock.Builder codeBlock = CodeBlock.builder();
+                    ClassName builderType = className.nestedClass("Builder");
 
                     // TODO: handle optional fields
                     codeBlock.beginControlFlow("if (value == null)")
                         .addStatement("limit(offset() + $L)", offset(name))
                         .nextControlFlow("else")
                         .addStatement("kind($L)", kind(name))
-                        .addStatement("$L().set(value, $T.UTF_8)", name, StandardCharsets.class);
+                        .addStatement("$T $L = $L()", builderType, name, name)
+                        .addStatement("$L.set(value, $T.UTF_8)", name, StandardCharsets.class);
 
                     if (nextType instanceof ParameterizedTypeName)
                     {
-                        codeBlock.addStatement("$L($L().build().limit())", nextName, name);
+                        codeBlock.addStatement("$L($L.build().limit())", nextName, name);
                     }
 
-                    codeBlock.addStatement("limit($L().build().limit())", name)
+                    codeBlock.addStatement("limit($L.build().limit())", name)
                         .endControlFlow()
                         .addStatement("return this");
 
