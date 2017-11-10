@@ -33,6 +33,14 @@ public class GenerateMojoTest
     }
 
     @Test(expected = ParseCancellationException.class)
+    public void shouldNotGenerateInvalidStructIntArrayLengthFieldNotUnsigned()
+        throws Exception
+    {
+        generator.scopeNames("invalidIntArrayLengthNotUnsigned")
+            .generate();
+    }
+
+    @Test(expected = ParseCancellationException.class)
     public void shouldNotGenerateInvalidStructOctetsNotLast()
         throws Exception
     {

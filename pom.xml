@@ -156,6 +156,7 @@
         <version>2.17</version>
         <configuration>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <excludes>**/generated/handcrafted/*</excludes>
         </configuration>
         <executions>
           <execution>

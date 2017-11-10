@@ -75,7 +75,7 @@ declarators
 declarator
    : ID
    ;
-
+   
 integer_type
    : signed_integer_type
    | unsigned_integer_type
@@ -171,6 +171,7 @@ member
    : type_spec declarators SEMICOLON
    | uint_member SEMICOLON
    | int_member SEMICOLON
+   | integer_array_member SEMICOLON
    ;
    
 uint_member
@@ -179,6 +180,17 @@ uint_member
    
 int_member 
    : signed_integer_type declarator EQUALS int_literal
+   ;
+   
+integer_array_member
+   : int8_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   | int16_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   | int32_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   | int64_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   | uint8_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   | uint16_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   | uint32_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   | uint64_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
    ;
    
 unbounded_member

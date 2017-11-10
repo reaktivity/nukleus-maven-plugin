@@ -40,6 +40,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int64_t
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
@@ -248,6 +249,21 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.defaultValue(parseInt(ctx.int_literal()));
         return super.visitInt_member(ctx);
+    }
+
+    @Override
+    public AstNode visitInteger_array_member(
+        Integer_array_memberContext ctx)
+    {
+        if (ctx.positive_int_const() != null)
+        {
+            memberBuilder.size(Integer.parseInt(ctx.positive_int_const().getText()));
+        }
+        else if (ctx.ID() != null)
+        {
+            memberBuilder.sizeName(ctx.ID().getText());
+        }
+        return super.visitInteger_array_member(ctx);
     }
 
     @Override

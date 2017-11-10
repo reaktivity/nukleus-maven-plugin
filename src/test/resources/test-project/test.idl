@@ -72,6 +72,38 @@ scope test
             int64 signed64 = -64;
         }
     
+        struct IntegerFixedArrays
+        {
+            uint8  unsigned8[1];
+            uint16 unsigned16[2];
+            uint32 unsigned32[3];
+            uint64 unsigned64[4];
+            int8  signed8[1];
+            int16 signed16[2];
+            int32 signed32[3];
+            int64 signed64[4];
+        }
+    
+        struct IntegerVariableArrays
+        {
+            uint16 unsigned8Length;
+            uint8  unsigned8[4];
+            uint8 unsigned16Length;
+            uint16 unsigned16[4];
+            uint64 unsigned32Length;
+            uint32 unsigned32[4];
+            uint32 unsigned64Length;
+            uint64 unsigned64[4];
+            uint16 signed8Length;
+            int8  signed8[4];
+            uint8 signed16Length;
+            int16 signed16[4];
+            uint64 signed32Length;
+            int32 signed32[4];
+            uint32 signed64Length;
+            int64 signed64[4];
+        }
+    
         struct NestedAllDefaulting
         {
             uint8 fixed1 = 11;
