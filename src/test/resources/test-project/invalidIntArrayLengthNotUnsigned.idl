@@ -17,8 +17,8 @@ scope invalidIntArrayLengthNotUnsigned
 {
     struct InvalidIntegerArray
     {
-        signed8 length;
-        int64[length] longArray;
+        int8 length;
+        uint64[length] longArray;
     }
     
 }

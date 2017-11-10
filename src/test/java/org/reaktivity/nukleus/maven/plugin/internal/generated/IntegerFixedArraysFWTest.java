@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -191,7 +192,9 @@ public class IntegerFixedArraysFWTest
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
                 .unsigned8(0, 10)
+                .unsigned16(0, 10)
                 .unsigned16(1, 20)
+                .unsigned32(1, 20)
                 .unsigned32(2, 30)
                 .unsigned64(3, 40)
                 .signed8(0, (byte) -10)
@@ -201,8 +204,31 @@ public class IntegerFixedArraysFWTest
                 .build();
         flyweightRO.wrap(buffer,  0,  100);
         assertEquals(10, flyweightRO.unsigned8(0));
+        assertEquals(10, flyweightRO.unsigned16(0));
+        assertEquals(20, flyweightRO.unsigned16(1));
+        assertEquals(20, flyweightRO.unsigned32(1));
+        assertEquals(30, flyweightRO.unsigned32(2));
         assertEquals(0L, flyweightRO.signed64(2));
         assertEquals(-40L, flyweightRO.signed64(3));
+    }
+
+    @Test
+    public void shouldConvertToString() throws Exception
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .unsigned8(0, 10)
+        .unsigned16(1, 20)
+        .unsigned32(2, 30)
+        .unsigned64(3, 40)
+        .signed8(0, (byte) -10)
+        .signed16(1, (short) -20)
+        .signed32(2, -30)
+        .signed64(2, -40)
+        .signed64(3, -80)
+        .build();
+        flyweightRO.wrap(buffer,  0,  100);
+        assertTrue(flyweightRO.toString().contains("unsigned32=[0, 0, 30]"));
+        assertTrue(flyweightRO.toString().contains("signed64=[0, 0, -40, -80]"));
     }
 
 }

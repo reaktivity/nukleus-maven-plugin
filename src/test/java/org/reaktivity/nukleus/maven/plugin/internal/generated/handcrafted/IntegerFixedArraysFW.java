@@ -235,11 +235,9 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
         throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned8\"", value));
       }
       checkFieldsSet(0, INDEX_UNSIGNED8);
-      int newLimit = limit() + FIELD_SIZE_UNSIGNED8 * ARRAY_SIZE_UNSIGNED8;
-      checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_UNSIGNED8, limit(), newLimit);
-      buffer().putByte(limit() + index * FIELD_SIZE_UNSIGNED8, (byte)(value & 0xFF));
-      limit(newLimit);
+      int length = FIELD_SIZE_UNSIGNED8 * ARRAY_SIZE_UNSIGNED8;
+      initializeIfNotSet(INDEX_UNSIGNED8, length);
+      buffer().putByte(limit() - length + index * FIELD_SIZE_UNSIGNED8, (byte)(value & 0xFF));
       return this;
     }
 
@@ -251,11 +249,9 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
         throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned16\"", value));
       }
       checkFieldsSet(0, INDEX_UNSIGNED16);
-      int newLimit = limit() + FIELD_SIZE_UNSIGNED16 * ARRAY_SIZE_UNSIGNED16;
-      checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_UNSIGNED16, limit(), newLimit);
-      buffer().putShort(limit() + index * FIELD_SIZE_UNSIGNED16, (short)(value & 0xFFFF), ByteOrder.BIG_ENDIAN);
-      limit(newLimit);
+      int length = FIELD_SIZE_UNSIGNED16 * ARRAY_SIZE_UNSIGNED16;
+      initializeIfNotSet(INDEX_UNSIGNED16, length);
+      buffer().putShort(limit() - length + index * FIELD_SIZE_UNSIGNED16, (short)(value & 0xFFFF), ByteOrder.BIG_ENDIAN);
       return this;
     }
 
@@ -267,11 +263,9 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
         throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned32\"", value));
       }
       checkFieldsSet(0, INDEX_UNSIGNED32);
-      int newLimit = limit() + FIELD_SIZE_UNSIGNED32 * ARRAY_SIZE_UNSIGNED32;
-      checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_UNSIGNED32, limit(), newLimit);
-      buffer().putInt(limit()+ index * FIELD_SIZE_UNSIGNED32, (int)(value & 0xFFFF_FFFF), ByteOrder.BIG_ENDIAN);
-      limit(newLimit);
+      int length = FIELD_SIZE_UNSIGNED32 * ARRAY_SIZE_UNSIGNED32;
+      initializeIfNotSet(INDEX_UNSIGNED32, length);
+      buffer().putInt(limit() - length + index * FIELD_SIZE_UNSIGNED32, (int)(value & 0xFFFF_FFFF), ByteOrder.BIG_ENDIAN);
       return this;
     }
 
@@ -283,11 +277,9 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
         throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned64\"", value));
       }
       checkFieldsSet(0, INDEX_UNSIGNED64);
-      int newLimit = limit() + FIELD_SIZE_UNSIGNED64 * ARRAY_SIZE_UNSIGNED64;
-      checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_UNSIGNED64, limit(), newLimit);
-      buffer().putLong(limit() + index * FIELD_SIZE_UNSIGNED64, value);
-      limit(newLimit);
+      int length = FIELD_SIZE_UNSIGNED64 * ARRAY_SIZE_UNSIGNED64;
+      initializeIfNotSet(INDEX_UNSIGNED64, length);
+      buffer().putLong(limit() - length + index * FIELD_SIZE_UNSIGNED64, value);
       return this;
     }
 
@@ -299,11 +291,9 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
         throw new IllegalArgumentException(String.format("Value %d too high for field \"signed8\"", value));
       }
       checkFieldsSet(0, INDEX_SIGNED8);
-      int newLimit = limit() + FIELD_SIZE_SIGNED8 * ARRAY_SIZE_SIGNED8;
-      checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_SIGNED8, limit(), newLimit);
-      buffer().putByte(limit() + index * FIELD_SIZE_SIGNED8, value);
-      limit(newLimit);
+      int length = FIELD_SIZE_SIGNED8 * ARRAY_SIZE_SIGNED8;
+      initializeIfNotSet(INDEX_SIGNED8, length);
+      buffer().putByte(limit() - length + index * FIELD_SIZE_SIGNED8, value);
       return this;
     }
 
@@ -315,12 +305,10 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
         throw new IllegalArgumentException(String.format("Value %d too high for field \"signed16\"", value));
       }
       checkFieldsSet(0, INDEX_SIGNED16);
-      int newLimit = limit() + FIELD_SIZE_SIGNED16 * ARRAY_SIZE_SIGNED16;
-      checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_SIGNED16, limit(), newLimit);
-      buffer().putShort(limit() + index * FIELD_SIZE_SIGNED16, value);
+      int length = FIELD_SIZE_SIGNED16 * ARRAY_SIZE_SIGNED16;
+      initializeIfNotSet(INDEX_SIGNED16, length);
+      buffer().putShort(limit() - length + index * FIELD_SIZE_SIGNED16, value);
       fieldsSet.set(INDEX_SIGNED16);
-      limit(newLimit);
       return this;
     }
 
@@ -334,8 +322,9 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
       checkFieldsSet(0, INDEX_SIGNED32);
       int newLimit = limit() + FIELD_SIZE_SIGNED32 * ARRAY_SIZE_SIGNED32;
       checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_SIGNED32, limit(), newLimit);
-      buffer().putInt(limit() + index * FIELD_SIZE_SIGNED32, value);
+      int length = FIELD_SIZE_SIGNED32 * ARRAY_SIZE_SIGNED32;
+      initializeIfNotSet(INDEX_SIGNED32, length);
+      buffer().putInt(limit() - length + index * FIELD_SIZE_SIGNED32, value);
       fieldsSet.set(INDEX_SIGNED32);
       limit(newLimit);
       return this;
@@ -349,12 +338,10 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
         throw new IllegalArgumentException(String.format("Value %d too high for field \"signed64\"", value));
       }
       checkFieldsSet(0, INDEX_SIGNED64);
-      int newLimit = limit() + FIELD_SIZE_SIGNED64 * ARRAY_SIZE_SIGNED64;
-      checkLimit(newLimit, maxLimit());
-      initializeIfNotSet(INDEX_SIGNED64, limit(), newLimit);
-      buffer().putLong(limit() + index * FIELD_SIZE_SIGNED64, value);
+      int length = FIELD_SIZE_SIGNED64 * ARRAY_SIZE_SIGNED64;
+      initializeIfNotSet(INDEX_SIGNED64, length);
+      buffer().putLong(limit() - length + index * FIELD_SIZE_SIGNED64, value);
       fieldsSet.set(INDEX_SIGNED64);
-      limit(newLimit);
       return this;
     }
 
@@ -391,11 +378,13 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
 
     private void initializeIfNotSet(
         int index,
-        int limit,
-        int newLimit)
+        int length)
     {
         if (!fieldsSet.get(index)) {
-            buffer().setMemory(limit, newLimit - limit, (byte) 0);
+            int newLimit = limit() + length;
+            checkLimit(newLimit, maxLimit());
+            buffer().setMemory(limit(), length, (byte) 0);
+            limit(newLimit);
             fieldsSet.set(index);
         }
     }

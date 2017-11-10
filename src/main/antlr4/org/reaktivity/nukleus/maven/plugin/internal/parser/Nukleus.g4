@@ -183,14 +183,14 @@ int_member
    ;
    
 integer_array_member
-   : int8_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | int16_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | int32_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | int64_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | uint8_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | uint16_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | uint32_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
-   | uint64_type declarator LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET
+   : int8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
+   | int16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
+   | int32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
+   | int64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
+   | uint8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
+   | uint16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
+   | uint32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
+   | uint64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator
    ;
    
 unbounded_member

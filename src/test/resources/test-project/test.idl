@@ -74,34 +74,23 @@ scope test
     
         struct IntegerFixedArrays
         {
-            uint8  unsigned8[1];
-            uint16 unsigned16[2];
-            uint32 unsigned32[3];
-            uint64 unsigned64[4];
-            int8  signed8[1];
-            int16 signed16[2];
-            int32 signed32[3];
-            int64 signed64[4];
+            uint8[1]  unsigned8;
+            uint16[2] unsigned16;
+            uint32[3] unsigned32;
+            uint64[4] unsigned64;
+            int8[1]  signed8;
+            int16[2] signed16;
+            int32[3] signed32;
+            int64[4] signed64;
         }
     
         struct IntegerVariableArrays
         {
-            uint16 unsigned8Length;
-            uint8  unsigned8[4];
-            uint8 unsigned16Length;
-            uint16 unsigned16[4];
-            uint64 unsigned32Length;
-            uint32 unsigned32[4];
+            uint8  fixed1 = 0;
             uint32 unsigned64Length;
-            uint64 unsigned64[4];
-            uint16 signed8Length;
-            int8  signed8[4];
+            uint64[unsigned64Length] unsigned64;
             uint8 signed16Length;
-            int16 signed16[4];
-            uint64 signed32Length;
-            int32 signed32[4];
-            uint32 signed64Length;
-            int64 signed64[4];
+            int16[signed16Length] signed16;
         }
     
         struct NestedAllDefaulting

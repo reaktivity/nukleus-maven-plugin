@@ -32,7 +32,7 @@ public class GenerateMojoTest
     {
     }
 
-    @Test(expected = ParseCancellationException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void shouldNotGenerateInvalidStructIntArrayLengthFieldNotUnsigned()
         throws Exception
     {
