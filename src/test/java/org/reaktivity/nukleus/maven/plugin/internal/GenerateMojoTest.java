@@ -33,10 +33,26 @@ public class GenerateMojoTest
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void shouldNotGenerateInvalidStructIntArrayLengthFieldNotUnsigned()
+    public void shouldNotGenerateInvalidIntArrayLengthHasDefault()
+        throws Exception
+    {
+        generator.scopeNames("invalidIntArrayLengthHasDefault")
+            .generate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGenerateInvalidIntArrayLengthNotUnsigned()
         throws Exception
     {
         generator.scopeNames("invalidIntArrayLengthNotUnsigned")
+            .generate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGenerateInvalidIntArrayWithDefaultLengthNotSigned()
+        throws Exception
+    {
+        generator.scopeNames("invalidIntArrayWithDefaultLengthNotSigned")
             .generate();
     }
 
@@ -48,14 +64,6 @@ public class GenerateMojoTest
             .generate();
     }
 
-    @Test // TODO: (expected = ParseCancellationException.class)
-    public void shouldNotGenerateUnrecognizedType()
-        throws Exception
-    {
-        generator.scopeNames("invalidUnrecognizedType")
-            .generate();
-    }
-
     @Test(expected = ParseCancellationException.class)
     @Ignore("TODO: validate this in the grammar by defining unbounded_struct_type")
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()
@@ -64,4 +72,13 @@ public class GenerateMojoTest
             generator.scopeNames("invalidOctetsNotLastNested")
                 .generate();
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGenerateUnrecognizedType()
+        throws Exception
+    {
+        generator.scopeNames("invalidUnrecognizedType")
+            .generate();
+    }
+
 }

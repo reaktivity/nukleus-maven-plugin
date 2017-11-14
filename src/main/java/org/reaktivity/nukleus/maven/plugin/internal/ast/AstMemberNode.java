@@ -30,6 +30,7 @@ public final class AstMemberNode extends AstNode
     private final int size;
     private final String sizeName;
     private final AstType unsignedType;
+    private boolean hasDefault;
     private final Object defaultValue;
     private boolean usedAsSize;
 
@@ -39,6 +40,7 @@ public final class AstMemberNode extends AstNode
         int size,
         String sizeName,
         AstType unsignedType,
+        boolean hasDefault,
         Object defaultValue)
     {
         this.name = requireNonNull(name);
@@ -46,6 +48,7 @@ public final class AstMemberNode extends AstNode
         this.size = size;
         this.sizeName = sizeName;
         this.unsignedType = unsignedType;
+        this.hasDefault = hasDefault;
         this.defaultValue = defaultValue;
     }
 
@@ -86,6 +89,11 @@ public final class AstMemberNode extends AstNode
         return sizeName;
     }
 
+    public boolean hasDefault()
+    {
+        return hasDefault;
+    }
+
     public Object defaultValue()
     {
         return defaultValue;
@@ -116,6 +124,7 @@ public final class AstMemberNode extends AstNode
                 Objects.deepEquals(this.types, that.types) &&
                 Objects.equals(this.unsignedType, that.unsignedType) &&
                 Objects.equals(this.sizeName, that.sizeName) &&
+                this.hasDefault == that.hasDefault &&
                 Objects.equals(this.defaultValue, that.defaultValue);
     }
 
@@ -155,6 +164,7 @@ public final class AstMemberNode extends AstNode
         private int size;
         private String sizeName;
         private AstType unsignedType;
+        private boolean hasDefault;
         private Integer defaultValue;
 
         public Builder()
@@ -198,13 +208,20 @@ public final class AstMemberNode extends AstNode
             int defaultValue)
         {
             this.defaultValue = defaultValue;
+            this.hasDefault = true;
+            return this;
+        }
+
+        public  Builder defaultToNull()
+        {
+            this.hasDefault = true;
             return this;
         }
 
         @Override
         public AstMemberNode build()
         {
-            return new AstMemberNode(name, types, size, sizeName, unsignedType, defaultValue);
+            return new AstMemberNode(name, types, size, sizeName, unsignedType, hasDefault, defaultValue);
         }
     }
 }

@@ -32,6 +32,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Default_nullContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int16_typeContext;
@@ -39,7 +40,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int32_t
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
@@ -55,7 +56,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_literalContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_list_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
@@ -236,19 +237,19 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitUint_member(
-        Uint_memberContext ctx)
+    public AstNode visitUint_member_with_default(
+        Uint_member_with_defaultContext ctx)
     {
         memberBuilder.defaultValue(parseInt(ctx.uint_literal()));
-        return super.visitUint_member(ctx);
+        return super.visitUint_member_with_default(ctx);
     }
 
     @Override
-    public AstNode visitInt_member(
-        Int_memberContext ctx)
+    public AstNode visitInt_member_with_default(
+        Int_member_with_defaultContext ctx)
     {
         memberBuilder.defaultValue(parseInt(ctx.int_literal()));
-        return super.visitInt_member(ctx);
+        return super.visitInt_member_with_default(ctx);
     }
 
     @Override
@@ -264,6 +265,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             memberBuilder.sizeName(ctx.ID().getText());
         }
         return super.visitInteger_array_member(ctx);
+    }
+
+    @Override
+    public AstNode visitDefault_null(
+        Default_nullContext ctx)
+    {
+        memberBuilder.defaultToNull();
+        return super.visitDefault_null(ctx);
     }
 
     @Override

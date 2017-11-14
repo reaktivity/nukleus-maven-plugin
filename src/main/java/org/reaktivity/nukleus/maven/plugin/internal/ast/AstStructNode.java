@@ -131,9 +131,6 @@ public final class AstStructNode extends AstNode
 
         public Builder member(AstMemberNode member)
         {
-            // TODO: validate member.sizeName() if non-null (must be prior to this field in the structure
-            // and must be one of the uint types) and mark the referenced field as "used for size"
-            // so code generator can stash its value in its setter
             if (member.sizeName() != null)
             {
                 final String target = member.sizeName();
@@ -141,7 +138,20 @@ public final class AstStructNode extends AstNode
                 if (sizeField.isPresent())
                 {
                     AstMemberNode size = sizeField.get();
-                    if (size.unsignedType() == null)
+                    if (size.hasDefault())
+                    {
+                        throw new IllegalArgumentException(format(
+                                "Size field \"%s\" for field \"%s\" must not have a default value's",
+                                member.sizeName(), member.name()));
+                    }
+                    boolean defaultsToNull = member.hasDefault();
+                    if (defaultsToNull && !size.type().isSignedInteger())
+                    {
+                        throw new IllegalArgumentException(format(
+                                "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
+                                member.sizeName(), member.name()));
+                    }
+                    else if (!defaultsToNull && size.unsignedType() == null)
                     {
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" must be an unsigned integer type",

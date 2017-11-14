@@ -66,7 +66,7 @@ public class FlatWithOctetsFWTest
                 .build()
                 .limit();
         flatWithOctetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, flatWithOctetsRO.length());
+        assertEquals(6, flatWithOctetsRO.lengthOctets2());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

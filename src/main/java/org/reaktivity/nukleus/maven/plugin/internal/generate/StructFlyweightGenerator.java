@@ -40,6 +40,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntBinaryOperator;
@@ -108,17 +110,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         int size,
         String sizeName,
         boolean usedAsSize,
+        boolean hasDefault,
         Object defaultValue)
     {
-        memberOffsetConstant.addMember(name, type, unsignedType);
+        memberOffsetConstant.addMember(name, type, unsignedType, size, sizeName);
         memberSizeConstant.addMember(name, type, unsignedType);
-        memberField.addMember(name, type, unsignedType);
+        memberField.addMember(name, type, unsignedType, size, sizeName);
         memberAccessor.addMember(name, type, unsignedType);
 
         limitMethod.addMember(name, type, unsignedType);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName);
         toStringMethod.addMember(name, type, unsignedType);
-        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, defaultValue);
+        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, hasDefault, defaultValue);
 
         return this;
     }
@@ -230,7 +233,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         public MemberOffsetConstantGenerator addMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            int size,
+            String sizeName)
         {
             builder.addField(
                     FieldSpec.builder(int.class, offset(name), PUBLIC, STATIC, FINAL)
@@ -238,7 +243,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                      ? "0" : String.format("%s + %s", offset(previousName), size(previousName)))
                              .build());
 
-            previousName = type.isPrimitive() ? name : null;
+            boolean isPrimitive = type.isPrimitive() && size == -1 && sizeName == null;
+            previousName = isPrimitive ? name : null;
 
             return this;
         }
@@ -246,6 +252,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
     private static final class MemberFieldGenerator extends ClassSpecMixinGenerator
     {
+        private boolean generateIntPrimitiveIterator;
+        private boolean generateLongPrimitiveIterator;
+
         private MemberFieldGenerator(
             ClassName thisType,
             TypeSpec.Builder builder)
@@ -256,31 +265,118 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         public MemberFieldGenerator addMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            int size,
+            String sizeName)
         {
-            if (!type.isPrimitive())
+            if (type.isPrimitive())
             {
-                String fieldRO = String.format("%sRO", name);
-                Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL);
-
-                if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
+                if (size != -1 || sizeName != null)
                 {
-                    fieldBuilder.initializer("new $T(new byte[0])", UNSAFE_BUFFER_TYPE);
+                    addIntegerArrayMember(name, type, unsignedType);
                 }
-                else if (type instanceof ParameterizedTypeName)
-                {
-                    ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
-                    TypeName typeArgument = parameterizedType.typeArguments.get(0);
-                    fieldBuilder.initializer("new $T(new $T())", type, typeArgument);
-                }
-                else
-                {
-                    fieldBuilder.initializer("new $T()", type);
-                }
-
-                builder.addField(fieldBuilder.build());
+            }
+            else
+            {
+                addNonPrimitiveMember(name, type, unsignedType);
             }
             return this;
+        }
+
+        private void addIntegerArrayMember(
+            String name,
+            TypeName type,
+            TypeName unsignedType)
+        {
+            builder.addField(TypeName.INT, dynamicLimit(name), PRIVATE);
+            TypeName generateType = (unsignedType != null) ? unsignedType : type;
+            if (generateType == TypeName.LONG)
+            {
+                generateLongPrimitiveIterator = true;
+            }
+            else
+            {
+                generateIntPrimitiveIterator = true;
+            }
+        }
+
+        private MemberFieldGenerator addNonPrimitiveMember(
+            String name,
+            TypeName type,
+            TypeName unsignedType)
+        {
+            String fieldRO = String.format("%sRO", name);
+            Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL);
+
+            if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
+            {
+                fieldBuilder.initializer("new $T(new byte[0])", UNSAFE_BUFFER_TYPE);
+            }
+            else if (type instanceof ParameterizedTypeName)
+            {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                TypeName typeArgument = parameterizedType.typeArguments.get(0);
+                fieldBuilder.initializer("new $T(new $T())", type, typeArgument);
+            }
+            else
+            {
+                fieldBuilder.initializer("new $T()", type);
+            }
+
+            builder.addField(fieldBuilder.build());
+            return this;
+        }
+
+        @Override
+        public TypeSpec.Builder build()
+        {
+            if (generateIntPrimitiveIterator)
+            {
+                ClassName intIterator = thisType.nestedClass("IntPrimitiveIterator");
+                TypeSpec.Builder builder = classBuilder(intIterator.simpleName())
+                        .addModifiers(PRIVATE, FINAL)
+                        .addSuperinterface(ClassName.get(PrimitiveIterator.OfInt.class));
+                builder.addField(String.class, "fieldName", PRIVATE, FINAL);
+                builder.addField(int.class, "offset", PRIVATE, FINAL);
+                builder.addField(int.class, "fieldSize", PRIVATE, FINAL);
+                builder.addField(int.class, "count", PRIVATE, FINAL);
+                builder.addField(int.class, "index", PRIVATE);
+
+                builder.addMethod(constructorBuilder()
+                        .addParameter(String.class, "fieldName")
+                        .addParameter(int.class, "offset")
+                        .addParameter(int.class, "fieldSize")
+                        .addParameter(int.class, "count")
+                        .addStatement("this.fieldName = fieldName")
+                        .addStatement("this.offset = offset")
+                        .addStatement("this.fieldSize = fieldSize")
+                        .addStatement("this.count = count")
+                        .build());
+
+                builder.addMethod(MethodSpec.methodBuilder("hasNext")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .returns(boolean.class)
+                        .addStatement("return index < count")
+                        .build());
+
+                builder.addMethod(MethodSpec.methodBuilder("nextInt")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .returns(int.class)
+                        .beginControlFlow("if (!hasNext())")
+                        .addStatement("throw new NoSuchElementException(fieldName + \": \" + index)")
+                        .endControlFlow()
+                        .addStatement("return buffer().getInt(offset + fieldSize * index++)")
+                        .build());
+
+                MemberFieldGenerator.this.builder.addType(builder.build());
+            }
+            if (generateLongPrimitiveIterator)
+            {
+
+            }
+            return super.build();
         }
     }
 
@@ -659,18 +755,21 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             int size,
             String sizeName,
             boolean usedAsSize,
+            boolean hasDefault,
             Object defaultValue)
         {
             if (usedAsSize)
             {
                 defaultValue = 0;
+                hasDefault = true;
             }
-            memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
-            memberField.addMember(name, type, unsignedType, usedAsSize);
-            memberAccessor.addMember(name, type, unsignedType, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
+            memberConstant.addMember(name, type, unsignedType, size, sizeName, hasDefault, defaultValue);
+            memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize);
+            memberAccessor.addMember(name, type, unsignedType, size, sizeName, hasDefault,
+                    priorDefaulted, priorDefaultedIsPrimitive);
             memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, priorDefaulted,
                     priorDefaultedIsPrimitive);
-            if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
+            if (hasDefault || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
                 priorDefaultedIsPrimitive = type.isPrimitive();
@@ -775,15 +874,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .build();
         }
 
+        private static String appendMethodName(
+            String fieldName)
+        {
+            return String.format("append%s", initCap(fieldName));
+        }
+
         private static String defaultName(
             String fieldName)
         {
             return String.format("DEFAULT_%s", constant(fieldName));
-        }
-
-        private static String initCap(String value)
-        {
-            return Character.toUpperCase(value.charAt(0)) + value.substring(1);
         }
 
         private static boolean isImplicitlyDefaulted(
@@ -840,6 +940,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String sizeName,
+                boolean hasDefault,
                 Object defaultValue)
             {
                 builder.addField(
@@ -847,18 +948,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                  .initializer(Integer.toString(nextIndex++))
                                  .build());
                 fieldNames.add(name);
-                if (defaultValue != null)
+                boolean isOctetsType = type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName());
+                if (hasDefault)
                 {
                     TypeName generateType = (unsignedType != null) ? unsignedType : type;
                     builder.addField(
                             FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
-                                     .initializer(defaultValue.toString())
+                                     .initializer(Objects.toString(defaultValue))
                                      .build());
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
-                else if ((type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName())
-                           && size < 0 && sizeName == null)
-                          || (type instanceof ParameterizedTypeName && "ListFW".equals(
+                else if ((isOctetsType && size < 0 && sizeName == null)
+                         || (type instanceof ParameterizedTypeName && "ListFW".equals(
                                   ((ParameterizedTypeName) type).rawType.simpleName()))
                         )
                 {
@@ -912,15 +1013,24 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
+                int size,
+                String sizeName,
                 boolean usedAsSize)
             {
                 if (usedAsSize)
                 {
-                    TypeName generateType = unsignedType != null ? unsignedType : type;
-                    builder.addField(FieldSpec.builder(generateType, dynamicOffset(name), PRIVATE)
+                    builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
                             .build());
                 }
-                else if (!type.isPrimitive())
+                else if (type.isPrimitive())
+                {
+                    if (size != -1 || sizeName != null)
+                    {
+                        builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
+                                .build());
+                    }
+                }
+                else
                 {
                     String fieldRW = String.format("%sRW", name);
 
@@ -973,6 +1083,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String sizeName,
+                boolean hasDefault,
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
@@ -995,6 +1106,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                 priorFieldIfDefaulted,
                                 priorDefaultedIsPrimitive);
                     }
+                }
+                else if (type.isPrimitive() && (size != -1 || sizeName != null))
+                {
+                    addIntegerArrayType(name,
+                            type,
+                            unsignedType,
+                            size,
+                            sizeName,
+                            hasDefault,
+                            priorFieldIfDefaulted,
+                            priorDefaultedIsPrimitive);
                 }
                 return this;
             }
@@ -1077,12 +1199,63 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addCode(code.build())
                         .build());
             }
+
+            private void addIntegerArrayType(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                int size,
+                String sizeName,
+                boolean hasDefault,
+                String priorFieldIfDefaulted,
+                boolean priorDefaultedIsPrimitive)
+            {
+
+                CodeBlock.Builder code = CodeBlock.builder();
+                code.addStatement("checkFieldNotSet($L)", index(name));
+                TypeName inputType = (unsignedType != null) ? unsignedType : type;
+                TypeName iteratorType = inputType == TypeName.LONG ? ClassName.get(PrimitiveIterator.OfLong.class)
+                        : ClassName.get(PrimitiveIterator.OfInt.class);
+                if (priorFieldIfDefaulted != null)
+                {
+                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    if (priorDefaultedIsPrimitive)
+                    {
+                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                    }
+                    else
+                    {
+                        //  Attempt to default the entire object. This will fail if it has any required fields.
+                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
+                    }
+                    code.endControlFlow();
+                }
+                if (hasDefault)
+                {
+                    code.beginControlFlow("if (values == null || !values.hasNext())");
+                    // TODO: Set limit if length field does not immediately precede this field
+                    code.addStatement("$L(values == null ? -1 : 0)", methodName(sizeName));
+                    code.addStatement("checkFieldsSet(0, $L)", index(name));
+                    code.addStatement("fieldsSet.set($L)", index(name));
+                    code.nextControlFlow("else");
+                    code.beginControlFlow("while (values.hasNext())");
+                    code.endControlFlow();
+                    code.endControlFlow();
+                }
+                code.addStatement("return this");
+
+                builder.addMethod(methodBuilder(methodName(name))
+                        .addModifiers(PUBLIC)
+                        .addParameter(iteratorType, "values")
+                        .returns(thisType)
+                        .addCode(code.build())
+                        .build());
+            }
         }
 
         private static final class MemberMutatorGenerator extends ClassSpecMixinGenerator
         {
             private static final Map<TypeName, String> PUTTER_NAMES;
-            private static final Map<TypeName, String[]> SIGNED_INT_RANGES;
             private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
 
             static
@@ -1097,18 +1270,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 putterNames.put(TypeName.LONG, "putLong");
                 PUTTER_NAMES = unmodifiableMap(putterNames);
 
-                Map<TypeName, String[]> signed = new HashMap<>();
-                signed.put(TypeName.BYTE, new String[]{"Byte.MIN_VALUE", "Byte.MAX_VALUE"});
-                signed.put(TypeName.SHORT, new String[]{"Short.MIN_VALUE", "Short.MAX_VALUE"});
-                signed.put(TypeName.INT, new String[]{"Integer.MIN_VALUE", "Integer.MAX_VALUE"});
-                signed.put(TypeName.LONG, new String[]{"Long.MIN_VALUE", "Long.MAX_VALUE"});
-                SIGNED_INT_RANGES = unmodifiableMap(signed);
-
                 Map<TypeName, String[]> unsigned = new HashMap<>();
                 unsigned.put(TypeName.BYTE, new String[]{"0", "0XFF"});
                 unsigned.put(TypeName.SHORT, new String[]{"0", "0xFFFF"});
                 unsigned.put(TypeName.INT, new String[]{"0", "0xFFFFFFFFL"});
-                unsigned.put(TypeName.LONG, new String[]{"0L", "Long.MAX_VALUE"});
+                unsigned.put(TypeName.LONG, new String[]{"0L", null});
                 UNSIGNED_INT_RANGES = unmodifiableMap(unsigned);
             }
 
@@ -1129,9 +1295,26 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
+//                System.out.println(String.format("name=%s, type=%s, unsignedType=%s, usedAsSize=%b, size=%d, sizeName=%s",
+//                        name, type, unsignedType, usedAsSize, size, sizeName));
                 if (type.isPrimitive())
                 {
-                    addPrimitiveMember(name, type, unsignedType, usedAsSize, priorDefaulted, priorDefaultedIsPrimitive);
+                    if (sizeName != null)
+                    {
+                        addIntegerVariableArrayMember(name, type, unsignedType, sizeName, priorDefaulted,
+                                priorDefaultedIsPrimitive);
+                    }
+                    else if (size != -1)
+                    {
+                        addIntegerFixedArrayMember(name, type, unsignedType, size, priorDefaulted,
+                                priorDefaultedIsPrimitive);
+
+                    }
+                    else
+                    {
+                        addPrimitiveMember(name, type, unsignedType, usedAsSize, priorDefaulted, priorDefaultedIsPrimitive);
+                    }
+
                 }
                 else
                 {
@@ -1166,23 +1349,21 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("checkFieldNotSet($L)", index(name));
                 }
-                String[] range;
-                if (unsignedType == null)
+                if (unsignedType != null)
                 {
-                    range = SIGNED_INT_RANGES.get(type);
-                }
-                else
-                {
-                    range = UNSIGNED_INT_RANGES.get(type);
-                }
-                code.beginControlFlow("if (value < $L)", range[0])
+                    String[] range = UNSIGNED_INT_RANGES.get(type);
+                    code.beginControlFlow("if (value < $L)", range[0])
                     .addStatement("throw new IllegalArgumentException(String.format($S, value))",
                             format("Value %%d too low for field \"%s\"", name))
-                    .endControlFlow()
-                    .beginControlFlow("if (value > $L)", range[1])
-                    .addStatement("throw new IllegalArgumentException(String.format($S, value))",
-                            format("Value %%d too high for field \"%s\"", name))
                     .endControlFlow();
+                    if (range[1] != null)
+                    {
+                        code.beginControlFlow("if (value > $L)", range[1])
+                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                            format("Value %%d too high for field \"%s\"", name))
+                        .endControlFlow();
+                    }
+                }
 
                 if (priorFieldIfDefaulted != null)
                 {
@@ -1240,6 +1421,116 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(usedAsSize ? PRIVATE : PUBLIC)
                         .addParameter(generateType, "value")
+                        .returns(thisType)
+                        .addCode(code.build())
+                        .build());
+            }
+
+            private void addIntegerFixedArrayMember(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                int size,
+                String priorFieldIfDefaulted,
+                boolean priorDefaultedIsPrimitive)
+            {
+
+            }
+
+            private void addIntegerVariableArrayMember(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                String sizeName,
+                String priorFieldIfDefaulted,
+                boolean priorDefaultedIsPrimitive)
+            {
+                String putterName = PUTTER_NAMES.get(type);
+                if (putterName == null)
+                {
+                    throw new IllegalStateException("member type not supported: " + type);
+                }
+
+                TypeName inputType = (unsignedType != null) ? unsignedType : type;
+                CodeBlock.Builder code = CodeBlock.builder();
+                if (unsignedType != null)
+                {
+                    String[] range = UNSIGNED_INT_RANGES.get(type);
+                    code.beginControlFlow("if (value < $L)", range[0])
+                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                                format("Value %%d too low for field \"%s\"", name))
+                    .endControlFlow();
+                    if (range[1] != null)
+                    {
+                        code.beginControlFlow("if (value > $L)", range[1])
+                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                                format("Value %%d too high for field \"%s\"", name))
+                        .endControlFlow();
+                    }
+                }
+
+                code.beginControlFlow("if (!fieldsSet.get($L))", index(name));
+
+                if (priorFieldIfDefaulted != null)
+                {
+                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    if (priorDefaultedIsPrimitive)
+                    {
+                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                    }
+                    else
+                    {
+                        //  Attempt to default the entire object. This will fail if it has any required fields.
+                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
+                    }
+                    code.endControlFlow();
+                }
+                code.addStatement("fieldsSet.set($L)", index(sizeName))
+                    .addStatement("checkFieldsSet(0, $L)", index(name))
+                    .addStatement("$L = limit()", dynamicOffset(name))
+                    .addStatement("fieldsSet.set($L)", index(name))
+                .endControlFlow();
+
+                code.addStatement("int newLimit = limit() + $L", size(name))
+                    .addStatement("checkLimit(newLimit, maxLimit())")
+                    .add("$[")
+                    .add("buffer().$L(limit(), ", putterName);
+                if (inputType != type)
+                {
+                    code.add("($T)", type);
+
+                    if (type == TypeName.BYTE)
+                    {
+                        code.add("(value & 0xFF))");
+                    }
+                    else if (type == TypeName.SHORT)
+                    {
+                        code.add("(value & 0xFFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                    }
+                    else if (type == TypeName.INT)
+                    {
+                        code.add("(value & 0xFFFF_FFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                    }
+                    else
+                    {
+                        code.add("value)");
+                    }
+                }
+                else
+                {
+                    code.add("value)");
+                }
+                code.add(";\n$]");
+                code.addStatement("fieldsSet.set($L)", index(name))
+                    .addStatement("limit($L)", dynamicOffset(sizeName))
+                    .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name))
+                    .addStatement("$L(newSize)", methodName(sizeName))
+                    .addStatement("limit(newLimit)")
+                    .addStatement("return this");
+
+                builder.addMethod(methodBuilder(appendMethodName(name))
+                        .addModifiers(PUBLIC)
+                        .addParameter(inputType, "value")
                         .returns(thisType)
                         .addCode(code.build())
                         .build());
@@ -1634,6 +1925,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         return String.format("INDEX_%s", constant(fieldName));
     }
 
+    private static String initCap(String value)
+    {
+        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
+    }
+
     private static String offset(
         String fieldName)
     {
@@ -1650,6 +1946,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         String fieldName)
     {
         return fieldName.replaceAll("([^_A-Z])([A-Z])", "$1_$2").toUpperCase();
+    }
+
+    private static String dynamicLimit(String fieldName)
+    {
+        return "limit" + initCap(fieldName);
     }
 
     private static String methodName(String name)
