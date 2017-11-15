@@ -1,207 +1,300 @@
-/**
- * Copyright 2016-2017 The Reaktivity Project
- *
- * The Reaktivity Project licenses this file to you under the Apache License,
- * version 2.0 (the "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at:
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations
- * under the License.
- */
+// TODO: license
 package org.reaktivity.nukleus.maven.plugin.internal.generated.handcrafted;
 
-import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
-import java.util.function.IntFunction;
-
+import java.util.NoSuchElementException;
+import java.util.PrimitiveIterator;
+import java.util.function.IntToLongFunction;
+import java.util.function.IntUnaryOperator;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.IntegerVariableArraysFW.Builder;
 
 public final class IntegerFixedArraysFW extends Flyweight {
-  public static final int FIELD_OFFSET_UNSIGNED8 = 0;
+  public static final int FIELD_OFFSET_UINT8_ARRAY = 0;
 
-  private static final int FIELD_SIZE_UNSIGNED8 = BitUtil.SIZE_OF_BYTE;
+  private static final int FIELD_SIZE_UINT8_ARRAY = BitUtil.SIZE_OF_BYTE;
 
-  private static final int ARRAY_SIZE_UNSIGNED8 = 1;
+  private static final int ARRAY_SIZE_UINT8_ARRAY = 1;
 
-  public static final int FIELD_OFFSET_UNSIGNED16 = FIELD_OFFSET_UNSIGNED8 + FIELD_SIZE_UNSIGNED8 * ARRAY_SIZE_UNSIGNED8;
+  public static final int FIELD_OFFSET_UINT16_ARRAY = FIELD_OFFSET_UINT8_ARRAY + (FIELD_SIZE_UINT8_ARRAY * ARRAY_SIZE_UINT8_ARRAY);
 
-  private static final int FIELD_SIZE_UNSIGNED16 = BitUtil.SIZE_OF_SHORT;
+  private static final int FIELD_SIZE_UINT16_ARRAY = BitUtil.SIZE_OF_SHORT;
 
-  private static final int ARRAY_SIZE_UNSIGNED16 = 2;
+  private static final int ARRAY_SIZE_UINT16_ARRAY = 2;
 
-  public static final int FIELD_OFFSET_UNSIGNED32 = FIELD_OFFSET_UNSIGNED16 + FIELD_SIZE_UNSIGNED16 * ARRAY_SIZE_UNSIGNED16;
+  public static final int FIELD_OFFSET_UINT32_ARRAY = FIELD_OFFSET_UINT16_ARRAY + (FIELD_SIZE_UINT16_ARRAY * ARRAY_SIZE_UINT16_ARRAY);
 
-  private static final int FIELD_SIZE_UNSIGNED32 = BitUtil.SIZE_OF_INT;
+  private static final int FIELD_SIZE_UINT32_ARRAY = BitUtil.SIZE_OF_INT;
 
-  private static final int ARRAY_SIZE_UNSIGNED32 = 3;
+  private static final int ARRAY_SIZE_UINT32_ARRAY = 3;
 
-  public static final int FIELD_OFFSET_UNSIGNED64 = FIELD_OFFSET_UNSIGNED32 + FIELD_SIZE_UNSIGNED32 * ARRAY_SIZE_UNSIGNED32;
+  public static final int FIELD_OFFSET_UINT64_ARRAY = FIELD_OFFSET_UINT32_ARRAY + (FIELD_SIZE_UINT32_ARRAY * ARRAY_SIZE_UINT32_ARRAY);
 
-  private static final int FIELD_SIZE_UNSIGNED64 = BitUtil.SIZE_OF_LONG;
+  private static final int FIELD_SIZE_UINT64_ARRAY = BitUtil.SIZE_OF_LONG;
 
-  private static final int ARRAY_SIZE_UNSIGNED64 = 4;
+  private static final int ARRAY_SIZE_UINT64_ARRAY = 4;
 
-  public static final int FIELD_OFFSET_SIGNED8 = FIELD_OFFSET_UNSIGNED64 + FIELD_SIZE_UNSIGNED64 * ARRAY_SIZE_UNSIGNED64;
+  public static final int FIELD_OFFSET_ANCHOR = FIELD_OFFSET_UINT64_ARRAY + (FIELD_SIZE_UINT64_ARRAY * ARRAY_SIZE_UINT64_ARRAY);
 
-  private static final int FIELD_SIZE_SIGNED8 = BitUtil.SIZE_OF_BYTE;
+  public static final int FIELD_OFFSET_INT8_ARRAY = 0;
 
-  private static final int ARRAY_SIZE_SIGNED8 = 1;
+  private static final int FIELD_SIZE_INT8_ARRAY = BitUtil.SIZE_OF_BYTE;
 
-  public static final int FIELD_OFFSET_SIGNED16 = FIELD_OFFSET_SIGNED8 + FIELD_SIZE_SIGNED8 * ARRAY_SIZE_SIGNED8;
+  private static final int ARRAY_SIZE_INT8_ARRAY = 1;
 
-  private static final int FIELD_SIZE_SIGNED16 = BitUtil.SIZE_OF_SHORT;
+  public static final int FIELD_OFFSET_INT16_ARRAY = FIELD_OFFSET_INT8_ARRAY + (FIELD_SIZE_INT8_ARRAY * ARRAY_SIZE_INT8_ARRAY);
 
-  private static final int ARRAY_SIZE_SIGNED16 = 2;
+  private static final int FIELD_SIZE_INT16_ARRAY = BitUtil.SIZE_OF_SHORT;
 
-  public static final int FIELD_OFFSET_SIGNED32 = FIELD_OFFSET_SIGNED16 + FIELD_SIZE_SIGNED16 * ARRAY_SIZE_SIGNED16;
+  private static final int ARRAY_SIZE_INT16_ARRAY = 2;
 
-  private static final int FIELD_SIZE_SIGNED32 = BitUtil.SIZE_OF_INT;
+  public static final int FIELD_OFFSET_INT32_ARRAY = FIELD_OFFSET_INT16_ARRAY + (FIELD_SIZE_INT16_ARRAY * ARRAY_SIZE_INT16_ARRAY);
 
-  private static final int ARRAY_SIZE_SIGNED32 = 3;
+  private static final int FIELD_SIZE_INT32_ARRAY = BitUtil.SIZE_OF_INT;
 
-  public static final int FIELD_OFFSET_SIGNED64 = FIELD_OFFSET_SIGNED32 + FIELD_SIZE_SIGNED32 * ARRAY_SIZE_SIGNED32;
+  private static final int ARRAY_SIZE_INT32_ARRAY = 3;
 
-  private static final int FIELD_SIZE_SIGNED64 = BitUtil.SIZE_OF_LONG;
+  public static final int FIELD_OFFSET_INT64_ARRAY = FIELD_OFFSET_INT32_ARRAY + (FIELD_SIZE_INT32_ARRAY * ARRAY_SIZE_INT32_ARRAY);
 
-  private static final int ARRAY_SIZE_SIGNED64 = 4;
+  private static final int FIELD_SIZE_INT64_ARRAY = BitUtil.SIZE_OF_LONG;
 
-  public int unsigned8(int index) {
-    checkIndex(index, 0, 4);
-    return buffer().getByte(offset() + FIELD_OFFSET_UNSIGNED8 + index * FIELD_SIZE_UNSIGNED8) & 0xFF;
+  private static final int ARRAY_SIZE_INT64_ARRAY = 4;
+
+  private IntPrimitiveIterator iteratorUint8Array;
+
+  private IntPrimitiveIterator iteratorUint16Array;
+
+  private LongPrimitiveIterator iteratorUint32Array;
+
+  private LongPrimitiveIterator iteratorUint64Array;
+
+  private final StringFW anchorRO = new StringFW();
+
+  private IntPrimitiveIterator iteratorInt8Array;
+
+  private IntPrimitiveIterator iteratorInt16Array;
+
+  private IntPrimitiveIterator iteratorInt32Array;
+
+  private LongPrimitiveIterator iteratorInt64Array;
+
+  public PrimitiveIterator.OfInt uint8Array() {
+    iteratorUint8Array.index = 0;
+    return iteratorUint8Array;
   }
 
-  public int unsigned16(int index) {
-    return buffer().getShort(offset() + FIELD_OFFSET_UNSIGNED16 + index * FIELD_SIZE_UNSIGNED16, ByteOrder.BIG_ENDIAN) & 0xFFFF;
+  public PrimitiveIterator.OfInt uint16Array() {
+    iteratorUint16Array.index = 0;
+    return iteratorUint16Array;
   }
 
-  public long unsigned32(int index) {
-    return buffer().getInt(offset() + FIELD_OFFSET_UNSIGNED32 + index * FIELD_SIZE_UNSIGNED32, ByteOrder.BIG_ENDIAN) & 0xFFFF_FFFF;
+  public PrimitiveIterator.OfLong uint32Array() {
+    iteratorUint32Array.index = 0;
+    return iteratorUint32Array;
   }
 
-  public long unsigned64(int index) {
-    return buffer().getLong(offset() + FIELD_OFFSET_UNSIGNED64 + index * FIELD_SIZE_UNSIGNED64);
+  public PrimitiveIterator.OfLong uint64Array() {
+    iteratorUint64Array.index = 0;
+    return iteratorUint64Array;
   }
 
-  public byte signed8(int index) {
-    return buffer().getByte(offset() + FIELD_OFFSET_SIGNED8 + index * FIELD_SIZE_SIGNED8);
+  public StringFW anchor() {
+    return anchorRO;
   }
 
-  public short signed16(int index) {
-    return buffer().getShort(offset() + FIELD_OFFSET_SIGNED16 + index * FIELD_SIZE_SIGNED16);
+  public PrimitiveIterator.OfInt int8Array() {
+    iteratorInt8Array.index = 0;
+    return iteratorInt8Array;
   }
 
-  public int signed32(int index) {
-    return buffer().getInt(offset() + FIELD_OFFSET_SIGNED32 + index * FIELD_SIZE_SIGNED32);
+  public PrimitiveIterator.OfInt int16Array() {
+    iteratorInt16Array.index = 0;
+    return iteratorInt16Array;
   }
 
-  public long signed64(int index) {
-    return buffer().getLong(offset() + FIELD_OFFSET_SIGNED64 + index * FIELD_SIZE_SIGNED64);
+  public PrimitiveIterator.OfInt int32Array() {
+    iteratorInt32Array.index = 0;
+    return iteratorInt32Array;
+  }
+
+  public PrimitiveIterator.OfLong int64Array() {
+    iteratorInt64Array.index = 0;
+    return iteratorInt64Array;
   }
 
   @Override
   public IntegerFixedArraysFW wrap(DirectBuffer buffer, int offset, int maxLimit) {
     super.wrap(buffer, offset, maxLimit);
+    iteratorUint8Array = new IntPrimitiveIterator("uint8Array", FIELD_OFFSET_UINT8_ARRAY, FIELD_SIZE_UINT8_ARRAY, ARRAY_SIZE_UINT8_ARRAY, o -> (buffer().getByte(o) & 0xFF));
+    iteratorUint16Array = new IntPrimitiveIterator("uint16Array", FIELD_OFFSET_UINT16_ARRAY, FIELD_SIZE_UINT16_ARRAY, ARRAY_SIZE_UINT16_ARRAY, o -> (buffer().getShort(o) & 0xFFFF));
+    iteratorUint32Array = new LongPrimitiveIterator("uint32Array", FIELD_OFFSET_UINT32_ARRAY, FIELD_SIZE_UINT32_ARRAY, ARRAY_SIZE_UINT32_ARRAY, o -> (buffer().getInt(o) & 0xFFFF_FFFFL));
+    iteratorUint64Array = new LongPrimitiveIterator("uint64Array", FIELD_OFFSET_UINT64_ARRAY, FIELD_SIZE_UINT64_ARRAY, ARRAY_SIZE_UINT64_ARRAY, o -> buffer().getLong(o));
+    anchorRO.wrap(buffer, offset + FIELD_OFFSET_ANCHOR, maxLimit);
+    final int offsetInt8Array = anchor().limit() + FIELD_OFFSET_INT8_ARRAY;
+    iteratorInt8Array = new IntPrimitiveIterator("int8Array", offsetInt8Array, FIELD_SIZE_INT8_ARRAY, ARRAY_SIZE_INT8_ARRAY, o -> (int)(buffer().getByte(o)));
+    final int offsetInt16Array = anchor().limit() + FIELD_OFFSET_INT16_ARRAY;
+    iteratorInt16Array = new IntPrimitiveIterator("int16Array", offsetInt16Array, FIELD_SIZE_INT16_ARRAY, ARRAY_SIZE_INT16_ARRAY, o -> (int)(buffer().getShort(o)));
+    final int offsetInt32Array = anchor().limit() + FIELD_OFFSET_INT32_ARRAY;
+    iteratorInt32Array = new IntPrimitiveIterator("int32Array", offsetInt32Array, FIELD_SIZE_INT32_ARRAY, ARRAY_SIZE_INT32_ARRAY, o -> buffer().getInt(o));
+    final int offsetInt64Array = anchor().limit() + FIELD_OFFSET_INT64_ARRAY;
+    iteratorInt64Array = new LongPrimitiveIterator("int64Array", offsetInt64Array, FIELD_SIZE_INT64_ARRAY, ARRAY_SIZE_INT64_ARRAY, o -> buffer().getLong(o));
     checkLimit(limit(), maxLimit);
     return this;
   }
 
   @Override
   public int limit() {
-    return offset() + FIELD_OFFSET_SIGNED64 + FIELD_SIZE_SIGNED64* ARRAY_SIZE_SIGNED64;
-  }
-
-  private String toStringByteArray(IntFunction<Byte> value, int count)
-  {
-      StringBuffer result = new StringBuffer().append("[");
-      for (int i=0; i < count-1; i++) {
-          result.append(value.apply(i));
-          result.append(", ");
-      }
-      result.append(value.apply(count-1));
-      result.append("]");
-      return result.toString();
-  }
-
-  private String toStringIntArray(IntFunction<Integer> value, int count)
-  {
-      StringBuffer result = new StringBuffer().append("[");
-      for (int i=0; i < count-1; i++) {
-          result.append(value.apply(i));
-          result.append(", ");
-      }
-      result.append(value.apply(count-1));
-      result.append("]");
-      return result.toString();
-  }
-
-  private String toStringLongArray(IntFunction<Long> value, int count)
-  {
-      StringBuffer result = new StringBuffer().append("[");
-      for (int i=0; i < count-1; i++) {
-          result.append(value.apply(i));
-          result.append(", ");
-      }
-      result.append(value.apply(count-1));
-      result.append("]");
-      return result.toString();
-  }
-
-  private String toStringShortArray(IntFunction<Short> value, int count)
-  {
-      StringBuffer result = new StringBuffer().append("[");
-      for (int i=0; i < count-1; i++) {
-          result.append(value.apply(i));
-          result.append(", ");
-      }
-      result.append(value.apply(count-1));
-      result.append("]");
-      return result.toString();
+    return anchor().limit() + FIELD_OFFSET_INT64_ARRAY + (FIELD_SIZE_INT64_ARRAY * ARRAY_SIZE_INT64_ARRAY);
   }
 
   @Override
   public String toString() {
-    return String.format("INTEGER_FIXED_ARRAYS [unsigned8=%s, unsigned16=%s, unsigned32=%s, unsigned64=%s, signed8=%s, signed16=%s, signed32=%s, signed64=%s]",
-            toStringIntArray(this::unsigned8, 1), toStringIntArray(this::unsigned16, 2), toStringLongArray(this::unsigned32, 3), toStringLongArray(this::unsigned64, 4),
-            toStringByteArray(this::signed8, 1), toStringShortArray(this::signed16, 2), toStringIntArray(this::signed32, 3), toStringLongArray(this::signed64, 4));
+    return String.format("INTEGER_FIXED_ARRAYS [uint8Array=%s, uint16Array=%s, uint32Array=%s, uint64Array=%s, anchor=%s, int8Array=%s, int16Array=%s, int32Array=%s, int64Array=%s]", uint8Array(), uint16Array(), uint32Array(), uint64Array(), anchorRO.asString(), int8Array(), int16Array(), int32Array(), int64Array());
   }
 
-  private void checkIndex(
-    int value,
-    int lowest,
-    int tooHigh)
-    {
-        if (value < lowest || value >= tooHigh)
-        {
-            throw new IndexOutOfBoundsException(String.format("Array index out of range: %d" + value));
-        }
+  private final class IntPrimitiveIterator implements PrimitiveIterator.OfInt {
+    private final String fieldName;
+
+    private final int offset;
+
+    private final int fieldSize;
+
+    private final int count;
+
+    private final IntUnaryOperator accessor;
+
+    private int index;
+
+    IntPrimitiveIterator(String fieldName, int offset, int fieldSize, int count,
+        IntUnaryOperator accessor) {
+      this.fieldName = fieldName;
+      this.offset = offset;
+      this.fieldSize = fieldSize;
+      this.count = count;
+      this.accessor = accessor;
     }
 
-public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW> {
-    private static final int INDEX_UNSIGNED8 = 0;
+    @Override
+    public boolean hasNext() {
+      return index < count;
+    }
 
-    private static final int INDEX_UNSIGNED16 = 1;
+    @Override
+    public int nextInt() {
+      if (!hasNext()) {
+        throw new NoSuchElementException(fieldName + ": " + index);
+      }
+      return accessor.applyAsInt(offset + fieldSize * index++);
+    }
 
-    private static final int INDEX_UNSIGNED32 = 2;
+    @Override
+    public String toString() {
+      StringBuffer result = new StringBuffer().append("[");
+      boolean first = true;
+      while(hasNext()) {
+        if (!first) {
+          result.append(", ");
+        }
+        result.append(nextInt());
+        first = false;
+      }
+      result.append("]");
+      return result.toString();
+    }
+  }
 
-    private static final int INDEX_UNSIGNED64 = 3;
+  private final class LongPrimitiveIterator implements PrimitiveIterator.OfLong {
+    private final String fieldName;
 
-    private static final int INDEX_SIGNED8 = 4;
+    private final int offset;
 
-    private static final int INDEX_SIGNED16 = 5;
+    private final int fieldSize;
 
-    private static final int INDEX_SIGNED32 = 6;
+    private final int count;
 
-    private static final int INDEX_SIGNED64 = 7;
+    private final IntToLongFunction accessor;
 
-    private static final int FIELD_COUNT = 8;
+    private int index;
+
+    LongPrimitiveIterator(String fieldName, int offset, int fieldSize, int count,
+        IntToLongFunction accessor) {
+      this.fieldName = fieldName;
+      this.offset = offset;
+      this.fieldSize = fieldSize;
+      this.count = count;
+      this.accessor = accessor;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return index < count;
+    }
+
+    @Override
+    public long nextLong() {
+      if (!hasNext()) {
+        throw new NoSuchElementException(fieldName + ": " + index);
+      }
+      return accessor.applyAsLong(offset + fieldSize * index++);
+    }
+
+    @Override
+    public String toString() {
+      StringBuffer result = new StringBuffer().append("[");
+      boolean first = true;
+      while(hasNext()) {
+        if (!first) {
+          result.append(", ");
+        }
+        result.append(nextLong());
+        first = false;
+      }
+      result.append("]");
+      return result.toString();
+    }
+  }
+
+  public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW> {
+    private static final int INDEX_UINT8_ARRAY = 0;
+
+    private static final int INDEX_UINT16_ARRAY = 1;
+
+    private static final int INDEX_UINT32_ARRAY = 2;
+
+    private static final int INDEX_UINT64_ARRAY = 3;
+
+    private static final int INDEX_ANCHOR = 4;
+
+    private static final int INDEX_INT8_ARRAY = 5;
+
+    private static final int INDEX_INT16_ARRAY = 6;
+
+    private static final int INDEX_INT32_ARRAY = 7;
+
+    private static final int INDEX_INT64_ARRAY = 8;
+
+    private int dynamicOffsetUint8Array;
+
+    private int dynamicOffsetUint16Array;
+
+    private int dynamicOffsetUint32Array;
+
+    private int dynamicOffsetUint64Array;
+
+    private int dynamicOffsetInt8Array;
+
+    private int dynamicOffsetInt16Array;
+
+    private int dynamicOffsetInt32Array;
+
+    private int dynamicOffsetInt64Array;
+
+    private static final int FIELD_COUNT = 9;
 
     @SuppressWarnings("serial")
     private static final BitSet FIELDS_WITH_DEFAULTS = new BitSet(FIELD_COUNT)  {
@@ -211,15 +304,18 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
     ;
 
     private static final String[] FIELD_NAMES = {
-      "unsigned8",
-      "unsigned16",
-      "unsigned32",
-      "unsigned64",
-      "signed8",
-      "signed16",
-      "signed32",
-      "signed64"
+      "uint8Array",
+      "uint16Array",
+      "uint32Array",
+      "uint64Array",
+      "anchor",
+      "int8Array",
+      "int16Array",
+      "int32Array",
+      "int64Array"
     };
+
+    private final StringFW.Builder anchorRW = new StringFW.Builder();
 
     private final BitSet fieldsSet = new BitSet(FIELD_COUNT);
 
@@ -227,121 +323,74 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
       super(new IntegerFixedArraysFW());
     }
 
-    public Builder unsigned8(int index, int value) {
-      if (value < 0) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"unsigned8\"", value));
+    public Builder uint8Array(PrimitiveIterator.OfInt values) {
+      checkFieldNotSet(INDEX_UINT8_ARRAY);
+      if (values == null)
+      {
+          throw new IllegalArgumentException("uint8Array cannot be null");
       }
-      if (value > 0XFF) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned8\"", value));
+      int count = 0;
+      while (values.hasNext()) {
+          int value = values.nextInt();
+          appendUint8Array((short) value);
+          count++;
       }
-      checkFieldsSet(0, INDEX_UNSIGNED8);
-      int length = FIELD_SIZE_UNSIGNED8 * ARRAY_SIZE_UNSIGNED8;
-      initializeIfNotSet(INDEX_UNSIGNED8, length);
-      buffer().putByte(limit() - length + index * FIELD_SIZE_UNSIGNED8, (byte)(value & 0xFF));
+      if (count < ARRAY_SIZE_INT8_ARRAY)
+      {
+          throw new IllegalArgumentException("Not enough values for uint8Array");
+      }
       return this;
     }
 
-    public Builder unsigned16(int index, int value) {
-      if (value < 0) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"unsigned16\"", value));
-      }
-      if (value > 0xFFFF) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned16\"", value));
-      }
-      checkFieldsSet(0, INDEX_UNSIGNED16);
-      int length = FIELD_SIZE_UNSIGNED16 * ARRAY_SIZE_UNSIGNED16;
-      initializeIfNotSet(INDEX_UNSIGNED16, length);
-      buffer().putShort(limit() - length + index * FIELD_SIZE_UNSIGNED16, (short)(value & 0xFFFF), ByteOrder.BIG_ENDIAN);
-      return this;
-    }
-
-    public Builder unsigned32(int index, long value) {
-      if (value < 0) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"unsigned32\"", value));
-      }
-      if (value > 0xFFFFFFFFL) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned32\"", value));
-      }
-      checkFieldsSet(0, INDEX_UNSIGNED32);
-      int length = FIELD_SIZE_UNSIGNED32 * ARRAY_SIZE_UNSIGNED32;
-      initializeIfNotSet(INDEX_UNSIGNED32, length);
-      buffer().putInt(limit() - length + index * FIELD_SIZE_UNSIGNED32, (int)(value & 0xFFFF_FFFF), ByteOrder.BIG_ENDIAN);
-      return this;
-    }
-
-    public Builder unsigned64(int index, long value) {
+    public Builder appendUint8Array(short value) {
       if (value < 0L) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"unsigned64\"", value));
+        throw new IllegalArgumentException(String.format("Value %d too low for field \"uint8Array\"", value));
       }
-      if (value > Long.MAX_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"unsigned64\"", value));
+      if (!fieldsSet.get(INDEX_UINT8_ARRAY)) {
+          // Set prior default if any
+        checkFieldsSet(0, INDEX_UINT8_ARRAY);
+        fieldsSet.set(INDEX_UINT8_ARRAY);
+        dynamicOffsetInt8Array = limit();
       }
-      checkFieldsSet(0, INDEX_UNSIGNED64);
-      int length = FIELD_SIZE_UNSIGNED64 * ARRAY_SIZE_UNSIGNED64;
-      initializeIfNotSet(INDEX_UNSIGNED64, length);
-      buffer().putLong(limit() - length + index * FIELD_SIZE_UNSIGNED64, value);
-      return this;
-    }
-
-    public Builder signed8(int index, byte value) {
-      if (value < Byte.MIN_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"signed8\"", value));
-      }
-      if (value > Byte.MAX_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"signed8\"", value));
-      }
-      checkFieldsSet(0, INDEX_SIGNED8);
-      int length = FIELD_SIZE_SIGNED8 * ARRAY_SIZE_SIGNED8;
-      initializeIfNotSet(INDEX_SIGNED8, length);
-      buffer().putByte(limit() - length + index * FIELD_SIZE_SIGNED8, value);
-      return this;
-    }
-
-    public Builder signed16(int index, short value) {
-      if (value < Short.MIN_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"signed16\"", value));
-      }
-      if (value > Short.MAX_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"signed16\"", value));
-      }
-      checkFieldsSet(0, INDEX_SIGNED16);
-      int length = FIELD_SIZE_SIGNED16 * ARRAY_SIZE_SIGNED16;
-      initializeIfNotSet(INDEX_SIGNED16, length);
-      buffer().putShort(limit() - length + index * FIELD_SIZE_SIGNED16, value);
-      fieldsSet.set(INDEX_SIGNED16);
-      return this;
-    }
-
-    public Builder signed32(int index, int value) {
-      if (value < Integer.MIN_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"signed32\"", value));
-      }
-      if (value > Integer.MAX_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"signed32\"", value));
-      }
-      checkFieldsSet(0, INDEX_SIGNED32);
-      int newLimit = limit() + FIELD_SIZE_SIGNED32 * ARRAY_SIZE_SIGNED32;
+      int newLimit = limit() + FIELD_SIZE_UINT16_ARRAY;
       checkLimit(newLimit, maxLimit());
-      int length = FIELD_SIZE_SIGNED32 * ARRAY_SIZE_SIGNED32;
-      initializeIfNotSet(INDEX_SIGNED32, length);
-      buffer().putInt(limit() - length + index * FIELD_SIZE_SIGNED32, value);
-      fieldsSet.set(INDEX_SIGNED32);
+      int newSize = newLimit - dynamicOffsetInt8Array / FIELD_SIZE_UINT16_ARRAY;
+      if (newSize > ARRAY_SIZE_INT8_ARRAY)
+      {
+          throw new IndexOutOfBoundsException();
+      }
+      buffer().putLong(limit(), value);
       limit(newLimit);
       return this;
     }
 
-    public Builder signed64(int index, long value) {
-      if (value < Long.MIN_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too low for field \"signed64\"", value));
-      }
-      if (value > Long.MAX_VALUE) {
-        throw new IllegalArgumentException(String.format("Value %d too high for field \"signed64\"", value));
-      }
-      checkFieldsSet(0, INDEX_SIGNED64);
-      int length = FIELD_SIZE_SIGNED64 * ARRAY_SIZE_SIGNED64;
-      initializeIfNotSet(INDEX_SIGNED64, length);
-      buffer().putLong(limit() - length + index * FIELD_SIZE_SIGNED64, value);
-      fieldsSet.set(INDEX_SIGNED64);
+    private StringFW.Builder anchor() {
+      checkFieldNotSet(INDEX_ANCHOR);
+      checkFieldsSet(0, INDEX_ANCHOR);
+      return anchorRW.wrap(buffer(), limit(), maxLimit());
+    }
+
+    public Builder anchor(String value) {
+      StringFW.Builder anchorRW = anchor();
+      anchorRW.set(value, StandardCharsets.UTF_8);
+      fieldsSet.set(INDEX_ANCHOR);
+      limit(anchorRW.build().limit());
+      return this;
+    }
+
+    public Builder anchor(StringFW value) {
+      StringFW.Builder anchorRW = anchor();
+      anchorRW.set(value);
+      fieldsSet.set(INDEX_ANCHOR);
+      limit(anchorRW.build().limit());
+      return this;
+    }
+
+    public Builder anchor(DirectBuffer buffer, int offset, int length) {
+      StringFW.Builder anchorRW = anchor();
+      anchorRW.set(buffer, offset, length);
+      fieldsSet.set(INDEX_ANCHOR);
+      limit(anchorRW.build().limit());
       return this;
     }
 
@@ -374,19 +423,6 @@ public static final class Builder extends Flyweight.Builder<IntegerFixedArraysFW
       if (fieldNotSet < toIndex) {
         throw new IllegalStateException(String.format("Required field \"%s\" is not set", FIELD_NAMES[fieldNotSet]));
       }
-    }
-
-    private void initializeIfNotSet(
-        int index,
-        int length)
-    {
-        if (!fieldsSet.get(index)) {
-            int newLimit = limit() + length;
-            checkLimit(newLimit, maxLimit());
-            buffer().setMemory(limit(), length, (byte) 0);
-            limit(newLimit);
-            fieldsSet.set(index);
-        }
     }
   }
 }

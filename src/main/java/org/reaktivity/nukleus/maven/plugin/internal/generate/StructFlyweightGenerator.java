@@ -655,7 +655,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (type == TypeName.INT)
                 {
-                    codeBlock.add(", $T.BIG_ENDIAN) & 0xFFFF_FFFF)", ByteOrder.class);
+                    codeBlock.add(", $T.BIG_ENDIAN) & 0xFFFF_FFFFL)", ByteOrder.class);
                 }
                 else
                 {
@@ -736,7 +736,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else
                     {
-                        code.add("return $L().limit()", anchorName);
+                        code.add("return $L().limit()", methodName(anchorName));
                     }
                 }
                 else
@@ -816,18 +816,27 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             int size)
         {
             ClassName iteratorClass = iteratorClass(thisType, type, unsignedType);
+            TypeName targetType = (unsignedType != null) ? unsignedType : type;
+            targetType = targetType == TypeName.LONG ? targetType : TypeName.INT;
+            CodeBlock.Builder code = CodeBlock.builder();
+            String offsetName;
             if (anchorLimit != null)
             {
-                String offsetName = "offset" + initCap(name);
-                builder.addStatement("final int $L = $L + $L", offsetName, anchorLimit, offset(name))
-                       .addStatement("$L = new $T($S, $L, $L, $L)",
-                               iterator(name), iteratorClass, name, offsetName, size(name), arraySize(name));
+                offsetName = "offset" + initCap(name);
+                code.addStatement("final int $L = $L + $L", offsetName, anchorLimit, offset(name));
             }
             else
             {
-                builder.addStatement("$L = new $T($S, $L, $L, $L)",
-                               iterator(name), iteratorClass, name, offset(name), size(name), arraySize(name));
+                offsetName = offset(name);
             }
+            code.add("$[")
+                .add("$L = new $T($S, $L, $L, $L, o -> ",
+                        iterator(name), iteratorClass, name, offsetName, size(name), arraySize(name));
+            addBufferGet(code, targetType, type, unsignedType, "o");
+            code.add(")")
+                .add(";\n$]");
+
+            builder.addCode(code.build());
         }
 
         private void addVariableIntegerArrayMember(
@@ -940,7 +949,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (type == TypeName.INT)
                 {
-                    codeBlock.add(") & 0xFFFF_FFFF)", ByteOrder.class);
+                    codeBlock.add(") & 0xFFFF_FFFFL)", ByteOrder.class);
                 }
                 else
                 {
@@ -951,7 +960,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 codeBlock.add(")");
             }
-            if (targetType != type)
+            if (targetType != type && unsignedType == null)
             {
                 codeBlock.add(")");
             }
@@ -1545,16 +1554,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     if (sizeName != null)
                     {
-                        addIntegerVariableArrayMutator1(name, type, unsignedType, sizeName, hasDefault, priorDefaulted,
+                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, hasDefault, priorDefaulted,
                                 priorDefaultedIsPrimitive);
-                        addIntegerVariableArrayMutator2(name, type, unsignedType, sizeName, priorDefaulted,
+                        addIntegerVariableArrayAppendMutator(name, type, unsignedType, sizeName, priorDefaulted,
                                 priorDefaultedIsPrimitive);
                     }
                     else if (size != -1)
                     {
-                        addIntegerFixedArrayMutator1(name, type, unsignedType, size, priorDefaulted,
+                        addIntegerFixedArrayIteratorMutator(name, type, unsignedType, size, priorDefaulted,
                                 priorDefaultedIsPrimitive);
-                        addIntegerFixedArrayMutator2(name, type, unsignedType, size, priorDefaulted,
+                        addIntegerFixedArrayAppendMutator(name, type, unsignedType, size, priorDefaulted,
                                 priorDefaultedIsPrimitive);
                     }
                     else
@@ -1645,7 +1654,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (type == TypeName.INT)
                     {
-                        code.add("(value & 0xFFFF_FFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                        code.add("(value & 0xFFFF_FFFFL), $T.BIG_ENDIAN)", ByteOrder.class);
                     }
                     else
                     {
@@ -1673,7 +1682,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .build());
             }
 
-            private void addIntegerFixedArrayMutator1(
+            private void addIntegerFixedArrayIteratorMutator(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -1681,10 +1690,82 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
+                CodeBlock.Builder code = CodeBlock.builder();
+                code.addStatement("checkFieldNotSet($L)", index(name));
+                TypeName inputType = (unsignedType != null) ? unsignedType : type;
+                TypeName valueType = inputType == TypeName.LONG ? TypeName.LONG : TypeName.INT;
+                TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
+                        : INT_ITERATOR_CLASS_NAME;
+                if (priorFieldIfDefaulted != null)
+                {
+                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    if (priorDefaultedIsPrimitive)
+                    {
+                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                    }
+                    else
+                    {
+                        //  Attempt to default the entire object. This will fail if it has any required fields.
+                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
+                    }
+                    code.endControlFlow();
+                }
+                code.beginControlFlow("if (values == null)");
+                code.addStatement("throw new $T($S)",
+                        IllegalArgumentException.class, format("fixed size array %s cannot be set to null", name));
+                code.endControlFlow();
+                code.addStatement("int count = 0");
+                code.beginControlFlow("while (values.hasNext())");
+                code.addStatement("$T value = values.next$L()", valueType,
+                        valueType == TypeName.LONG ? "Long" : "Int");
+                code.add("$[");
+                code.add("$L(", appendMethodName(name));
+                if (valueType != type)
+                {
+                    code.add("($T)", inputType);
 
+                    if (unsignedType != null)
+                    {
+                        if (type == TypeName.BYTE)
+                        {
+                            code.add("(value & 0xFF))");
+                        }
+                        else if (type == TypeName.SHORT)
+                        {
+                            code.add("(value & 0xFFFF))");
+                        }
+                        else if (type == TypeName.INT)
+                        {
+                            code.add("(value & 0xFFFF_FFFFL))");
+                        }
+                    }
+                    else
+                    {
+                        code.add("value)");
+                    }
+                }
+                else
+                {
+                    code.add("value)");
+                }
+                code.add(";\n$]");
+                code.addStatement("count++");
+                code.endControlFlow();
+                code.beginControlFlow("if (count < $L)", arraySize(name));
+                code.addStatement("throw new $T($S)",
+                        IllegalArgumentException.class, format("Not enough values for %s", name));
+                code.endControlFlow();
+                code.addStatement("return this");
+
+                builder.addMethod(methodBuilder(methodName(name))
+                        .addModifiers(PUBLIC)
+                        .addParameter(iteratorType, "values")
+                        .returns(thisType)
+                        .addCode(code.build())
+                        .build());
             }
 
-            private void addIntegerFixedArrayMutator2(
+            private void addIntegerFixedArrayAppendMutator(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -1692,10 +1773,105 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
+                String putterName = PUTTER_NAMES.get(type);
+                if (putterName == null)
+                {
+                    throw new IllegalStateException("member type not supported: " + type);
+                }
 
+                CodeBlock.Builder code = CodeBlock.builder();
+                if (unsignedType != null)
+                {
+                    String[] range = UNSIGNED_INT_RANGES.get(type);
+                    code.beginControlFlow("if (value < $L)", range[0])
+                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                                format("Value %%d too low for field \"%s\"", name))
+                    .endControlFlow();
+                    if (range[1] != null)
+                    {
+                        code.beginControlFlow("if (value > $L)", range[1])
+                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                                format("Value %%d too high for field \"%s\"", name))
+                        .endControlFlow();
+                    }
+                }
+
+                code.beginControlFlow("if (!fieldsSet.get($L))", index(name));
+
+                if (priorFieldIfDefaulted != null)
+                {
+                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    if (priorDefaultedIsPrimitive)
+                    {
+                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                    }
+                    else
+                    {
+                        //  Attempt to default the entire object. This will fail if it has any required fields.
+                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
+                    }
+                    code.endControlFlow();
+                }
+                code.addStatement("checkFieldsSet(0, $L)", index(name))
+                    .addStatement("$L = limit()", dynamicOffset(name))
+                    .addStatement("fieldsSet.set($L)", index(name))
+                .endControlFlow();
+
+                code.addStatement("int newLimit = limit() + $L", size(name))
+                    .addStatement("checkLimit(newLimit, maxLimit())")
+                    .addStatement("int newSize = newLimit - $L / $L",  dynamicOffset(name), size(name))
+                    .beginControlFlow("if (newSize > $L)", arraySize(name))
+                    .addStatement("throw new $T($S)", IndexOutOfBoundsException.class, "too many values for " + name)
+                    .endControlFlow()
+                    .add("$[")
+                    .add("buffer().$L(limit(), ", putterName);
+
+                TypeName inputType = (unsignedType != null) ? unsignedType : type;
+                if (inputType != type)
+                {
+                    code.add("($T)", type);
+
+                    if (unsignedType != null)
+                    {
+                        if (type == TypeName.BYTE)
+                        {
+                            code.add("(value & 0xFF))");
+                        }
+                        else if (type == TypeName.SHORT)
+                        {
+                            code.add("(value & 0xFFFF))");
+                        }
+                        else if (type == TypeName.INT)
+                        {
+                            code.add("(value & 0xFFFF_FFFFL))", ByteOrder.class);
+                        }
+                        else
+                        {
+                            code.add("value)");
+                        }
+                    }
+                    else
+                    {
+                        code.add("value)");
+                    }
+                }
+                else
+                {
+                    code.add("value)");
+                }
+                code.add(";\n$]");
+                code.addStatement("limit(newLimit)")
+                    .addStatement("return this");
+
+                builder.addMethod(methodBuilder(appendMethodName(name))
+                        .addModifiers(PUBLIC)
+                        .addParameter(inputType, "value")
+                        .returns(thisType)
+                        .addCode(code.build())
+                        .build());
             }
 
-            private void addIntegerVariableArrayMutator1(
+            private void addIntegerVariableArrayIteratorMutator(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -1704,7 +1880,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
-                // fieldName(iterator) method
                 CodeBlock.Builder code = CodeBlock.builder();
                 code.addStatement("checkFieldNotSet($L)", index(name));
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
@@ -1736,7 +1911,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.beginControlFlow("if (values == null)");
                     code.addStatement("throw new $T($S + $S)",
-                            IllegalArgumentException.class, name, " does not default to null, cannot be set to null");
+                            IllegalArgumentException.class, name, " does not default to null so cannot be set to null");
                     code.endControlFlow();
                     code.beginControlFlow("if (!values.hasNext())");
                     code.addStatement("int limit = limit()");
@@ -1754,7 +1929,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 code.add("$L(", appendMethodName(name));
                 if (valueType != type)
                 {
-                    code.add("($T)", type);
+                    code.add("($T)", inputType);
 
                     if (unsignedType != null)
                     {
@@ -1768,7 +1943,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         }
                         else if (type == TypeName.INT)
                         {
-                            code.add("(value & 0xFFFF_FFFF))");
+                            code.add("(value & 0xFFFF_FFFFL))");
                         }
                     }
                     else
@@ -1793,7 +1968,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .build());
             }
 
-            private void addIntegerVariableArrayMutator2(
+            private void addIntegerVariableArrayAppendMutator(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -1801,8 +1976,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
-
-                // appendFieldName method
                 String putterName = PUTTER_NAMES.get(type);
                 if (putterName == null)
                 {
@@ -1868,7 +2041,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (type == TypeName.INT)
                     {
-                        code.add("(value & 0xFFFF_FFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                        code.add("(value & 0xFFFF_FFFFL), $T.BIG_ENDIAN)", ByteOrder.class);
                     }
                     else
                     {

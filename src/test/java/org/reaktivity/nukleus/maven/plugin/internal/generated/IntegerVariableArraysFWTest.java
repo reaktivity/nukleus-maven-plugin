@@ -116,6 +116,13 @@ public class IntegerVariableArraysFWTest
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToSetSigned16ToNull()
+    {
+        flyweightRW.wrap(buffer, 10, 10 + 6 + 4);
+        flyweightRW.signed16Array(null);
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToBuildWithInsufficientSpace()
     {
