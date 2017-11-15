@@ -1819,7 +1819,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 code.addStatement("int newLimit = limit() + $L", size(name))
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement("int newSize = newLimit - $L / $L",  dynamicOffset(name), size(name))
+                    .addStatement("int newSize = (newLimit - $L) / $L",  dynamicOffset(name), size(name))
                     .beginControlFlow("if (newSize > $L)", arraySize(name))
                     .addStatement("throw new $T($S)", IndexOutOfBoundsException.class, "too many values for " + name)
                     .endControlFlow()
