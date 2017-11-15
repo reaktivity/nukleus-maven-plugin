@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.PrimitiveIterator;
 
@@ -50,16 +51,12 @@ public class IntegerFixedArraysFWTest
     public ExpectedException expectedException = ExpectedException.none();
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToBuildWithInsufficientSpace()
+    public void shouldFailToSetUint16ArrayBeyondLimit()
     {
-
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUint8ArrayBeyondLimit()
-    {
-//      flyweightRW.wrap(buffer, 0, buffer.capacity())
-//      .appendUint8Array(1, 10)
+      flyweightRW.wrap(buffer, 10, 13)
+          .appendUint8Array(10)
+          .appendUint16Array((short) 0)
+          .appendUint16Array((short) 0);
     }
 
     @Test
@@ -156,7 +153,6 @@ public class IntegerFixedArraysFWTest
                 .appendInt64Array(-22)
                 .appendInt64Array(-23)
                 .build();
-        flyweightRO.wrap(buffer,  0,  buffer.capacity());
 
         expected.putByte(0, (byte) 0xFF); // uint8Array[1]
         expected.putShort(1, (short) 3); // uint16Array[2]
@@ -181,12 +177,58 @@ public class IntegerFixedArraysFWTest
         expected.putLong(89, -22L);
         expected.putLong(97, -23L);
 
-        byte[] bytes = new byte[buffer.capacity()];
-        buffer.getBytes(0, bytes);
-        System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(bytes));
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+    }
 
-        expected.getBytes(0, bytes);
-        System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(bytes));
+    @Test
+    public void shouldSetAllValuesUsingIterators() throws Exception
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+                .appendUint8Array(0xFF)
+                .appendUint16Array(3)
+                .appendUint16Array(0xFFFF)
+                .appendUint32Array(10)
+                .appendUint32Array(11)
+                .appendUint32Array(0xFFFFFFFFL)
+                .appendUint64Array(20)
+                .appendUint64Array(21)
+                .appendUint64Array(22)
+                .appendUint64Array(23)
+                .anchor("anchor")
+                .appendInt8Array((byte) 127)
+                .appendInt16Array((short) 3)
+                .appendInt16Array((short) 0xFFFF)
+                .appendInt32Array(-10)
+                .appendInt32Array(-11)
+                .appendInt32Array(-12)
+                .appendInt64Array(-20)
+                .appendInt64Array(-21)
+                .appendInt64Array(-22)
+                .appendInt64Array(-23)
+                .build();
+
+        expected.putByte(0, (byte) 0xFF); // uint8Array[1]
+        expected.putShort(1, (short) 3); // uint16Array[2]
+        expected.putShort(3, (short) 0xFFFF);
+        expected.putInt(5, 10); // uint32Array[3]
+        expected.putInt(9, 11);
+        expected.putInt(13, 0xFFFFFFFF);
+        expected.putLong(17, 20L); // uint64Array[4]
+        expected.putLong(25, 21L);
+        expected.putLong(33, 22L);
+        expected.putLong(41, 23L);
+        expected.putByte(49, (byte) 6);
+        expected.putStringWithoutLengthUtf8(50, "anchor");
+        expected.putByte(56, (byte) 127);
+        expected.putShort(57, (short) 3); // int16Array[2]
+        expected.putShort(59, (short) 0xFFFF);
+        expected.putInt(61, -10); // int32Array[3]
+        expected.putInt(65, -11);
+        expected.putInt(69, -12);
+        expected.putLong(73, -20L); // int64Array[4]
+        expected.putLong(81, -21L);
+        expected.putLong(89, -22L);
+        expected.putLong(97, -23L);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
@@ -194,20 +236,32 @@ public class IntegerFixedArraysFWTest
     @Test
     public void shouldConvertToString() throws Exception
     {
-//        flyweightRW.wrap(buffer, 0, buffer.capacity())
-//        .unsigned8(0, 10)
-//        .unsigned16(1, 20)
-//        .unsigned32(2, 30)
-//        .unsigned64(3, 40)
-//        .signed8(0, (byte) -10)
-//        .signed16(1, (short) -20)
-//        .signed32(2, -30)
-//        .signed64(2, -40)
-//        .signed64(3, -80)
-//        .build();
-//        flyweightRO.wrap(buffer,  0,  100);
-//        assertTrue(flyweightRO.toString().contains("unsigned32=[0, 0, 30]"));
-//        assertTrue(flyweightRO.toString().contains("signed64=[0, 0, -40, -80]"));
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .appendUint8Array(0xFF)
+            .appendUint16Array(3)
+            .appendUint16Array(0xFFFF)
+            .appendUint32Array(10)
+            .appendUint32Array(11)
+            .appendUint32Array(0xFFFFFFFFL)
+            .appendUint64Array(20)
+            .appendUint64Array(21)
+            .appendUint64Array(22)
+            .appendUint64Array(23)
+            .anchor("anchor")
+            .appendInt8Array((byte) 127)
+            .appendInt16Array((short) 3)
+            .appendInt16Array((short) 0xFFFF)
+            .appendInt32Array(-10)
+            .appendInt32Array(-11)
+            .appendInt32Array(-12)
+            .appendInt64Array(-20)
+            .appendInt64Array(-21)
+            .appendInt64Array(-22)
+            .appendInt64Array(-23)
+            .build();
+        flyweightRO.wrap(buffer,  0,  buffer.capacity());
+        assertTrue(flyweightRO.toString().contains("uint16Array=[3, 65535]"));
+        assertTrue(flyweightRO.toString().contains("int16Array=[3, -1]"));
     }
 
 }
