@@ -32,6 +32,15 @@ public class GenerateMojoTest
     {
     }
 
+    @Test
+    // Regenerate from test.idl so it's included in code coverage report
+    public void shouldGenerateTestIdl()
+        throws Exception
+    {
+        generator.scopeNames("test")
+            .generate();
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotGenerateInvalidIntArrayLengthHasDefault()
         throws Exception
