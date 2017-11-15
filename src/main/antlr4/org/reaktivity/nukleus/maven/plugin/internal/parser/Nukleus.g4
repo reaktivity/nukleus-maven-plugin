@@ -20,7 +20,15 @@ specification
    ;
 
 scope
-   : KW_SCOPE ID LEFT_BRACE definition * RIGHT_BRACE
+   : KW_SCOPE ID LEFT_BRACE option * definition * RIGHT_BRACE
+   ;
+
+option
+   : KW_OPTION optionByteOrder SEMICOLON
+   ;
+
+optionByteOrder
+   : KW_BYTEORDER (KW_NATIVE | KW_NETWORK)
    ;
 
 scoped_name
@@ -440,6 +448,21 @@ KW_SCOPE
    : 'scope'
    ;
 
+KW_OPTION
+   : 'option'
+   ;
+
+KW_BYTEORDER
+   : 'byteorder'
+   ;
+
+KW_NATIVE
+   : 'native'
+   ;
+
+KW_NETWORK
+   : 'network'
+   ;
 
 ID
    : LETTER (LETTER | ID_DIGIT)*

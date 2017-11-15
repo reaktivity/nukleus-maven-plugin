@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Set;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
@@ -83,6 +84,7 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         int size = memberNode.size();
         String sizeName = memberNode.sizeName();
         AstType memberUnsignedType = memberNode.unsignedType();
+        AstByteOrder byteOrder = memberNode.byteOrder();
 
         if (memberType == AstType.LIST)
         {
@@ -95,13 +97,13 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName);
+            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
         }
         else
         {
             TypeName memberTypeName = resolver.resolveType(memberType);
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName);
+            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
         }
 
         return defaultResult();

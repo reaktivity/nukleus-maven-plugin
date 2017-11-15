@@ -15,9 +15,13 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
+
 import java.util.Deque;
 import java.util.LinkedList;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
@@ -42,6 +46,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_lit
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_nameContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
@@ -71,10 +76,12 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private AstUnionNode.Builder unionBuilder;
 
     private Builder caseBuilder;
+    private AstByteOrder byteOrder;
 
     public AstParser()
     {
         this.scopeBuilders = new LinkedList<>();
+        this.byteOrder = NATIVE;
     }
 
     @Override
@@ -98,9 +105,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         scopeBuilder.depth(scopeBuilders.size());
         scopeBuilder.name(name);
 
+        AstByteOrder byteOrder = this.byteOrder;
         scopeBuilders.offer(scopeBuilder);
         super.visitScope(ctx);
         scopeBuilders.pollLast();
+        this.byteOrder = byteOrder;
 
         AstScopeNode.Builder parent = scopeBuilders.peekLast();
         if (parent != null)
@@ -119,6 +128,26 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             return scopeBuilder.build();
         }
+    }
+
+    @Override
+    public AstNode visitOptionByteOrder(
+        OptionByteOrderContext ctx)
+    {
+        if (ctx.KW_NATIVE() != null)
+        {
+            byteOrder = NATIVE;
+        }
+        else if (ctx.KW_NETWORK() != null)
+        {
+            byteOrder = NETWORK;
+        }
+        else
+        {
+            throw new IllegalStateException("Unexpected byte order option");
+        }
+
+        return super.visitOptionByteOrder(ctx);
     }
 
     @Override
@@ -192,7 +221,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstMemberNode visitMember(
         MemberContext ctx)
     {
-        memberBuilder = new AstMemberNode.Builder();
+        memberBuilder = new AstMemberNode.Builder().byteOrder(byteOrder);
 
         super.visitMember(ctx);
 

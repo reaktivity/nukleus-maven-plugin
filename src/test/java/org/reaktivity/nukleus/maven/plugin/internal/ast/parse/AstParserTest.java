@@ -16,9 +16,11 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
 import static org.junit.Assert.assertEquals;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
@@ -32,6 +34,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusLexer;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
@@ -63,6 +66,40 @@ public class AstParserTest
                 .name("common")
                 .scope(new AstScopeNode.Builder().depth(1).name("control").build())
                 .scope(new AstScopeNode.Builder().depth(1).name("stream").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseOptionByteOrderNetwork()
+    {
+        NukleusParser parser = newParser("option byteorder network;");
+        OptionContext ctx = parser.option();
+        new AstParser().visitOption(ctx);
+    }
+
+    @Test
+    public void shouldParseOptionByteOrderNative()
+    {
+        NukleusParser parser = newParser("option byteorder native;");
+        OptionContext ctx = parser.option();
+        new AstParser().visitOption(ctx);
+    }
+
+    @Test
+    public void shouldParseScopedStructWithNetworkOrderField()
+    {
+        NukleusParser parser = newParser("scope common { option byteorder network; struct Holder { int32 value; } }");
+        ScopeContext ctx = parser.scope();
+        AstScopeNode actual = new AstParser().visitScope(ctx);
+
+        AstScopeNode expected = new AstScopeNode.Builder()
+                .name("common")
+                .struct(new AstStructNode.Builder()
+                    .name("Holder")
+                    .member(new AstMemberNode.Builder().type(AstType.INT32).name("value").byteOrder(NETWORK).build())
+                    .build())
                 .build();
 
         assertEquals(expected, actual);
@@ -184,7 +221,7 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("struct s {list<uint8> field1; uint8 field2;");
         Struct_typeContext ctx = parser.struct_type();
-        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+        new AstParser().visitStruct_type(ctx);
     }
 
     @Test(expected = ParseCancellationException.class)
@@ -192,7 +229,7 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("struct s {octets field1; uint8 field2;");
         Struct_typeContext ctx = parser.struct_type();
-        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+        new AstParser().visitStruct_type(ctx);
     }
 
     @Test
@@ -446,8 +483,8 @@ public class AstParserTest
     private static NukleusParser newParser(
         String input)
     {
-        ANTLRInputStream ais = new ANTLRInputStream(input);
-        NukleusLexer lexer = new NukleusLexer(ais);
+        CharStream chars = CharStreams.fromString(input);
+        NukleusLexer lexer = new NukleusLexer(chars);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         NukleusParser parser = new NukleusParser(tokens);
         parser.setErrorHandler(new BailErrorStrategy());

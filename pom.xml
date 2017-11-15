@@ -47,7 +47,7 @@
     <agrona.version>0.5.5</agrona.version>
     
     <jacoco.coverage.ratio>0.40</jacoco.coverage.ratio>
-    <jacoco.missed.count>54</jacoco.missed.count>
+    <jacoco.missed.count>56</jacoco.missed.count>
   </properties>
 
   <dependencies>
