@@ -51,6 +51,7 @@ public class UnionOctetsFWTest
         unionRO.wrap(buffer,  0,  limit);
         assertEquals("1234", unionRO.octets4().get((b, o, m) -> b.getStringWithoutLengthUtf8(o, m - o)));
         assertEquals(0, unionRO.octets16().sizeof());
+        assertEquals(null, unionRO.string1().asString());
     }
 
     @Test
@@ -63,6 +64,29 @@ public class UnionOctetsFWTest
         unionRO.wrap(buffer,  0,  limit);
         assertEquals("1234567890123456", unionRO.octets16().get((b, o, m) -> b.getStringWithoutLengthUtf8(o, m - o)));
         assertEquals(0, unionRO.octets4().sizeof());
+        assertEquals(null, unionRO.string1().asString());
+    }
+
+    @Test
+    public void shouldSetString1()
+    {
+        int limit = unionRW.wrap(buffer, 0, buffer.capacity())
+            .string1("valueOfString1")
+            .build()
+            .limit();
+        unionRO.wrap(buffer,  0,  limit);
+        assertEquals("valueOfString1", unionRO.string1().asString());
+        assertEquals(0, unionRO.octets4().sizeof());
+        assertEquals(0, unionRO.octets16().sizeof());
+    }
+
+    @Test
+    public void shouldSetStringWithValueNull()
+    {
+        int limit = unionRW.wrap(buffer, 10, buffer.capacity())
+            .string1(null).build().limit();
+        unionRO.wrap(buffer,  0,  limit);
+        assertEquals(null, unionRO.string1().asString());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

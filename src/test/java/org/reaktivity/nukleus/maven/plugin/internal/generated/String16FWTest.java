@@ -16,15 +16,26 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.ByteOrder.BIG_ENDIAN;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 import org.reaktivity.reaktor.internal.test.types.String16FW;
 
+@RunWith(Parameterized.class)
 public class String16FWTest
 {
     private static final int LENGTH_SIZE = 2;
@@ -36,8 +47,40 @@ public class String16FWTest
             setMemory(0, capacity(), (byte) 0xF);
         }
     };
-    private final String16FW.Builder stringRW = new String16FW.Builder();
-    private final String16FW stringRO = new String16FW();
+
+    @Parameters
+    public static Collection<Object[]> values()
+    {
+        return Arrays.asList(
+                new Object[][]
+                {
+                    { new String16FW.Builder(), new String16FW() },
+                    { new String16FW.Builder(LITTLE_ENDIAN), new String16FW(LITTLE_ENDIAN) },
+                    { new String16FW.Builder(BIG_ENDIAN), new String16FW(BIG_ENDIAN) }
+                });
+    }
+
+    @Parameter(0)
+    public String16FW.Builder stringRW;
+
+    @Parameter(1)
+    public String16FW stringRO;
+
+    @Test
+    public void shouldDefaultAfterRewrap() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set("Hello, world", UTF_8)
+                .build()
+                .limit();
+
+        String16FW string = stringRW.wrap(buffer, 0, limit)
+                .build();
+
+        assertNull(string.asString());
+        assertEquals(LENGTH_SIZE, string.limit());
+        assertEquals(LENGTH_SIZE, string.sizeof());
+    }
 
     @Test
     public void shouldDefaultToEmpty() throws Exception
@@ -48,7 +91,6 @@ public class String16FWTest
         stringRO.wrap(buffer,  0,  limit);
         assertEquals(LENGTH_SIZE, stringRO.limit());
         assertEquals(LENGTH_SIZE, stringRO.sizeof());
-
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

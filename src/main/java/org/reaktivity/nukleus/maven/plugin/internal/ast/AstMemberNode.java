@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -32,6 +33,8 @@ public final class AstMemberNode extends AstNode
     private final AstType unsignedType;
     private boolean hasDefault;
     private final Object defaultValue;
+    private final AstByteOrder byteOrder;
+
     private boolean usedAsSize;
 
     private AstMemberNode(
@@ -41,7 +44,8 @@ public final class AstMemberNode extends AstNode
         String sizeName,
         AstType unsignedType,
         boolean hasDefault,
-        Object defaultValue)
+        Object defaultValue,
+        AstByteOrder byteOrder)
     {
         this.name = requireNonNull(name);
         this.types = unmodifiableList(requireNotEmpty(requireNonNull(types)));
@@ -50,6 +54,7 @@ public final class AstMemberNode extends AstNode
         this.unsignedType = unsignedType;
         this.hasDefault = hasDefault;
         this.defaultValue = defaultValue;
+        this.byteOrder = byteOrder;
     }
 
     @Override
@@ -99,10 +104,15 @@ public final class AstMemberNode extends AstNode
         return defaultValue;
     }
 
+    public AstByteOrder byteOrder()
+    {
+        return byteOrder;
+    }
+
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, unsignedType, sizeName, size, defaultValue);
+        return Objects.hash(name, types, unsignedType, sizeName, size, defaultValue, byteOrder);
     }
 
     @Override
@@ -125,15 +135,16 @@ public final class AstMemberNode extends AstNode
                 Objects.equals(this.unsignedType, that.unsignedType) &&
                 Objects.equals(this.sizeName, that.sizeName) &&
                 this.hasDefault == that.hasDefault &&
-                Objects.equals(this.defaultValue, that.defaultValue);
+                Objects.equals(this.defaultValue, that.defaultValue) &&
+                Objects.equals(this.byteOrder, that.byteOrder);
     }
 
     @Override
     public String toString()
     {
         String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
-        return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s, defaultValue=%s]",
-                name, size, types, unsignedType, defaultValue);
+        return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s, defaultValue=%s, byteOrder=%s]",
+                name, size, types, unsignedType, defaultValue, byteOrder);
     }
 
     public void usedAsSize(boolean value)
@@ -166,11 +177,13 @@ public final class AstMemberNode extends AstNode
         private AstType unsignedType;
         private boolean hasDefault;
         private Integer defaultValue;
+        private AstByteOrder byteOrder;
 
         public Builder()
         {
             this.types = new LinkedList<>();
             this.size = -1;
+            this.byteOrder = NATIVE;
         }
 
         public Builder name(String name)
@@ -218,10 +231,16 @@ public final class AstMemberNode extends AstNode
             return this;
         }
 
+        public Builder byteOrder(AstByteOrder byteOrder)
+        {
+            this.byteOrder = byteOrder;
+            return this;
+        }
+
         @Override
         public AstMemberNode build()
         {
-            return new AstMemberNode(name, types, size, sizeName, unsignedType, hasDefault, defaultValue);
+            return new AstMemberNode(name, types, size, sizeName, unsignedType, hasDefault, defaultValue, byteOrder);
         }
     }
 }

@@ -62,6 +62,7 @@ scope test
         {
             case 1: octets[4] octets4;
             case 2: octets[16] octets16;
+            case 3: string string1;
         }
     
         struct Integers

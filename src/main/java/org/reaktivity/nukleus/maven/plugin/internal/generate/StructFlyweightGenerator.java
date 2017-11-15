@@ -24,6 +24,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BYTE_ARRAY;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
@@ -49,6 +50,8 @@ import java.util.function.IntBinaryOperator;
 import java.util.function.IntConsumer;
 import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
+
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -132,17 +135,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         String sizeName,
         boolean usedAsSize,
         boolean hasDefault,
-        Object defaultValue)
+        Object defaultValue,
+        AstByteOrder byteOrder)
     {
         memberOffsetConstant.addMember(name, type, unsignedType, size, sizeName);
         memberSizeConstant.addMember(name, type, unsignedType, size);
-        memberField.addMember(name, type, unsignedType, size, sizeName);
-        memberAccessor.addMember(name, type, unsignedType, size, sizeName);
-
+        memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder);
+        memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName);
         limitMethod.addMember(name, type, unsignedType, size, sizeName);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName);
         toStringMethod.addMember(name, type, unsignedType, size, sizeName);
-        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, hasDefault, defaultValue);
+        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, hasDefault, defaultValue, byteOrder);
 
         return this;
     }
@@ -311,11 +314,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName type,
             TypeName unsignedType,
             int size,
-            String sizeName)
+            String sizeName,
+            AstByteOrder byteOrder)
         {
             if (!type.isPrimitive())
             {
-                addNonPrimitiveMember(name, type, unsignedType);
+                addNonPrimitiveMember(name, type, unsignedType, byteOrder);
             }
             else if (size != -1 || sizeName != null)
             {
@@ -350,7 +354,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private MemberFieldGenerator addNonPrimitiveMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            AstByteOrder byteOrder)
         {
             String fieldRO = String.format("%sRO", name);
             Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL);
@@ -364,6 +369,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
                 TypeName typeArgument = parameterizedType.typeArguments.get(0);
                 fieldBuilder.initializer("new $T(new $T())", type, typeArgument);
+            }
+            else if (type instanceof ClassName && isString16Type((ClassName) type) && byteOrder == NETWORK)
+            {
+                fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", type, ByteOrder.class);
             }
             else
             {
@@ -530,6 +539,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             String name,
             TypeName type,
             TypeName unsignedType,
+            AstByteOrder byteOrder,
             int size,
             String sizeName)
         {
@@ -537,11 +547,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 if (size != -1 || sizeName != null)
                 {
-                    addIntegerArrayMember(name, type, unsignedType, sizeName);
+                    addIntegerArrayMember(name, type, unsignedType, byteOrder, sizeName);
                 }
                 else
                 {
-                    addPrimitiveMember(name, type, unsignedType);
+                    addPrimitiveMember(name, type, unsignedType, byteOrder);
                 }
             }
             else
@@ -555,7 +565,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             String name,
             TypeName type,
             TypeName unsignedType,
-             String sizeName)
+            AstByteOrder byteOrder,
+            String sizeName)
         {
             TypeName generateType = (unsignedType != null) ? unsignedType : type;
             generateType = generateType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
@@ -615,7 +626,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private void addPrimitiveMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            AstByteOrder byteOrder)
         {
             TypeName generateType = (unsignedType != null) ? unsignedType : type;
 
@@ -643,6 +655,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 codeBlock.add("buffer().$L(offset() + $L", getterName, offset(name));
             }
 
+            if (byteOrder == AstByteOrder.NETWORK)
+            {
+                if (type == TypeName.SHORT || type == TypeName.INT || type == TypeName.LONG)
+                {
+                    codeBlock.add(", $T.BIG_ENDIAN", ByteOrder.class);
+                }
+            }
+
             if (generateType != type)
             {
                 if (type == TypeName.BYTE)
@@ -651,11 +671,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (type == TypeName.SHORT)
                 {
-                    codeBlock.add(", $T.BIG_ENDIAN) & 0xFFFF)", ByteOrder.class);
+                    codeBlock.add(") & 0xFFFF)");
                 }
                 else if (type == TypeName.INT)
                 {
-                    codeBlock.add(", $T.BIG_ENDIAN) & 0xFFFF_FFFFL)", ByteOrder.class);
+                    codeBlock.add(") & 0xFFFF_FFFFL)");
+                }
+                else if (type == TypeName.LONG)
+                {
+                    codeBlock.add(") & 0xFFFF_FFFF)");
                 }
                 else
                 {
@@ -1068,7 +1092,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             String sizeName,
             boolean usedAsSize,
             boolean hasDefault,
-            Object defaultValue)
+            Object defaultValue,
+            AstByteOrder byteOrder)
         {
             if (usedAsSize)
             {
@@ -1076,11 +1101,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 hasDefault = true;
             }
             memberConstant.addMember(name, type, unsignedType, size, sizeName, hasDefault, defaultValue);
-            memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize);
+            memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize, byteOrder);
             memberAccessor.addMember(name, type, unsignedType, size, sizeName, hasDefault,
                     priorDefaulted, priorDefaultedIsPrimitive);
-            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, hasDefault, priorDefaulted,
-                    priorDefaultedIsPrimitive);
+            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, hasDefault, byteOrder,
+                    priorDefaulted, priorDefaultedIsPrimitive);
             if (hasDefault || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
@@ -1332,7 +1357,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String sizeName,
-                boolean usedAsSize)
+                boolean usedAsSize,
+                AstByteOrder byteOrder)
             {
                 if (usedAsSize)
                 {
@@ -1372,9 +1398,19 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     {
                         ClassName classType = (ClassName) type;
                         TypeName builderType = classType.nestedClass("Builder");
-                        builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
-                                .initializer("new $T()", builderType)
-                                .build());
+
+                        if (isString16Type(classType) && byteOrder == NETWORK)
+                        {
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                    .initializer("new $T($T.BIG_ENDIAN)", builderType, ByteOrder.class)
+                                    .build());
+                        }
+                        else
+                        {
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                    .initializer("new $T()", builderType)
+                                    .build());
+                        }
                     }
                     else
                     {
@@ -1547,6 +1583,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 int size,
                 String sizeName,
                 boolean hasDefault,
+                AstByteOrder byteOrder,
                 String priorDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
@@ -1556,19 +1593,20 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     {
                         addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, hasDefault, priorDefaulted,
                                 priorDefaultedIsPrimitive);
-                        addIntegerVariableArrayAppendMutator(name, type, unsignedType, sizeName, priorDefaulted,
+                        addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, priorDefaulted,
                                 priorDefaultedIsPrimitive);
                     }
                     else if (size != -1)
                     {
                         addIntegerFixedArrayIteratorMutator(name, type, unsignedType, size, priorDefaulted,
                                 priorDefaultedIsPrimitive);
-                        addIntegerFixedArrayAppendMutator(name, type, unsignedType, size, priorDefaulted,
+                        addIntegerFixedArrayAppendMutator(name, type, unsignedType, byteOrder, size, priorDefaulted,
                                 priorDefaultedIsPrimitive);
                     }
                     else
                     {
-                        addPrimitiveMember(name, type, unsignedType, usedAsSize, priorDefaulted, priorDefaultedIsPrimitive);
+                        addPrimitiveMember(name, type, unsignedType, usedAsSize, byteOrder, priorDefaulted,
+                                priorDefaultedIsPrimitive);
                     }
 
                 }
@@ -1590,6 +1628,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName type,
                 TypeName unsignedType,
                 boolean usedAsSize,
+                AstByteOrder byteOrder,
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
@@ -1646,26 +1685,30 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                     if (type == TypeName.BYTE)
                     {
-                        code.add("(value & 0xFF))");
+                        code.add("(value & 0xFF)");
                     }
                     else if (type == TypeName.SHORT)
                     {
-                        code.add("(value & 0xFFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                        code.add("(value & 0xFFFF)");
                     }
                     else if (type == TypeName.INT)
                     {
-                        code.add("(value & 0xFFFF_FFFFL), $T.BIG_ENDIAN)", ByteOrder.class);
+                        code.add("(value & 0xFFFF_FFFFL)");
                     }
                     else
                     {
-                        code.add("value)");
+                        code.add("value");
                     }
                 }
                 else
                 {
-                    code.add("value)");
+                    code.add("value");
                 }
-                code.add(";\n$]");
+                if (byteOrder == NETWORK)
+                {
+                    code.add(", $T.BIG_ENDIAN", ByteOrder.class);
+                }
+                code.add(");\n$]");
                 if (usedAsSize)
                 {
                     code.addStatement("$L = limit()", dynamicOffset(name));
@@ -1769,6 +1812,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
+                AstByteOrder byteOrder,
                 int size,
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
@@ -1835,31 +1879,35 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     {
                         if (type == TypeName.BYTE)
                         {
-                            code.add("(value & 0xFF))");
+                            code.add("(value & 0xFF)");
                         }
                         else if (type == TypeName.SHORT)
                         {
-                            code.add("(value & 0xFFFF))");
+                            code.add("(value & 0xFFFF)");
                         }
                         else if (type == TypeName.INT)
                         {
-                            code.add("(value & 0xFFFF_FFFFL))", ByteOrder.class);
+                            code.add("(value & 0xFFFF_FFFFL)", ByteOrder.class);
                         }
                         else
                         {
-                            code.add("value)");
+                            code.add("value");
                         }
                     }
                     else
                     {
-                        code.add("value)");
+                        code.add("value");
                     }
                 }
                 else
                 {
-                    code.add("value)");
+                    code.add("value");
                 }
-                code.add(";\n$]");
+                if (byteOrder == NETWORK)
+                {
+                    code.add(", $T.BIG_ENDIAN", ByteOrder.class);
+                }
+                code.add(");\n$]");
                 code.addStatement("limit(newLimit)")
                     .addStatement("return this");
 
@@ -1972,6 +2020,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
+                AstByteOrder byteOrder,
                 String sizeName,
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
@@ -2033,26 +2082,30 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                     if (type == TypeName.BYTE)
                     {
-                        code.add("(value & 0xFF))");
+                        code.add("(value & 0xFF)");
                     }
                     else if (type == TypeName.SHORT)
                     {
-                        code.add("(value & 0xFFFF), $T.BIG_ENDIAN)", ByteOrder.class);
+                        code.add("(value & 0xFFFF)");
                     }
                     else if (type == TypeName.INT)
                     {
-                        code.add("(value & 0xFFFF_FFFFL), $T.BIG_ENDIAN)", ByteOrder.class);
+                        code.add("(value & 0xFFFF_FFFFL)");
                     }
                     else
                     {
-                        code.add("value)");
+                        code.add("value");
                     }
                 }
                 else
                 {
-                    code.add("value)");
+                    code.add("value");
                 }
-                code.add(";\n$]");
+                if (byteOrder == NETWORK)
+                {
+                    code.add(", $T.BIG_ENDIAN", ByteOrder.class);
+                }
+                code.add(");\n$]");
                 code.addStatement("fieldsSet.set($L)", index(name))
                     .addStatement("limit($L)", dynamicOffset(sizeName))
                     .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name))
@@ -2245,6 +2298,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name)
             {
                 ClassName builderType = className.nestedClass("Builder");
+
                 builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PUBLIC)
                         .returns(thisType)
@@ -2448,7 +2502,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         ClassName classType)
     {
         String name = classType.simpleName();
-        return ("StringFW".equals(name) || "String16FW".equals(name));
+        return ("StringFW".equals(name) || isString16Type(classType));
+    }
+
+    private static boolean isString16Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String16FW".equals(name);
     }
 
     private static String index(
