@@ -78,15 +78,15 @@ scope test
     
         struct IntegerFixedArrays
         {
-            uint8[1]  unsigned8;
-            uint16[2] unsigned16;
-            uint32[3] unsigned32;
-            uint64[4] unsigned64;
-            string string1;
-            int8[1]  signed8;
-            int16[2] signed16;
-            int32[3] signed32;
-            int64[4] signed64;
+            uint8[1]  uint8Array;
+            uint16[2] uint16Array;
+            uint32[3] uint32Array;
+            uint64[4] uint64Array;
+            string anchor;
+            int8[1]  int8Array;
+            int16[2] int16Array;
+            int32[3] int32Array;
+            int64[4] int64Array;
         }
     
         struct IntegerVariableArrays

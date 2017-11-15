@@ -19,6 +19,8 @@ import java.nio.ByteOrder;
 import java.util.BitSet;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
+import java.util.function.IntBinaryOperator;
+import java.util.function.IntUnaryOperator;
 
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
@@ -89,11 +91,13 @@ public final class IntegerVariableArraysFW extends Flyweight {
         private final int offset;
         private final int fieldSize;
         private final int count;
+        private IntUnaryOperator accessor;
 
-        IntPrimitiveIterator(int offset, int fieldSize, int count) {
+        IntPrimitiveIterator(int offset, int fieldSize, int count, IntUnaryOperator accessor) {
             this.offset = offset;
             this.fieldSize = fieldSize;
             this.count = count;
+            this.accessor = accessor;
         }
 
         @Override
@@ -108,7 +112,7 @@ public final class IntegerVariableArraysFW extends Flyweight {
             if (!hasNext()) {
                 throw new NoSuchElementException("unsigned64: " + index);
             }
-            return buffer().getInt(offset + fieldSize * index++);
+            return accessor.applyAsInt(offset + fieldSize * index++);
         }
 
     };
@@ -143,7 +147,8 @@ public final class IntegerVariableArraysFW extends Flyweight {
     limitUnsigned64Array = offsetUnsigned64Array + FIELD_SIZE_UNSIGNED64 * (int) lengthUnsigned64Array();
 
     final int offsetSigned16 = limitUnsigned64Array + FIELD_OFFSET_SIGNED16;
-    iteratorSigned16 = new IntPrimitiveIterator(offsetSigned16, FIELD_SIZE_LENGTH_SIGNED16, lengthSigned16());
+    iteratorSigned16 = new IntPrimitiveIterator(offsetSigned16, FIELD_SIZE_LENGTH_SIGNED16, lengthSigned16(),
+            buffer()::getShort);
     limitSigned16 = offsetSigned16 + FIELD_SIZE_SIGNED16 * lengthSigned16();
     checkLimit(limit(), maxLimit);
     return this;
@@ -278,8 +283,10 @@ public static final class Builder extends Flyweight.Builder<IntegerVariableArray
           checkFieldNotSet(INDEX_UNSIGNED64_ARRAY);
           if (values == null || !values.hasNext())
           {
-              // TODO: set limit if length field is not immediately prior
+              int limit = limit();
+              limit(dynamicOffsetLengthUnsigned64Array);
               lengthUnsigned64Array(values == null ? -1 : 0);
+              limit(limit);
               checkFieldsSet(0, INDEX_UNSIGNED64_ARRAY);
               fieldsSet.set(INDEX_UNSIGNED64_ARRAY);
           }
