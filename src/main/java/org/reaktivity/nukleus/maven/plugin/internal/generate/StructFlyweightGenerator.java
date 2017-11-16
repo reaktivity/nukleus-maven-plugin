@@ -574,7 +574,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             builder.addMethod(methodBuilder(methodName(name))
                     .addModifiers(PUBLIC)
                     .returns(generateType)
+                    .beginControlFlow("if ($L != null)", iterator(name))
                     .addStatement("$L.index = 0", iterator(name))
+                    .endControlFlow()
                     .addStatement("return $L",  iterator(name))
                     .build());
             if (sizeName != null)

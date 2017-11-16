@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.PrimitiveIterator;
@@ -147,6 +148,8 @@ public class IntegerVariableArraysFWTest
 
         flyweightRO.wrap(buffer,  0,  buffer.capacity());
         assertEquals(0, flyweightRO.fixed1());
+        assertEquals(0, flyweightRO.fixed2());
+        assertNull(flyweightRO.unsigned64Array());
     }
 
     @Test
