@@ -75,6 +75,11 @@ public final class AstType
         return Objects.equals(this.name, that.name);
     }
 
+    boolean isSignedInteger()
+    {
+        return this == INT8 || this == INT16 || this == INT32 || this == INT64;
+    }
+
     @Override
     public String toString()
     {

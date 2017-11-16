@@ -104,11 +104,17 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, false, null, byteOrder);
+            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, false,
+                    defaultValue, byteOrder);
         }
         else
         {
             TypeName memberTypeName = resolver.resolveType(memberType);
+            if (memberTypeName == null)
+            {
+                throw new IllegalArgumentException(String.format(
+                        " Unable to resolve type %s for field %s", memberType, memberName));
+            }
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
             generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, usedAsSize,
                     defaultValue, byteOrder);

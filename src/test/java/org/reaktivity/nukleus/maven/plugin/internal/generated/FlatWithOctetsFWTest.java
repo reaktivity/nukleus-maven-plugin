@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -25,8 +26,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 
 public class FlatWithOctetsFWTest
 {
@@ -54,6 +55,7 @@ public class FlatWithOctetsFWTest
                 .limit();
         flatWithOctetsRO.wrap(buffer,  0,  limit);
         assertEquals(11, flatWithOctetsRO.fixed1());
+        assertNull(flatWithOctetsRO.octets3());
     }
 
     @Test
@@ -66,7 +68,7 @@ public class FlatWithOctetsFWTest
                 .build()
                 .limit();
         flatWithOctetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, flatWithOctetsRO.length());
+        assertEquals(6, flatWithOctetsRO.lengthOctets2());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -195,15 +197,19 @@ public class FlatWithOctetsFWTest
                 .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
                 .string1("value1")
                 .octets2(b -> b.put("12345".getBytes(UTF_8)))
+                .octets3(b -> b.put("678".getBytes(UTF_8)))
                 .extension(b -> b.put("octetsValue".getBytes(UTF_8)))
                 .build()
                 .limit();
         flatWithOctetsRO.wrap(buffer,  0,  limit);
         assertEquals(5, flatWithOctetsRO.fixed1());
         assertEquals("value1", flatWithOctetsRO.string1().asString());
-        final String octetsValue = flatWithOctetsRO.extension().get(
+        final String octets3 = flatWithOctetsRO.octets3().get(
                 (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
-        assertEquals("octetsValue", octetsValue);
+        assertEquals("678", octets3);
+        final String extension = flatWithOctetsRO.extension().get(
+                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+        assertEquals("octetsValue", extension);
     }
 
     @Test

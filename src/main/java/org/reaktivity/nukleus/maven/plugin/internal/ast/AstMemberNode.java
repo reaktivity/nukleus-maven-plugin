@@ -26,6 +26,8 @@ import java.util.Objects;
 
 public final class AstMemberNode extends AstNode
 {
+    public static final Object NULL_DEFAULT = new Object();
+
     private final String name;
     private final List<AstType> types;
     private final int size;
@@ -166,7 +168,7 @@ public final class AstMemberNode extends AstNode
         private int size;
         private String sizeName;
         private AstType unsignedType;
-        private Integer defaultValue;
+        private Object defaultValue;
         private AstByteOrder byteOrder;
 
         public Builder()
@@ -211,6 +213,12 @@ public final class AstMemberNode extends AstNode
             int defaultValue)
         {
             this.defaultValue = defaultValue;
+            return this;
+        }
+
+        public  Builder defaultToNull()
+        {
+            this.defaultValue = NULL_DEFAULT;
             return this;
         }
 

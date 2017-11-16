@@ -17,6 +17,8 @@ scope test
 {
 
     scope inner {
+        //option byte_order native;
+        
         struct FlatParent
         {
             uint64 fixed1;
@@ -48,9 +50,11 @@ scope test
         {
             uint32 fixed1 = 11;
             octets[10] octets1;
-            uint16 length;
+            uint16 lengthOctets2;
             string string1;
-            octets[length] octets2;
+            octets[lengthOctets2] octets2;
+            int32 lengthOctets3;
+            octets[lengthOctets3] octets3 = null;
             octets extension;
         }
         
@@ -71,6 +75,29 @@ scope test
             int16 signed16 = -16;
             int32 signed32 = -32;
             int64 signed64 = -64;
+        }
+    
+        struct IntegerFixedArrays
+        {
+            uint8[1]  uint8Array;
+            uint16[2] uint16Array;
+            uint32[3] uint32Array;
+            uint64[4] uint64Array;
+            string anchor;
+            int8[1]  int8Array;
+            int16[2] int16Array;
+            int32[3] int32Array;
+            int64[4] int64Array;
+        }
+    
+        struct IntegerVariableArrays
+        {
+            uint8  fixed1 = 0;
+            int32 lengthUnsigned64;
+            int16 fixed2 = 0;
+            uint64[lengthUnsigned64] unsigned64Array = null;
+            uint8 lengthSigned16;
+            int16[lengthSigned16] signed16Array;
         }
     
         struct NestedAllDefaulting

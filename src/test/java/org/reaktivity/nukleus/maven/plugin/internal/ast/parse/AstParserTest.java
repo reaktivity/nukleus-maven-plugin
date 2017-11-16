@@ -284,6 +284,42 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseOctetsDefaultingToNull()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { int16 size; octets[size] field = null; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.INT16)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
+                        .name("field").defaultToNull().build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotParseVariableOctetsDefaultingToNullWithUnsignedSizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint64 size; octets[size] field = null; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
+                        .name("field").defaultToNull().build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseInt64Member()
     {
         NukleusParser parser = newParser("int64 field;");
@@ -398,6 +434,77 @@ public class AstParserTest
                 .type(AstType.UINT16)
                 .unsignedType(AstType.INT32)
                 .name("field")
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseUint16FixedArrayMember()
+    {
+        NukleusParser parser = newParser("uint16[10] field;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.UINT16)
+                .unsignedType(AstType.INT32)
+                .name("field")
+                .size(10)
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseUint64VariableArrayMember()
+    {
+        NukleusParser parser = newParser("struct arrayField { uint16 size; uint64[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("arrayField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(AstType.INT32)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
+                        .sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseInt32VariableArrayMemberDefaultingToNulld()
+    {
+        NukleusParser parser = newParser("struct arrayField { int8 size; int32[size] field = null; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("arrayField")
+                .member(new AstMemberNode.Builder().type(AstType.INT8)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.INT32).sizeName("size")
+                        .name("field").defaultToNull().build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotParseInt32VariableArrayMemberDefaultingToNullWithUnsignedSizeField()
+    {
+        NukleusParser parser = newParser("struct arrayField { uint64 size; int32[size] field = null; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("arrayField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
+                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.INT32).sizeName("size")
+                        .name("field").defaultToNull().build())
                 .build();
 
         assertEquals(expected, actual);

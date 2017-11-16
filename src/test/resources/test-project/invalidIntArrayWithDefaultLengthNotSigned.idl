@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-scope invalidUnrecognizedType
+scope invalidIntArrayWithDefaultLengthNotSigned
 {
-    struct OctetsNotLast
+    struct InvalidIntegerArray
     {
-        octetszzz extension;
-        int64 fixed1;
+        uint8 length = 0;
+        uint32[length] array = null;
     }
     
 }
