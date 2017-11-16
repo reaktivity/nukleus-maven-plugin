@@ -1138,12 +1138,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 defaultValue = 0;
             }
+            Consumer<CodeBlock.Builder> defaultPriorField = priorDefaulted == null ? null
+                    : b -> defaultPriorField(b);
             memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
             memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize, byteOrder);
             memberAccessor.addMember(name, type, unsignedType, size, sizeName, defaultValue,
-                    priorDefaulted, priorDefaultedIsPrimitive, priorDefaultValue, priorSizeName);
+                    priorDefaulted, defaultPriorField);
             memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, byteOrder, defaultValue,
-                    priorDefaulted, priorDefaultedIsPrimitive, priorDefaultValue, priorSizeName);
+                    priorDefaulted, defaultPriorField);
             if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
@@ -1304,6 +1306,27 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             String fieldName)
         {
             return String.format("dynamicOffset%s", initCap(fieldName));
+        }
+
+        private void defaultPriorField(
+            CodeBlock.Builder code)
+        {
+            if (priorDefaultValue != null && priorDefaultedIsPrimitive)
+            {
+                code.addStatement("$L($L)", priorDefaulted, defaultName(priorDefaulted));
+            }
+            else
+            {
+                //  Attempt to default the entire object. This will fail if it has any required fields.
+                code.addStatement("$L(b -> { })", priorDefaulted);
+                if (priorDefaultValue == NULL_DEFAULT)
+                {
+                    code.addStatement("int limit = limit()");
+                    code.addStatement("limit($L)", dynamicOffset(priorSizeName));
+                    code.addStatement("$L(-1)", methodName(priorSizeName));
+                    code.addStatement("limit(limit)");
+                }
+            }
         }
 
         private static final class MemberConstantGenerator extends ClassSpecMixinGenerator
@@ -1487,13 +1510,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String sizeName,
                 Object defaultValue,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive,
-                Object priorDefaultValue,
-                String priorSizeName)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
-                Consumer<CodeBlock.Builder> defaultPriorField = priorFieldIfDefaulted == null ? null
-                        : b -> defaultPriorField(b, priorFieldIfDefaulted, priorDefaultedIsPrimitive,
-                            priorDefaultValue, priorSizeName);
                 if (type instanceof ClassName)
                 {
                     ClassName classType = (ClassName) type;
@@ -1581,31 +1599,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addCode(code.build())
                         .build());
             }
-
-            private void defaultPriorField(
-                CodeBlock.Builder code,
-                String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive,
-                Object priorDefaultValue,
-                String priorSizeName)
-            {
-                if (priorDefaultValue != null && priorDefaultedIsPrimitive)
-                {
-                    code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                }
-                else
-                {
-                    //  Attempt to default the entire object. This will fail if it has any required fields.
-                    code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
-                    if (priorDefaultValue == NULL_DEFAULT)
-                    {
-                        code.addStatement("int limit = limit()");
-                        code.addStatement("limit($L)", dynamicOffset(priorSizeName));
-                        code.addStatement("$L(-1)", methodName(priorSizeName));
-                        code.addStatement("limit(limit)");
-                    }
-                }
-            }
         }
 
         private static final class MemberMutatorGenerator extends ClassSpecMixinGenerator
@@ -1650,12 +1643,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 Object defaultValue,
                 String priorDefaulted,
-                boolean priorDefaultedIsPrimitive,
-                Object priorDefaultValue,
-                String priorSizeName)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
-                Consumer<CodeBlock.Builder> defaultPriorField = priorDefaulted == null ? null
-                        : b -> defaultPriorField(b, priorDefaulted, priorDefaultedIsPrimitive, priorDefaultValue, priorSizeName);
                 if (type.isPrimitive())
                 {
                     if (sizeName != null)
@@ -2497,31 +2486,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addParameter(itemMutatorType, "mutator")
                             .addCode(code.build())
                             .build());
-                }
-            }
-
-            private void defaultPriorField(
-                CodeBlock.Builder code,
-                String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive,
-                Object priorDefaultValue,
-                String priorSizeName)
-            {
-                if (priorDefaultValue != null && priorDefaultedIsPrimitive)
-                {
-                    code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                }
-                else
-                {
-                    //  Attempt to default the entire object. This will fail if it has any required fields.
-                    code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
-                    if (priorDefaultValue == NULL_DEFAULT)
-                    {
-                        code.addStatement("int limit = limit()");
-                        code.addStatement("limit($L)", dynamicOffset(priorSizeName));
-                        code.addStatement("$L(-1)", methodName(priorSizeName));
-                        code.addStatement("limit(limit)");
-                    }
                 }
             }
         }
