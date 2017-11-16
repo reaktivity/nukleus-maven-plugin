@@ -25,6 +25,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode.NULL_DEFAULT;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BYTE_ARRAY;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
@@ -52,6 +53,7 @@ import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -134,7 +136,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         int size,
         String sizeName,
         boolean usedAsSize,
-        boolean hasDefault,
         Object defaultValue,
         AstByteOrder byteOrder)
     {
@@ -145,7 +146,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         limitMethod.addMember(name, type, unsignedType, size, sizeName);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName);
         toStringMethod.addMember(name, type, unsignedType, size, sizeName);
-        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, hasDefault, defaultValue, byteOrder);
+        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, defaultValue, byteOrder);
 
         return this;
     }
@@ -1093,22 +1094,19 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             int size,
             String sizeName,
             boolean usedAsSize,
-            boolean hasDefault,
             Object defaultValue,
             AstByteOrder byteOrder)
         {
             if (usedAsSize)
             {
                 defaultValue = 0;
-                hasDefault = true;
             }
-            memberConstant.addMember(name, type, unsignedType, size, sizeName, hasDefault, defaultValue);
+            memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
             memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize, byteOrder);
-            memberAccessor.addMember(name, type, unsignedType, size, sizeName, hasDefault,
+            memberAccessor.addMember(name, type, unsignedType, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
+            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, byteOrder, defaultValue,
                     priorDefaulted, priorDefaultedIsPrimitive);
-            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, hasDefault, byteOrder,
-                    priorDefaulted, priorDefaultedIsPrimitive);
-            if (hasDefault || isImplicitlyDefaulted(type, size, sizeName))
+            if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
                 priorDefaultedIsPrimitive = type.isPrimitive();
@@ -1279,7 +1277,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String sizeName,
-                boolean hasDefault,
                 Object defaultValue)
             {
                 builder.addField(
@@ -1288,8 +1285,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                  .build());
                 fieldNames.add(name);
                 boolean isOctetsType = type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName());
-                if (hasDefault)
+                if (defaultValue != null)
                 {
+                    Object defaultValueToSet = defaultValue == NULL_DEFAULT ? null : defaultValue;
                     TypeName generateType = (unsignedType != null) ? unsignedType : type;
                     if (size != -1 || sizeName != null)
                     {
@@ -1298,7 +1296,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     builder.addField(
                             FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
-                                     .initializer(Objects.toString(defaultValue))
+                                     .initializer(Objects.toString(defaultValueToSet))
                                      .build());
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
@@ -1439,7 +1437,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String sizeName,
-                boolean hasDefault,
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
@@ -1585,8 +1582,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 boolean usedAsSize,
                 int size,
                 String sizeName,
-                boolean hasDefault,
                 AstByteOrder byteOrder,
+                Object defaultValue,
                 String priorDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
@@ -1594,7 +1591,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     if (sizeName != null)
                     {
-                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, hasDefault, priorDefaulted,
+                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, defaultValue, priorDefaulted,
                                 priorDefaultedIsPrimitive);
                         addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, priorDefaulted,
                                 priorDefaultedIsPrimitive);
@@ -1926,7 +1923,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName type,
                 TypeName unsignedType,
                 String sizeName,
-                boolean hasDefault,
+                Object defaultValue,
                 String priorFieldIfDefaulted,
                 boolean priorDefaultedIsPrimitive)
             {
@@ -1950,7 +1947,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     code.endControlFlow();
                 }
-                if (hasDefault)
+                if (defaultValue != null)
                 {
                     code.beginControlFlow("if (values == null || !values.hasNext())");
                     code.addStatement("int limit = limit()");

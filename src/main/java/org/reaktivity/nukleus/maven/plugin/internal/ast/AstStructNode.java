@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode.NULL_DEFAULT;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -138,13 +139,13 @@ public final class AstStructNode extends AstNode
                 if (sizeField.isPresent())
                 {
                     AstMemberNode size = sizeField.get();
-                    if (size.hasDefault())
+                    if (size.defaultValue() != null)
                     {
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" must not have a default value's",
                                 member.sizeName(), member.name()));
                     }
-                    boolean defaultsToNull = member.hasDefault();
+                    boolean defaultsToNull = member.defaultValue() == NULL_DEFAULT;
                     if (defaultsToNull && !size.type().isSignedInteger())
                     {
                         throw new IllegalArgumentException(format(

@@ -26,12 +26,13 @@ import java.util.Objects;
 
 public final class AstMemberNode extends AstNode
 {
+    public static final Object NULL_DEFAULT = new Object();
+
     private final String name;
     private final List<AstType> types;
     private final int size;
     private final String sizeName;
     private final AstType unsignedType;
-    private boolean hasDefault;
     private final Object defaultValue;
     private final AstByteOrder byteOrder;
 
@@ -43,7 +44,6 @@ public final class AstMemberNode extends AstNode
         int size,
         String sizeName,
         AstType unsignedType,
-        boolean hasDefault,
         Object defaultValue,
         AstByteOrder byteOrder)
     {
@@ -52,7 +52,6 @@ public final class AstMemberNode extends AstNode
         this.size = size;
         this.sizeName = sizeName;
         this.unsignedType = unsignedType;
-        this.hasDefault = hasDefault;
         this.defaultValue = defaultValue;
         this.byteOrder = byteOrder;
     }
@@ -94,11 +93,6 @@ public final class AstMemberNode extends AstNode
         return sizeName;
     }
 
-    public boolean hasDefault()
-    {
-        return hasDefault;
-    }
-
     public Object defaultValue()
     {
         return defaultValue;
@@ -134,7 +128,6 @@ public final class AstMemberNode extends AstNode
                 Objects.deepEquals(this.types, that.types) &&
                 Objects.equals(this.unsignedType, that.unsignedType) &&
                 Objects.equals(this.sizeName, that.sizeName) &&
-                this.hasDefault == that.hasDefault &&
                 Objects.equals(this.defaultValue, that.defaultValue) &&
                 Objects.equals(this.byteOrder, that.byteOrder);
     }
@@ -175,8 +168,7 @@ public final class AstMemberNode extends AstNode
         private int size;
         private String sizeName;
         private AstType unsignedType;
-        private boolean hasDefault;
-        private Integer defaultValue;
+        private Object defaultValue;
         private AstByteOrder byteOrder;
 
         public Builder()
@@ -221,13 +213,12 @@ public final class AstMemberNode extends AstNode
             int defaultValue)
         {
             this.defaultValue = defaultValue;
-            this.hasDefault = true;
             return this;
         }
 
         public  Builder defaultToNull()
         {
-            this.hasDefault = true;
+            this.defaultValue = NULL_DEFAULT;
             return this;
         }
 
@@ -240,7 +231,7 @@ public final class AstMemberNode extends AstNode
         @Override
         public AstMemberNode build()
         {
-            return new AstMemberNode(name, types, size, sizeName, unsignedType, hasDefault, defaultValue, byteOrder);
+            return new AstMemberNode(name, types, size, sizeName, unsignedType, defaultValue, byteOrder);
         }
     }
 }
