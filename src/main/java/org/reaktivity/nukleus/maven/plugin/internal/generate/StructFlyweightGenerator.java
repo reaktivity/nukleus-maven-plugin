@@ -53,7 +53,6 @@ import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
