@@ -141,7 +141,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         memberOffsetConstant.addMember(name, type, unsignedType, size, sizeName);
         memberSizeConstant.addMember(name, type, unsignedType, size);
         memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder, defaultValue);
-        memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName);
+        memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName, defaultValue);
         limitMethod.addMember(name, type, unsignedType, size, sizeName);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         toStringMethod.addMember(name, type, unsignedType, size, sizeName);
@@ -547,7 +547,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType,
             AstByteOrder byteOrder,
             int size,
-            String sizeName)
+            String sizeName,
+            Object defaultValue)
         {
             if (type.isPrimitive())
             {
@@ -562,7 +563,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                addNonPrimitiveMember(name, type, unsignedType);
+                addNonPrimitiveMember(name, type, unsignedType, sizeName, defaultValue);
             }
             return this;
         }
@@ -594,7 +595,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private void addNonPrimitiveMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            String sizeName,
+            Object defaultValue)
         {
             CodeBlock.Builder codeBlock = CodeBlock.builder();
 
@@ -620,7 +623,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .build());
             }
 
-            codeBlock.addStatement("return $LRO", name);
+            if (defaultValue == NULL_DEFAULT && sizeName != null)
+            {
+                codeBlock.addStatement("return $L() == -1 ? null: $LRO", methodName(sizeName), name);
+            }
+            else
+            {
+                codeBlock.addStatement("return $LRO", name);
+            }
 
             anchorLimit = methodName(name) + "()." + (DIRECT_BUFFER_TYPE.equals(type) ? "capacity()" : "limit()");
 
@@ -922,16 +932,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (sizeName != null)
                 {
-                    CodeBlock.Builder code = CodeBlock.builder();
-                    code.add("$[");
                     if (defaultValue == NULL_DEFAULT)
                     {
-                        code.add("$LRO = $L() == -1 ? null : ", name, methodName(sizeName));
+                        builder.addStatement(
+                            "$LRO.wrap(buffer, $L + $L, $L + $L + ((int) $L() == -1 ? 0 : (int) $L()))",
+                            name, anchorLimit, offset(name), anchorLimit, offset(name), methodName(sizeName),
+                            methodName(sizeName));
                     }
-                    code.add("$LRO.wrap(buffer, $L + $L, $L + $L + (int) $L())",
+                    else
+                    {
+                        builder.addStatement("$LRO.wrap(buffer, $L + $L, $L + $L + (int) $L())",
                             name, anchorLimit, offset(name), anchorLimit, offset(name), methodName(sizeName));
-                    code.add(";\n$]");
-                    builder.addCode(code.build());
+                    }
                 }
                 else
                 {
@@ -965,7 +977,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             name, offset(name));
                 }
             }
-            anchorLimit = methodName(name) + "().limit()";
+            anchorLimit = name + "RO.limit()";
         }
 
         private void addBufferGet(
@@ -1086,6 +1098,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private final MemberMutatorGenerator memberMutator;
         private String priorDefaulted;
         private boolean priorDefaultedIsPrimitive;
+        private Object priorDefaultValue;
+        private String priorSizeName;
 
         private BuilderClassGenerator(
             ClassName structType,
@@ -1126,13 +1140,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
             memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
             memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize, byteOrder);
-            memberAccessor.addMember(name, type, unsignedType, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
+            memberAccessor.addMember(name, type, unsignedType, size, sizeName, defaultValue,
+                    priorDefaulted, priorDefaultedIsPrimitive, priorDefaultValue, priorSizeName);
             memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, byteOrder, defaultValue,
-                    priorDefaulted, priorDefaultedIsPrimitive);
+                    priorDefaulted, priorDefaultedIsPrimitive, priorDefaultValue, priorSizeName);
             if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
                 priorDefaultedIsPrimitive = type.isPrimitive();
+                priorDefaultValue = defaultValue;
+                priorSizeName = sizeName;
             }
             else
             {
@@ -1149,7 +1166,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             memberMutator.build();
             return builder.addMethod(constructor())
                           .addMethod(wrapMethod())
-                          .addMethod(buildMethod(priorDefaulted, priorDefaultedIsPrimitive))
+                          .addMethod(buildMethod())
                           .addMethod(checkFieldNotSetMethod())
                           .addMethod(checkFieldsSetMethod())
                           .build();
@@ -1179,23 +1196,31 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .build();
         }
 
-        private MethodSpec buildMethod(String priorFieldIfDefaulted, boolean priorDefaultedIsPrimitive)
+        private MethodSpec buildMethod()
         {
             MethodSpec.Builder builder = methodBuilder("build")
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(structType);
-            if (priorFieldIfDefaulted != null)
+            if (priorDefaulted != null)
             {
-                builder.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                if (priorDefaultedIsPrimitive)
+                builder.beginControlFlow("if (!fieldsSet.get($L))", index(priorDefaulted));
+
+                if (priorDefaultValue != null && priorDefaultedIsPrimitive)
                 {
-                    builder.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                    builder.addStatement("$L($L)", priorDefaulted, defaultName(priorDefaulted));
                 }
                 else
                 {
                     //  Attempt to default the entire object. This will fail if it has any required fields.
-                    builder.addStatement("$L(b -> { });", priorFieldIfDefaulted);
+                    builder.addStatement("$L(b -> { })", priorDefaulted);
+                    if (priorDefaultValue == NULL_DEFAULT)
+                    {
+                        builder.addStatement("int limit = limit()");
+                        builder.addStatement("limit($L)", dynamicOffset(priorSizeName));
+                        builder.addStatement("$L(-1)", methodName(priorSizeName));
+                        builder.addStatement("limit(limit)");
+                    }
                 }
                 builder.endControlFlow();
             }
@@ -1308,7 +1333,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                  .build());
                 fieldNames.add(name);
                 boolean isOctetsType = type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName());
-                if (defaultValue != null)
+                if (defaultValue != null && !isOctetsType)
                 {
                     Object defaultValueToSet = defaultValue == NULL_DEFAULT ? null : defaultValue;
                     TypeName generateType = (unsignedType != null) ? unsignedType : type;
@@ -1460,9 +1485,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String sizeName,
+                Object defaultValue,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                boolean priorDefaultedIsPrimitive,
+                Object priorDefaultValue,
+                String priorSizeName)
             {
+                Consumer<CodeBlock.Builder> defaultPriorField = priorFieldIfDefaulted == null ? null
+                        : b -> defaultPriorField(b, priorFieldIfDefaulted, priorDefaultedIsPrimitive,
+                            priorDefaultValue, priorSizeName);
                 if (type instanceof ClassName)
                 {
                     ClassName classType = (ClassName) type;
@@ -1471,7 +1502,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         addStringType(name,
                                       classType,
                                       priorFieldIfDefaulted,
-                                      priorDefaultedIsPrimitive);
+                                      defaultPriorField);
                     }
                     else if ("OctetsFW".equals(classType.simpleName()))
                     {
@@ -1479,8 +1510,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                 classType,
                                 size,
                                 sizeName,
+                                defaultValue,
                                 priorFieldIfDefaulted,
-                                priorDefaultedIsPrimitive);
+                                defaultPriorField);
                     }
                 }
                 return this;
@@ -1491,8 +1523,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 ClassName className,
                 int size,
                 String sizeName,
+                Object defaultValue,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 String fieldRW = String.format("%sRW", name);
                 ClassName builderType = className.nestedClass("Builder");
@@ -1502,15 +1535,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name));
@@ -1536,7 +1561,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 ClassName classType,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 String fieldRW = String.format("%sRW", name);
                 TypeName builderType = classType.nestedClass("Builder");
@@ -1545,15 +1570,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name))
@@ -1563,6 +1580,31 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .returns(builderType)
                         .addCode(code.build())
                         .build());
+            }
+
+            private void defaultPriorField(
+                CodeBlock.Builder code,
+                String priorFieldIfDefaulted,
+                boolean priorDefaultedIsPrimitive,
+                Object priorDefaultValue,
+                String priorSizeName)
+            {
+                if (priorDefaultValue != null && priorDefaultedIsPrimitive)
+                {
+                    code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                }
+                else
+                {
+                    //  Attempt to default the entire object. This will fail if it has any required fields.
+                    code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
+                    if (priorDefaultValue == NULL_DEFAULT)
+                    {
+                        code.addStatement("int limit = limit()");
+                        code.addStatement("limit($L)", dynamicOffset(priorSizeName));
+                        code.addStatement("$L(-1)", methodName(priorSizeName));
+                        code.addStatement("limit(limit)");
+                    }
+                }
             }
         }
 
@@ -1608,34 +1650,38 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 Object defaultValue,
                 String priorDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                boolean priorDefaultedIsPrimitive,
+                Object priorDefaultValue,
+                String priorSizeName)
             {
+                Consumer<CodeBlock.Builder> defaultPriorField = priorDefaulted == null ? null
+                        : b -> defaultPriorField(b, priorDefaulted, priorDefaultedIsPrimitive, priorDefaultValue, priorSizeName);
                 if (type.isPrimitive())
                 {
                     if (sizeName != null)
                     {
-                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, defaultValue, priorDefaulted,
-                                priorDefaultedIsPrimitive);
+                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, defaultValue,
+                                priorDefaulted, defaultPriorField);
                         addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, priorDefaulted,
-                                priorDefaultedIsPrimitive);
+                                defaultPriorField);
                     }
                     else if (size != -1)
                     {
                         addIntegerFixedArrayIteratorMutator(name, type, unsignedType, size, priorDefaulted,
-                                priorDefaultedIsPrimitive);
+                                defaultPriorField);
                         addIntegerFixedArrayAppendMutator(name, type, unsignedType, byteOrder, size, priorDefaulted,
-                                priorDefaultedIsPrimitive);
+                                defaultPriorField);
                     }
                     else
                     {
                         addPrimitiveMember(name, type, unsignedType, usedAsSize, byteOrder, priorDefaulted,
-                                priorDefaultedIsPrimitive);
+                                defaultPriorField);
                     }
 
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
+                    addNonPrimitiveMember(name, type, size, sizeName, priorDefaulted, defaultPriorField);
                 }
                 return this;
             }
@@ -1653,7 +1699,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 boolean usedAsSize,
                 AstByteOrder byteOrder,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 String putterName = PUTTER_NAMES.get(type);
                 if (putterName == null)
@@ -1686,15 +1732,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name))
@@ -1754,7 +1792,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 CodeBlock.Builder code = CodeBlock.builder();
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
@@ -1764,15 +1802,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 code.beginControlFlow("if (values == null)");
@@ -1837,7 +1867,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 int size,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 String putterName = PUTTER_NAMES.get(type);
                 if (putterName == null)
@@ -1868,15 +1898,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name))
@@ -1948,7 +1970,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String sizeName,
                 Object defaultValue,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 CodeBlock.Builder code = CodeBlock.builder();
                 code.addStatement("checkFieldNotSet($L)", index(name));
@@ -1956,18 +1978,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName valueType = inputType == TypeName.LONG ? TypeName.LONG : TypeName.INT;
                 TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
                         : INT_ITERATOR_CLASS_NAME;
-                if (priorFieldIfDefaulted != null)
+                if (defaultPriorField != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 if (defaultValue != null)
@@ -2045,7 +2059,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 String sizeName,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 String putterName = PUTTER_NAMES.get(type);
                 if (putterName == null)
@@ -2075,15 +2089,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 code.addStatement("fieldsSet.set($L)", index(sizeName))
@@ -2149,17 +2155,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 int size,
                 String sizeName,
                 String priorDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 if (type instanceof ClassName)
                 {
                     ClassName className = (ClassName) type;
-                    addClassType(name, className, size, sizeName, priorDefaulted, priorDefaultedIsPrimitive);
+                    addClassType(name, className, size, sizeName, priorDefaulted, defaultPriorField);
                 }
                 else if (type instanceof ParameterizedTypeName)
                 {
                     ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
-                    addParameterizedType(name, parameterizedType, priorDefaulted, priorDefaultedIsPrimitive);
+                    addParameterizedType(name, parameterizedType, priorDefaulted, defaultPriorField);
                 }
                 else
                 {
@@ -2180,7 +2186,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 int size,
                 String sizeName,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 if (isStringType(className))
                 {
@@ -2207,15 +2213,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (priorFieldIfDefaulted != null)
                     {
                         code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                        if (priorDefaultedIsPrimitive)
-                        {
-                            code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                        }
-                        else
-                        {
-                            //  Attempt to default the entire object. This will fail if it has any required fields.
-                            code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                        }
+                        defaultPriorField.accept(code);
                         code.endControlFlow();
                     }
                     code.addStatement("checkFieldsSet(0, $L)", index(name))
@@ -2442,7 +2440,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 ParameterizedTypeName parameterizedType,
                 String priorFieldIfDefaulted,
-                boolean priorDefaultedIsPrimitive)
+                Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 ClassName rawType = parameterizedType.rawType;
                 ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
@@ -2458,15 +2456,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (priorFieldIfDefaulted != null)
                 {
                     code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                    if (priorDefaultedIsPrimitive)
-                    {
-                        code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                    }
-                    else
-                    {
-                        //  Attempt to default the entire object. This will fail if it has any required fields.
-                        code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                    }
+                    defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name))
@@ -2490,15 +2480,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (priorFieldIfDefaulted != null)
                     {
                         code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
-                        if (priorDefaultedIsPrimitive)
-                        {
-                            code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
-                        }
-                        else
-                        {
-                            //  Attempt to default the entire object. This will fail if it has any required fields.
-                            code.addStatement("$L(b -> { });", priorFieldIfDefaulted);
-                        }
+                        defaultPriorField.accept(code);
                         code.endControlFlow();
                     }
                     code.addStatement("checkFieldsSet(0, $L)", index(name))
@@ -2515,6 +2497,31 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addParameter(itemMutatorType, "mutator")
                             .addCode(code.build())
                             .build());
+                }
+            }
+
+            private void defaultPriorField(
+                CodeBlock.Builder code,
+                String priorFieldIfDefaulted,
+                boolean priorDefaultedIsPrimitive,
+                Object priorDefaultValue,
+                String priorSizeName)
+            {
+                if (priorDefaultValue != null && priorDefaultedIsPrimitive)
+                {
+                    code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                }
+                else
+                {
+                    //  Attempt to default the entire object. This will fail if it has any required fields.
+                    code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
+                    if (priorDefaultValue == NULL_DEFAULT)
+                    {
+                        code.addStatement("int limit = limit()");
+                        code.addStatement("limit($L)", dynamicOffset(priorSizeName));
+                        code.addStatement("$L(-1)", methodName(priorSizeName));
+                        code.addStatement("limit(limit)");
+                    }
                 }
             }
         }
