@@ -15,9 +15,13 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
+
 import java.util.Deque;
 import java.util.LinkedList;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
@@ -32,6 +36,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Default_nullContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int16_typeContext;
@@ -39,9 +44,11 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int32_t
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_nameContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
@@ -54,7 +61,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_literalContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_list_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
@@ -71,10 +78,12 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private AstUnionNode.Builder unionBuilder;
 
     private Builder caseBuilder;
+    private AstByteOrder byteOrder;
 
     public AstParser()
     {
         this.scopeBuilders = new LinkedList<>();
+        this.byteOrder = NATIVE;
     }
 
     @Override
@@ -98,9 +107,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         scopeBuilder.depth(scopeBuilders.size());
         scopeBuilder.name(name);
 
+        AstByteOrder byteOrder = this.byteOrder;
         scopeBuilders.offer(scopeBuilder);
         super.visitScope(ctx);
         scopeBuilders.pollLast();
+        this.byteOrder = byteOrder;
 
         AstScopeNode.Builder parent = scopeBuilders.peekLast();
         if (parent != null)
@@ -119,6 +130,26 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             return scopeBuilder.build();
         }
+    }
+
+    @Override
+    public AstNode visitOptionByteOrder(
+        OptionByteOrderContext ctx)
+    {
+        if (ctx.KW_NATIVE() != null)
+        {
+            byteOrder = NATIVE;
+        }
+        else if (ctx.KW_NETWORK() != null)
+        {
+            byteOrder = NETWORK;
+        }
+        else
+        {
+            throw new IllegalStateException("Unexpected byte order option");
+        }
+
+        return super.visitOptionByteOrder(ctx);
     }
 
     @Override
@@ -192,7 +223,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstMemberNode visitMember(
         MemberContext ctx)
     {
-        memberBuilder = new AstMemberNode.Builder();
+        memberBuilder = new AstMemberNode.Builder().byteOrder(byteOrder);
 
         super.visitMember(ctx);
 
@@ -235,19 +266,42 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitUint_member(
-        Uint_memberContext ctx)
+    public AstNode visitUint_member_with_default(
+        Uint_member_with_defaultContext ctx)
     {
         memberBuilder.defaultValue(parseInt(ctx.uint_literal()));
-        return super.visitUint_member(ctx);
+        return super.visitUint_member_with_default(ctx);
     }
 
     @Override
-    public AstNode visitInt_member(
-        Int_memberContext ctx)
+    public AstNode visitInt_member_with_default(
+        Int_member_with_defaultContext ctx)
     {
         memberBuilder.defaultValue(parseInt(ctx.int_literal()));
-        return super.visitInt_member(ctx);
+        return super.visitInt_member_with_default(ctx);
+    }
+
+    @Override
+    public AstNode visitInteger_array_member(
+        Integer_array_memberContext ctx)
+    {
+        if (ctx.positive_int_const() != null)
+        {
+            memberBuilder.size(Integer.parseInt(ctx.positive_int_const().getText()));
+        }
+        else if (ctx.ID() != null)
+        {
+            memberBuilder.sizeName(ctx.ID().getText());
+        }
+        return super.visitInteger_array_member(ctx);
+    }
+
+    @Override
+    public AstNode visitDefault_null(
+        Default_nullContext ctx)
+    {
+        memberBuilder.defaultToNull();
+        return super.visitDefault_null(ctx);
     }
 
     @Override

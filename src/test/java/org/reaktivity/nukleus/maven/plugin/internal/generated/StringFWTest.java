@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
@@ -38,6 +39,22 @@ public class StringFWTest
     };
     private final StringFW.Builder stringRW = new StringFW.Builder();
     private final StringFW stringRO = new StringFW();
+
+    @Test
+    public void shouldDefaultAfterRewrap() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set("Hello, world", UTF_8)
+                .build()
+                .limit();
+
+        StringFW string = stringRW.wrap(buffer, 0, limit)
+                .build();
+
+        assertNull(string.asString());
+        assertEquals(LENGTH_SIZE, string.limit());
+        assertEquals(LENGTH_SIZE, string.sizeof());
+    }
 
     @Test
     public void shouldDefaultToEmpty() throws Exception

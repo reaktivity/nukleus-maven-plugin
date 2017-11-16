@@ -32,19 +32,44 @@ public class GenerateMojoTest
     {
     }
 
+    @Test
+    // Regenerate from test.idl so it's included in code coverage report
+    public void shouldGenerateTestIdl()
+        throws Exception
+    {
+        generator.scopeNames("test")
+            .generate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGenerateInvalidIntArrayLengthHasDefault()
+        throws Exception
+    {
+        generator.scopeNames("invalidIntArrayLengthHasDefault")
+            .generate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGenerateInvalidIntArrayLengthNotUnsigned()
+        throws Exception
+    {
+        generator.scopeNames("invalidIntArrayLengthNotUnsigned")
+            .generate();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGenerateInvalidIntArrayWithDefaultLengthNotSigned()
+        throws Exception
+    {
+        generator.scopeNames("invalidIntArrayWithDefaultLengthNotSigned")
+            .generate();
+    }
+
     @Test(expected = ParseCancellationException.class)
     public void shouldNotGenerateInvalidStructOctetsNotLast()
         throws Exception
     {
         generator.scopeNames("invalidOctetsNotLast")
-            .generate();
-    }
-
-    @Test // TODO: (expected = ParseCancellationException.class)
-    public void shouldNotGenerateUnrecognizedType()
-        throws Exception
-    {
-        generator.scopeNames("invalidUnrecognizedType")
             .generate();
     }
 
@@ -56,4 +81,13 @@ public class GenerateMojoTest
             generator.scopeNames("invalidOctetsNotLastNested")
                 .generate();
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotGenerateUnrecognizedType()
+        throws Exception
+    {
+        generator.scopeNames("invalidUnrecognizedType")
+            .generate();
+    }
+
 }

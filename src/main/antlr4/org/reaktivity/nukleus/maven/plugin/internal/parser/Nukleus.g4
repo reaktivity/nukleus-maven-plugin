@@ -20,7 +20,15 @@ specification
    ;
 
 scope
-   : KW_SCOPE ID LEFT_BRACE definition * RIGHT_BRACE
+   : KW_SCOPE ID LEFT_BRACE option * definition * RIGHT_BRACE
+   ;
+
+option
+   : KW_OPTION optionByteOrder SEMICOLON
+   ;
+
+optionByteOrder
+   : KW_BYTEORDER (KW_NATIVE | KW_NETWORK)
    ;
 
 scoped_name
@@ -169,16 +177,37 @@ member_list
 
 member
    : type_spec declarators SEMICOLON
-   | uint_member SEMICOLON
-   | int_member SEMICOLON
+   | uint_member_with_default SEMICOLON
+   | int_member_with_default SEMICOLON
+   | octets_member_with_default SEMICOLON
+   | integer_array_member SEMICOLON
    ;
    
-uint_member
+uint_member_with_default
    : unsigned_integer_type declarator EQUALS uint_literal
    ;
    
-int_member 
+int_member_with_default 
    : signed_integer_type declarator EQUALS int_literal
+   ;
+   
+octets_member_with_default
+   : octets_type declarator default_null
+   ;
+   
+integer_array_member
+   : int8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | int16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | int32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | int64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | uint8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | uint16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | uint32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | uint64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   ;
+   
+default_null
+   : '= null'
    ;
    
 unbounded_member
@@ -440,6 +469,21 @@ KW_SCOPE
    : 'scope'
    ;
 
+KW_OPTION
+   : 'option'
+   ;
+
+KW_BYTEORDER
+   : 'byteorder'
+   ;
+
+KW_NATIVE
+   : 'native'
+   ;
+
+KW_NETWORK
+   : 'network'
+   ;
 
 ID
    : LETTER (LETTER | ID_DIGIT)*

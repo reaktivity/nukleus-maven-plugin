@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -88,7 +90,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         TypeName type,
         TypeName unsignedType,
         int size,
-        String sizeName)
+        String sizeName,
+        AstByteOrder byteOrder)
     {
         memberKindConstant.addMember(value, name);
         memberOffsetConstant.addMember(name);

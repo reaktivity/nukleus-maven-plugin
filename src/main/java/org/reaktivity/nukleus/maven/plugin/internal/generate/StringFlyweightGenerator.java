@@ -192,6 +192,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(int.class, "maxLimit")
                     .addStatement("checkLimit(offset + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH, maxLimit)")
                     .addStatement("super.wrap(buffer, offset, maxLimit)")
+                    .addStatement("this.valueSet = false")
                     .addStatement("return this")
                     .build();
         }

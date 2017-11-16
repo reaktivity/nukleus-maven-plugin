@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2016-2017 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
@@ -13,12 +13,10 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-scope invalidUnrecognizedType
+package org.reaktivity.nukleus.maven.plugin.internal.ast;
+
+public enum AstByteOrder
 {
-    struct OctetsNotLast
-    {
-        octetszzz extension;
-        int64 fixed1;
-    }
-    
+    NATIVE,
+    NETWORK
 }
