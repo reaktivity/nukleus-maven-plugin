@@ -21,6 +21,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.PrimitiveIterator;
+import java.util.PrimitiveIterator.OfInt;
+import java.util.PrimitiveIterator.OfLong;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -31,6 +33,52 @@ import org.reaktivity.reaktor.internal.test.types.inner.IntegerFixedArraysFW;
 
 public class IntegerFixedArraysFWTest
 {
+    public class IntIterator implements OfInt
+    {
+        private final int[] values;
+        private int index = 0;
+
+        public IntIterator(int... values)
+        {
+            this.values = values;
+        }
+
+        @Override
+        public boolean hasNext()
+        {
+            return index < values.length;
+        }
+
+        @Override
+        public int nextInt()
+        {
+            return values[index++];
+        }
+    }
+
+    public class LongIterator implements OfLong
+    {
+        private final long[] values;
+        private int index = 0;
+
+        public LongIterator(long... values)
+        {
+            this.values = values;
+        }
+
+        @Override
+        public boolean hasNext()
+        {
+            return index < values.length;
+        }
+
+        @Override
+        public long nextLong()
+        {
+            return values[index++];
+        }
+    }
+
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(150))
     {
         {
@@ -57,6 +105,55 @@ public class IntegerFixedArraysFWTest
           .appendUint8Array(10)
           .appendUint16Array((short) 0)
           .appendUint16Array((short) 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToSetUint16ArrayToNull()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+          .appendUint8Array(10)
+          .uint16Array(null);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToIncompletelySetUint16ArrayUsingAppend()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+          .appendUint8Array(10)
+          .appendUint16Array(15)
+          .appendUint32Array(13);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToIncompletelySetUint16ArrayUsingIterator()
+    {
+      flyweightRW.wrap(buffer, 0, buffer.capacity())
+          .appendUint8Array(0)
+          .uint16Array(new IntIterator(1));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToBuildWithIncompletelySetUint16ArrayUsingAppend()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+          .appendUint8Array(10)
+          .appendUint16Array(15)
+          .build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToSetInt32ArrayWithIteratorExceedingSize() throws Exception
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+                .uint8Array(new IntIterator(0xFF))
+                .uint16Array(new IntIterator(3, 0xFFFF))
+                .uint32Array(new LongIterator(10, 11, 0xFFFFFFFFL))
+                .uint64Array(new LongIterator(20, 21, 22, 23))
+                .anchor("anchor")
+                .int8Array(new IntIterator(127))
+                .int16Array(new IntIterator(3, 0xFFFF))
+                .int32Array(new IntIterator(-10, -11, -12, -13)) // too many values
+                .build();
     }
 
     @Test
@@ -184,27 +281,15 @@ public class IntegerFixedArraysFWTest
     public void shouldSetAllValuesUsingIterators() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-                .appendUint8Array(0xFF)
-                .appendUint16Array(3)
-                .appendUint16Array(0xFFFF)
-                .appendUint32Array(10)
-                .appendUint32Array(11)
-                .appendUint32Array(0xFFFFFFFFL)
-                .appendUint64Array(20)
-                .appendUint64Array(21)
-                .appendUint64Array(22)
-                .appendUint64Array(23)
+                .uint8Array(new IntIterator(0xFF))
+                .uint16Array(new IntIterator(3, 0xFFFF))
+                .uint32Array(new LongIterator(10, 11, 0xFFFFFFFFL))
+                .uint64Array(new LongIterator(20, 21, 22, 23))
                 .anchor("anchor")
-                .appendInt8Array((byte) 127)
-                .appendInt16Array((short) 3)
-                .appendInt16Array((short) 0xFFFF)
-                .appendInt32Array(-10)
-                .appendInt32Array(-11)
-                .appendInt32Array(-12)
-                .appendInt64Array(-20)
-                .appendInt64Array(-21)
-                .appendInt64Array(-22)
-                .appendInt64Array(-23)
+                .int8Array(new IntIterator(127))
+                .int16Array(new IntIterator(3, 0xFFFF))
+                .int32Array(new IntIterator(-10, -11, -12))//, -13))
+                .int64Array(new LongIterator(-20, -21, -22, -23))
                 .build();
 
         expected.putByte(0, (byte) 0xFF); // uint8Array[1]

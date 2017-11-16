@@ -1370,6 +1370,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (size != -1 || sizeName != null)
                     {
                         builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
+                                .initializer("-1")
                                 .build());
                     }
                 }
@@ -1734,7 +1735,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 boolean priorDefaultedIsPrimitive)
             {
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("checkFieldNotSet($L)", index(name));
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
                 TypeName valueType = inputType == TypeName.LONG ? TypeName.LONG : TypeName.INT;
                 TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
@@ -1824,6 +1824,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
 
                 CodeBlock.Builder code = CodeBlock.builder();
+                code.addStatement("checkFieldNotSet($L)", index(name));
                 if (unsignedType != null)
                 {
                     String[] range = UNSIGNED_INT_RANGES.get(type);
@@ -1840,7 +1841,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                 }
 
-                code.beginControlFlow("if (!fieldsSet.get($L))", index(name));
+                code.beginControlFlow("if ($L == -1)", dynamicOffset(name));
 
                 if (priorFieldIfDefaulted != null)
                 {
@@ -1858,14 +1859,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 code.addStatement("checkFieldsSet(0, $L)", index(name))
                     .addStatement("$L = limit()", dynamicOffset(name))
-                    .addStatement("fieldsSet.set($L)", index(name))
                 .endControlFlow();
 
                 code.addStatement("int newLimit = limit() + $L", size(name))
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("int newSize = (newLimit - $L) / $L",  dynamicOffset(name), size(name))
-                    .beginControlFlow("if (newSize > $L)", arraySize(name))
-                    .addStatement("throw new $T($S)", IndexOutOfBoundsException.class, "too many values for " + name)
+                    .beginControlFlow("if (newSize == $L)", arraySize(name))
+                        .addStatement("fieldsSet.set($L)", index(name))
                     .endControlFlow()
                     .add("$[")
                     .add("buffer().$L(limit(), ", putterName);
