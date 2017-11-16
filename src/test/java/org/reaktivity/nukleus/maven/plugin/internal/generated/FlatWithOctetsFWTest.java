@@ -25,8 +25,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 
 public class FlatWithOctetsFWTest
 {
@@ -54,6 +54,7 @@ public class FlatWithOctetsFWTest
                 .limit();
         flatWithOctetsRO.wrap(buffer,  0,  limit);
         assertEquals(11, flatWithOctetsRO.fixed1());
+        // assertNull(flatWithOctetsRO.octets3()); // TODO: make builder default it to null instead of empty
     }
 
     @Test

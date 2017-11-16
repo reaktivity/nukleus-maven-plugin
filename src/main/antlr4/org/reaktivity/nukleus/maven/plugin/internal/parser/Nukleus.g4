@@ -83,7 +83,7 @@ declarators
 declarator
    : ID
    ;
-   
+
 integer_type
    : signed_integer_type
    | unsigned_integer_type

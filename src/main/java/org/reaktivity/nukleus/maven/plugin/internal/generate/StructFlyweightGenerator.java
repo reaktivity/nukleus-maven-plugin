@@ -140,10 +140,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     {
         memberOffsetConstant.addMember(name, type, unsignedType, size, sizeName);
         memberSizeConstant.addMember(name, type, unsignedType, size);
-        memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder);
+        memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder, defaultValue);
         memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName);
         limitMethod.addMember(name, type, unsignedType, size, sizeName);
-        wrapMethod.addMember(name, type, unsignedType, size, sizeName);
+        wrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         toStringMethod.addMember(name, type, unsignedType, size, sizeName);
         builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, defaultValue, byteOrder);
 
@@ -315,11 +315,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType,
             int size,
             String sizeName,
-            AstByteOrder byteOrder)
+            AstByteOrder byteOrder,
+            Object defaultValue)
         {
             if (!type.isPrimitive())
             {
-                addNonPrimitiveMember(name, type, unsignedType, byteOrder);
+                addNonPrimitiveMember(name, type, unsignedType, byteOrder, defaultValue);
             }
             else if (size != -1 || sizeName != null)
             {
@@ -355,10 +356,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             String name,
             TypeName type,
             TypeName unsignedType,
-            AstByteOrder byteOrder)
+            AstByteOrder byteOrder,
+            Object defaultValue)
         {
             String fieldRO = String.format("%sRO", name);
-            Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL);
+            Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE);
+            if (defaultValue == null)
+            {
+                fieldBuilder.addModifiers(FINAL);
+            }
 
             if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
             {
@@ -813,7 +819,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName type,
             TypeName unsignedType,
             int size,
-            String sizeName)
+            String sizeName,
+            Object defaultValue)
         {
             if (DIRECT_BUFFER_TYPE.equals(type))
             {
@@ -822,7 +829,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
             else if (!type.isPrimitive())
             {
-                addNonPrimitiveMember(name, type, unsignedType, size, sizeName);
+                addNonPrimitiveMember(name, type, unsignedType, size, sizeName, defaultValue);
             }
             else if (size != -1)
             {
@@ -903,7 +910,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName type,
             TypeName unsignedType,
             int size,
-            String sizeName)
+            String sizeName,
+            Object defaultValue)
         {
             if (anchorLimit != null)
             {
@@ -914,8 +922,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (sizeName != null)
                 {
-                    builder.addStatement("$LRO.wrap(buffer, $L + $L, $L + $L + (int) $L())",
-                            name, anchorLimit, offset(name), anchorLimit, offset(name), sizeName);
+                    CodeBlock.Builder code = CodeBlock.builder();
+                    code.add("$[");
+                    if (defaultValue == NULL_DEFAULT)
+                    {
+                        code.add("$LRO = $L() == -1 ? null : ", name, methodName(sizeName));
+                    }
+                    code.add("$LRO.wrap(buffer, $L + $L, $L + $L + (int) $L())",
+                            name, anchorLimit, offset(name), anchorLimit, offset(name), methodName(sizeName));
+                    code.add(";\n$]");
+                    builder.addCode(code.build());
                 }
                 else
                 {
@@ -932,8 +948,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (sizeName != null)
                 {
-                    builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + (int) $L())",
-                            name, offset(name), offset(name), sizeName);
+                    CodeBlock.Builder code = CodeBlock.builder();
+                    code.add("$[");
+                    if (defaultValue == NULL_DEFAULT)
+                    {
+                        code.add("$LRO = $L() == -1 ? null : ", name, methodName(sizeName));
+                    }
+                    code.add("$LRO.wrap(buffer, offset + $L, offset + $L + (int) $L())",
+                            name, offset(name), offset(name), methodName(sizeName));
+                    code.add(";\n$]");
+                    builder.addCode(code.build());
                 }
                 else
                 {
