@@ -38,6 +38,9 @@ public final class GenerateMojo extends AbstractMojo
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/reaktivity")
     protected File outputDirectory;
 
+    @Parameter(defaultValue = "${project.build.directory}/generated-test-sources/reaktivity")
+    protected File outputTestDirectory;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException
     {
@@ -61,6 +64,7 @@ public final class GenerateMojo extends AbstractMojo
         generator.setPackageName(packageName);
         generator.setInputDirectory(inputDirectory);
         generator.setOutputDirectory(outputDirectory);
+        generator.setOutputTestDirectory(outputTestDirectory);
         generator.setScopeNames(scopeNames);
         generator.generate(createLoader());
         project.addCompileSourceRoot(outputDirectory.getPath());

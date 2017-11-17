@@ -99,7 +99,6 @@
       <groupId>org.agrona</groupId>
       <artifactId>Agrona</artifactId>
       <version>${agrona.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

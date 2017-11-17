@@ -40,6 +40,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.String16FlyweightGe
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StringFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.String16FlyweightTestGenerator;
 
 import com.squareup.javapoet.JavaFile;
 
@@ -48,6 +49,7 @@ public class Generator
     private String scopeNames = "test";
     private File inputDirectory = new File("src/test/resources/test-project");
     private File outputDirectory = new File("target/generated-test-sources/test-reaktivity");
+    private File outputTestDirectory = new File("target/generated-test-sources/test-reaktivity");
     private String packageName = "org.reaktivity.reaktor.internal.test.types";
 
     private Parser parser = new Parser();
@@ -92,6 +94,8 @@ public class Generator
             typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
             typeSpecs.add(new ListFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
+            typeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+
             System.out.println("Generating to " + outputDirectory);
 
             if (outputDirectory.exists())
@@ -102,13 +106,22 @@ public class Generator
                      .forEach(f -> f.setWritable(true));
             }
 
+            if (outputTestDirectory.exists())
+            {
+                Files.walk(outputTestDirectory.toPath())
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(f -> f.setWritable(true));
+            }
+
             for (TypeSpecGenerator<?> typeSpec : typeSpecs)
             {
+                boolean isTest = typeSpec.className().simpleName().endsWith("Test");
                 JavaFile sourceFile = JavaFile.builder(typeSpec.className().packageName(), typeSpec.generate())
                         .addFileComment("TODO: license")
                         .skipJavaLangImports(true)
                         .build();
-                sourceFile.writeTo(outputDirectory);
+                sourceFile.writeTo(isTest?outputTestDirectory:outputDirectory);
             }
 
             if (outputDirectory.exists())
@@ -117,6 +130,13 @@ public class Generator
                      .map(Path::toFile)
                      .filter(File::isFile)
                      .forEach(f -> f.setWritable(false));
+            }
+            if (outputTestDirectory.exists())
+            {
+                Files.walk(outputTestDirectory.toPath())
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(f -> f.setWritable(false));
             }
     }
 
@@ -160,6 +180,12 @@ public class Generator
         File outputDirectory)
     {
         this.outputDirectory = outputDirectory;
+    }
+
+    void setOutputTestDirectory(
+        File outputTestDirectory)
+    {
+        this.outputTestDirectory = outputTestDirectory;
     }
 
     private ClassLoader createClassLoader() throws MalformedURLException

@@ -26,7 +26,8 @@ public class GenerateMojoTest
     public GenerateMojoRule generator = new GenerateMojoRule()
             .packageName("org.reaktivity.reaktor.internal.test.types")
             .inputDirectory("src/test/resources/test-project")
-            .outputDirectory("target/generated-test-sources/test-reaktivity");
+            .outputDirectory("target/generated-test-sources/test-reaktivity")
+            .outputTestDirectory("target/generated-test-sources/test-reaktivity");
 
     public GenerateMojoTest() throws Exception
     {
