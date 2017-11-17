@@ -32,15 +32,15 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-public final class VarintFlyweightGenerator extends ClassSpecGenerator
+public final class Varint64FlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
 
-    public VarintFlyweightGenerator(
+    public Varint64FlyweightGenerator(
         ClassName flyweightType)
     {
-        super(flyweightType.peerClass("VarintFW"));
+        super(flyweightType.peerClass("Varint64FW"));
 
         this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
@@ -79,21 +79,21 @@ public final class VarintFlyweightGenerator extends ClassSpecGenerator
     {
         return methodBuilder("value")
                 .addModifiers(PUBLIC)
-                .returns(int.class)
-                .addStatement("int value = 0")
+                .returns(long.class)
+                .addStatement("long value = 0L")
                 .addStatement("int i = 0;")
-                .addStatement("int b")
+                .addStatement("long b")
                 .addStatement("int pos  = offset()")
-                .beginControlFlow("while (((b = buffer().getByte(pos++)) & 0x80) != 0)")
+                .beginControlFlow("while (((b = buffer().getByte(pos++)) & 0x80L) != 0)")
                 .addStatement("value |= (b & 0x7F) << i")
                 .addStatement("i += 7")
-                .beginControlFlow("if (i > 35)")
-                .addStatement("throw new $T($S)", IllegalArgumentException.class, "varint value too long")
+                .beginControlFlow("if (i > 65)")
+                .addStatement("throw new $T($S)", IllegalArgumentException.class, "varint64 value too long")
                 .endControlFlow()
                 .endControlFlow()
-                .addStatement("int unsigned = value  | (b << i);")
-                .addStatement("int result = (((unsigned << 31) >> 31) ^ unsigned) >> 1")
-                .addStatement("result = result ^ (unsigned & (1 << 31))")
+                .addStatement("long unsigned = value  | (b << i);")
+                .addStatement("long result = (((unsigned << 63) >> 63) ^ unsigned) >> 1")
+                .addStatement("result = result ^ (unsigned & (1L << 63))")
                 .addStatement("return result")
                 .build();
     }
@@ -120,7 +120,7 @@ public final class VarintFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(String.class)
-                .addStatement("return Integer.toString(value())")
+                .addStatement("return Long.toString(value())")
                 .build();
     }
 
@@ -131,14 +131,16 @@ public final class VarintFlyweightGenerator extends ClassSpecGenerator
                 .returns(int.class)
                 .addStatement("int pos = offset()")
                 .addStatement("byte b = (byte) 0")
-                .addStatement("final int maxPos = Math.max(pos + 5,  maxLimit())")
+                .addStatement("final int maxPos = Math.max(pos + 10,  maxLimit())")
                 .beginControlFlow("while (pos <= maxPos && ((b = buffer().getByte(pos)) & 0x80L) != 0)")
                 .addStatement("pos++")
                 .endControlFlow()
-                .beginControlFlow("if ((b & 0x80L) != 0)")
-                .addStatement("throw new $T($S)", IllegalArgumentException.class, "varint value at offset %d exceeds 32 bits")
-                .endControlFlow()
                 .addStatement("int size = 1 + pos - offset()")
+                .addStatement("int mask = size < 10 ? 0x80 : 0x02") // 64 % 7 = 1 bit allowed only
+                .beginControlFlow("if ((b & mask) != 0)") // must only contain one bit (64 - 7*9)
+                .addStatement("throw new $T(String.format($S, offset()))", IllegalArgumentException.class,
+                        "(varint64 value at offset %d exceeds 64 bits")
+                .endControlFlow()
                 .addStatement("return size")
                 .build();
     }
@@ -207,22 +209,22 @@ public final class VarintFlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("set")
                     .addModifiers(PUBLIC)
                     .returns(flyweightType.nestedClass("Builder"))
-                    .addParameter(int.class, "value")
-                    .addStatement("int zigzagged = (value << 1) ^ (value >> 31)")
+                    .addParameter(long.class, "value")
+                    .addStatement("long zigzagged = (value << 1) ^ (value >> 63)")
                     .addStatement("int pos = offset()")
                     .addStatement("int bits = 1 + $1T.numberOfTrailingZeros($1T.highestOneBit(zigzagged))",
-                            java.lang.Integer.class)
+                            java.lang.Long.class)
                     .addStatement("int size = bits / 7")
                     .beginControlFlow("if (size * 7 < bits)")
                         .addStatement("size++")
                     .endControlFlow()
                     .addStatement("int newLimit = pos + size")
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .beginControlFlow("while ((zigzagged & 0xFFFFFF80) != 0L)")
-                        .addStatement("buffer().putByte(pos++, (byte) ((zigzagged & 0x7F) | 0x80))")
+                    .beginControlFlow("while ((zigzagged & 0xFFFFFFFF_FFFFFF80L) != 0L)")
+                        .addStatement("buffer().putByte(pos++, (byte) ((zigzagged & 0x7FL) | 0x80L))")
                         .addStatement("zigzagged >>>= 7")
                     .endControlFlow()
-                    .addStatement("buffer().putByte(pos, (byte) (zigzagged & 0x7F))")
+                    .addStatement("buffer().putByte(pos, (byte) (zigzagged & 0x7FL))")
                     .addStatement("limit(newLimit)")
                     .addStatement("valueSet = true")
                     .addStatement("return this")

@@ -40,7 +40,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.String16FlyweightGe
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StringFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.VarintFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
 
 import com.squareup.javapoet.JavaFile;
 
@@ -92,7 +93,8 @@ public class Generator
             typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
             typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
             typeSpecs.add(new ListFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new VarintFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+            typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+            typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
             System.out.println("Generating to " + outputDirectory);
 

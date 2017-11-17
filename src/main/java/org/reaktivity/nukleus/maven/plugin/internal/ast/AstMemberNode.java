@@ -35,8 +35,10 @@ public final class AstMemberNode extends AstNode
     private final AstType unsignedType;
     private final Object defaultValue;
     private final AstByteOrder byteOrder;
+    private final boolean isArray;
 
     private boolean usedAsSize;
+
 
     private AstMemberNode(
         String name,
@@ -45,7 +47,8 @@ public final class AstMemberNode extends AstNode
         String sizeName,
         AstType unsignedType,
         Object defaultValue,
-        AstByteOrder byteOrder)
+        AstByteOrder byteOrder,
+        boolean isArray)
     {
         this.name = requireNonNull(name);
         this.types = unmodifiableList(requireNotEmpty(requireNonNull(types)));
@@ -54,6 +57,7 @@ public final class AstMemberNode extends AstNode
         this.unsignedType = unsignedType;
         this.defaultValue = defaultValue;
         this.byteOrder = byteOrder;
+        this.isArray = isArray;
     }
 
     @Override
@@ -81,6 +85,11 @@ public final class AstMemberNode extends AstNode
     public List<AstType> types()
     {
         return types;
+    }
+
+    public boolean isArray()
+    {
+        return isArray;
     }
 
     public int size()
@@ -167,6 +176,7 @@ public final class AstMemberNode extends AstNode
         private List<AstType> types;
         private int size;
         private String sizeName;
+        private boolean isArray;
         private AstType unsignedType;
         private Object defaultValue;
         private AstByteOrder byteOrder;
@@ -190,9 +200,16 @@ public final class AstMemberNode extends AstNode
             return this;
         }
 
+        public void isArray(
+            boolean isArray)
+        {
+            this.isArray = isArray;
+        }
+
         public Builder size(int size)
         {
             this.size = size;
+            isArray(true);
             return this;
         }
 
@@ -200,6 +217,7 @@ public final class AstMemberNode extends AstNode
             String sizeName)
         {
             this.sizeName = sizeName;
+            isArray(true);
             return this;
         }
 
@@ -231,7 +249,7 @@ public final class AstMemberNode extends AstNode
         @Override
         public AstMemberNode build()
         {
-            return new AstMemberNode(name, types, size, sizeName, unsignedType, defaultValue, byteOrder);
+            return new AstMemberNode(name, types, size, sizeName, unsignedType, defaultValue, byteOrder, isArray);
         }
     }
 }

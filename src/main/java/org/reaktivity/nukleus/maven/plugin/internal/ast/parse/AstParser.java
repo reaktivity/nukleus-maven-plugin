@@ -66,7 +66,9 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbound
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint32_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint64_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_array_memberContext;
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
 {
@@ -298,6 +300,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
+    public AstNode visitVarint_array_member(
+        Varint_array_memberContext ctx)
+    {
+        memberBuilder.isArray(true);
+        return super.visitVarint_array_member(ctx);
+    }
+
+    @Override
     public AstNode visitDefault_null(
         Default_nullContext ctx)
     {
@@ -355,11 +365,19 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitVarint_type(
-        Varint_typeContext ctx)
+    public AstNode visitVarint32_type(
+        Varint32_typeContext ctx)
     {
-        memberBuilder.type(AstType.VARINT);
-        return super.visitVarint_type(ctx);
+        memberBuilder.type(AstType.VARINT32);
+        return super.visitVarint32_type(ctx);
+    }
+
+    @Override
+    public AstNode visitVarint64_type(
+        Varint64_typeContext ctx)
+    {
+        memberBuilder.type(AstType.VARINT64);
+        return super.visitVarint64_type(ctx);
     }
 
     @Override

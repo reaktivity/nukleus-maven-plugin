@@ -94,7 +94,8 @@ signed_integer_type
    | int16_type
    | int32_type
    | int64_type
-   | varint_type
+   | varint32_type
+   | varint64_type
    ;
 
 unsigned_integer_type
@@ -136,8 +137,12 @@ uint64_type
    : KW_UINT64
    ;
    
-varint_type
-   : KW_VARINT
+varint32_type
+   : KW_VARINT32
+   ;
+   
+varint64_type
+   : KW_VARINT64
    ;
 
 octets_type
@@ -186,6 +191,7 @@ member
    | int_member_with_default SEMICOLON
    | octets_member_with_default SEMICOLON
    | integer_array_member SEMICOLON
+   | varint_array_member SEMICOLON
    ;
    
 uint_member_with_default
@@ -205,11 +211,15 @@ integer_array_member
    | int16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | int32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | int64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
-   | varint_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   ;
+   
+varint_array_member
+   : varint32_type LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET declarator default_null?
+   | varint64_type LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET declarator default_null?
    ;
    
 default_null
@@ -466,8 +476,13 @@ KW_UINT64
    ;
 
 
-KW_VARINT
-   : 'varint'
+KW_VARINT32
+   : 'varint32'
+   ;
+
+
+KW_VARINT64
+   : 'varint64'
    ;
 
 

@@ -71,12 +71,12 @@ scope test
             uint16 unsigned16 = 0xFFFF;
             uint32 unsigned32 = 0x7FFFFFFF; // TODO: 0xFFFFFFFF;
             uint64 unsigned64 = 0x7FFFFFFF; // TODO: 0xFFFFFFFFFFFFFFFF;
-            varint varint1 = 123;
+            varint32 variable32 = 123;
             int8  signed8  =  -8;
             int16 signed16 = -16;
             int32 signed32 = -32;
             int64 signed64 = -64;
-            varint varint2 = -234;
+            varint64 variable64 = -234;
         }
     
         struct IntegerFixedArrays
@@ -97,6 +97,8 @@ scope test
             uint8  fixed1 = 0;
             int32 lengthUnsigned64;
             int16 fixed2 = 0;
+//            varint32[] varint32Array;
+//            varint64[] varint64Array;
             uint64[lengthUnsigned64] unsigned64Array = null;
             uint8 lengthSigned16;
             int16[lengthSigned16] signed16Array;
