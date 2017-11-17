@@ -66,6 +66,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbound
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_typeContext;
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
 {
@@ -351,6 +352,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.name(ctx.ID().toString());
         return super.visitDeclarator(ctx);
+    }
+
+    @Override
+    public AstNode visitVarint_type(
+        Varint_typeContext ctx)
+    {
+        memberBuilder.type(AstType.VARINT);
+        return super.visitVarint_type(ctx);
     }
 
     @Override

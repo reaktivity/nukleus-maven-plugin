@@ -51,10 +51,12 @@ public class IntegerFWTest
         assertEquals(0xFFFF, integersRO.unsigned16());
         assertEquals(0x7FFFFFFF, integersRO.unsigned32());
         assertEquals(0x7FFFFFFF, integersRO.unsigned64());
+        assertEquals(123, integersRO.varint1());
         assertEquals(-8, integersRO.signed8());
         assertEquals(-16, integersRO.signed16());
         assertEquals(-32, integersRO.signed32());
         assertEquals(-64, integersRO.signed64());
+        assertEquals(-234, integersRO.varint2());
     }
 
     @Test
@@ -77,6 +79,28 @@ public class IntegerFWTest
                .limit();
         integersRO.wrap(buffer,  0,  limit);
         assertEquals(0, integersRO.unsigned8());
+    }
+
+    @Test
+    public void shouldSetVarint1ToMaximumValue()
+    {
+        int limit = integersRW.wrap(buffer, 0, buffer.capacity())
+               .varint1(Integer.MAX_VALUE)
+               .build()
+               .limit();
+        integersRO.wrap(buffer,  0,  limit);
+        assertEquals(Integer.MAX_VALUE, integersRO.varint1());
+    }
+
+    @Test
+    public void shouldSetvarint2ToMinimumValue()
+    {
+        int limit = integersRW.wrap(buffer, 0, buffer.capacity())
+                .varint2(Integer.MIN_VALUE)
+                .build()
+                .limit();
+        integersRO.wrap(buffer,  0,  limit);
+        assertEquals(Integer.MIN_VALUE, integersRO.varint2());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
