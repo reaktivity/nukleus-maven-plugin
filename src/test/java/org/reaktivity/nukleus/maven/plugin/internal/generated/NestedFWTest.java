@@ -131,8 +131,9 @@ public class NestedFWTest
     public void shouldFailToBuildWhenFlatIsNotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("flat");
+        expectedException.expectMessage("fixed1"); // first required field in flat
         nestedRW.wrap(buffer, 0, 100)
+            .fixed5(12L)
             .build();
     }
 

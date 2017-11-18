@@ -623,20 +623,26 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .build());
             }
 
+            TypeName returnType = type;
             if (defaultValue == NULL_DEFAULT && sizeName != null)
             {
                 codeBlock.addStatement("return $L() == -1 ? null: $LRO", methodName(sizeName), name);
+            }
+            else if (isVarintType(type))
+            {
+                codeBlock.addStatement("return $LRO.value()", name);
+                returnType = isVarint32Type(type) ? TypeName.INT : TypeName.LONG;
             }
             else
             {
                 codeBlock.addStatement("return $LRO", name);
             }
 
-            anchorLimit = methodName(name) + "()." + (DIRECT_BUFFER_TYPE.equals(type) ? "capacity()" : "limit()");
+            anchorLimit = name + "RO." + (DIRECT_BUFFER_TYPE.equals(type) ? "capacity()" : "limit()");
 
             builder.addMethod(methodBuilder(methodName(name))
                     .addModifiers(PUBLIC)
-                    .returns(type)
+                    .returns(returnType)
                     .addCode(codeBlock.build())
                     .build());
         }
@@ -778,7 +784,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else
                     {
-                        code.add("return $L().limit()", methodName(anchorName));
+                        code.add("return $LRO.limit()", anchorName);
                     }
                 }
                 else
@@ -1149,7 +1155,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
-                priorDefaultedIsPrimitive = type.isPrimitive();
+                priorDefaultedIsPrimitive = type.isPrimitive() || isVarintType(type);
                 priorDefaultValue = defaultValue;
                 priorSizeName = sizeName;
             }
@@ -1207,23 +1213,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             if (priorDefaulted != null)
             {
                 builder.beginControlFlow("if (!fieldsSet.get($L))", index(priorDefaulted));
-
-                if (priorDefaultValue != null && priorDefaultedIsPrimitive)
-                {
-                    builder.addStatement("$L($L)", priorDefaulted, defaultName(priorDefaulted));
-                }
-                else
-                {
-                    //  Attempt to default the entire object. This will fail if it has any required fields.
-                    builder.addStatement("$L(b -> { })", priorDefaulted);
-                    if (priorDefaultValue == NULL_DEFAULT)
-                    {
-                        builder.addStatement("int limit = limit()");
-                        builder.addStatement("limit($L)", dynamicOffset(priorSizeName));
-                        builder.addStatement("$L(-1)", methodName(priorSizeName));
-                        builder.addStatement("limit(limit)");
-                    }
-                }
+                CodeBlock.Builder code = CodeBlock.builder();
+                defaultPriorField(code);
+                builder.addCode(code.build());
                 builder.endControlFlow();
             }
             return builder.addStatement("checkFieldsSet(0, FIELD_COUNT)")
@@ -1279,7 +1271,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             String sizeName)
         {
             boolean result = false;
-            if (type instanceof ClassName && !isStringType((ClassName) type))
+            if (type instanceof ClassName && !isStringType((ClassName) type) && !isVarintType(type))
             {
                 ClassName classType = (ClassName) type;
                 if ("OctetsFW".equals(classType.simpleName()))
@@ -1294,7 +1286,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             if (type instanceof ParameterizedTypeName)
             {
                 ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
-                if ("ListFW".equals(parameterizedType.rawType.simpleName()))
+                if ("ListFW".equals(parameterizedType.rawType.simpleName())
+                        || "ArrayFW".equals(parameterizedType.rawType.simpleName()))
                 {
                     result = true;
                 }
@@ -1318,7 +1311,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             else
             {
                 //  Attempt to default the entire object. This will fail if it has any required fields.
-                code.addStatement("$L(b -> { })", priorDefaulted);
+                code.addStatement("$L(b -> { });;;", priorDefaulted);
                 if (priorDefaultValue == NULL_DEFAULT)
                 {
                     code.addStatement("int limit = limit()");
@@ -1355,7 +1348,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                  .initializer(Integer.toString(nextIndex++))
                                  .build());
                 fieldNames.add(name);
-                boolean isOctetsType = type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName());
+                boolean isOctetsType = isOctetsType(type);
                 if (defaultValue != null && !isOctetsType)
                 {
                     Object defaultValueToSet = defaultValue == NULL_DEFAULT ? null : defaultValue;
@@ -1365,16 +1358,21 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         generateType = generateType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
                                 : INT_ITERATOR_CLASS_NAME;
                     }
+                    if (isVarint32Type(type))
+                    {
+                        generateType = TypeName.INT;
+                    }
+                    else if (isVarint64Type(type))
+                    {
+                        generateType = TypeName.LONG;
+                    }
                     builder.addField(
                             FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
                                      .initializer(Objects.toString(defaultValueToSet))
                                      .build());
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
-                else if ((isOctetsType && size < 0 && sizeName == null)
-                         || (type instanceof ParameterizedTypeName && "ListFW".equals(
-                                  ((ParameterizedTypeName) type).rawType.simpleName()))
-                        )
+                else if (isImplicitlyDefaulted(type, size, sizeName))
                 {
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
@@ -2195,7 +2193,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     ClassName consumerType = ClassName.get(Consumer.class);
                     ClassName builderType = className.nestedClass("Builder");
-                    TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+                    TypeName parameterType = isVarint32Type(className) ? TypeName.INT
+                        : isVarint64Type(className) ? TypeName.LONG
+                        : ParameterizedTypeName.get(consumerType, builderType);
+                    String parameterName = isVarintType(className) ? "mutator" : "value";
 
                     CodeBlock.Builder code = CodeBlock.builder();
                     code.addStatement("checkFieldNotSet($L)", index(name));
@@ -2206,16 +2207,23 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.endControlFlow();
                     }
                     code.addStatement("checkFieldsSet(0, $L)", index(name))
-                        .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
-                        .addStatement("mutator.accept($LRW)", name)
-                        .addStatement("limit($LRW.build().limit())", name)
+                        .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name);
+                    if (isVarintType(className))
+                    {
+                        code.addStatement("$LRW.set($L)", name, parameterName);
+                    }
+                    else
+                    {
+                        code.addStatement("$L.accept($LRW)", parameterName, name);
+                    }
+                    code.addStatement("limit($LRW.build().limit())", name)
                         .addStatement("fieldsSet.set($L)", index(name))
                         .addStatement("return this");
 
                     builder.addMethod(methodBuilder(methodName(name))
                             .addModifiers(PUBLIC)
                             .returns(thisType)
-                            .addParameter(mutatorType, "mutator")
+                            .addParameter(parameterType, parameterName)
                             .addCode(code.build())
                             .build());
                 }
@@ -2491,6 +2499,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         }
     }
 
+    private static boolean isOctetsType(
+        TypeName type)
+    {
+        return type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName());
+    }
+
     private static boolean isStringType(
         ClassName classType)
     {
@@ -2503,6 +2517,25 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     {
         String name = classType.simpleName();
         return "String16FW".equals(name);
+    }
+
+    private static boolean isVarintType(
+        TypeName type)
+    {
+        return type instanceof ClassName && "Varint32FW".equals(((ClassName) type).simpleName())
+                || type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static boolean isVarint32Type(
+        TypeName type)
+    {
+        return type instanceof ClassName && "Varint32FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static boolean isVarint64Type(
+        TypeName type)
+    {
+        return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
     }
 
     private static String index(

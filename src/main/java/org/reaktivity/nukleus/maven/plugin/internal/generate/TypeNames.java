@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeVariableName;
 
 public final class TypeNames
 {
@@ -31,6 +32,9 @@ public final class TypeNames
     public static final ClassName UNSAFE_BUFFER_TYPE = ClassName.get(AGRONA_CONCURRENT_PACKAGE, "UnsafeBuffer");
 
     public static final TypeName BYTE_ARRAY = ArrayTypeName.of(byte.class);
+
+    public static final TypeName VARINT = TypeVariableName.get("Varint");
+
 
     private TypeNames()
     {
