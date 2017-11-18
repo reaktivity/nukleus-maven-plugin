@@ -300,14 +300,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitVarint_array_member(
-        Varint_array_memberContext ctx)
-    {
-        memberBuilder.isArray(true);
-        return super.visitVarint_array_member(ctx);
-    }
-
-    @Override
     public AstNode visitDefault_null(
         Default_nullContext ctx)
     {
@@ -362,6 +354,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.name(ctx.ID().toString());
         return super.visitDeclarator(ctx);
+    }
+
+    @Override
+    public AstNode visitVarint_array_member(
+        Varint_array_memberContext ctx)
+    {
+        memberBuilder.type(AstType.ARRAY);
+        return super.visitVarint_array_member(ctx);
     }
 
     @Override

@@ -1290,6 +1290,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     result = true;
                 }
+                if ("ArrayFW".equals(parameterizedType.rawType.simpleName()))
+                {
+                    result = true;
+                }
             }
             return result;
         }
@@ -1371,10 +1375,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                      .build());
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
-                else if ((isOctetsType && size < 0 && sizeName == null)
-                         || (type instanceof ParameterizedTypeName && "ListFW".equals(
-                                  ((ParameterizedTypeName) type).rawType.simpleName()))
-                        )
+                else if (isImplicitlyDefaulted(type, size, sizeName))
                 {
                     fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }

@@ -91,6 +91,7 @@ public final class TypeResolver
         namesByType.put(AstType.STRING, ClassName.get(packageName, "StringFW"));
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.LIST, ClassName.get(packageName, "ListFW"));
+        namesByType.put(AstType.ARRAY, ClassName.get(packageName, "ArrayFW"));
         namesByType.put(AstType.OCTETS, ClassName.get(packageName, "OctetsFW"));
         namesByType.put(AstType.INT8, TypeName.BYTE);
         namesByType.put(AstType.UINT8, TypeName.BYTE);
