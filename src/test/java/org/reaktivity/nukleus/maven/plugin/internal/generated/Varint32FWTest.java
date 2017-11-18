@@ -72,8 +72,9 @@ public class Varint32FWTest
     @Test
     public void shouldReadOneByteValue() throws Exception
     {
-        buffer.putByte(10,  (byte) 0x18);
-        varint32RO.wrap(buffer,  10,  21);
+        int offset = 13;
+        buffer.putByte(offset,  (byte) 0x18);
+        assertEquals(offset + 1, varint32RO.wrap(buffer,  offset,  21).limit());
         assertEquals(12, varint32RO.value());
     }
 
@@ -83,7 +84,7 @@ public class Varint32FWTest
         // Actual value is -66, zigzagged value is 132-1 = 131 = 0x83
         buffer.putByte(50, (byte) 0x83);
         buffer.putByte(51, (byte) 0x01);
-        varint32RO.wrap(buffer,  50,  buffer.capacity());
+        assertEquals(52, varint32RO.wrap(buffer,  50,  buffer.capacity()).limit());
         assertEquals(-66, varint32RO.value());
     }
 
@@ -98,7 +99,7 @@ public class Varint32FWTest
         buffer.putByte(52, (byte) 0xff);
         buffer.putByte(53, (byte) 0xff);
         buffer.putByte(54, (byte) 0x0f);
-        varint32RO.wrap(buffer,  50,  buffer.capacity());
+        assertEquals(55, varint32RO.wrap(buffer,  50,  buffer.capacity()).limit());
         assertEquals(Integer.MAX_VALUE, varint32RO.value());
     }
 

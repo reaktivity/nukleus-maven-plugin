@@ -75,7 +75,7 @@ public class Varint64FWTest
     public void shouldReadOneByteValue() throws Exception
     {
         buffer.putByte(10,  (byte) 0x18);
-        varint64RO.wrap(buffer,  10,  21);
+        assertEquals(11, varint64RO.wrap(buffer,  10,  21).limit());
         assertEquals(12L, varint64RO.value());
     }
 
@@ -85,7 +85,7 @@ public class Varint64FWTest
         // Actual value is -66, zigzagged value is 132-1 = 131 = 0x83
         buffer.putByte(50, (byte) 0x83);
         buffer.putByte(51, (byte) 0x01);
-        varint64RO.wrap(buffer,  50,  buffer.capacity());
+        assertEquals(52, varint64RO.wrap(buffer,  50,  buffer.capacity()).limit());
         assertEquals(-66L, varint64RO.value());
     }
 
@@ -115,7 +115,7 @@ public class Varint64FWTest
         buffer.putByte(52, (byte) 0xff);
         buffer.putByte(53, (byte) 0xff);
         buffer.putByte(54, (byte) 0x0f);
-        varint64RO.wrap(buffer,  50,  buffer.capacity());
+        assertEquals(55, varint64RO.wrap(buffer,  50,  buffer.capacity()).limit());
         assertEquals(Integer.MIN_VALUE, varint64RO.value());
     }
 
