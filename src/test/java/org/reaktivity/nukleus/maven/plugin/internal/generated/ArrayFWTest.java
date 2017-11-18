@@ -24,9 +24,11 @@ import java.util.List;
 import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.Rule;
 import org.junit.Test;
-import org.reaktivity.nukleus.maven.plugin.internal.generated.handcrafted.ArrayFW;
-import org.reaktivity.nukleus.maven.plugin.internal.generated.handcrafted.Varint64FW;
+import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.ArrayFW;
+import org.reaktivity.reaktor.internal.test.types.Varint64FW;
 
 public class ArrayFWTest
 {
@@ -52,6 +54,9 @@ public class ArrayFWTest
 
     private final ArrayFW<Varint64FW> arrayRO = new ArrayFW<>(new Varint64FW());
 
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
+
     @Test
     public void shouldBuildEmptyList() throws Exception
     {
@@ -73,6 +78,15 @@ public class ArrayFWTest
         List<Long> contents = new ArrayList<Long>();
         arrayRO.forEach(v -> contents.add(v.value()));
         assertEquals(0, contents.size());
+    }
+
+    @Test
+    public void shouldFailWrapWhenListSizeIsNegative() throws Exception
+    {
+        buffer.putInt(10,  -1);
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("size < 0");
+        arrayRO.wrap(buffer, 10, buffer.capacity());
     }
 
     @Test
