@@ -149,7 +149,7 @@ public class StringFWTest
         stringRO.wrap(buffer,  0,  limit);
         assertEquals(LENGTH_SIZE, stringRO.limit());
         assertEquals(LENGTH_SIZE, stringRO.sizeof());
-        assertEquals(null, stringRO.asString());
+        assertNull(stringRO.asString());
     }
 
     @Test(expected = IllegalArgumentException.class)

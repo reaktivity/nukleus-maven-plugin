@@ -91,6 +91,7 @@ public final class TypeResolver
         namesByType.put(AstType.STRING, ClassName.get(packageName, "StringFW"));
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.LIST, ClassName.get(packageName, "ListFW"));
+        namesByType.put(AstType.ARRAY, ClassName.get(packageName, "ArrayFW"));
         namesByType.put(AstType.OCTETS, ClassName.get(packageName, "OctetsFW"));
         namesByType.put(AstType.INT8, TypeName.BYTE);
         namesByType.put(AstType.UINT8, TypeName.BYTE);
@@ -98,6 +99,8 @@ public final class TypeResolver
         namesByType.put(AstType.UINT16, TypeName.SHORT);
         namesByType.put(AstType.INT32, TypeName.INT);
         namesByType.put(AstType.UINT32, TypeName.INT);
+        namesByType.put(AstType.VARINT32, ClassName.get(packageName, "Varint32FW"));
+        namesByType.put(AstType.VARINT64, ClassName.get(packageName, "Varint64FW"));
         namesByType.put(AstType.INT64, TypeName.LONG);
         namesByType.put(AstType.UINT64, TypeName.LONG);
         return namesByType;
