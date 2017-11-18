@@ -1286,11 +1286,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             if (type instanceof ParameterizedTypeName)
             {
                 ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
-                if ("ListFW".equals(parameterizedType.rawType.simpleName()))
-                {
-                    result = true;
-                }
-                if ("ArrayFW".equals(parameterizedType.rawType.simpleName()))
+                if ("ListFW".equals(parameterizedType.rawType.simpleName())
+                        || "ArrayFW".equals(parameterizedType.rawType.simpleName()))
                 {
                     result = true;
                 }

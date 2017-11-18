@@ -107,10 +107,6 @@ public class ArrayFWTest
         expected.putByte(offset + 6, (byte) 0x18);
         byte[] bytes = new byte[buffer.capacity()];
         expected.getBytes(0, bytes);
-        System.out.println("Expected: " + javax.xml.bind.DatatypeConverter.printHexBinary(bytes));
-        bytes = new byte[buffer.capacity()];
-        buffer.getBytes(0, bytes);
-        System.out.println("Got: " + javax.xml.bind.DatatypeConverter.printHexBinary(bytes));
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
