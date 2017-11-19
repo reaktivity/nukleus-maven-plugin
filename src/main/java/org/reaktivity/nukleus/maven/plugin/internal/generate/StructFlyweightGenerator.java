@@ -1754,7 +1754,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 if (byteOrder == NETWORK)
                 {
-                    code.add(", $T.BIG_ENDIAN", ByteOrder.class);
+                    if (type == TypeName.SHORT || type == TypeName.INT || type == TypeName.LONG)
+                    {
+                        code.add(", $T.BIG_ENDIAN", ByteOrder.class);
+                    }
                 }
                 code.add(");\n$]");
                 if (usedAsSize)
