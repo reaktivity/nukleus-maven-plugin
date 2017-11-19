@@ -139,6 +139,7 @@ public final class AstStructNode extends AstNode
                 if (sizeField.isPresent())
                 {
                     AstMemberNode size = sizeField.get();
+                    member.sizeType(size.type());
                     if (size.defaultValue() != null)
                     {
                         throw new IllegalArgumentException(format(
@@ -146,8 +147,24 @@ public final class AstStructNode extends AstNode
                                 member.sizeName(), member.name()));
                     }
                     boolean defaultsToNull = member.defaultValue() == NULL_DEFAULT;
-                    if (defaultsToNull && !size.type().isSignedInteger())
+                    boolean sizeIsVarint = size.type() == AstType.VARINT32 || size.type() == AstType.VARINT64;
+                    if (sizeIsVarint)
                     {
+                        if (member.type() == AstType.OCTETS)
+                        {
+                            size.usedAsSize(true);
+                        }
+                        else
+                        {
+                            throw new IllegalArgumentException(format(
+                                "Size field \"%s\" for field \"%s\" may not be of type varint",
+                                member.sizeName(), member.name()));
+                        }
+                    }
+                    else if (defaultsToNull && !size.type().isSignedInteger())
+                    {
+                        Object sizeType = size.type();
+                        System.out.println(sizeType);
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
                                 member.sizeName(), member.name()));

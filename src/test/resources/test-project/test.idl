@@ -53,7 +53,7 @@ scope test
             uint16 lengthOctets2;
             string string1;
             octets[lengthOctets2] octets2;
-            int32 lengthOctets3;
+            varint32 lengthOctets3;
             octets[lengthOctets3] octets3 = null;
             octets extension;
         }
