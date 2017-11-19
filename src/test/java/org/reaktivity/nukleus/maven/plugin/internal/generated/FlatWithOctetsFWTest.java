@@ -197,6 +197,7 @@ public class FlatWithOctetsFWTest
                 .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
                 .string1("value1")
                 .octets2(b -> b.put("12345".getBytes(UTF_8)))
+                .lengthOctets3(3)
                 .octets3(b -> b.put("678".getBytes(UTF_8)))
                 .extension(b -> b.put("octetsValue".getBytes(UTF_8)))
                 .build()

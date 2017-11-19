@@ -37,6 +37,7 @@ public final class AstMemberNode extends AstNode
     private final AstByteOrder byteOrder;
     private final boolean isArray;
 
+    private AstType sizeType;
     private boolean usedAsSize;
 
 
@@ -102,6 +103,11 @@ public final class AstMemberNode extends AstNode
         return sizeName;
     }
 
+    public AstType sizeType()
+    {
+        return sizeType;
+    }
+
     public Object defaultValue()
     {
         return defaultValue;
@@ -147,6 +153,11 @@ public final class AstMemberNode extends AstNode
         String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
         return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s, defaultValue=%s, byteOrder=%s]",
                 name, size, types, unsignedType, defaultValue, byteOrder);
+    }
+
+    public void sizeType(AstType sizeType)
+    {
+        this.sizeType = sizeType;
     }
 
     public void usedAsSize(boolean value)
