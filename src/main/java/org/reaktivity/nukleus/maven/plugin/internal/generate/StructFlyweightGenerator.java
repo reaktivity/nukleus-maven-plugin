@@ -134,6 +134,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         TypeName unsignedType,
         int size,
         String sizeName,
+        TypeName sizeType,
         boolean usedAsSize,
         Object defaultValue,
         AstByteOrder byteOrder)
@@ -145,7 +146,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         limitMethod.addMember(name, type, unsignedType, size, sizeName);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         toStringMethod.addMember(name, type, unsignedType, size, sizeName);
-        builderClass.addMember(name, type, unsignedType, size, sizeName, usedAsSize, defaultValue, byteOrder);
+        builderClass.addMember(name, type, unsignedType, size, sizeName, sizeType, usedAsSize, defaultValue, byteOrder);
 
         return this;
     }
@@ -1106,6 +1107,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private boolean priorDefaultedIsPrimitive;
         private Object priorDefaultValue;
         private String priorSizeName;
+        private TypeName priorSizeType;
 
         private BuilderClassGenerator(
             ClassName structType,
@@ -1136,6 +1138,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType,
             int size,
             String sizeName,
+            TypeName sizeType,
             boolean usedAsSize,
             Object defaultValue,
             AstByteOrder byteOrder)
@@ -1150,14 +1153,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize, byteOrder);
             memberAccessor.addMember(name, type, unsignedType, size, sizeName, defaultValue,
                     priorDefaulted, defaultPriorField);
-            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, byteOrder, defaultValue,
-                    priorDefaulted, defaultPriorField);
+            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                    byteOrder, defaultValue, priorDefaulted, defaultPriorField);
             if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
                 priorDefaultedIsPrimitive = type.isPrimitive() || isVarintType(type);
                 priorDefaultValue = defaultValue;
                 priorSizeName = sizeName;
+                priorSizeType = sizeType;
             }
             else
             {
@@ -1301,6 +1305,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             return String.format("dynamicOffset%s", initCap(fieldName));
         }
 
+        private static String dynamicValue(
+            String fieldName)
+        {
+            return String.format("dynamicValue%s", initCap(fieldName));
+        }
+
         private void defaultPriorField(
             CodeBlock.Builder code)
         {
@@ -1311,13 +1321,25 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             else
             {
                 //  Attempt to default the entire object. This will fail if it has any required fields.
-                code.addStatement("$L(b -> { });;;", priorDefaulted);
                 if (priorDefaultValue == NULL_DEFAULT)
                 {
-                    code.addStatement("int limit = limit()");
-                    code.addStatement("limit($L)", dynamicOffset(priorSizeName));
-                    code.addStatement("$L(-1)", methodName(priorSizeName));
-                    code.addStatement("limit(limit)");
+                    if (isVarintType(priorSizeType))
+                    {
+                        code.addStatement("$L(-1)", methodName(priorSizeName))
+                            .addStatement("fieldsSet.set($L)", index(priorDefaulted));
+                    }
+                    else
+                    {
+                        code.addStatement("int limit = limit()");
+                        code.addStatement("limit($L);;;", dynamicOffset(priorSizeName));
+                        code.addStatement("$L(-1)", methodName(priorSizeName));
+                        code.addStatement("limit(limit)");
+                        code.addStatement("$L(b -> { })", priorDefaulted);
+                    }
+                }
+                else
+                {
+                    code.addStatement("$L(b -> { })", priorDefaulted);
                 }
             }
         }
@@ -1429,10 +1451,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 boolean usedAsSize,
                 AstByteOrder byteOrder)
             {
-                if (usedAsSize)
+                if (usedAsSize && isVarintType(type))
                 {
-                    builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
+                    builder.addField(FieldSpec.builder(TypeName.INT, dynamicValue(name), PRIVATE)
                             .build());
+                }
+                if (usedAsSize && !isVarintType(type))
+                {
+                        builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
+                                .build());
                 }
                 else if (type.isPrimitive())
                 {
@@ -1638,6 +1665,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 boolean usedAsSize,
                 int size,
                 String sizeName,
+                TypeName sizeType,
                 AstByteOrder byteOrder,
                 Object defaultValue,
                 String priorDefaulted,
@@ -1668,7 +1696,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type, size, sizeName, priorDefaulted, defaultPriorField);
+                    addNonPrimitiveMember(name, type, usedAsSize, size, sizeName, sizeType, priorDefaulted, defaultPriorField);
                 }
                 return this;
             }
@@ -2142,15 +2170,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             private void addNonPrimitiveMember(
                 String name,
                 TypeName type,
+                boolean usedAsSize,
                 int size,
                 String sizeName,
+                TypeName sizeType,
                 String priorDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 if (type instanceof ClassName)
                 {
                     ClassName className = (ClassName) type;
-                    addClassType(name, className, size, sizeName, priorDefaulted, defaultPriorField);
+                    addClassType(name, className, usedAsSize, size, sizeName, sizeType, priorDefaulted, defaultPriorField);
                 }
                 else if (type instanceof ParameterizedTypeName)
                 {
@@ -2173,8 +2203,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             private void addClassType(
                 String name,
                 ClassName className,
+                boolean usedAsSize,
                 int size,
                 String sizeName,
+                TypeName sizeType,
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
@@ -2190,7 +2222,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if ("OctetsFW".equals(className.simpleName()))
                 {
-                    addOctetsType(className, name, size, sizeName);
+                    addOctetsType(className, name, size, sizeName, sizeType);
                 }
                 else
                 {
@@ -2199,7 +2231,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     TypeName parameterType = isVarint32Type(className) ? TypeName.INT
                         : isVarint64Type(className) ? TypeName.LONG
                         : ParameterizedTypeName.get(consumerType, builderType);
-                    String parameterName = isVarintType(className) ? "mutator" : "value";
+                    String parameterName = isVarintType(className) ? "value" : "mutator";
 
                     CodeBlock.Builder code = CodeBlock.builder();
                     code.addStatement("checkFieldNotSet($L)", index(name));
@@ -2214,6 +2246,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (isVarintType(className))
                     {
                         code.addStatement("$LRW.set($L)", name, parameterName);
+                        if (usedAsSize)
+                        {
+                            code.addStatement("$L = $L", dynamicValue(name), parameterName);
+                        }
                     }
                     else
                     {
@@ -2236,7 +2272,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 ClassName className,
                 String name,
                 int size,
-                String sizeName)
+                String sizeName,
+                TypeName sizeType)
             {
                 ClassName consumerType = ClassName.get(Consumer.class);
                 ClassName builderType = className.nestedClass("Builder");
@@ -2258,10 +2295,24 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 else if (sizeName != null)
                 {
                     code.addStatement("int newLimit = $LRW.build().limit()", name)
-                        .addStatement("int size$$ = newLimit - limit()")
-                        .addStatement("limit($L)", dynamicOffset(sizeName))
-                        .addStatement("$L(size$$)", sizeName)
-                        .addStatement("limit(newLimit)");
+                        .addStatement("int size$$ = newLimit - limit()");
+
+                    if (isVarintType(sizeType))
+                    {
+                        code.beginControlFlow("if (size$$ > $L)", dynamicValue(sizeName))
+                            .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
+                                format("%%d bytes have been set for field \"%s\", does not match value %%d set in %%s",
+                                        name),
+                                dynamicValue(sizeName),
+                                sizeName)
+                            .endControlFlow();
+                    }
+                    else
+                    {
+                        code.addStatement("limit($L)", dynamicOffset(sizeName))
+                            .addStatement("$L(size$$)", sizeName);
+                    }
+                    code.addStatement("limit(newLimit)");
                 }
                 else
                 {
@@ -2291,10 +2342,24 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (sizeName != null)
                     {
                         code2.addStatement("int newLimit = $LRW.build().limit()", name)
-                             .addStatement("int size$$ = newLimit - limit()")
-                             .addStatement("limit($L)", dynamicOffset(sizeName))
-                             .addStatement("$L(size$$)", sizeName)
-                             .addStatement("limit(newLimit)");
+                             .addStatement("int size$$ = newLimit - limit()");
+
+                        if (isVarintType(sizeType))
+                        {
+                            code2.beginControlFlow("if (size$$ > $L)", dynamicValue(sizeName))
+                                 .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
+                                    format("%%d bytes have been set for field \"%s\", does not match value %%d set in %%s",
+                                            name),
+                                    dynamicValue(sizeName),
+                                    sizeName)
+                                 .endControlFlow();
+                        }
+                        else
+                        {
+                            code2.addStatement("limit($L)", dynamicOffset(sizeName))
+                                 .addStatement("$L(size$$)", sizeName);
+                        }
+                        code2.addStatement("limit(newLimit)");
                     }
                     else
                     {
