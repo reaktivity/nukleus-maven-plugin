@@ -733,6 +733,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private String lastName;
         private TypeName lastType;
         private int lastSize;
+        private String lastSizeName;
 
         private LimitMethodGenerator()
         {
@@ -758,6 +759,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             lastName = name;
             lastType = type;
             lastSize = size;
+            lastSizeName = sizeName;
 
             return this;
         }
@@ -798,7 +800,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     {
                         code.add(" + $L + ($L * $L)", offset(lastName), size(lastName), arraySize(lastName));
                     }
-                    else if (anchorName == null) // not an array
+                    else if (lastSizeName == null) // not an array
                     {
                         code.add(" + $L + $L", offset(lastName), size(lastName));
                     }

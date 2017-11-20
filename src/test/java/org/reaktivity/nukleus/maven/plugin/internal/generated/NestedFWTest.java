@@ -174,6 +174,7 @@ public class NestedFWTest
         assertEquals(30, nestedRO.flat().fixed3());
         assertEquals("value2", nestedRO.flat().string2().asString());
         assertEquals(50, nestedRO.fixed5());
+        assertEquals(nestedRO.flat().string2().limit() + 8, limit);
     }
 
 }
