@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.visit.ScopeVisitor;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.ArrayFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.OctetsFlyweightGenerator;
@@ -40,6 +41,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.String16FlyweightGe
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StringFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.test.String16FlyweightTestGenerator;
 
 import com.squareup.javapoet.JavaFile;
@@ -93,6 +96,9 @@ public class Generator
             typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
             typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
             typeSpecs.add(new ListFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+            typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+            typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+            typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
             typeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
 

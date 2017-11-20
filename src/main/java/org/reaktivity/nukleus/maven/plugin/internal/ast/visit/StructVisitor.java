@@ -94,11 +94,13 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
         AstType memberUnsignedType = memberNode.unsignedType();
         int size = memberNode.size();
         String sizeName = memberNode.sizeName();
+        TypeName sizeTypeName = resolver.resolveType(memberNode.sizeType());
+
         boolean usedAsSize = memberNode.usedAsSize();
         Object defaultValue = memberNode.defaultValue();
         AstByteOrder byteOrder = memberNode.byteOrder();
 
-        if (memberType == AstType.LIST)
+        if (memberType == AstType.LIST || memberType == AstType.ARRAY)
         {
             ClassName rawType = resolver.resolveClass(memberType);
             TypeName[] typeArguments = memberNode.types()
@@ -109,8 +111,8 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, false,
-                    defaultValue, byteOrder);
+            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
+                    false, defaultValue, byteOrder);
             // TODO call generatorTest to enhance test class
         }
         else
@@ -122,8 +124,8 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                         " Unable to resolve type %s for field %s", memberType, memberName));
             }
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
-            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, usedAsSize,
-                    defaultValue, byteOrder);
+            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
+                usedAsSize, defaultValue, byteOrder);
             // TODO call generatorTest to enhance test class
         }
 

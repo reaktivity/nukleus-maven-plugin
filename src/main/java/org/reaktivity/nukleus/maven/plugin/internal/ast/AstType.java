@@ -25,6 +25,8 @@ public final class AstType
     public static final AstType INT16 = new AstType("int16");
     public static final AstType INT32 = new AstType("int32");
     public static final AstType INT64 = new AstType("int64");
+    public static final AstType VARINT32 = new AstType("varint32");
+    public static final AstType VARINT64 = new AstType("varint64");
 
     public static final AstType UINT8 = new AstType("uint8");
     public static final AstType UINT16 = new AstType("uint16");
@@ -36,6 +38,7 @@ public final class AstType
     public static final AstType STRING16 = new AstType("string16");
 
     public static final AstType LIST = new AstType("list");
+    public static final AstType ARRAY = new AstType("array");
     public static final AstType STRUCT = new AstType("struct");
 
     private final String name;
@@ -77,7 +80,7 @@ public final class AstType
 
     boolean isSignedInteger()
     {
-        return this == INT8 || this == INT16 || this == INT32 || this == INT64;
+        return this == INT8 || this == INT16 || this == INT32 || this == INT64 || this == VARINT32 || this == VARINT64;
     }
 
     @Override
