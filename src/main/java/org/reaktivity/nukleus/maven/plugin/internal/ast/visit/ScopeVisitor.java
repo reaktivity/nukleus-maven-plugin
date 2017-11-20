@@ -33,6 +33,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGene
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.StructFlyweightTestGenerator;
 
 import com.squareup.javapoet.ClassName;
 
@@ -90,11 +91,26 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
         String baseName = structNode.name();
         AstType structType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
-        ClassName structName = resolver.resolveClass(structType);
-        StructFlyweightGenerator generator = new StructFlyweightGenerator(structName, resolver.flyweightName(), baseName);
-        generator.typeId(findTypeId(structNode));
+        AstType structTypeTest = AstType.dynamicType(String.format("%s::%s", scopeName, baseName + "Test"));
 
-        return new StructVisitor(generator, resolver).visitStruct(structNode);
+        ClassName structName = resolver.resolveClass(structType);
+        ClassName structNameTest = resolver.resolveClass(structTypeTest);
+
+        StructFlyweightGenerator generatorFlyweight = new StructFlyweightGenerator(
+            structName,
+            resolver.flyweightName(),
+            baseName);
+        StructFlyweightTestGenerator generatorTest = new StructFlyweightTestGenerator(
+            structNameTest,
+            baseName);
+
+        generatorFlyweight.typeId(findTypeId(structNode));
+        generatorTest.typeId(findTypeId(structNode));
+
+        return new StructVisitor(
+            generatorFlyweight,
+            generatorTest,
+            resolver).visitStruct(structNode);
     }
 
     @Override

@@ -100,7 +100,6 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
 
     private FieldSpec fieldBuffer()
     {
-        // TODO see if imports can be defined
         return FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
             .initializer("new $T($T.allocateDirect(100000)) \n" +
                 "{\n"+

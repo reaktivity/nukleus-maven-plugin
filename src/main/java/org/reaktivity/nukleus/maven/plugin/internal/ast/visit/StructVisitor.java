@@ -15,10 +15,11 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
-import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
@@ -31,6 +32,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.StructFlyweightTestGenerator;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -39,16 +41,19 @@ import com.squareup.javapoet.TypeName;
 public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
     private final StructFlyweightGenerator generator;
+    private final StructFlyweightTestGenerator generatorTest;
     private final TypeResolver resolver;
-    private final Set<TypeSpecGenerator<?>> defaultResult;
+    private final Set<TypeSpecGenerator<?>> defaultResult = new HashSet<>(2);
 
     public StructVisitor(
         StructFlyweightGenerator generator,
+        StructFlyweightTestGenerator generatorTest,
         TypeResolver resolver)
     {
         this.generator = generator;
+        this.generatorTest = generatorTest;
         this.resolver = resolver;
-        this.defaultResult = singleton(generator);
+        Collections.addAll(this.defaultResult, generator, generatorTest);
     }
 
     @Override
@@ -106,6 +111,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
             generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, false,
                     defaultValue, byteOrder);
+            // TODO call generatorTest to enhance test class
         }
         else
         {
@@ -118,6 +124,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
             generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, usedAsSize,
                     defaultValue, byteOrder);
+            // TODO call generatorTest to enhance test class
         }
 
         return defaultResult();
