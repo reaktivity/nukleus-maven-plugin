@@ -71,6 +71,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addField(fieldString16ReadOnly())
             .addMethod(values())
             .addMethod(shouldDefaultAfterRewrap())
+            .addMethod(shouldDefaultToEmpty())
             .build();
     }
 
@@ -151,4 +152,20 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addStatement("$T.assertEquals(LENGTH_SIZE, string.sizeof())", Assert.class)
             .build();
     }
+
+    private MethodSpec shouldDefaultToEmpty()
+    {
+        return MethodSpec.methodBuilder("shouldDefaultToEmpty")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("int limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
+                              "    .build()\n" +
+                              "    .limit()")
+                .addStatement("stringRO.wrap(buffer, 0, limit)")
+                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
+                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
+                .build();
+    }
+
 }
