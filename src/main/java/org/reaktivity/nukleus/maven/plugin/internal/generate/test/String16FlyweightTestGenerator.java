@@ -79,6 +79,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
             .addMethod(shouldSetToNull())
             .addMethod(shouldFailToBuildLargeString())
+            .addMethod(shouldBuildLargeString())
             .build();
     }
 
@@ -272,6 +273,18 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(testAnnotation)
                 .addStatement("$1T str = $1T.format(\"%65535s\", \"0\")", String.class)
+                .addStatement("stringRW.wrap(buffer, 0, buffer.capacity())\n" +
+                        ".set(str, $T.UTF_8)", StandardCharsets.class)
+                .build();
+    }
+
+    private MethodSpec shouldBuildLargeString()
+    {
+        return MethodSpec.methodBuilder("shouldBuildLargeString")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("$1T str = $1T.format(\"%65534s\", \"0\")", String.class)
                 .addStatement("stringRW.wrap(buffer, 0, buffer.capacity())\n" +
                         ".set(str, $T.UTF_8)", StandardCharsets.class)
                 .build();
