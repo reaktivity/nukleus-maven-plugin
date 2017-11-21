@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Assert;
@@ -74,6 +75,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldDefaultToEmpty())
             .addMethod(shouldFailToWrapWithInsufficientLength())
             .addMethod(shouldWrapWithSufficientLength())
+            .addMethod(shouldFailToSetUsingStringWhenExceedsMaxLimit())
             .build();
     }
 
@@ -189,6 +191,30 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addStatement("stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)")
+                .build();
+    }
+
+    private MethodSpec shouldFailToSetUsingStringWhenExceedsMaxLimit()
+    {
+        AnnotationSpec testAnnotation = AnnotationSpec.builder(Test.class)
+                .addMember("expected", "$T.class", IndexOutOfBoundsException.class)
+                .build();
+
+        return MethodSpec.methodBuilder("shouldFailToSetUsingStringWhenExceedsMaxLimit")
+                .addModifiers(PUBLIC)
+                .addAnnotation(testAnnotation)
+                .addStatement("buffer.setMemory(0,  buffer.capacity(), ($T) 0x00)", byte.class)
+                .beginControlFlow("try")
+                .addStatement("stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)\n" +
+                        "  .set(\"1\", $T.UTF_8)", StandardCharsets.class)
+                .endControlFlow()
+                .beginControlFlow("finally")
+                .addStatement("$1T[] bytes = new $1T[1 + LENGTH_SIZE]", byte.class)
+                .addStatement("buffer.getBytes(10, bytes)")
+                .addComment("Make sure memory was not written beyond maxLimit")
+                .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + " +
+                        "$T.toHex(bytes), 0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
+                .endControlFlow()
                 .build();
     }
 
