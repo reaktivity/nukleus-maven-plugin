@@ -76,6 +76,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldFailToWrapWithInsufficientLength())
             .addMethod(shouldWrapWithSufficientLength())
             .addMethod(shouldFailToSetUsingStringWhenExceedsMaxLimit())
+            .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
             .build();
     }
 
@@ -214,6 +215,30 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addComment("Make sure memory was not written beyond maxLimit")
                 .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + " +
                         "$T.toHex(bytes), 0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
+                .endControlFlow()
+                .build();
+    }
+
+    private MethodSpec shouldFailToSetUsingBufferWhenExceedsMaxLimit()
+    {
+        AnnotationSpec testAnnotation = AnnotationSpec.builder(Test.class)
+                .addMember("expected", "$T.class", IndexOutOfBoundsException.class)
+                .build();
+
+        return MethodSpec.methodBuilder("shouldFailToSetUsingBufferWhenExceedsMaxLimit")
+                .addModifiers(PUBLIC)
+                .addAnnotation(testAnnotation)
+                .addStatement("buffer.setMemory(0,  buffer.capacity(), ($T) 0x00)", byte.class)
+                .addStatement("buffer.putStringWithoutLengthUtf8(0, \"1\")")
+                .beginControlFlow("try")
+                .addStatement("stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)\n.set(buffer, 0, 1)")
+                .endControlFlow()
+                .beginControlFlow("finally")
+                .addStatement("$1T[] bytes = new $1T[1 + LENGTH_SIZE]", byte.class)
+                .addStatement("buffer.getBytes(10, bytes)")
+                .addComment("Make sure memory was not written beyond maxLimit")
+                .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + " +
+                        "$T.toHex(bytes),\n0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
                 .endControlFlow()
                 .build();
     }
