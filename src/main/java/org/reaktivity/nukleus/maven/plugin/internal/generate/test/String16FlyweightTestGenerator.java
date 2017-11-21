@@ -173,7 +173,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
     private MethodSpec shouldFailToWrapWithInsufficientLength()
     {
         AnnotationSpec testAnnotation = AnnotationSpec.builder(Test.class)
-                .addMember("expected", "$L", "IndexOutOfBoundsException.class")
+                .addMember("expected", "$T.class", IndexOutOfBoundsException.class)
                 .build();
 
         return MethodSpec.methodBuilder("shouldFailToWrapWithInsufficientLength")
