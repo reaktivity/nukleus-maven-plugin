@@ -73,6 +73,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldDefaultAfterRewrap())
             .addMethod(shouldDefaultToEmpty())
             .addMethod(shouldFailToWrapWithInsufficientLength())
+            .addMethod(shouldWrapWithSufficientLength())
             .build();
     }
 
@@ -179,6 +180,15 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(testAnnotation)
                 .addStatement("stringRW.wrap(buffer, 10, 10)")
+                .build();
+    }
+
+    private MethodSpec shouldWrapWithSufficientLength()
+    {
+        return MethodSpec.methodBuilder("shouldWrapWithSufficientLength")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addStatement("stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)")
                 .build();
     }
 
