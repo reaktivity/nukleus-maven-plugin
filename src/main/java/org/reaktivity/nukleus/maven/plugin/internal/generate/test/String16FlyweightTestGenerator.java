@@ -252,10 +252,10 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldSetToNull")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
-                .addStatement("int limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
+                .addStatement("$T limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
                         ".set(null, $T.UTF_8)\n" +
                         ".build()\n" +
-                        ".limit()", StandardCharsets.class)
+                        ".limit()", int.class, StandardCharsets.class)
                 .addStatement("$T.assertEquals(2, limit)", Assert.class)
                 .addStatement("stringRO.wrap(buffer,  0,  limit)")
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
