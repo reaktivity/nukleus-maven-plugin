@@ -78,6 +78,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldFailToSetUsingStringWhenExceedsMaxLimit())
             .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
             .addMethod(shouldSetToNull())
+            .addMethod(shouldFailToBuildLargeString())
             .build();
     }
 
@@ -258,6 +259,21 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
                 .addStatement("$T.assertEquals(null, stringRO.asString())", Assert.class)
+                .build();
+    }
+
+    private MethodSpec shouldFailToBuildLargeString()
+    {
+        AnnotationSpec testAnnotation = AnnotationSpec.builder(Test.class)
+                .addMember("expected", "$T.class", IllegalArgumentException.class)
+                .build();
+
+        return MethodSpec.methodBuilder("shouldFailToBuildLargeString")
+                .addModifiers(PUBLIC)
+                .addAnnotation(testAnnotation)
+                .addStatement("$1T str = $1T.format(\"%65535s\", \"0\")", String.class)
+                .addStatement("stringRW.wrap(buffer, 0, buffer.capacity())\n" +
+                        ".set(str, $T.UTF_8)", StandardCharsets.class)
                 .build();
     }
 
