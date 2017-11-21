@@ -77,6 +77,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldWrapWithSufficientLength())
             .addMethod(shouldFailToSetUsingStringWhenExceedsMaxLimit())
             .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
+            .addMethod(shouldSetToNull())
             .build();
     }
 
@@ -240,6 +241,23 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + " +
                         "$T.toHex(bytes),\n0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
                 .endControlFlow()
+                .build();
+    }
+
+    private MethodSpec shouldSetToNull()
+    {
+        return MethodSpec.methodBuilder("shouldSetToNull")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addStatement("int limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
+                        ".set(null, $T.UTF_8)\n" +
+                        ".build()\n" +
+                        ".limit()", StandardCharsets.class)
+                .addStatement("$T.assertEquals(2, limit)", Assert.class)
+                .addStatement("stringRO.wrap(buffer,  0,  limit)")
+                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
+                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
+                .addStatement("$T.assertEquals(null, stringRO.asString())", Assert.class)
                 .build();
     }
 
