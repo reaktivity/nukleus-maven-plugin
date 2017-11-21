@@ -72,6 +72,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(values())
             .addMethod(shouldDefaultAfterRewrap())
             .addMethod(shouldDefaultToEmpty())
+            .addMethod(shouldFailToWrapWithInsufficientLength())
             .build();
     }
 
@@ -165,6 +166,19 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("stringRO.wrap(buffer, 0, limit)")
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
+                .build();
+    }
+
+    private MethodSpec shouldFailToWrapWithInsufficientLength()
+    {
+        AnnotationSpec testAnnotation = AnnotationSpec.builder(Test.class)
+                .addMember("expected", "$L", "IndexOutOfBoundsException.class")
+                .build();
+
+        return MethodSpec.methodBuilder("shouldFailToWrapWithInsufficientLength")
+                .addModifiers(PUBLIC)
+                .addAnnotation(testAnnotation)
+                .addStatement("stringRW.wrap(buffer, 10, 10)")
                 .build();
     }
 
