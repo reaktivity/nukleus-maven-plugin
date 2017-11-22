@@ -66,6 +66,9 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
+        MethodSpec asBuffer = asBuffer();
+        MethodSpec asStringFW = asStringFW();
+
         return classBuilder.addField(fieldConstantLengthSize())
             .addField(fieldBuffer())
             .addField(fieldString16Builder())
@@ -76,17 +79,17 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldFailToWrapWithInsufficientLength())
             .addMethod(shouldWrapWithSufficientLength())
             .addMethod(shouldFailToSetUsingStringWhenExceedsMaxLimit())
-            .addMethod(shouldFailToSetUsingStringFWWhenExceedsMaxLimit(asStringFW()))
+            .addMethod(shouldFailToSetUsingStringFWWhenExceedsMaxLimit(asStringFW))
             .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
             .addMethod(shouldSetToNull())
             .addMethod(shouldFailToBuildLargeString())
             .addMethod(shouldBuildLargeString())
             .addMethod(shouldSetToEmptyString())
             .addMethod(shouldSetUsingString())
-            .addMethod(shouldSetUsingStringFW(asStringFW()))
-            .addMethod(shouldSetUsingBuffer(asBuffer()))
-            .addMethod(asBuffer())
-            .addMethod(asStringFW())
+            .addMethod(shouldSetUsingStringFW(asStringFW))
+            .addMethod(shouldSetUsingBuffer(asBuffer))
+            .addMethod(asBuffer)
+            .addMethod(asStringFW)
             .build();
     }
 
