@@ -83,6 +83,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldSetToEmptyString())
             .addMethod(shouldSetUsingString())
             .addMethod(asBuffer())
+            .addMethod(asStringFW())
             .build();
     }
 
@@ -337,6 +338,19 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                         MutableDirectBuffer.class, UnsafeBuffer.class, java.nio.ByteBuffer.class)
                 .addStatement("buffer.putStringWithoutLengthUtf8(0, value)")
                 .addStatement("return buffer")
+                .build();
+    }
+
+    private MethodSpec asStringFW()
+    {
+        return MethodSpec.methodBuilder("asStringFW")
+                .addModifiers(PRIVATE, STATIC)
+                .addParameter(String.class, "value")
+                .returns(string16FlyweightClassName)
+                .addStatement("$T buffer = new $T($T.allocateDirect($T.SIZE + value.length()))",
+                        MutableDirectBuffer.class, UnsafeBuffer.class, java.nio.ByteBuffer.class, Byte.class)
+                .addStatement("return new $T.Builder().wrap(buffer, 0, buffer.capacity()).set(value, $T.UTF_8).build()",
+                        string16FlyweightClassName, StandardCharsets.class)
                 .build();
     }
 
