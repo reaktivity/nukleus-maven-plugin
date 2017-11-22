@@ -241,7 +241,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.setMemory(0,  buffer.capacity(), ($T) 0x00)", byte.class)
                 .beginControlFlow("try")
                 .addStatement("stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)\n" +
-                        "                .set($N(\"1\"))", asStringFW)
+                        ".set($N(\"1\"))", asStringFW)
                 .endControlFlow()
                 .beginControlFlow("finally")
                 .addStatement("$1T[] bytes = new $1T[1 + LENGTH_SIZE]", byte.class)
@@ -282,6 +282,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldSetToNull")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
+                .addException(Exception.class)
                 .addStatement("$T limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
                         ".set(null, $T.UTF_8)\n" +
                         ".build()\n" +
@@ -303,6 +304,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldFailToBuildLargeString")
                 .addModifiers(PUBLIC)
                 .addAnnotation(testAnnotation)
+                .addException(Exception.class)
                 .addStatement("$1T str = $1T.format(\"%65535s\", \"0\")", String.class)
                 .addStatement("stringRW.wrap(buffer, 0, buffer.capacity())\n" +
                         ".set(str, $T.UTF_8)", StandardCharsets.class)
