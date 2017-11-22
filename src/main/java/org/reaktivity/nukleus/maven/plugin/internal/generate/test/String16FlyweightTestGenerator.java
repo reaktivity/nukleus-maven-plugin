@@ -82,6 +82,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldBuildLargeString())
             .addMethod(shouldSetToEmptyString())
             .addMethod(shouldSetUsingString())
+            .addMethod(shouldSetUsingStringFW(asStringFW()))
             .addMethod(asBuffer())
             .addMethod(asStringFW())
             .build();
@@ -321,6 +322,23 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                         ".set(\"value1\", $T.UTF_8)\n" +
                         ".build()\n" +
                         ".limit()", int.class, StandardCharsets.class)
+                .addStatement("stringRO.wrap(buffer,  0,  limit)")
+                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.limit())", Assert.class)
+                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.sizeof())", Assert.class)
+                .addStatement("$T.assertEquals(\"value1\", stringRO.asString())", Assert.class)
+                .build();
+    }
+
+    private MethodSpec shouldSetUsingStringFW(MethodSpec asStringFW)
+    {
+        return MethodSpec.methodBuilder("shouldSetUsingStringFW")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("$T limit = stringRW.wrap(buffer, 0, 50)\n" +
+                        ".set($N(\"value1\"))\n" +
+                        ".build()\n" +
+                        ".limit()", int.class, asStringFW)
                 .addStatement("stringRO.wrap(buffer,  0,  limit)")
                 .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.limit())", Assert.class)
                 .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.sizeof())", Assert.class)
