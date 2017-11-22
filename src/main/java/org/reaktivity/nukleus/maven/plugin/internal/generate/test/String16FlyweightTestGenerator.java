@@ -394,8 +394,6 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .build();
     }
 
-
-
     private MethodSpec asBuffer()
     {
         return MethodSpec.methodBuilder("asBuffer")
