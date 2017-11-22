@@ -83,6 +83,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMethod(shouldSetToEmptyString())
             .addMethod(shouldSetUsingString())
             .addMethod(shouldSetUsingStringFW(asStringFW()))
+            .addMethod(shouldSetUsingBuffer(asBuffer()))
             .addMethod(asBuffer())
             .addMethod(asStringFW())
             .build();
@@ -345,6 +346,25 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("$T.assertEquals(\"value1\", stringRO.asString())", Assert.class)
                 .build();
     }
+
+    private MethodSpec shouldSetUsingBuffer(MethodSpec asBuffer)
+    {
+        return MethodSpec.methodBuilder("shouldSetUsingBuffer")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("$T limit = stringRW.wrap(buffer, 0, 50)\n" +
+                        ".set($N(\"value1\"), 0, 6)\n" +
+                        ".build()\n" +
+                        ".limit()", int.class, asBuffer)
+                .addStatement("stringRO.wrap(buffer,  0,  limit)")
+                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.limit())", Assert.class)
+                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.sizeof())", Assert.class)
+                .addStatement("$T.assertEquals(\"value1\", stringRO.asString())", Assert.class)
+                .build();
+    }
+
+
 
     private MethodSpec asBuffer()
     {
