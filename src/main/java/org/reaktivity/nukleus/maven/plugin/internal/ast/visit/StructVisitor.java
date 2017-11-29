@@ -113,7 +113,8 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
             generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
                     false, defaultValue, byteOrder);
-            // TODO call generatorTest to enhance test class
+            generatorTest.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
+                    false, defaultValue, byteOrder);
         }
         else
         {
@@ -126,7 +127,8 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
             TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
             generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
                 usedAsSize, defaultValue, byteOrder);
-            // TODO call generatorTest to enhance test class
+            generatorTest.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
+                    false, defaultValue, byteOrder);
         }
 
         return defaultResult();

@@ -44,6 +44,7 @@ public class IntegerFWTest
     public void shouldDefaultValues() throws Exception
     {
         int limit = integersRW.wrap(buffer, 0, 100)
+                //.unsigned8()
                 .build()
                 .limit();
         integersRO.wrap(buffer,  0,  limit);
