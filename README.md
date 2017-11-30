@@ -20,15 +20,15 @@
   
 ## Field types
 
-All of the supported structure member types are illustrated in [test.idl](src/test/resources/test-project/test.idl). Below are otes on some of them.
+The supported structure member types are illustrated in [test.idl](src/test/resources/test-project/test.idl). Below are otes on some of them.
 
 ### Integer types
 
-These comprise fixed width signed types (int8, int16, int32, int64), fixed width unsigned types (uint8, uint16, uint32, uint64) and signed variable width types (varint32, varint64). The variable width types are limited to 4 or 8 bytes in length respectively, and conform to the sint32 and sint64 formats described in https://developers.google.com/protocol-buffers/docs/encoding.
+These comprise fixed width signed types (int8, int16, int32, int64), fixed width unsigned types (uint8, uint16, uint32, uint64) and variable width signed types (varint32, varint64). The variable width types are limited to 4 or 8 bytes in length respectively, and conform to the sint32 and sint64 formats described in https://developers.google.com/protocol-buffers/docs/encoding.
 
 ### octets type
 
-The octets type represents an array of bytes. By default the length is undetermined, in which case the field must be the last one in its structure. Alternatively, the length can be fixed, or can be stored in another member of the structure, known as the size field. 
+The octets type represents an array of bytes. By default the length is undetermined, in which case the field must be the last in its structure. Alternatively, the length can be fixed, or stored in another member of the structure, known as the size field. 
 
 If the size field is a fixed width integer type (int or uint), it is set automatically on mutation of the octets field. If it is a varint (varint32 or varint64), it must be set explicitly before setting the octets field. 
 
@@ -54,7 +54,7 @@ The usages are illustrated in the following structure (taken from [test.idl](src
 
 #### Arrays of fixed width integers
 
-Arrays of fixed width integers (int or uint) are supported. They can be fixed or variable length. If variable, a size field must be named, which must be one of the fixed width integer types. The usages are illustrated in the following structure:
+Arrays of fixed width integers (int or uint) are supported. They can be fixed or variable length. If variable, a size field must be named, which must be one of the fixed width integer types. These usages are illustrated here:
 ```
         struct intArrays
         {
@@ -66,7 +66,7 @@ Arrays of fixed width integers (int or uint) are supported. They can be fixed or
 
 #### Arrays of variable width integers
 
-Arrays of varints are supported using the syntax illustrated in the following example:
+Arrays of varints are supported using the syntax illustrated here:
 ```
         struct varintArrays
         {
@@ -74,4 +74,4 @@ Arrays of varints are supported using the syntax illustrated in the following ex
             varint64[] varint64Array;
         }
 ```
-Specifying a default value is not supported. The actual length in bytes of the array is stored a four byte signed integer (int32), using the byteorder specified in the ArrayFW.Builder or ArrayFW constructor, and is followed by the actual values. Varint array fields are accessed and set via the generated ArrayFW flyweight class. [IntegerVariableArraysFWTest](src/test/java/org/reaktivity/nukleus/maven/plugin/internal/generated/IntegerVariableArraysFWTest.java) illustrates the usage. 
+Specifying a default value is not supported. Varint array fields are accessed and set using the generated ArrayFW flyweight class. [IntegerVariableArraysFWTest](src/test/java/org/reaktivity/nukleus/maven/plugin/internal/generated/IntegerVariableArraysFWTest.java) illustrates the usage. The actual length in bytes of the array is stored automatically as a four byte signed integer (int32), using the byteorder specified in the ArrayFW.Builder or ArrayFW constructor, and is followed by the actual values. 
