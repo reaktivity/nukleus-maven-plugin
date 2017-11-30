@@ -4,6 +4,8 @@
 
 [build-status-image]: https://travis-ci.org/reaktivity/nukleus-maven-plugin.svg?branch=develop
 [build-status]: https://travis-ci.org/reaktivity/nukleus-maven-plugin
+
+The Nukleus Maven plugin is used to generate flyweight classes from IDL files defining data structures.
   
 ## Rules for using the generated flyweight Builders
  
