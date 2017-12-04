@@ -88,12 +88,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         GETTER_NAMES = unmodifiableMap(getterNames);
     }
 
+    // TODO: declare field and method generators here
     private final String baseName;
     private final TypeSpec.Builder builder;
     private final BufferGenerator buffer;
     private final FieldRWGenerator fieldRW;
     private final FieldROGenerator fieldRO;
-    // TODO: add new fields and methods here
     private final MemberFieldGenerator memberField;
     private final MemberSizeConstantGenerator memberSizeConstant;
     private final MemberOffsetConstantGenerator memberOffsetConstant;
@@ -108,12 +108,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         String baseName)
     {
         super(structName);
+        // TODO: initialize field and method generators here
         this.baseName = baseName + "Test";
         this.builder = classBuilder(structName).addModifiers(PUBLIC, FINAL);
         this.buffer = new BufferGenerator(structName, builder); // should add tests for correct type set
         this.fieldRW = new FieldRWGenerator(structName, builder, baseName);
         this.fieldRO = new FieldROGenerator(structName, builder, baseName);
-        // TODO: add new fields and methods here
         this.memberSizeConstant = new MemberSizeConstantGenerator(structName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
         this.memberField = new MemberFieldGenerator(structName, builder);
@@ -148,10 +148,10 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
+        // TODO: build fields and methods here
         buffer.build();
         fieldRW.build();
         fieldRO.build();
-        // TODO: add new fields and methods here
         memberOffsetConstant.build();
         memberSizeConstant.build();
         memberField.build();
@@ -1159,17 +1159,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             if (isNumericType(type))
             {
-                System.out.println("Found num " + type.toString());
                 return "0";
             }
             else if (isCharacterType(type))
             {
-                System.out.println("Found char " + type.toString());
                 return "\'a\'";
             }
             else if (isBooleanType(type))
             {
-                System.out.println("Found bool " + type.toString());
                 return "true";
             }
             else
@@ -1227,9 +1224,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 }
                 else
                 {
+                    // This is a hack. TODO: find a more elegant way of handling this
                     initialization.add("    .$L(($L)null)\n", fd.name, fd.type.toString().replaceAll("FW$", ""));
                 }
-                // TODO: fix this mess
             }
             initialization.add("    .build()\n" +
                     "    .limit();\n");
