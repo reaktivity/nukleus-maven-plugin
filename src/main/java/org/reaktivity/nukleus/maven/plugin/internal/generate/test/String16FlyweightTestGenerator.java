@@ -93,17 +93,17 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addMember("value", "1")
             .build();
         return FieldSpec
-                .builder(string16FlyweightClassName, "stringRO", PUBLIC)
-                .addAnnotation(paramAnnotationSpec)
-                .build();
+            .builder(string16FlyweightClassName, "stringRO", PUBLIC)
+            .addAnnotation(paramAnnotationSpec)
+            .build();
     }
 
     private FieldSpec fieldBuffer()
     {
         return FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
             .initializer("new $T($T.allocateDirect(100000)) \n" +
-                "{\n"+
-                "    {\n"+
+                "{\n" +
+                "    {\n" +
                 "        // Make sure the code is not secretly relying upon memory being initialized to 0\n" +
                 "        setMemory(0, capacity(), (byte) 0xF);\n" +
                 "    }\n" +
@@ -142,9 +142,9 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addException(Exception.class)
             .addStatement(
                 "  int limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
-                "    .set(\"Hello, world\", $T.UTF_8)\n" +
-                "    .build()\n" +
-                "    .limit()", StandardCharsets.class)
+                    "    .set(\"Hello, world\", $T.UTF_8)\n" +
+                    "    .build()\n" +
+                    "    .limit()", StandardCharsets.class)
             .addStatement("String16FW string = stringRW.wrap(buffer, 0, limit).build()")
             .addStatement("$T.assertNull(string.asString())", Assert.class)
             .addStatement("$T.assertEquals(LENGTH_SIZE, string.limit())", Assert.class)

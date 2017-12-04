@@ -30,8 +30,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNodeLocator;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.visit.ScopeTestVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.visit.ScopeVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ArrayFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.FlyweightGenerator;
@@ -51,8 +53,8 @@ public class Generator
 {
     private String scopeNames = "test";
     private File inputDirectory = new File("src/test/resources/test-project");
-    private File outputDirectory = new File("target/generated-test-sources/test-reaktivity");
-    private File outputTestDirectory = new File("target/generated-test-sources/test-reaktivity");
+    private File outputDirectory = new File("target/generated-test-sources/reaktivity/flyweights");
+    private File outputTestDirectory = new File("target/generated-test-sources/reaktivity/tests");
     private String packageName = "org.reaktivity.reaktor.internal.test.types";
 
     private Parser parser = new Parser();
@@ -84,11 +86,16 @@ public class Generator
             specifications.forEach(resolver::visit);
 
             Collection<TypeSpecGenerator<?>> typeSpecs = new HashSet<>();
+            Collection<TypeSpecGenerator<?>> testTypeSpecs = new HashSet<>();
+
             for (AstSpecificationNode specification : specifications)
             {
                 String scopeName = specification.scope().name();
+                AstNodeLocator nodeLocator = new AstNodeLocator(specification.scope());
                 ScopeVisitor visitor = new ScopeVisitor(scopeName, packageName, resolver, targetScopes);
                 typeSpecs.addAll(specification.accept(visitor));
+                ScopeTestVisitor testVisitor = new ScopeTestVisitor(scopeName, packageName, resolver, targetScopes, nodeLocator);
+                testTypeSpecs.addAll(specification.accept(testVisitor));
             }
 
             typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
@@ -100,9 +107,9 @@ public class Generator
             typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
             typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
-            typeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
-
-            System.out.println("Generating to " + outputDirectory);
+            testTypeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+            System.out.println("Generating flyweights to " + outputDirectory);
+            System.out.println("Generating tests to " + outputTestDirectory);
 
             if (outputDirectory.exists())
             {
@@ -122,12 +129,20 @@ public class Generator
 
             for (TypeSpecGenerator<?> typeSpec : typeSpecs)
             {
-                boolean isTest = typeSpec.className().simpleName().endsWith("Test");
                 JavaFile sourceFile = JavaFile.builder(typeSpec.className().packageName(), typeSpec.generate())
                         .addFileComment("TODO: license")
                         .skipJavaLangImports(true)
                         .build();
-                sourceFile.writeTo(isTest?outputTestDirectory:outputDirectory);
+                sourceFile.writeTo(outputDirectory);
+            }
+
+            for (TypeSpecGenerator<?> testTypeSpec : testTypeSpecs)
+            {
+                JavaFile sourceFile = JavaFile.builder(testTypeSpec.className().packageName(), testTypeSpec.generate())
+                    .addFileComment("TODO: license")
+                    .skipJavaLangImports(true)
+                    .build();
+                sourceFile.writeTo(outputTestDirectory);
             }
 
             if (outputDirectory.exists())
@@ -137,6 +152,7 @@ public class Generator
                      .filter(File::isFile)
                      .forEach(f -> f.setWritable(false));
             }
+
             if (outputTestDirectory.exists())
             {
                 Files.walk(outputTestDirectory.toPath())

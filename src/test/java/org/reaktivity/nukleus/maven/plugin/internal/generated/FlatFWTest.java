@@ -68,6 +68,8 @@ public class FlatFWTest
                 .build()
                 .limit();
         flatRO.wrap(buffer,  0,  limit);
+        assertEquals(10, flatRO.fixed1());
+
         assertEquals(222, flatRO.fixed2());
         assertEquals(333, flatRO.fixed3());
     }

@@ -47,7 +47,7 @@
     <agrona.version>0.5.5</agrona.version>
     
     <jacoco.coverage.ratio>0.55</jacoco.coverage.ratio>
-    <jacoco.missed.count>4</jacoco.missed.count>
+    <jacoco.missed.count>5</jacoco.missed.count>
   </properties>
 
   <dependencies>
@@ -182,7 +182,8 @@
             </goals>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-test-sources/test-reaktivity</source>
+                <source>${project.build.directory}/generated-test-sources/reaktivity/flyweights</source>
+                <source>${project.build.directory}/generated-test-sources/reaktivity/tests</source>
               </sources>
             </configuration>
           </execution>
@@ -239,7 +240,7 @@
         </executions>
         <configuration>
           <mainClass>org.reaktivity.nukleus.maven.plugin.internal.Generator</mainClass>
-          <testSourceRoot>${project.build.directory}/generated-test-sources/test-reaktivity</testSourceRoot>
+          <testSourceRoot>${project.build.directory}/generated-test-sources/reaktivity</testSourceRoot>
         </configuration>
       </plugin>
       <plugin>

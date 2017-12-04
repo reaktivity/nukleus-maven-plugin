@@ -44,6 +44,9 @@ import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNodeLocator;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecMixinGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.MethodSpecGenerator;
@@ -86,7 +89,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
     private final String baseName;
     private final TypeSpec.Builder builder;
-    private final TypeIdGenerator typeId;
+    private final TypeIdTestGenerator typeId;
     private final MemberFieldGenerator memberField;
     private final MemberSizeConstantGenerator memberSizeConstant;
     private final MemberOffsetConstantGenerator memberOffsetConstant;
@@ -94,15 +97,18 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final WrapMethodGenerator wrapMethod;
     private final LimitMethodGenerator limitMethod;
     private final ToStringMethodGenerator toStringMethod;
+    private final AstNodeLocator astNodeLocator;
 
     public StructFlyweightTestGenerator(
         ClassName structName,
-        String baseName)
+        String baseName,
+        AstNodeLocator astNodeLocator)
     {
         super(structName);
         this.baseName = baseName + "Test";
         this.builder = classBuilder(structName).addModifiers(PUBLIC, FINAL);
-        this.typeId = new TypeIdGenerator(structName, builder); // should add tests for correct type set
+        this.typeId = new TypeIdTestGenerator(structName, builder); // should add tests for correct type set
+
         this.memberSizeConstant = new MemberSizeConstantGenerator(structName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
         this.memberField = new MemberFieldGenerator(structName, builder);
@@ -110,6 +116,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         this.wrapMethod = new WrapMethodGenerator(structName);
         this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
+
+        this.astNodeLocator = astNodeLocator;
+        // = new SetterWithDefaultValuesGenerator()
     }
 
     public StructFlyweightTestGenerator typeId(
@@ -120,22 +129,30 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     }
 
     public StructFlyweightTestGenerator addMember(
+        AstType memberType,
         String name,
         TypeName type,
         TypeName unsignedType,
         int size,
         String sizeName,
+        TypeName sizeType,
         boolean usedAsSize,
         Object defaultValue,
         AstByteOrder byteOrder)
     {
 //        memberOffsetConstant.addMember(name, type, unsignedType, size, sizeName);
 //        memberSizeConstant.addMember(name, type, unsignedType, size);
-        memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder, defaultValue);
-        memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName, defaultValue);
+//        memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder, defaultValue);
+//        memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName, defaultValue);
 //        limitMethod.addMember(name, type, unsignedType, size, sizeName);
 //        wrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
-        toStringMethod.addMember(name, type, unsignedType, size, sizeName);
+//        toStringMethod.addMember(name, type, unsignedType, size, sizeName);
+
+        if (memberType.isDynamic())
+        {
+            AstNode memberNode = astNodeLocator.locateNode(null, memberType.name(), null);
+            System.out.println("memberNode for " + memberType.name() + " is " + memberNode);
+        }
 
         return this;
     }
@@ -156,11 +173,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             .build();
     }
 
-    private static final class TypeIdGenerator extends ClassSpecMixinGenerator
+    private static final class TypeIdTestGenerator extends ClassSpecMixinGenerator
     {
         private int typeId;
 
-        private TypeIdGenerator(
+        private TypeIdTestGenerator(
             ClassName thisType,
             TypeSpec.Builder builder)
         {
@@ -708,6 +725,50 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     .build());
         }
     }
+
+
+
+    private final class SetterWithDefaultValuesGenerator extends MethodSpecGenerator
+    {
+
+        protected SetterWithDefaultValuesGenerator()
+        {
+            super(methodBuilder("shouldSetAndGetValuesWithDefaults")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(int.class));
+        }
+
+
+        @Override
+        public MethodSpec generate()
+        {
+            return null;
+        }
+
+        public SetterWithDefaultValuesGenerator addMember(
+            String name,
+            TypeName type,
+            TypeName unsignedType,
+            int size,
+            String sizeName)
+        {
+            // add code that sets field as parameter
+
+            //
+
+
+
+            // add code that sets field as parameter
+
+
+            return this;
+        }
+
+
+    }
+
+
 
     private final class LimitMethodGenerator extends MethodSpecGenerator
     {
