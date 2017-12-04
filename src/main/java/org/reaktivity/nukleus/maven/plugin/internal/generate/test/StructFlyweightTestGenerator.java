@@ -43,9 +43,13 @@ import java.util.Set;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.antlr.v4.runtime.CharStream;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecGenerator;
@@ -163,7 +167,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         }
         catch (UnsupportedOperationException uoe)
         {
-            uoe.printStackTrace();
         }
         builder.addMethod(toStringMethod.generate());
 
@@ -1143,43 +1146,113 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             Object defaultValue;
         }
 
-        private boolean isNumericType(TypeName type)
+        private boolean isNumericType(FieldDefinition fd)
         {
-            return type.equals(TypeName.INT) ||
-                    type.equals(TypeName.LONG) ||
-                    type.equals(TypeName.SHORT) ||
-                    type.equals(TypeName.BYTE) ||
-                    type.equals(TypeName.DOUBLE) ||
-                    type.equals(TypeName.FLOAT);
+            return fd.type.equals(TypeName.INT) ||
+                    fd.type.equals(TypeName.LONG) ||
+                    fd.type.equals(TypeName.SHORT) ||
+                    fd.type.equals(TypeName.BYTE) ||
+                    fd.type.equals(TypeName.DOUBLE) ||
+                    fd.type.equals(TypeName.FLOAT);
         }
 
-        private boolean isCharacterType(TypeName type)
+        private boolean isCharacterType(FieldDefinition fd)
         {
-            return type.equals(TypeName.CHAR);
+            return fd.type.equals(TypeName.CHAR);
         }
 
-        private boolean isBooleanType(TypeName type)
+        private boolean isBooleanType(FieldDefinition fd)
         {
-            return type.equals(TypeName.BOOLEAN);
+            return fd.type.equals(TypeName.BOOLEAN);
         }
 
-        private String generateValue(TypeName type)
+        private boolean isArrayType(FieldDefinition fd)
         {
-            if (isNumericType(type))
+            return fd.name.contains("Array");
+        }
+
+        private CodeBlock generateNumericTypeValue(FieldDefinition fd)
+        {
+            CodeBlock.Builder builder = CodeBlock.builder();
+
+            if (isArrayType(fd))
             {
-                return "0";
-            }
-            else if (isCharacterType(type))
-            {
-                return "\'a\'";
-            }
-            else if (isBooleanType(type))
-            {
-                return "true";
+                TypeName actualType = fd.unsignedType != null ? fd.unsignedType : fd.type;
+                if (actualType.equals(TypeName.DOUBLE))
+                {
+                    return builder.add("$T.of(0, 0, 0, 0).iterator()", DoubleStream.class).build();
+                }
+                else if (actualType.equals(TypeName.LONG))
+                {
+                    return builder.add("$T.of(0, 0, 0, 0).iterator()", LongStream.class).build();
+                }
+                else
+                {
+                    return builder.add("$T.of(0, 0, 0, 0).iterator()", IntStream.class).build();
+                }
             }
             else
             {
-                return null;
+                return builder.add("0").build();
+            }
+        }
+
+        private CodeBlock generateCharacterTypeValue(FieldDefinition fd)
+        {
+            CodeBlock.Builder builder = CodeBlock.builder();
+
+            if (isArrayType(fd))
+            {
+                return builder.add("$T.of(\'a\', \'a\', \'a\', \'a\').iterator()", CharStream.class).build();
+            }
+            else
+            {
+                return builder.add("a").build();
+            }
+        }
+
+        private CodeBlock generatePrimitiveValue(FieldDefinition fd)
+        {
+            if (isNumericType(fd))
+            {
+                return generateNumericTypeValue(fd);
+            }
+            else if (isCharacterType(fd))
+            {
+                return generateCharacterTypeValue(fd);
+            }
+            else if (isBooleanType(fd))
+            {
+                return CodeBlock.builder().add("true").build();
+            }
+            else
+            {
+                throw new UnsupportedOperationException("Unknown Field Definition " + fd);
+            }
+        }
+
+        private CodeBlock generateNonPrimitiveValue(FieldDefinition fd)
+        {
+            CodeBlock.Builder builder = CodeBlock.builder();
+
+            // TODO: add more types here as they become supported
+            if (!fd.type.toString().matches(".*\\.StringFW$"))
+            {
+                throw new UnsupportedOperationException("Cannot build members of type " + fd.type);
+            }
+
+            return builder.add("($L)null", "String").build();
+        }
+
+        private CodeBlock generateValue(FieldDefinition fd)
+        {
+            if (fd.type.isPrimitive())
+            {
+                return generatePrimitiveValue(fd);
+            }
+            else
+            {
+                return generateNonPrimitiveValue(fd);
             }
         }
 
@@ -1224,24 +1297,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             CodeBlock.Builder initialization = CodeBlock.builder();
             initialization.add("int limit = fieldRW.wrap(buffer, 0, 100)\n");
+
             for(FieldDefinition fd : notDefaulted)
             {
-                if (fd.type.isPrimitive())
-                {
-                    initialization.add("    .$L($L)\n", fd.name, generateValue(fd.type));
-                }
-                else
-                {
-                    // This is a hack. TODO: find a more elegant way of handling this
-                    String typeString = fd.type.toString();
-                    if (!typeString.matches(".*\\.StringFW$"))
-                    {
-                        throw new UnsupportedOperationException("Cannot build members of type " + typeString);
-                    }
-
-                    initialization.add("    .$L(($L)null)\n", fd.name, "String");
-                }
+                initialization.add("    .$L(", fd.name).add(generateValue(fd)).add(")\n");
             }
+
             initialization.add("    .build()\n" +
                     "    .limit();\n");
 
