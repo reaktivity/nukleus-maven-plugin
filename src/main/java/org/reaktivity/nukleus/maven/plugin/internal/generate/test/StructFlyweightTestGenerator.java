@@ -157,10 +157,18 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         memberField.build();
         memberAccessor.build();
 
-        return builder
-            .addMethod(shouldDefaultValuesMethodGenerator.generate())
-            .addMethod(toStringMethod.generate())
-            .build();
+        try
+        {
+            builder.addMethod(shouldDefaultValuesMethodGenerator.generate());
+        }
+        catch (UnsupportedOperationException uoe)
+        {
+            uoe.printStackTrace();
+        }
+        builder.addMethod(toStringMethod.generate());
+
+
+        return builder.build();
     }
 
     private static final class BufferGenerator extends ClassSpecMixinGenerator
@@ -1225,7 +1233,13 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 else
                 {
                     // This is a hack. TODO: find a more elegant way of handling this
-                    initialization.add("    .$L(($L)null)\n", fd.name, fd.type.toString().replaceAll("FW$", ""));
+                    String typeString = fd.type.toString();
+                    if (!typeString.matches(".*\\.StringFW$"))
+                    {
+                        throw new UnsupportedOperationException("Cannot build members of type " + typeString);
+                    }
+
+                    initialization.add("    .$L(($L)null)\n", fd.name, "String");
                 }
             }
             initialization.add("    .build()\n" +
