@@ -19,7 +19,10 @@ import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATI
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
@@ -82,6 +85,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
     private Builder caseBuilder;
     private AstByteOrder byteOrder;
+
+    private Map<String, AstNode> scopedNameAstNodes = new HashMap<>();
 
     public AstParser()
     {
@@ -198,8 +203,26 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstStructNode visitStruct_type(
         Struct_typeContext ctx)
     {
+        Iterator it = scopeBuilders.iterator();
+        StringBuilder scopedNameBuilder = new StringBuilder();
+        while (it.hasNext())
+        {
+            scopedNameBuilder.append(((AstScopeNode.Builder)it.next()).name()).append("::");
+        }
+
         structBuilder = new AstStructNode.Builder();
         structBuilder.name(ctx.ID().getText());
+
+        System.out.println("visitStruct_type.ctx.ID().getText(): " + ctx.ID().getText());
+        System.out.println("visitStruct_type.ctx.scoped_name(): " + ctx.scoped_name());
+        if (ctx.parent != null)
+        {
+            System.out.println("visitStruct_type.ctx.parent.getText(): " + ctx.parent.getText());
+        }
+        // TODO track struct nodes to be matched with member nodes by scoped name
+        System.out.println("visitStruct_type.SCOPED_STRUCT: " + scopedNameBuilder.toString() + ctx.ID().getText());
+        System.out.println();
+
 
         Scoped_nameContext scopedName = ctx.scoped_name();
         if (scopedName != null)
@@ -208,18 +231,20 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         super.visitStruct_type(ctx);
-
+        AstStructNode structNode;
         AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
         if (scopeBuilder != null)
         {
             AstStructNode struct = structBuilder.build();
             scopeBuilder.struct(struct);
-            return struct;
+            structNode = struct;
         }
         else
         {
-            return structBuilder.build();
+            structNode = structBuilder.build();
         }
+        scopedNameAstNodes.put(scopedNameBuilder.toString() + ctx.ID().getText(), structNode);
+        return structNode;
     }
 
     @Override
@@ -497,6 +522,9 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         if (memberBuilder != null)
         {
+            System.out.println("visitScoped_name: " + ctx.getText());
+            System.out.println("visitScoped_name: " + scopedNameAstNodes.containsKey(ctx.getText()));
+            System.out.println();
             memberBuilder.type(AstType.dynamicType(ctx.getText()));
         }
         return super.visitScoped_name(ctx);

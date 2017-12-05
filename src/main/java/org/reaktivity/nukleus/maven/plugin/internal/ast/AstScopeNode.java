@@ -176,5 +176,10 @@ public final class AstScopeNode extends AstNode
         {
             return new AstScopeNode(depth, name, enums, structs, unions, scopes);
         }
+
+        public String name()
+        {
+            return name;
+        }
     }
 }

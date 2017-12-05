@@ -52,6 +52,9 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.antlr.v4.runtime.CharStream;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNodeLocator;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecMixinGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.MethodSpecGenerator;
@@ -92,9 +95,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         GETTER_NAMES = unmodifiableMap(getterNames);
     }
 
-    // TODO: declare field and method generators here
     private final String baseName;
     private final TypeSpec.Builder builder;
+    private final TypeIdTestGenerator typeId;
     private final BufferGenerator buffer;
     private final FieldRWGenerator fieldRW;
     private final FieldROGenerator fieldRO;
@@ -106,18 +109,20 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final LimitMethodGenerator limitMethod;
     private final ToStringMethodGenerator toStringMethod;
     private final ShouldDefaultValuesMethodGenerator shouldDefaultValuesMethodGenerator;
+    private final AstNodeLocator astNodeLocator;
 
     public StructFlyweightTestGenerator(
         ClassName structName,
-        String baseName)
+        String baseName,
+        AstNodeLocator astNodeLocator)
     {
         super(structName);
-        // TODO: initialize field and method generators here
         this.baseName = baseName + "Test";
         this.builder = classBuilder(structName).addModifiers(PUBLIC, FINAL);
         this.buffer = new BufferGenerator(structName, builder); // should add tests for correct type set
         this.fieldRW = new FieldRWGenerator(structName, builder, baseName);
         this.fieldRO = new FieldROGenerator(structName, builder, baseName);
+        this.typeId = new TypeIdTestGenerator(structName, builder); // should add tests for correct type set
         this.memberSizeConstant = new MemberSizeConstantGenerator(structName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
         this.memberField = new MemberFieldGenerator(structName, builder);
@@ -126,15 +131,18 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
         this.shouldDefaultValuesMethodGenerator = new ShouldDefaultValuesMethodGenerator();
+        this.astNodeLocator = astNodeLocator;
     }
 
     public StructFlyweightTestGenerator typeId(
         int typeId)
     {
+        this.typeId.typeId(typeId);
         return this;
     }
 
     public StructFlyweightTestGenerator addMember(
+        AstType memberType,
         String name,
         TypeName type,
         TypeName unsignedType,
@@ -145,6 +153,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         Object defaultValue,
         AstByteOrder byteOrder)
     {
+        if (memberType.isDynamic())
+        {
+            AstNode memberNode = astNodeLocator.locateNode(null, memberType.name(), null);
+            System.out.println("memberNode for " + memberType.name() + " is " + memberNode);
+        }
         shouldDefaultValuesMethodGenerator.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         return this;
     }
@@ -168,38 +181,74 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         catch (UnsupportedOperationException uoe)
         {
         }
+
         builder.addMethod(toStringMethod.generate());
-
-
         return builder.build();
     }
 
-    private static final class BufferGenerator extends ClassSpecMixinGenerator
+    private static final class TypeIdTestGenerator extends ClassSpecMixinGenerator
     {
-        private BufferGenerator(
+        private int typeId;
+
+        private TypeIdTestGenerator(
             ClassName thisType,
             TypeSpec.Builder builder)
         {
             super(thisType, builder);
         }
 
+        public void typeId(
+            int typeId)
+        {
+            this.typeId = typeId;
+        }
+
         @Override
         public TypeSpec.Builder build()
         {
-            FieldSpec bufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
-                    .initializer("new $T($T.allocateDirect(100000)) \n" +
-                            "{\n"+
-                            "    {\n"+
-                            "        // Make sure the code is not secretly relying upon memory being initialized to 0\n" +
-                            "        setMemory(0, capacity(), (byte) 0xF);\n" +
-                            "    }\n" +
-                            "}", UnsafeBuffer.class, ByteBuffer.class)
-                    .build();
-            builder.addField(bufferFieldSpec);
+            if (typeId != 0)
+            {
+                builder.addField(FieldSpec.builder(int.class, "TYPE_ID", PUBLIC, STATIC, FINAL)
+                        .initializer("$L", String.format("0x%08x", typeId))
+                        .build());
 
+                builder.addMethod(methodBuilder("typeId")
+                        .addModifiers(PUBLIC)
+                        .returns(int.class)
+                        .addStatement("return TYPE_ID")
+                        .build());
+            }
             return builder;
         }
     }
+
+    private static final class BufferGenerator extends ClassSpecMixinGenerator
+    {
+
+    private BufferGenerator(
+            ClassName thisType,
+            TypeSpec.Builder builder)
+    {
+        super(thisType, builder);
+    }
+
+    @Override
+    public TypeSpec.Builder build()
+    {
+        FieldSpec bufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
+                .initializer("new $T($T.allocateDirect(100000)) \n" +
+                        "{\n"+
+                        "    {\n"+
+                        "        // Make sure the code is not secretly relying upon memory being initialized to 0\n" +
+                        "        setMemory(0, capacity(), (byte) 0xF);\n" +
+                        "    }\n" +
+                        "}", UnsafeBuffer.class, ByteBuffer.class)
+                .build();
+        builder.addField(bufferFieldSpec);
+
+        return builder;
+    }
+}
 
     private static final class FieldRWGenerator extends ClassSpecMixinGenerator
     {
