@@ -31,19 +31,10 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UN
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.PrimitiveIterator;
-import java.util.Set;
+import java.util.*;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
-import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -1220,24 +1211,48 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             return fd.name.contains("Array");
         }
 
+        private CodeBlock generateArray(Class streamType, int numberOfEntries)
+        {
+            if (numberOfEntries < 1)
+            {
+                throw new AssertionError("Expected a number of entries greater than 1 (one)");
+            }
+
+            CodeBlock.Builder builder = CodeBlock.builder();
+            builder.add("$T.of(0", streamType);
+            for (int i = 1; i < numberOfEntries; i++)
+            {
+                builder.add(", 0");
+            }
+            builder.add(").iterator()");
+
+            return builder.build();
+        }
+
         private CodeBlock generateNumericTypeValue(FieldDefinition fd)
         {
             CodeBlock.Builder builder = CodeBlock.builder();
 
             if (isArrayType(fd))
             {
+                Map<String, Integer> types = new Hashtable<>();
+                types.put("uint8Array", 1);
+                types.put("uint16Array", 2);
+                types.put("uint32Array", 3);
+                types.put("uint64Array", 4);
+                types.put("int8Array", 1);
+                types.put("int16Array", 2);
+                types.put("int32Array", 3);
+                types.put("int64Array", 4);
+
                 TypeName actualType = fd.unsignedType != null ? fd.unsignedType : fd.type;
-                if (actualType.equals(TypeName.DOUBLE))
+                if (actualType.equals(TypeName.LONG))
                 {
-                    return builder.add("$T.of(0, 0, 0, 0).iterator()", DoubleStream.class).build();
-                }
-                else if (actualType.equals(TypeName.LONG))
-                {
-                    return builder.add("$T.of(0, 0, 0, 0).iterator()", LongStream.class).build();
+                    return generateArray(LongStream.class, types.get(fd.name));
                 }
                 else
                 {
-                    return builder.add("$T.of(0, 0, 0, 0).iterator()", IntStream.class).build();
+                    return generateArray(IntStream.class, types.get(fd.name));
                 }
             }
             else
