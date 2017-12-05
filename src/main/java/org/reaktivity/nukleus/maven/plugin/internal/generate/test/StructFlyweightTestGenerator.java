@@ -1375,11 +1375,20 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 initialization.add("    .$L(", fd.name).add(generateValue(fd)).add(")\n");
             }
             initialization.add("    .build()\n    .limit();\n");
+            initialization.addStatement("fieldRO.wrap(buffer, 0, limit)");
+
+            CodeBlock.Builder asserts = CodeBlock.builder();
+            for (FieldDefinition fd : defaulted)
+            {
+                asserts.addStatement("$T.assertEquals($L, fieldRO.$L())", Assert.class, fd.defaultValue.toString(),
+                        fd.name);
+            }
 
             return builder
                     .addModifiers(PUBLIC)
                     .addException(Exception.class)
                     .addCode(initialization.build())
+                    .addCode(asserts.build())
                     .build();
         }
     }
