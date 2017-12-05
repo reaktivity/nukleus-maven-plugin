@@ -1185,21 +1185,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             TypeName type;
             TypeName unsignedType;
             Object defaultValue;
-        }
-
-        private Map<String, Integer> arraySizesMap;
-
-        private void initializeArraySizesMap()
-        {
-            this.arraySizesMap = new Hashtable<>();
-            arraySizesMap.put("uint8Array", 1);
-            arraySizesMap.put("uint16Array", 2);
-            arraySizesMap.put("uint32Array", 3);
-            arraySizesMap.put("uint64Array", 4);
-            arraySizesMap.put("int8Array", 1);
-            arraySizesMap.put("int16Array", 2);
-            arraySizesMap.put("int32Array", 3);
-            arraySizesMap.put("int64Array", 4);
+            int size;
+            String sizeName;
         }
 
         private boolean isNumericType(FieldDefinition fd)
@@ -1254,11 +1241,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 TypeName actualType = fd.unsignedType != null ? fd.unsignedType : fd.type;
                 if (actualType.equals(TypeName.LONG))
                 {
-                    return generateArray(LongStream.class, this.arraySizesMap.get(fd.name));
+                    return generateArray(LongStream.class, fd.size);
                 }
                 else
                 {
-                    return generateArray(IntStream.class, this.arraySizesMap.get(fd.name));
+                    return generateArray(IntStream.class, fd.size);
                 }
             }
             else
@@ -1273,7 +1260,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
             if (isArrayType(fd))
             {
-                return builder.add("$T.of(\'a\', \'a\', \'a\', \'a\').iterator()", CharStream.class).build();
+                return generateArray(CharStream.class, fd.size);
             }
             else
             {
@@ -1335,8 +1322,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     .addAnnotation(Test.class)
                     .addModifiers(PUBLIC)
                     .addException(Exception.class));
-
-            initializeArraySizesMap();
         }
 
         public ShouldDefaultValuesMethodGenerator addMember(
@@ -1351,6 +1336,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             fd.name = name;
             fd.type = type;
             fd.unsignedType = unsignedType;
+            fd.size = size;
+            fd.sizeName = sizeName;
 
             if (defaultValue != null)
             {
