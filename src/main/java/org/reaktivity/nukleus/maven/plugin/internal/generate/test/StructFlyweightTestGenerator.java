@@ -41,6 +41,7 @@ import java.util.stream.LongStream;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.antlr.v4.runtime.CharStream;
+import org.junit.Assert;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -1186,6 +1187,21 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             Object defaultValue;
         }
 
+        private Map<String, Integer> arraySizesMap;
+
+        private void initializeArraySizesMap()
+        {
+            this.arraySizesMap = new Hashtable<>();
+            arraySizesMap.put("uint8Array", 1);
+            arraySizesMap.put("uint16Array", 2);
+            arraySizesMap.put("uint32Array", 3);
+            arraySizesMap.put("uint64Array", 4);
+            arraySizesMap.put("int8Array", 1);
+            arraySizesMap.put("int16Array", 2);
+            arraySizesMap.put("int32Array", 3);
+            arraySizesMap.put("int64Array", 4);
+        }
+
         private boolean isNumericType(FieldDefinition fd)
         {
             return fd.type.equals(TypeName.INT) ||
@@ -1235,24 +1251,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
             if (isArrayType(fd))
             {
-                Map<String, Integer> types = new Hashtable<>();
-                types.put("uint8Array", 1);
-                types.put("uint16Array", 2);
-                types.put("uint32Array", 3);
-                types.put("uint64Array", 4);
-                types.put("int8Array", 1);
-                types.put("int16Array", 2);
-                types.put("int32Array", 3);
-                types.put("int64Array", 4);
-
                 TypeName actualType = fd.unsignedType != null ? fd.unsignedType : fd.type;
                 if (actualType.equals(TypeName.LONG))
                 {
-                    return generateArray(LongStream.class, types.get(fd.name));
+                    return generateArray(LongStream.class, this.arraySizesMap.get(fd.name));
                 }
                 else
                 {
-                    return generateArray(IntStream.class, types.get(fd.name));
+                    return generateArray(IntStream.class, this.arraySizesMap.get(fd.name));
                 }
             }
             else
@@ -1329,6 +1335,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     .addAnnotation(Test.class)
                     .addModifiers(PUBLIC)
                     .addException(Exception.class));
+
+            initializeArraySizesMap();
         }
 
         public ShouldDefaultValuesMethodGenerator addMember(
@@ -1353,6 +1361,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 notDefaulted.add(fd);
             }
+
             return this;
         }
 
@@ -1361,16 +1370,15 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             CodeBlock.Builder initialization = CodeBlock.builder();
             initialization.add("int limit = fieldRW.wrap(buffer, 0, 100)\n");
-
             for(FieldDefinition fd : notDefaulted)
             {
                 initialization.add("    .$L(", fd.name).add(generateValue(fd)).add(")\n");
             }
-
-            initialization.add("    .build()\n" +
-                    "    .limit();\n");
+            initialization.add("    .build()\n    .limit();\n");
 
             return builder
+                    .addModifiers(PUBLIC)
+                    .addException(Exception.class)
                     .addCode(initialization.build())
                     .build();
         }
