@@ -150,7 +150,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             AstNode memberNode = astNodeLocator.locateNode(null, memberType.name(), null);
             System.out.println("memberNode for " + memberType.name() + " is " + memberNode);
         }
-        shouldDefaultValuesMethodGenerator.addMember(name, type, unsignedType, size, sizeName, defaultValue);
+
+        try
+        {
+            shouldDefaultValuesMethodGenerator.addMember(name, type, unsignedType, size, sizeName, defaultValue);
+        }
+        catch (UnsupportedOperationException uoe)
+        {
+        }
         return this;
     }
 
@@ -173,8 +180,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         catch (UnsupportedOperationException uoe)
         {
         }
-
         builder.addMethod(toStringMethod.generate());
+
         return builder.build();
     }
 
@@ -1187,6 +1194,35 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             Object defaultValue;
             int size;
             String sizeName;
+
+            FieldDefinition(String name, TypeName type, TypeName unsignedType, Object defaultValue, int size,
+                                   String sizeName)
+            {
+                this.name = name;
+                this.type = type;
+                this.unsignedType = unsignedType;
+                this.defaultValue = defaultValue;
+                this.size = size;
+                this.sizeName = sizeName;
+            }
+        }
+
+        private boolean errorGenerating;
+
+        private CodeBlock.Builder initializationsBlock;
+        private CodeBlock.Builder assertionsBlock;
+
+        private ShouldDefaultValuesMethodGenerator()
+        {
+            super(methodBuilder("shouldDefaultValues")
+                    .addAnnotation(Test.class)
+                    .addModifiers(PUBLIC)
+                    .addException(Exception.class));
+
+            this.errorGenerating = false;
+
+            this.initializationsBlock = CodeBlock.builder().add("int limit = fieldRW.wrap(buffer, 0, 100)\n");
+            this.assertionsBlock = CodeBlock.builder();
         }
 
         private boolean isNumericType(FieldDefinition fd)
@@ -1216,9 +1252,10 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
         private CodeBlock generateArray(Class streamType, int numberOfEntries)
         {
-            if (numberOfEntries < 1)
+            if (numberOfEntries == -1)
             {
-                throw new AssertionError("Expected a number of entries greater than 1 (one)");
+                this.errorGenerating = true;
+                throw new UnsupportedOperationException("Don't know how to generate variable length arrays");
             }
 
             CodeBlock.Builder builder = CodeBlock.builder();
@@ -1284,6 +1321,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
+                this.errorGenerating = true;
                 throw new UnsupportedOperationException("Unknown Field Definition " + fd);
             }
         }
@@ -1295,6 +1333,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             // TODO: add more types here as they become supported
             if (!fd.type.toString().matches(".*\\.StringFW$"))
             {
+                this.errorGenerating = true;
                 throw new UnsupportedOperationException("Cannot build members of type " + fd.type);
             }
 
@@ -1313,17 +1352,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
         }
 
-        private final List<FieldDefinition> defaulted = new LinkedList<>();
-        private final List<FieldDefinition> notDefaulted = new LinkedList<>();
-
-        private ShouldDefaultValuesMethodGenerator()
-        {
-            super(methodBuilder("shouldDefaultValues")
-                    .addAnnotation(Test.class)
-                    .addModifiers(PUBLIC)
-                    .addException(Exception.class));
-        }
-
         public ShouldDefaultValuesMethodGenerator addMember(
                 String name,
                 TypeName type,
@@ -1332,21 +1360,16 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 String sizeName,
                 Object defaultValue)
         {
-            FieldDefinition fd = new FieldDefinition();
-            fd.name = name;
-            fd.type = type;
-            fd.unsignedType = unsignedType;
-            fd.size = size;
-            fd.sizeName = sizeName;
+            FieldDefinition fd = new FieldDefinition(name, type, unsignedType, defaultValue, size, sizeName);
 
             if (defaultValue != null)
             {
-                fd.defaultValue = defaultValue;
-                defaulted.add(fd);
+                this.assertionsBlock.addStatement("$T.assertEquals($L, fieldRO.$L())", Assert.class,
+                        fd.defaultValue.toString(), fd.name);
             }
             else
             {
-                notDefaulted.add(fd);
+                initializationsBlock.add("    .$L(", fd.name).add(generateValue(fd)).add(")\n");
             }
 
             return this;
@@ -1355,27 +1378,20 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            CodeBlock.Builder initialization = CodeBlock.builder();
-            initialization.add("int limit = fieldRW.wrap(buffer, 0, 100)\n");
-            for(FieldDefinition fd : notDefaulted)
+            // TODO: once all types of members are supported, remove this exception throw
+            if (this.errorGenerating)
             {
-                initialization.add("    .$L(", fd.name).add(generateValue(fd)).add(")\n");
+                throw new UnsupportedOperationException();
             }
-            initialization.add("    .build()\n    .limit();\n");
-            initialization.addStatement("fieldRO.wrap(buffer, 0, limit)");
 
-            CodeBlock.Builder asserts = CodeBlock.builder();
-            for (FieldDefinition fd : defaulted)
-            {
-                asserts.addStatement("$T.assertEquals($L, fieldRO.$L())", Assert.class, fd.defaultValue.toString(),
-                        fd.name);
-            }
+            initializationsBlock.add("    .build()\n    .limit();\n");
+            initializationsBlock.addStatement("fieldRO.wrap(buffer, 0, limit)");
 
             return builder
                     .addModifiers(PUBLIC)
                     .addException(Exception.class)
-                    .addCode(initialization.build())
-                    .addCode(asserts.build())
+                    .addCode(initializationsBlock.build())
+                    .addCode(assertionsBlock.build())
                     .build();
         }
     }
