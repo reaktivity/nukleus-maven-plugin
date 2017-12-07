@@ -91,6 +91,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final TypeSpec.Builder builder;
     private final TypeIdTestGenerator typeId;
     private final BufferGenerator buffer;
+    private final ExpectedBufferGenerator expectedBuffer;
     private final FieldRWGenerator fieldRW;
     private final FieldROGenerator fieldRO;
     private final MemberFieldGenerator memberField;
@@ -112,6 +113,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         this.baseName = baseName + "Test";
         this.builder = classBuilder(structName).addModifiers(PUBLIC, FINAL);
         this.buffer = new BufferGenerator(structName, builder); // should add tests for correct type set
+        this.expectedBuffer = new ExpectedBufferGenerator(structName, builder);
         this.fieldRW = new FieldRWGenerator(structName, builder, baseName);
         this.fieldRO = new FieldROGenerator(structName, builder, baseName);
         this.typeId = new TypeIdTestGenerator(structName, builder); // should add tests for correct type set
@@ -166,6 +168,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     {
         // TODO: build fields and methods here
         buffer.build();
+        expectedBuffer.build();
         fieldRW.build();
         fieldRO.build();
         memberOffsetConstant.build();
@@ -248,6 +251,34 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return builder;
     }
 }
+
+    private static final class ExpectedBufferGenerator extends ClassSpecMixinGenerator
+    {
+
+        private ExpectedBufferGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder)
+        {
+            super(thisType, builder);
+        }
+
+        @Override
+        public TypeSpec.Builder build()
+        {
+            FieldSpec expectedBufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "expectedBuffer", PRIVATE, FINAL)
+                    .initializer("new $T($T.allocateDirect(100000)) \n" +
+                            "{\n"+
+                            "    {\n"+
+                            "        // Make sure the code is not secretly relying upon memory being initialized to 0\n" +
+                            "        setMemory(0, capacity(), (byte) 0xF);\n" +
+                            "    }\n" +
+                            "}", UnsafeBuffer.class, ByteBuffer.class)
+                    .build();
+            builder.addField(expectedBufferFieldSpec);
+
+            return builder;
+        }
+    }
 
     private static final class FieldRWGenerator extends ClassSpecMixinGenerator
     {
