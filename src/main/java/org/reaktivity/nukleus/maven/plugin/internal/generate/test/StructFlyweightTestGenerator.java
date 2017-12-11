@@ -1241,6 +1241,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         private boolean errorGenerating;
 
         private CodeBlock.Builder initializationsBlock;
+        private CodeBlock.Builder expectationsBlock;
+        private int expectedBufferIndex;
         private CodeBlock.Builder assertionsBlock;
 
         private ShouldDefaultValuesMethodGenerator()
@@ -1252,8 +1254,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
             this.errorGenerating = false;
 
-            this.initializationsBlock = CodeBlock.builder().add("int limit = fieldRW.wrap(buffer, 0, 100)\n");
-            this.assertionsBlock = CodeBlock.builder();
+            this.initializationsBlock = CodeBlock.builder().add("fieldRW.wrap(buffer, 0, 100)\n");
+            this.expectationsBlock = CodeBlock.builder();
+            this.expectedBufferIndex = 0;
+            this.assertionsBlock = CodeBlock.builder()
+                    .addStatement("$T.assertEquals(expectedBuffer.byteBuffer(), buffer.byteBuffer())", Assert.class);
         }
 
         private boolean isNumericType(FieldDefinition fd)
@@ -1383,6 +1388,136 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
         }
 
+        private CodeBlock generateExpectationStatementPrimitiveValue(FieldDefinition fd)
+        {
+            CodeBlock.Builder builder = CodeBlock.builder().add("expectedBuffer.put");
+            String typeLabel = "";
+
+            int newBufferIndex = this.expectedBufferIndex;
+
+            if (fd.type == TypeName.INT)
+            {
+                typeLabel = "Int";
+                newBufferIndex += 4;
+            }
+            else if (fd.type == TypeName.LONG)
+            {
+                typeLabel = "Long";
+                newBufferIndex += 8;
+            }
+            else if (fd.type == TypeName.SHORT)
+            {
+                typeLabel = "Short";
+                newBufferIndex += 2;
+            }
+            else if (fd.type == TypeName.BYTE)
+            {
+                typeLabel = "Byte";
+                newBufferIndex += 1;
+            }
+            else if (fd.type == TypeName.CHAR)
+            {
+                typeLabel = "Char";
+                newBufferIndex += 1;
+            }
+            else
+            {
+                throw new UnsupportedOperationException("Unexpected primitive type " + fd.type);
+            }
+
+            Object defaultValue = fd.defaultValue != null ? fd.defaultValue : "0";
+            builder.add("$L($L, ($L) $L); // $L\n", typeLabel, this.expectedBufferIndex, fd.type, defaultValue, fd.name);
+            this.expectedBufferIndex = newBufferIndex;
+
+            return builder.build();
+        }
+
+        private CodeBlock generateExpectationStatementPrimitiveArray(FieldDefinition fd)
+        {
+            CodeBlock.Builder builder = CodeBlock.builder();
+            String typeLabel = "";
+
+            int newBufferIndex = this.expectedBufferIndex;
+            int unitSize;
+
+            if (fd.type == TypeName.INT)
+            {
+                typeLabel = "Int";
+                unitSize = 4;
+            }
+            else if (fd.type == TypeName.LONG)
+            {
+                typeLabel = "Long";
+                unitSize = 8;
+            }
+            else if (fd.type == TypeName.SHORT)
+            {
+                typeLabel = "Short";
+                unitSize = 2;
+            }
+            else if (fd.type == TypeName.BYTE)
+            {
+                typeLabel = "Byte";
+                unitSize = 1;
+            }
+            else if (fd.type == TypeName.CHAR)
+            {
+                typeLabel = "Char";
+                unitSize = 1;
+            }
+            else
+            {
+                throw new UnsupportedOperationException("Unexpected primitive array type " + fd.type);
+            }
+
+            for (int i = 0; i < fd.size; i++)
+            {
+                builder.add("expectedBuffer.put$L($L, ($L) $L); // $L $L\n", typeLabel, this.expectedBufferIndex, fd.type,
+                        0, fd.name, fd.size);
+                this.expectedBufferIndex += unitSize;
+            }
+
+            return builder.build();
+        }
+
+        private CodeBlock generateExpectationStatementPrimitive(FieldDefinition fd)
+        {
+            if (fd.name.matches(".*Array$"))
+            {
+                return generateExpectationStatementPrimitiveArray(fd);
+            }
+            else
+            {
+                return generateExpectationStatementPrimitiveValue(fd);
+            }
+        }
+
+        private CodeBlock generateExpectationStatementNonPrimitive(FieldDefinition fd)
+        {
+            if (fd.defaultValue != null)
+            {
+                this.errorGenerating = true;
+                throw new UnsupportedOperationException();
+            }
+
+            return CodeBlock.builder()
+                    .add("expectedBuffer.putByte($L, (byte) -1); // $L, $T, $L\n", this.expectedBufferIndex++, fd.name,
+                            fd.type, fd.size)
+                    .build();
+        }
+
+        private CodeBlock generateExpectationStatement(FieldDefinition fd)
+        {
+            if (!fd.type.isPrimitive())
+            {
+                return generateExpectationStatementNonPrimitive(fd);
+            }
+            else
+            {
+                return generateExpectationStatementPrimitive(fd);
+            }
+        }
+
         public ShouldDefaultValuesMethodGenerator addMember(
                 String name,
                 TypeName type,
@@ -1393,14 +1528,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             FieldDefinition fd = new FieldDefinition(name, type, unsignedType, defaultValue, size, sizeName);
 
-            if (defaultValue != null)
+            this.expectationsBlock.add(generateExpectationStatement(fd));
+
+            if (defaultValue == null)
             {
-                this.assertionsBlock.addStatement("$T.assertEquals($L, fieldRO.$L())", Assert.class,
-                        fd.defaultValue.toString(), fd.name);
-            }
-            else
-            {
-                initializationsBlock.add("    .$L(", fd.name).add(generateValue(fd)).add(")\n");
+                this.initializationsBlock.add("    .$L(", fd.name).add(generateValue(fd)).add(")\n");
             }
 
             return this;
@@ -1416,12 +1548,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
 
             initializationsBlock.add("    .build()\n    .limit();\n");
-            initializationsBlock.addStatement("fieldRO.wrap(buffer, 0, limit)");
 
             return builder
                     .addModifiers(PUBLIC)
                     .addException(Exception.class)
                     .addCode(initializationsBlock.build())
+                    .addCode("\n")
+                    .addCode(expectationsBlock.build())
+                    .addCode("\n")
                     .addCode(assertionsBlock.build())
                     .build();
         }
