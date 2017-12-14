@@ -1677,10 +1677,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     if (sizeName != null)
                     {
-                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, defaultValue,
+                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, sizeType, defaultValue,
                                 priorDefaulted, defaultPriorField);
-                        addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, priorDefaulted,
-                                defaultPriorField);
+                        addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, sizeType,
+                                priorDefaulted, defaultPriorField);
                     }
                     else if (size != -1)
                     {
@@ -1988,6 +1988,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName type,
                 TypeName unsignedType,
                 String sizeName,
+                TypeName sizeType,
                 Object defaultValue,
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
@@ -2009,7 +2010,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.beginControlFlow("if (values == null || !values.hasNext())");
                     code.addStatement("int limit = limit()");
                     code.addStatement("limit($L)", dynamicOffset(sizeName));
-                    code.addStatement("$L(values == null ? -1 : 0)", methodName(sizeName));
+                    code.add("$[");
+                    code.add("$L(values == null ? ", methodName(sizeName));
+                    if (sizeType == TypeName.BYTE || sizeType == TypeName.SHORT)
+                    {
+                        code.add("($T) ", sizeType);
+                    }
+                    code.add("-1 : 0)");
+                    code.add(";\n$]");
                 }
                 else
                 {
@@ -2078,6 +2086,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 AstByteOrder byteOrder,
                 String sizeName,
+                TypeName sizeType,
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
@@ -2156,9 +2165,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 code.add(");\n$]");
                 code.addStatement("fieldsSet.set($L)", index(name))
                     .addStatement("limit($L)", dynamicOffset(sizeName))
-                    .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name))
-                    .addStatement("$L(newSize)", methodName(sizeName))
-                    .addStatement("limit(newLimit)")
+                    .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name));
+
+                code.add("$[");
+                code.add("$L(", methodName(sizeName));
+                if (sizeType == TypeName.BYTE || sizeType == TypeName.SHORT)
+                {
+                    code.add("($T) ", sizeType);
+                }
+                code.add("newSize)");
+                code.add(";\n$]");
+
+                code.addStatement("limit(newLimit)")
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(appendMethodName(name))
