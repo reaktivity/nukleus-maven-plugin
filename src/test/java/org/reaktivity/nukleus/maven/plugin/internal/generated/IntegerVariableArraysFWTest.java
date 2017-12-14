@@ -175,6 +175,8 @@ public class IntegerVariableArraysFWTest
                 .appendSigned16Array((short) 2)
                 .appendSigned16Array((short) -500)
                 .varint64Array(a -> a.item(b -> b.set(12L)))
+                .appendArrayWithInt8Size(123)
+                .appendArrayWithInt16Size(124)
                 .build();
         expected.putByte(0, (byte) 11); // fixed1
         expected.putInt(1, 3); // lengthUnsigned64
@@ -190,6 +192,10 @@ public class IntegerVariableArraysFWTest
         expected.putShort(40,  (short) -500); // signed16Array
         expected.putInt(42, 1); // varint64Array
         expected.putByte(46, (byte) 0x18);
+        expected.putByte(47, (byte) 1);
+        expected.putInt(48, 123);
+        expected.putShort(52, (short) 1);
+        expected.putInt(54, 124);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
@@ -208,6 +214,10 @@ public class IntegerVariableArraysFWTest
         List<Long> varint64 = new ArrayList<Long>();
         flyweightRO.varint64Array().forEach(v -> varint64.add(v.value()));
         assertEquals(Arrays.asList(12L), varint64);
+        PrimitiveIterator.OfInt arrayWithInt8Size = flyweightRO.arrayWithInt8Size();
+        assertEquals(123, arrayWithInt8Size.nextInt());
+        PrimitiveIterator.OfInt arrayWithInt16Size = flyweightRO.arrayWithInt16Size();
+        assertEquals(124, arrayWithInt16Size.nextInt());
     }
 
     @Test

@@ -139,7 +139,7 @@ public final class AstStructNode extends AstNode
                 if (sizeField.isPresent())
                 {
                     AstMemberNode size = sizeField.get();
-                    member.sizeType(size.type());
+                    member.sizeType(size.unsignedType() != null ? size.unsignedType() : size.type());
                     if (size.defaultValue() != null)
                     {
                         throw new IllegalArgumentException(format(
