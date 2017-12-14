@@ -37,13 +37,13 @@ public class IntegerFixedArraysFWTest
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xFF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(150))
     {
         {
-            setMemory(0, capacity(), (byte) 0xFF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final IntegerFixedArraysFW.Builder flyweightRW = new IntegerFixedArraysFW.Builder();
