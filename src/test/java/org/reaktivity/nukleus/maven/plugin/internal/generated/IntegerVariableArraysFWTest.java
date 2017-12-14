@@ -27,7 +27,6 @@ import java.util.PrimitiveIterator;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -136,13 +135,31 @@ public class IntegerVariableArraysFWTest
         flyweightRW.signed16Array(null);
     }
 
-    @Test
-    @Ignore // Issue #52
-    public void shouldFailToSetUnsigned64ArrayAfteSigned16Array()
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToAppendUnsigned64ArrayWhenFollowingFieldsAreSet()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
         .appendSigned16Array((short) 0)
         .appendUnsigned64Array(12L)
+        .build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToAppendSigned64ArrayWhenFollowingFieldsAreSet()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .appendArrayWithInt8Size(12)
+        .appendSigned16Array((short) 0)
+        .build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToAppendArraytWithInt8SizeWhenFollowingFieldsAreSet()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .appendSigned16Array((short) 0)
+        .appendArrayWithInt16Size(12)
+        .appendArrayWithInt8Size(12)
         .build();
     }
 
@@ -284,8 +301,6 @@ public class IntegerVariableArraysFWTest
         .appendSigned16Array((short) -500)
         .build();
         flyweightRO.wrap(buffer, 0, 100);
-        System.out.println(flyweightRO);
-        System.out.println(flyweightRO);
         assertTrue(flyweightRO.toString().contains("unsigned64Array=[10, 1112345, 11234567]"));
         assertTrue(flyweightRO.toString().contains("signed16Array=[2, -500]"));
     }
