@@ -102,6 +102,10 @@ scope test
             uint8 lengthSigned16;
             int16[lengthSigned16] signed16Array;
             varint64[] varint64Array;
+            int8 lengthInt8;
+            int32[lengthInt8] arrayWithInt8Size = null;
+            int16 lengthInt16;
+            int32[lengthInt16] arrayWithInt16Size = null;
         }
     
         struct NestedAllDefaulting
