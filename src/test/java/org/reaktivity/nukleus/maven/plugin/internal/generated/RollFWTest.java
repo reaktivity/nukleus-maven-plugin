@@ -33,7 +33,7 @@ public class RollFWTest
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xFF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final RollFW.Builder rollRW = new RollFW.Builder();
