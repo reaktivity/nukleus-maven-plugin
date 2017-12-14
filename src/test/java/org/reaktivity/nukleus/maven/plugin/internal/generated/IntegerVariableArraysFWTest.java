@@ -27,6 +27,7 @@ import java.util.PrimitiveIterator;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -38,13 +39,13 @@ public class IntegerVariableArraysFWTest
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xFF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
     {
         {
-            setMemory(0, capacity(), (byte) 0xFF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final IntegerVariableArraysFW.Builder flyweightRW = new IntegerVariableArraysFW.Builder();
@@ -69,6 +70,8 @@ public class IntegerVariableArraysFWTest
         expected.putByte(19, (byte) 1); // lengthSigned16
         expected.putShort(20,  (short) 0); // signed16Array
         expected.putInt(22, 0); // varint64Array
+        expected.putByte(26,  (byte) -1);
+        expected.putShort(27,  (short) -1);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  limit);
@@ -91,6 +94,8 @@ public class IntegerVariableArraysFWTest
         expected.putByte(19, (byte) 1); // lengthSigned16
         expected.putShort(20,  (short) 0); // signed16Array
         expected.putInt(22, 0); // varint64Array
+        expected.putByte(26,  (byte) -1);
+        expected.putShort(27,  (short) -1);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  limit);
@@ -131,6 +136,16 @@ public class IntegerVariableArraysFWTest
         flyweightRW.signed16Array(null);
     }
 
+    @Test
+    @Ignore // Issue #52
+    public void shouldFailToSetUnsigned64ArrayAfteSigned16Array()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .appendSigned16Array((short) 0)
+        .appendUnsigned64Array(12L)
+        .build();
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToBuildWithInsufficientSpace()
     {
@@ -153,12 +168,49 @@ public class IntegerVariableArraysFWTest
         expected.putByte(11, (byte) 1); // lengthSigned16
         expected.putShort(12,  (short) 0); // signed16Array
         expected.putInt(14, 0); // varint64Array
+        expected.putByte(18, (byte) -1);
+        expected.putShort(19, (short) -1);
+
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  buffer.capacity());
         assertEquals(0, flyweightRO.fixed1());
         assertEquals(0, flyweightRO.fixed2());
         assertNull(flyweightRO.unsigned64Array());
+        assertNull(flyweightRO.arrayWithInt8Size());
+        assertNull(flyweightRO.arrayWithInt16Size());
+    }
+
+    @Test
+    public void shouldDefaultValuesAfterVarintArray()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .appendSigned16Array((short) 0)
+            .varint64Array(a -> a.item(b -> b.set(12L)))
+            .build();
+
+        expected.putByte(0, (byte) 0); // fixed1
+        expected.putInt(1, -1); // lengthUnsigned64
+        expected.putShort(5, (short) 0); // fixed2
+        expected.putInt(7, 0); // varint32Array
+        expected.putByte(11, (byte) 1); // lengthSigned16
+        expected.putShort(12,  (short) 0); // signed16Array
+        expected.putInt(14, 1); // varint64Array
+        expected.putByte(18, (byte) 0x18);
+        expected.putByte(19, (byte) -1);
+        expected.putShort(20, (short) -1);
+
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+
+        flyweightRO.wrap(buffer,  0,  buffer.capacity());
+        assertEquals(0, flyweightRO.fixed1());
+        assertEquals(0, flyweightRO.fixed2());
+        assertNull(flyweightRO.arrayWithInt8Size());
+        assertNull(flyweightRO.arrayWithInt16Size());
+        List<Long> varint64 = new ArrayList<Long>();
+        flyweightRO.varint64Array().forEach(v -> varint64.add(v.value()));
+        assertEquals(Arrays.asList(12L), varint64);
+
     }
 
     @Test

@@ -1332,11 +1332,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else
                     {
+                        code.addStatement("$L(b -> { })", priorDefaulted);
                         code.addStatement("int limit = limit()");
-                        code.addStatement("limit($L);;;", dynamicOffset(priorSizeName));
+                        code.addStatement("limit($L)", dynamicOffset(priorSizeName));
                         code.addStatement("$L(-1)", methodName(priorSizeName));
                         code.addStatement("limit(limit)");
-                        code.addStatement("$L(b -> { })", priorDefaulted);
                     }
                 }
                 else
