@@ -192,6 +192,7 @@ member
    | octets_member_with_default SEMICOLON
    | integer_array_member SEMICOLON
    | varint_array_member SEMICOLON
+   | list_member SEMICOLON
    ;
    
 uint_member_with_default
@@ -216,27 +217,26 @@ integer_array_member
    | uint32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    ;
-   
+
 varint_array_member
    : varint32_type LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET declarator default_null?
    | varint64_type LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET declarator default_null?
    ;
-   
+
+list_member
+   : list_type declarators
+   ;
+
 default_null
    : '= null'
    ;
    
 unbounded_member
-   : unbounded_list_member
-   | unbounded_octets_member
+   : unbounded_octets_member
    ;
    
 unbounded_octets_member
    : unbounded_octets_type declarators SEMICOLON
-   ;
-   
-unbounded_list_member
-   : unbounded_list_type declarators SEMICOLON
    ;
 
 union_type
@@ -251,13 +251,7 @@ case_member
    : KW_CASE uint_literal COLON member
    ;
 
-/* Bounded list type, not yet supported:
 list_type 
-   : KW_LIST LEFT_ANG_BRACKET simple_type_spec COMMA positive_int_const RIGHT_ANG_BRACKET
-   ;
-*/
-   
-unbounded_list_type
    : KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
    ;
 
