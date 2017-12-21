@@ -40,7 +40,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
 
-public final class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
+public class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
@@ -48,7 +48,14 @@ public final class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerato
     public ArrayFlyweightGenerator(
         ClassName flyweightType)
     {
-        super(ParameterizedTypeName.get(flyweightType.peerClass("ArrayFW"), TypeVariableName.get("T")));
+        this(flyweightType, "ArrayFW");
+    }
+
+    protected ArrayFlyweightGenerator(
+        ClassName flyweightType,
+        String className)
+    {
+        super(ParameterizedTypeName.get(flyweightType.peerClass(className), TypeVariableName.get("T")));
 
         TypeVariableName typeVarT = TypeVariableName.get("T");
         TypeVariableName itemType = typeVarT.withBounds(flyweightType);
