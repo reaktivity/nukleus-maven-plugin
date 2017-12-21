@@ -879,7 +879,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                offsetName = offset(name);
+                offsetName = "offset + " + offset(name);
             }
             code.add("$[")
                 .add("$L = new $T($S, $L, $L, $L, o -> ",
@@ -1182,7 +1182,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                           .addMethod(wrapMethod())
                           .addMethod(buildMethod())
                           .addMethod(checkFieldNotSetMethod())
-                          .addMethod(checkFollowingFieldsNotSetMethod())
                           .addMethod(checkFieldsSetMethod())
                           .build();
         }
@@ -1239,18 +1238,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .beginControlFlow("if (fieldsSet.get(index))")
                     .addStatement("throw new IllegalStateException(String.format($S, FIELD_NAMES[index]))",
                                   "Field \"%s\" has already been set")
-                    .endControlFlow()
-                    .build();
-        }
-
-        private MethodSpec checkFollowingFieldsNotSetMethod()
-        {
-            return methodBuilder("checkFollowingFieldsNotSet")
-                    .addModifiers(PRIVATE)
-                    .addParameter(int.class, "index")
-                    .beginControlFlow("if (fieldsSet.nextSetBit(index + 1) != -1)")
-                    .addStatement("throw new IllegalStateException(String.format($S, FIELD_NAMES[index]))",
-                                  "Fields following \"%s\" have already been set")
                     .endControlFlow()
                     .build();
         }
@@ -1645,6 +1632,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         {
             private static final Map<TypeName, String> PUTTER_NAMES;
             private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
+            private boolean checkFollowingFieldsNotSetMethodIsRequired;
 
             static
             {
@@ -1719,6 +1707,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             @Override
             public TypeSpec.Builder build()
             {
+                if (checkFollowingFieldsNotSetMethodIsRequired)
+                {
+                    addCheckFollowingFieldsNotSetMethod();
+                }
                 return super.build();
             }
 
@@ -2145,6 +2137,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .add("$[")
                     .add("buffer().$L(limit(), ", putterName);
+                checkFollowingFieldsNotSetMethodIsRequired = true;
+
 
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
                 if (inputType != type)
@@ -2597,6 +2591,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addCode(code.build())
                             .build());
                 }
+            }
+
+            private void addCheckFollowingFieldsNotSetMethod()
+            {
+                builder.addMethod(methodBuilder("checkFollowingFieldsNotSet")
+                            .addModifiers(PRIVATE)
+                            .addParameter(int.class, "index")
+                            .beginControlFlow("if (fieldsSet.nextSetBit(index + 1) != -1)")
+                            .addStatement("throw new IllegalStateException(String.format($S, FIELD_NAMES[index]))",
+                                          "Fields following \"%s\" have already been set")
+                            .endControlFlow()
+                            .build());
             }
         }
     }
