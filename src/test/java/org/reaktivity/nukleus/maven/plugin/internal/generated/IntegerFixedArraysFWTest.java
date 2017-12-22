@@ -52,6 +52,84 @@ public class IntegerFixedArraysFWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    public static void setAllTestValues(MutableDirectBuffer buffer, int offset)
+    {
+        buffer.putByte(offset + 0, (byte) 0xFF); // uint8Array[1]
+        buffer.putShort(offset + 1, (short) 3); // uint16Array[2]
+        buffer.putShort(offset + 3, (short) 0xFFFF);
+        buffer.putInt(offset + 5, 10); // uint32Array[3]
+        buffer.putInt(offset + 9, 0xFFFFFFFF);
+        buffer.putInt(offset + 13, 12);
+        buffer.putLong(offset + 17, 20L); // uint64Array[4]
+        buffer.putLong(offset + 25, 21L);
+        buffer.putLong(offset + 33, 22L);
+        buffer.putLong(offset + 41, 23L);
+
+        buffer.putByte(offset + 49, (byte) -1); // anchor
+
+        buffer.putByte(offset + 50, (byte) 127); // int8Array[1]
+        buffer.putShort(offset + 51, (short) 3); // int16Array[2]
+        buffer.putShort(offset + 53, (short) 0xFFFF);
+        buffer.putInt(offset + 55, 10); // int32Array[3]
+        buffer.putInt(offset + 59, 0xFFFFFFFF);
+        buffer.putInt(offset + 63, 12);
+        buffer.putLong(offset + 67, -20L); // int64Array[4]
+        buffer.putLong(offset + 75, -21L);
+        buffer.putLong(offset + 83, -22L);
+        buffer.putLong(offset + 91, -23L);
+    }
+
+    public static void assertAllTestValuesRead(IntegerFixedArraysFW flyweightRO)
+    {
+        PrimitiveIterator.OfInt uint8Array = flyweightRO.uint8Array();
+        assertEquals(0xFF, uint8Array.nextInt());
+
+        PrimitiveIterator.OfInt uint16Array = flyweightRO.uint16Array();
+        assertEquals(3, uint16Array.nextInt());
+        assertEquals(0xFFFF, uint16Array.nextInt());
+
+        PrimitiveIterator.OfLong uint32Array = flyweightRO.uint32Array();
+        assertEquals(10, uint32Array.nextLong());
+        assertEquals(0xFFFFFFFFL, uint32Array.nextLong());
+        assertEquals(12, uint32Array.nextLong());
+
+        PrimitiveIterator.OfLong uint64Array = flyweightRO.uint64Array();
+        assertEquals(20, uint64Array.nextLong());
+        assertEquals(21, uint64Array.nextLong());
+        assertEquals(22, uint64Array.nextLong());
+        assertEquals(23, uint64Array.nextLong());
+
+        assertNull(flyweightRO.anchor().asString());
+
+        PrimitiveIterator.OfInt int8Array = flyweightRO.int8Array();
+        assertEquals(127, int8Array.nextInt());
+
+        PrimitiveIterator.OfInt int16Array = flyweightRO.int16Array();
+        assertEquals(3, int16Array.nextInt());
+        assertEquals(-1, int16Array.nextInt());
+
+        PrimitiveIterator.OfInt int32Array = flyweightRO.int32Array();
+        assertEquals(10, int32Array.nextInt());
+        assertEquals(-1, int32Array.nextInt());
+        assertEquals(12, int32Array.nextInt());
+
+        PrimitiveIterator.OfLong int64Array = flyweightRO.int64Array();
+        assertEquals(-20, int64Array.nextLong());
+        assertEquals(-21, int64Array.nextLong());
+        assertEquals(-22, int64Array.nextLong());
+        assertEquals(-23, int64Array.nextLong());
+
+    }
+
+    @Test
+    public void shouldReadAllValues() throws Exception
+    {
+        final int offset = 1;
+        setAllTestValues(buffer, offset);
+        flyweightRO.wrap(buffer, offset, buffer.capacity());
+        assertAllTestValuesRead(flyweightRO);
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUint16ArrayBeyondLimit()
     {
@@ -108,74 +186,6 @@ public class IntegerFixedArraysFWTest
                 .int16Array(IntStream.of(3, 0xFFFF).iterator())
                 .int32Array(IntStream.of(-10, -11, -12, -13).iterator()) // too many values
                 .build();
-    }
-
-    @Test
-    public void shouldReadAllValues() throws Exception
-    {
-        buffer.putByte(0, (byte) 0xFF); // uint8Array[1]
-        buffer.putShort(1, (short) 3); // uint16Array[2]
-        buffer.putShort(3, (short) 0xFFFF);
-        buffer.putInt(5, 10); // uint32Array[3]
-        buffer.putInt(9, 0xFFFFFFFF);
-        buffer.putInt(13, 12);
-        buffer.putLong(17, 20L); // uint64Array[4]
-        buffer.putLong(25, 21L);
-        buffer.putLong(33, 22L);
-        buffer.putLong(41, 23L);
-
-        buffer.putByte(49, (byte) -1); // anchor
-
-        buffer.putByte(50, (byte) 127); // int8Array[1]
-        buffer.putShort(51, (short) 3); // int16Array[2]
-        buffer.putShort(53, (short) 0xFFFF);
-        buffer.putInt(55, 10); // int32Array[3]
-        buffer.putInt(59, 0xFFFFFFFF);
-        buffer.putInt(63, 12);
-        buffer.putLong(67, -20L); // int64Array[4]
-        buffer.putLong(75, -21L);
-        buffer.putLong(83, -22L);
-        buffer.putLong(91, -23L);
-
-        flyweightRO.wrap(buffer,  0,  buffer.capacity());
-
-        PrimitiveIterator.OfInt uint8Array = flyweightRO.uint8Array();
-        assertEquals(0xFF, uint8Array.nextInt());
-
-        PrimitiveIterator.OfInt uint16Array = flyweightRO.uint16Array();
-        assertEquals(3, uint16Array.nextInt());
-        assertEquals(0xFFFF, uint16Array.nextInt());
-
-        PrimitiveIterator.OfLong uint32Array = flyweightRO.uint32Array();
-        assertEquals(10, uint32Array.nextLong());
-        assertEquals(0xFFFFFFFFL, uint32Array.nextLong());
-        assertEquals(12, uint32Array.nextLong());
-
-        PrimitiveIterator.OfLong uint64Array = flyweightRO.uint64Array();
-        assertEquals(20, uint64Array.nextLong());
-        assertEquals(21, uint64Array.nextLong());
-        assertEquals(22, uint64Array.nextLong());
-        assertEquals(23, uint64Array.nextLong());
-
-        assertNull(flyweightRO.anchor().asString());
-
-        PrimitiveIterator.OfInt int8Array = flyweightRO.int8Array();
-        assertEquals(127, int8Array.nextInt());
-
-        PrimitiveIterator.OfInt int16Array = flyweightRO.int16Array();
-        assertEquals(3, int16Array.nextInt());
-        assertEquals(-1, int16Array.nextInt());
-
-        PrimitiveIterator.OfInt int32Array = flyweightRO.int32Array();
-        assertEquals(10, int32Array.nextInt());
-        assertEquals(-1, int32Array.nextInt());
-        assertEquals(12, int32Array.nextInt());
-
-        PrimitiveIterator.OfLong int64Array = flyweightRO.int64Array();
-        assertEquals(-20, int64Array.nextLong());
-        assertEquals(-21, int64Array.nextLong());
-        assertEquals(-22, int64Array.nextLong());
-        assertEquals(-23, int64Array.nextLong());
     }
 
     @Test

@@ -55,6 +55,8 @@ scope test
             octets[lengthOctets2] octets2;
             varint32 lengthOctets3;
             octets[lengthOctets3] octets3 = null;
+            int32 lengthOctets4;
+            octets[lengthOctets4] octets4 = null;
             octets extension;
         }
         
@@ -102,6 +104,10 @@ scope test
             uint8 lengthSigned16;
             int16[lengthSigned16] signed16Array;
             varint64[] varint64Array;
+            int8 lengthInt8;
+            int32[lengthInt8] arrayWithInt8Size = null;
+            int16 lengthInt16;
+            int32[lengthInt16] arrayWithInt16Size = null;
         }
     
         struct NestedAllDefaulting

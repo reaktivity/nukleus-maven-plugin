@@ -733,6 +733,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private String lastName;
         private TypeName lastType;
         private int lastSize;
+        private String lastSizeName;
 
         private LimitMethodGenerator()
         {
@@ -758,6 +759,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             lastName = name;
             lastType = type;
             lastSize = size;
+            lastSizeName = sizeName;
 
             return this;
         }
@@ -798,7 +800,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     {
                         code.add(" + $L + ($L * $L)", offset(lastName), size(lastName), arraySize(lastName));
                     }
-                    else if (anchorName == null) // not an array
+                    else if (lastSizeName == null) // not an array
                     {
                         code.add(" + $L + $L", offset(lastName), size(lastName));
                     }
@@ -877,7 +879,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                offsetName = offset(name);
+                offsetName = "offset + " + offset(name);
             }
             code.add("$[")
                 .add("$L = new $T($S, $L, $L, $L, o -> ",
@@ -1330,11 +1332,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     else
                     {
+                        code.addStatement("$L(b -> { })", priorDefaulted);
                         code.addStatement("int limit = limit()");
-                        code.addStatement("limit($L);;;", dynamicOffset(priorSizeName));
+                        code.addStatement("limit($L)", dynamicOffset(priorSizeName));
                         code.addStatement("$L(-1)", methodName(priorSizeName));
                         code.addStatement("limit(limit)");
-                        code.addStatement("$L(b -> { })", priorDefaulted);
                     }
                 }
                 else
@@ -1630,6 +1632,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         {
             private static final Map<TypeName, String> PUTTER_NAMES;
             private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
+            private boolean checkFollowingFieldsNotSetMethodIsRequired;
 
             static
             {
@@ -1675,10 +1678,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     if (sizeName != null)
                     {
-                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, defaultValue,
+                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, sizeType, defaultValue,
                                 priorDefaulted, defaultPriorField);
-                        addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, priorDefaulted,
-                                defaultPriorField);
+                        addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, sizeType,
+                                priorDefaulted, defaultPriorField);
                     }
                     else if (size != -1)
                     {
@@ -1704,6 +1707,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             @Override
             public TypeSpec.Builder build()
             {
+                if (checkFollowingFieldsNotSetMethodIsRequired)
+                {
+                    addCheckFollowingFieldsNotSetMethod();
+                }
                 return super.build();
             }
 
@@ -1986,6 +1993,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName type,
                 TypeName unsignedType,
                 String sizeName,
+                TypeName sizeType,
                 Object defaultValue,
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
@@ -2007,7 +2015,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.beginControlFlow("if (values == null || !values.hasNext())");
                     code.addStatement("int limit = limit()");
                     code.addStatement("limit($L)", dynamicOffset(sizeName));
-                    code.addStatement("$L(values == null ? -1 : 0)", methodName(sizeName));
+                    code.add("$[");
+                    code.add("$L(values == null ? ", methodName(sizeName));
+                    if (sizeType == TypeName.BYTE || sizeType == TypeName.SHORT)
+                    {
+                        code.add("($T) ", sizeType);
+                    }
+                    code.add("-1 : 0)");
+                    code.add(";\n$]");
                 }
                 else
                 {
@@ -2076,6 +2091,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 AstByteOrder byteOrder,
                 String sizeName,
+                TypeName sizeType,
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
@@ -2116,10 +2132,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("fieldsSet.set($L)", index(name))
                 .endControlFlow();
 
-                code.addStatement("int newLimit = limit() + $L", size(name))
+                code.addStatement("checkFollowingFieldsNotSet($L)", index(name))
+                    .addStatement("int newLimit = limit() + $L", size(name))
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .add("$[")
                     .add("buffer().$L(limit(), ", putterName);
+                checkFollowingFieldsNotSetMethodIsRequired = true;
+
 
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
                 if (inputType != type)
@@ -2154,9 +2173,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 code.add(");\n$]");
                 code.addStatement("fieldsSet.set($L)", index(name))
                     .addStatement("limit($L)", dynamicOffset(sizeName))
-                    .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name))
-                    .addStatement("$L(newSize)", methodName(sizeName))
-                    .addStatement("limit(newLimit)")
+                    .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name));
+
+                code.add("$[");
+                code.add("$L(", methodName(sizeName));
+                if (sizeType == TypeName.BYTE || sizeType == TypeName.SHORT)
+                {
+                    code.add("($T) ", sizeType);
+                }
+                code.add("newSize)");
+                code.add(";\n$]");
+
+                code.addStatement("limit(newLimit)")
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(appendMethodName(name))
@@ -2563,6 +2591,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addCode(code.build())
                             .build());
                 }
+            }
+
+            private void addCheckFollowingFieldsNotSetMethod()
+            {
+                builder.addMethod(methodBuilder("checkFollowingFieldsNotSet")
+                            .addModifiers(PRIVATE)
+                            .addParameter(int.class, "index")
+                            .beginControlFlow("if (fieldsSet.nextSetBit(index + 1) != -1)")
+                            .addStatement("throw new IllegalStateException(String.format($S, FIELD_NAMES[index]))",
+                                          "Fields following \"%s\" have already been set")
+                            .endControlFlow()
+                            .build());
             }
         }
     }

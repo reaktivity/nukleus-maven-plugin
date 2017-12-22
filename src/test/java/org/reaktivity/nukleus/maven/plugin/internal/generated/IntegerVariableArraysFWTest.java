@@ -38,13 +38,13 @@ public class IntegerVariableArraysFWTest
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xFF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
     {
         {
-            setMemory(0, capacity(), (byte) 0xFF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final IntegerVariableArraysFW.Builder flyweightRW = new IntegerVariableArraysFW.Builder();
@@ -69,6 +69,8 @@ public class IntegerVariableArraysFWTest
         expected.putByte(19, (byte) 1); // lengthSigned16
         expected.putShort(20,  (short) 0); // signed16Array
         expected.putInt(22, 0); // varint64Array
+        expected.putByte(26,  (byte) -1);
+        expected.putShort(27,  (short) -1);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  limit);
@@ -91,6 +93,8 @@ public class IntegerVariableArraysFWTest
         expected.putByte(19, (byte) 1); // lengthSigned16
         expected.putShort(20,  (short) 0); // signed16Array
         expected.putInt(22, 0); // varint64Array
+        expected.putByte(26,  (byte) -1);
+        expected.putShort(27,  (short) -1);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  limit);
@@ -131,6 +135,34 @@ public class IntegerVariableArraysFWTest
         flyweightRW.signed16Array(null);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToAppendUnsigned64ArrayWhenFollowingFieldsAreSet()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .appendSigned16Array((short) 0)
+        .appendUnsigned64Array(12L)
+        .build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToAppendSigned64ArrayWhenFollowingFieldsAreSet()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .appendArrayWithInt8Size(12)
+        .appendSigned16Array((short) 0)
+        .build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailToAppendArraytWithInt8SizeWhenFollowingFieldsAreSet()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .appendSigned16Array((short) 0)
+        .appendArrayWithInt16Size(12)
+        .appendArrayWithInt8Size(12)
+        .build();
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToBuildWithInsufficientSpace()
     {
@@ -153,12 +185,49 @@ public class IntegerVariableArraysFWTest
         expected.putByte(11, (byte) 1); // lengthSigned16
         expected.putShort(12,  (short) 0); // signed16Array
         expected.putInt(14, 0); // varint64Array
+        expected.putByte(18, (byte) -1);
+        expected.putShort(19, (short) -1);
+
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  buffer.capacity());
         assertEquals(0, flyweightRO.fixed1());
         assertEquals(0, flyweightRO.fixed2());
         assertNull(flyweightRO.unsigned64Array());
+        assertNull(flyweightRO.arrayWithInt8Size());
+        assertNull(flyweightRO.arrayWithInt16Size());
+    }
+
+    @Test
+    public void shouldDefaultValuesAfterVarintArray()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .appendSigned16Array((short) 0)
+            .varint64Array(a -> a.item(b -> b.set(12L)))
+            .build();
+
+        expected.putByte(0, (byte) 0); // fixed1
+        expected.putInt(1, -1); // lengthUnsigned64
+        expected.putShort(5, (short) 0); // fixed2
+        expected.putInt(7, 0); // varint32Array
+        expected.putByte(11, (byte) 1); // lengthSigned16
+        expected.putShort(12,  (short) 0); // signed16Array
+        expected.putInt(14, 1); // varint64Array
+        expected.putByte(18, (byte) 0x18);
+        expected.putByte(19, (byte) -1);
+        expected.putShort(20, (short) -1);
+
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+
+        flyweightRO.wrap(buffer,  0,  buffer.capacity());
+        assertEquals(0, flyweightRO.fixed1());
+        assertEquals(0, flyweightRO.fixed2());
+        assertNull(flyweightRO.arrayWithInt8Size());
+        assertNull(flyweightRO.arrayWithInt16Size());
+        List<Long> varint64 = new ArrayList<Long>();
+        flyweightRO.varint64Array().forEach(v -> varint64.add(v.value()));
+        assertEquals(Arrays.asList(12L), varint64);
+
     }
 
     @Test
@@ -175,6 +244,8 @@ public class IntegerVariableArraysFWTest
                 .appendSigned16Array((short) 2)
                 .appendSigned16Array((short) -500)
                 .varint64Array(a -> a.item(b -> b.set(12L)))
+                .appendArrayWithInt8Size(123)
+                .appendArrayWithInt16Size(124)
                 .build();
         expected.putByte(0, (byte) 11); // fixed1
         expected.putInt(1, 3); // lengthUnsigned64
@@ -190,6 +261,10 @@ public class IntegerVariableArraysFWTest
         expected.putShort(40,  (short) -500); // signed16Array
         expected.putInt(42, 1); // varint64Array
         expected.putByte(46, (byte) 0x18);
+        expected.putByte(47, (byte) 1);
+        expected.putInt(48, 123);
+        expected.putShort(52, (short) 1);
+        expected.putInt(54, 124);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
@@ -208,6 +283,10 @@ public class IntegerVariableArraysFWTest
         List<Long> varint64 = new ArrayList<Long>();
         flyweightRO.varint64Array().forEach(v -> varint64.add(v.value()));
         assertEquals(Arrays.asList(12L), varint64);
+        PrimitiveIterator.OfInt arrayWithInt8Size = flyweightRO.arrayWithInt8Size();
+        assertEquals(123, arrayWithInt8Size.nextInt());
+        PrimitiveIterator.OfInt arrayWithInt16Size = flyweightRO.arrayWithInt16Size();
+        assertEquals(124, arrayWithInt16Size.nextInt());
     }
 
     @Test
@@ -222,8 +301,6 @@ public class IntegerVariableArraysFWTest
         .appendSigned16Array((short) -500)
         .build();
         flyweightRO.wrap(buffer, 0, 100);
-        System.out.println(flyweightRO);
-        System.out.println(flyweightRO);
         assertTrue(flyweightRO.toString().contains("unsigned64Array=[10, 1112345, 11234567]"));
         assertTrue(flyweightRO.toString().contains("signed16Array=[2, -500]"));
     }

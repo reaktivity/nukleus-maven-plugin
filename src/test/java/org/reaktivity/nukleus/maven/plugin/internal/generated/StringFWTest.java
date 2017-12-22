@@ -34,7 +34,7 @@ public class StringFWTest
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xF);
+            setMemory(0, capacity(), (byte) 0xab);
         }
     };
     private final StringFW.Builder stringRW = new StringFW.Builder();
