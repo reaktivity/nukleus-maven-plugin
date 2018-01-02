@@ -167,6 +167,20 @@ public class String16FWTest
     public void shouldSetToNull() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                            .set(null)
+                            .build()
+                            .limit();
+        assertEquals(2, limit);
+        stringRO.wrap(buffer,  0,  limit);
+        assertEquals(LENGTH_SIZE, stringRO.limit());
+        assertEquals(LENGTH_SIZE, stringRO.sizeof());
+        assertEquals(null, stringRO.asString());
+    }
+
+    @Test
+    public void shouldSetToNullUsingStringSetter() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
                             .set(null, UTF_8)
                             .build()
                             .limit();

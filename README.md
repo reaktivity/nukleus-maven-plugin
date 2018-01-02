@@ -22,7 +22,7 @@ The Nukleus Maven plugin is used to generate flyweight classes from IDL files de
   
 ## Field types
 
-The supported structure member types are illustrated in [test.idl](src/test/resources/test-project/test.idl). Below are otes on some of them.
+The supported structure member types are illustrated in [test.idl](src/test/resources/test-project/test.idl). Below are notes on some of them.
 
 ### Integer types
 
