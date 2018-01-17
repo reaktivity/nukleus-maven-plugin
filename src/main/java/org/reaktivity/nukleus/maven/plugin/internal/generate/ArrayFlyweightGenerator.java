@@ -78,6 +78,8 @@ public class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addMethod(wrapMethod())
                 .addMethod(forEachMethod())
                 .addMethod(anyMatchMethod())
+                .addMethod(matchFirstMethod())
+                .addMethod(isEmptyMethod())
                 .addMethod(toStringMethod())
                 .addMethod(length0Method())
                 .addType(builderClassBuilder.build())
@@ -160,7 +162,8 @@ public class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
     private MethodSpec forEachMethod()
     {
         ClassName consumerRawType = ClassName.get(Consumer.class);
-        TypeName itemType = WildcardTypeName.supertypeOf(thisName.typeArguments.get(0));
+        TypeName tType = thisName.typeArguments.get(0);
+        TypeName itemType = WildcardTypeName.supertypeOf(tType);
         TypeName consumerType = ParameterizedTypeName.get(consumerRawType, itemType);
 
         return methodBuilder("forEach")
@@ -192,7 +195,35 @@ public class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
               .endControlFlow()
               .addStatement("return false")
               .build();
+    }
 
+    private MethodSpec matchFirstMethod()
+    {
+        ClassName predicateRawType = ClassName.get(Predicate.class);
+        TypeName tType = thisName.typeArguments.get(0);
+        TypeName itemType = WildcardTypeName.supertypeOf(tType);
+        TypeName consumerType = ParameterizedTypeName.get(predicateRawType, itemType);
+        return methodBuilder("matchFirst")
+                .addModifiers(PUBLIC)
+                .addParameter(consumerType, "predicate")
+                .returns(tType)
+                .beginControlFlow("for (int offset = offset() + FIELD_SIZE_LENGTH; offset < limit(); offset = itemRO.limit())")
+                .addStatement("itemRO.wrap(buffer(), offset, maxLimit())")
+                .beginControlFlow("if (predicate.test(itemRO))")
+                .addStatement("return itemRO")
+                .endControlFlow()
+                .endControlFlow()
+                .addStatement("return null")
+                .build();
+    }
+
+    private MethodSpec isEmptyMethod()
+    {
+        return methodBuilder("isEmpty")
+              .addModifiers(PUBLIC)
+              .returns(BOOLEAN)
+              .addStatement("return length0() == 0")
+              .build();
     }
 
     private MethodSpec toStringMethod()
