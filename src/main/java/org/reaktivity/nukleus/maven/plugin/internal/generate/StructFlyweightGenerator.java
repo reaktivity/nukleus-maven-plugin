@@ -969,16 +969,18 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (sizeName != null)
                 {
-                    CodeBlock.Builder code = CodeBlock.builder();
-                    code.add("$[");
                     if (defaultValue == NULL_DEFAULT)
                     {
-                        code.add("$LRO = $L() == -1 ? null : ", name, methodName(sizeName));
+                        builder.addStatement(
+                                "$LRO.wrap(buffer, offset + $L, offset + $L + ((int) $L() == -1 ? 0 : (int) $L()))",
+                                name, offset(name), offset(name), methodName(sizeName), methodName(sizeName));
                     }
-                    code.add("$LRO.wrap(buffer, offset + $L, offset + $L + (int) $L())",
-                            name, offset(name), offset(name), methodName(sizeName));
-                    code.add(";\n$]");
-                    builder.addCode(code.build());
+                    else
+                    {
+                        builder.addStatement(
+                                "$LRO.wrap(buffer, offset + $L, offset + $L + (int) $L())",
+                                name, offset(name), offset(name), methodName(sizeName));
+                    }
                 }
                 else
                 {
