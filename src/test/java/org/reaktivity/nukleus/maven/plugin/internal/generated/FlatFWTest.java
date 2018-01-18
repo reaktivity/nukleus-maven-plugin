@@ -29,6 +29,17 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 
 public class FlatFWTest
 {
+
+    private static final int INDEX_FIXED1 = 0;
+
+    private static final int INDEX_FIXED2 = 1;
+
+    private static final int INDEX_STRING1 = 2;
+
+    private static final int INDEX_FIXED3 = 3;
+
+    private static final int INDEX_STRING2 = 4;
+
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -44,15 +55,11 @@ public class FlatFWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+
     @Test
     public void shouldProvideTypeId() throws Exception
     {
-        int limit = flatRW.wrap(buffer, 0, 100)
-                .fixed1(10)
-                .string1("value1")
-                .string2("value2")
-                .build()
-                .limit();
+        int limit = setAllRequiredValues(flatRW.wrap(buffer, 0, 100));
         flatRO.wrap(buffer,  0,  limit);
         assertEquals(0x10000001, FlatFW.TYPE_ID);
         assertEquals(0x10000001, flatRO.typeId());
@@ -61,57 +68,134 @@ public class FlatFWTest
     @Test
     public void shouldDefaultValues() throws Exception
     {
-        int limit = flatRW.wrap(buffer, 0, 100)
-                .fixed1(10)
-                .string1("value1")
-                .string2("value2")
-                .build()
-                .limit();
+        int limit = setAllRequiredValues(flatRW.wrap(buffer, 0, 100));
         flatRO.wrap(buffer,  0,  limit);
         assertEquals(222, flatRO.fixed2());
         assertEquals(333, flatRO.fixed3());
+    }
+
+
+    @Test
+    public void shouldSetAllValues() throws Exception
+    {
+        setAllValues(flatRW.wrap(buffer,  0,  buffer.capacity()));
+        flatRO.wrap(buffer,  0,  100);
+        assertAllValues(flatRO);
+    }
+
+    @Test
+    public void shouldSetStringValuesUsingStringFW() throws Exception
+    {
+        FlatFW.Builder builder = flatRW.wrap(buffer, 0, buffer.capacity());
+        builder.fixed1(10)
+                .fixed2(20);
+        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+                .set("value1", UTF_8)
+                .build();
+        builder.string1(value)
+                .fixed3(30);
+        value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+                .set("value2", UTF_8)
+                .build();
+        builder.string2(value)
+                .build();
+        flatRO.wrap(buffer,  0,  100);
+        assertAllValues(flatRO);
+    }
+
+    @Test
+    public void shouldSetStringValuesUsingBuffer() throws Exception
+    {
+        valueBuffer.putStringWithoutLengthUtf8(0, "value1");
+        valueBuffer.putStringWithoutLengthUtf8(10, "value2");
+        flatRW.wrap(buffer, 0, buffer.capacity())
+                .fixed1(10)
+                .fixed2(20)
+                .string1(valueBuffer, 0, 6)
+                .fixed3(30)
+                .string2(valueBuffer, 10, 6)
+                .build();
+        flatRO.wrap(buffer,  0,  100);
+        assertAllValues(flatRO);
+    }
+
+    @Test
+    public void shouldSetString1ValuesToNull() throws Exception
+    {
+        flatRW.wrap(buffer, 0, buffer.capacity())
+                .fixed1(10)
+                .fixed2(20)
+                .string1((String) null);
+    }
+
+    @Test
+    public void shouldSetStringValuesToEmptyString() throws Exception
+    {
+        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
+                .fixed1(10)
+                .fixed2(20)
+                .string1("")
+                .fixed3(30)
+                .string2("")
+                .build()
+                .limit();
+        flatRO.wrap(buffer,  0,  limit);
+        assertEquals("", flatRO.string1().asString());
+        assertEquals("", flatRO.string2().asString());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetFixed1WithInsufficientSpace()
     {
         flatRW.wrap(buffer, 10, 10)
-               .fixed1(10);
+                .fixed1(10);
+    }
+
+    @Test
+    public void shouldFailToResetFixed1() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed1");
+        setAllRequiredFields(flatRW.wrap(buffer, 0, 100), INDEX_FIXED2)
+                .fixed1(101)
+                .build();
+    }
+
+    @Test
+    public void shouldFailToBuildWhenFixed1NotSet() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed1");
+        flatRW.wrap(buffer, 0, 100)
+                .build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToSetFixed1WithLowerValue()
+    {
+        flatRW.wrap(buffer, 10, 10)
+                .fixed1(-1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetFixed2WithInsufficientSpace()
     {
-        flatRW.wrap(buffer, 10, 12)
-                .fixed1(10)
+        setAllRequiredFields(flatRW.wrap(buffer, 10, 8), INDEX_FIXED2)
                 .fixed2(20);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetString1WhenDefaultingFixed2ExceedsMaxLimit()
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToSetFixed2WithHigherValue()
     {
-        flatRW.wrap(buffer, 10, 12)
-                .fixed1(10)
-                .string1("");
+        setAllRequiredFields(flatRW.wrap(buffer, 10, 20), INDEX_FIXED2)
+                .fixed2(65536);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetString1WhenExceedsMaxLimit()
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToSetFixed2WithLowerValue()
     {
-        flatRW.wrap(buffer, 10, 14)
-                .fixed1(0x01)
-                .fixed2(0x0101)
-                .string1("1234");
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetFixed3WithInsufficientSpace()
-    {
-        flatRW.wrap(buffer, 10, 15)
-                .fixed1(10)
-                .fixed2(20)
-                .string1("")
-                .fixed3(30);
+        setAllRequiredFields(flatRW.wrap(buffer, 10, 20), INDEX_FIXED2)
+                .fixed2(-1);
     }
 
     @Test
@@ -123,6 +207,13 @@ public class FlatFWTest
                 .fixed2(10);
     }
 
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WhenDefaultingFixed2ExceedsMaxLimit()
+    {
+        setAllRequiredFields(flatRW.wrap(buffer, 10, 12), INDEX_FIXED2)
+                .string1("");
+    }
+
     @Test
     public void shouldFailToSetString1BeforeFixed1() throws Exception
     {
@@ -130,6 +221,40 @@ public class FlatFWTest
         expectedException.expectMessage("fixed1");
         flatRW.wrap(buffer, 0, 100)
                 .string1("value1");
+    }
+
+    @Test
+    public void shouldFailToBuildWhenString1NotSet() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("string1");
+        setAllRequiredFields(flatRW.wrap(buffer, 0, 100), INDEX_STRING1)
+                .build();
+    }
+
+    @Test
+    public void shouldFailToResetString1() throws Exception
+    {
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("string1");
+        setAllRequiredFields(flatRW.wrap(buffer, 0, 100), INDEX_STRING1)
+                .string1("string1")
+                .string1("another value")
+                .build();
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WhenExceedsMaxLimit()
+    {
+        setAllRequiredFields(flatRW.wrap(buffer, 10, 14), INDEX_STRING1)
+                .string1("1234");
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetFixed3WithInsufficientSpace()
+    {
+        setAllRequiredFields(flatRW.wrap(buffer, 10, 15), INDEX_FIXED3)
+                .fixed3(30);
     }
 
     @Test
@@ -146,52 +271,8 @@ public class FlatFWTest
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
-        flatRW.wrap(buffer, 0, 100)
-                .fixed1(10)
+        setAllRequiredFields(flatRW.wrap(buffer, 0, 100), INDEX_STRING1)
                 .string2("value1");
-    }
-
-    @Test
-    public void shouldFailToResetFixed1() throws Exception
-    {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
-        flatRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .fixed1(101)
-            .build();
-    }
-
-    @Test
-    public void shouldFailToResetString1() throws Exception
-    {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
-        flatRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .fixed2(111)
-            .string1("value1")
-            .string1("another value")
-            .build();
-    }
-
-    @Test
-    public void shouldFailToBuildWhenFixed1NotSet() throws Exception
-    {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
-        flatRW.wrap(buffer, 0, 100)
-            .build();
-    }
-
-    @Test
-    public void shouldFailToBuildWhenString1NotSet() throws Exception
-    {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
-        flatRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .build();
     }
 
     @Test
@@ -199,99 +280,55 @@ public class FlatFWTest
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string2");
-        flatRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .fixed2(111)
-            .string1("value1")
-            .fixed3(33)
-            .build();
+        setAllRequiredFields(flatRW.wrap(buffer, 0, 100), INDEX_STRING2)
+                .build();
     }
 
-    @Test
-    public void shouldSetAllValues() throws Exception
+    static int setAllRequiredValues(FlatFW.Builder builder)
     {
-        flatRW.wrap(buffer, 0, buffer.capacity())
-                .fixed1(10)
+        return builder.fixed1(10)
+                .string1("value1")
+                .string2("value2")
+                .build()
+                .limit();
+
+    }
+
+    static FlatFW.Builder setAllRequiredFields(FlatFW.Builder builder, int fieldIndex)
+    {
+        switch (fieldIndex)
+        {
+            case INDEX_FIXED2:
+            case INDEX_STRING1: builder.fixed1(10);
+                break;
+            case INDEX_STRING2: builder.fixed1(10);
+                builder.string1("value1");
+                break;
+            case INDEX_FIXED3: builder.fixed1(10);
+                builder.string1("value1");
+                builder.string2("value2");
+                break;
+        }
+
+        return builder;
+    }
+
+    static void setAllValues(FlatFW.Builder builder)
+    {
+        builder.fixed1(10)
                 .fixed2(20)
                 .string1("value1")
                 .fixed3(30)
                 .string2("value2")
                 .build();
-        flatRO.wrap(buffer,  0,  100);
-        assertEquals(10, flatRO.fixed1());
-        assertEquals(20, flatRO.fixed2());
-        assertEquals("value1", flatRO.string1().asString());
-        assertEquals(30, flatRO.fixed3());
-        assertEquals("value2", flatRO.string2().asString());
     }
 
-    @Test
-    public void shouldSetStringValuesUsingStringFW() throws Exception
+    static void assertAllValues(FlatFW flatFW)
     {
-        FlatFW.Builder builder = flatRW.wrap(buffer, 0, buffer.capacity());
-        builder.fixed1(10)
-               .fixed2(20);
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
-               .set("value1", UTF_8)
-               .build();
-        builder.string1(value)
-               .fixed3(30);
-        value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
-               .set("value2", UTF_8)
-               .build();
-        builder.string2(value)
-               .build();
-        flatRO.wrap(buffer,  0,  100);
-        assertEquals(10, flatRO.fixed1());
-        assertEquals(20, flatRO.fixed2());
-        assertEquals("value1", flatRO.string1().asString());
-        assertEquals(30, flatRO.fixed3());
-        assertEquals("value2", flatRO.string2().asString());
+        assertEquals(10, flatFW.fixed1());
+        assertEquals(20, flatFW.fixed2());
+        assertEquals("value1", flatFW.string1().asString());
+        assertEquals(30, flatFW.fixed3());
+        assertEquals("value2", flatFW.string2().asString());
     }
-
-    @Test
-    public void shouldSetStringValuesUsingBuffer() throws Exception
-    {
-        valueBuffer.putStringWithoutLengthUtf8(0, "value1");
-        valueBuffer.putStringWithoutLengthUtf8(10, "value2");
-        flatRW.wrap(buffer, 0, buffer.capacity())
-            .fixed1(10)
-            .fixed2(20)
-            .string1(valueBuffer, 0, 6)
-            .fixed3(30)
-            .string2(valueBuffer, 10, 6)
-            .build();
-        flatRO.wrap(buffer,  0,  100);
-        assertEquals(10, flatRO.fixed1());
-        assertEquals(20, flatRO.fixed2());
-        assertEquals("value1", flatRO.string1().asString());
-        assertEquals(30, flatRO.fixed3());
-        assertEquals("value2", flatRO.string2().asString());
-    }
-
-    @Test
-    public void shouldSetStringValuesToNull() throws Exception
-    {
-        flatRW.wrap(buffer, 0, buffer.capacity())
-            .fixed1(10)
-            .fixed2(20)
-            .string1((String) null);
-    }
-
-    @Test
-    public void shouldSetStringValuesToEmptyString() throws Exception
-    {
-        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
-            .fixed1(10)
-            .fixed2(20)
-            .string1("")
-            .fixed3(30)
-            .string2("")
-            .build()
-            .limit();
-        flatRO.wrap(buffer,  0,  limit);
-        assertEquals("", flatRO.string1().asString());
-        assertEquals("", flatRO.string2().asString());
-    }
-
 }

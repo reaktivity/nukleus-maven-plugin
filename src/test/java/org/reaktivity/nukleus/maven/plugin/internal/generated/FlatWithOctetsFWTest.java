@@ -66,186 +66,6 @@ public class FlatWithOctetsFWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    static int setAllValues(MutableDirectBuffer buffer, int offset)
-    {
-        return setAllValues(buffer, offset, Integer.MAX_VALUE);
-    }
-
-    static void assertAllValues(FlatWithOctetsFW flyweight)
-    {
-        assertEquals(11, flyweight.fixed1());
-        assertOctetsEquals("1234567890", flyweight.octets1());
-        builder.string1("value string1");
-        builder.octets2(b -> b.put("xy".getBytes(UTF_8)));
-        builder.lengthOctets3(2);
-        builder.octets3(b -> b.put("xy".getBytes(UTF_8)));
-        builder.octets4(b -> b.put("xy".getBytes(UTF_8)));
-        builder.extension(b -> b.put("xy".getBytes(UTF_8)));
-    }
-
-    static void assertRequiredValuesAndDefaults(FlatWithOctetsFW flyweight)
-    {
-        // TODO: copy from assertAllValues and alter the asserts for fields with defaults
-    }
-
-    static int setAllValues(MutableDirectBuffer buffer, int offset, int toFieldIndex)
-    {
-        if (toFieldIndex > INDEX_FIXED1)
-        {
-            buffer.putInt(offset,  11);
-        }
-        if (toFieldIndex > INDEX_OCTETS1)
-        {
-            // TODO: allocate and fill a byte array to deal with
-            //       arbitrary long fixed length
-            buffer.putBytes(offset += 4,  "1234567890".getBytes(UTF_8));
-        }
-        if (toFieldIndex > INDEX_LENGTH_OCTETS2)
-        {
-            buffer.putShort(offset += 10, (short) 2);
-        }
-        if (toFieldIndex > INDEX_STRING1)
-        {
-            buffer.putShort(offset += 2, (byte) "value string1".length());
-            buffer.putBytes(offset += 1, "value string1".getBytes(UTF_8));
-        }
-        if (toFieldIndex > INDEX_OCTETS2)
-        {
-            buffer.putByte(offset += "value string1".length(), (byte) 'x');
-            buffer.putByte(offset += 1, (byte) 'y');
-        }
-        if (toFieldIndex > INDEX_LENGTH_OCTETS3)
-        {
-            buffer.putByte(offset += 1,  (byte) 4); // varint(2)
-        }
-        if (toFieldIndex > INDEX_OCTETS3)
-        {
-            buffer.putByte(offset += 1, (byte) 'x');
-            buffer.putByte(offset += 1, (byte) 'y');
-        }
-        if (toFieldIndex > INDEX_LENGTH_OCTETS4)
-        {
-            buffer.putInt(offset += 1, 2);  // lengthOctets4 null default
-        }
-        if (toFieldIndex > INDEX_OCTETS4)
-        {
-            buffer.putByte(offset += 4, (byte) 'x');
-            buffer.putByte(offset += 1, (byte) 'y');
-        }
-        if (toFieldIndex > INDEX_EXTENSION)
-        {
-            buffer.putByte(offset += 1, (byte) 'x');
-            buffer.putByte(offset += 1, (byte) 'y');
-        }
-        return offset;
-    }
-
-    static void setAllValues(FlatWithOctetsFW.Builder builder)
-    {
-        setAllValues(builder, Integer.MAX_VALUE);
-    }
-
-    static void setAllValues(FlatWithOctetsFW.Builder builder, int toFieldIndex)
-    {
-        if (toFieldIndex > INDEX_FIXED1)
-        {
-            builder.fixed1(11);
-        }
-        if (toFieldIndex > INDEX_OCTETS1)
-        {
-            builder.octets1(b -> b.put("1234567890".getBytes(UTF_8)));
-        }
-        if (toFieldIndex > INDEX_STRING1)
-        {
-            builder.string1("value string1");
-        }
-        if (toFieldIndex > INDEX_OCTETS2)
-        {
-            builder.octets2(b -> b.put("xy".getBytes(UTF_8)));
-        }
-        if (toFieldIndex > INDEX_LENGTH_OCTETS3)
-        {
-            builder.lengthOctets3(2);
-        }
-        if (toFieldIndex > INDEX_OCTETS3)
-        {
-            builder.octets3(b -> b.put("xy".getBytes(UTF_8)));
-        }
-        if (toFieldIndex > INDEX_OCTETS4)
-        {
-            builder.octets4(b -> b.put("xy".getBytes(UTF_8)));
-        }
-        if (toFieldIndex > INDEX_EXTENSION)
-        {
-            builder.extension(b -> b.put("xy".getBytes(UTF_8)));
-        }
-    }
-
-    static int setRequiredValues(MutableDirectBuffer buffer, int offset)
-    {
-        return setRequiredValues(buffer, offset, Integer.MAX_VALUE);
-    }
-
-    static int setRequiredValues(MutableDirectBuffer buffer, int offset, int toFieldIndex)
-    {
-        if (toFieldIndex > INDEX_FIXED1)
-        {
-            buffer.putInt(offset,  11);
-        }
-        if (toFieldIndex > INDEX_OCTETS1)
-        {
-            buffer.putBytes(offset += 4,  "1234567890".getBytes(UTF_8));
-        }
-        if (toFieldIndex > INDEX_LENGTH_OCTETS2)
-        {
-            buffer.putShort(offset += 10, (short) 1);
-        }
-        if (toFieldIndex > INDEX_STRING1)
-        {
-            buffer.putByte(offset += 2, (byte) "value string1".length());
-            buffer.putBytes(offset += 1, "value string1".getBytes(UTF_8));
-        }
-        if (toFieldIndex > INDEX_OCTETS2)
-        {
-            buffer.putByte(offset += "value string1".length(), (byte) 'x');
-            buffer.putByte(offset += 1, (byte) 'y');
-        }
-        if (toFieldIndex > INDEX_LENGTH_OCTETS3)
-        {
-            buffer.putByte(offset += 1,  (byte) 1); // varint(-1) null default
-        }
-        if (toFieldIndex > INDEX_LENGTH_OCTETS4)
-        {
-            buffer.putInt(offset += 1, -1);  // lengthOctets4 null default
-        }
-        return offset;
-    }
-
-    static void setRequiredValues(FlatWithOctetsFW.Builder builder)
-    {
-        setAllValues(builder, Integer.MAX_VALUE);
-    }
-
-    static void setRequiredValues(FlatWithOctetsFW.Builder builder, int toFieldIndex)
-    {
-        if (toFieldIndex > INDEX_FIXED1)
-        {
-            builder.fixed1(11);
-        }
-        if (toFieldIndex > INDEX_OCTETS1)
-        {
-            builder.octets1(b -> b.put("1234567890".getBytes(UTF_8)));
-        }
-        if (toFieldIndex > INDEX_STRING1)
-        {
-            builder.string1("value string1");
-        }
-        if (toFieldIndex > INDEX_OCTETS2)
-        {
-            builder.octets2(b -> b.put("xy".getBytes(UTF_8)));
-        }
-    }
-
     @Test
     public void shouldDefaultValues() throws Exception
     {
@@ -290,28 +110,22 @@ public class FlatWithOctetsFWTest
     }
 
     // TODO: revise or remove all following methods
-
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetFixed1WithInsufficientSpace()
     {
         flatWithOctetsRW.wrap(buffer, 10, 11)
-               .fixed1(10);
+                .fixed1(11);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetString1WithInsufficientSpaceToDefaultPriorField()
+    @Test
+    public void shouldFailToResetFixed1() throws Exception
     {
-        flatWithOctetsRW.wrap(buffer, 10, 11)
-                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-                .string1("");
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetString1WithInsufficientSpace()
-    {
-        flatWithOctetsRW.wrap(buffer, 10, 18)
-                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-                .string1("1234");
+        expectedException.expect(IllegalStateException.class);
+        expectedException.expectMessage("fixed1");
+        flatWithOctetsRW.wrap(buffer, 0, 100)
+                .fixed1(10)
+                .fixed1(101)
+                .build();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -355,34 +169,30 @@ public class FlatWithOctetsFWTest
                 .fixed1(0)
                 .octets1(asBuffer("123456789"), 0, 9);
     }
-    @Test
-    public void shouldReadNullValues()
-    {
-        int offset = 0;
-        buffer.putInt(offset,  11);
-        buffer.putBytes(offset += 4,  "1234567890".getBytes(UTF_8));
-        buffer.putShort(offset += 10, (short) 1); // lengthOctets2
-        buffer.putShort(offset += 2, (byte) 6);
-        buffer.putBytes(offset += 1, "value1".getBytes(UTF_8));
-        buffer.putByte(offset += 6, (byte) '2');
-        buffer.putByte(offset += 1,  (byte) 1); // lengthOctets3 varint(-1)
-        buffer.putInt(offset += 1, -1); // lengthOctets4
-
-        FlatWithOctetsFW wrapped = flatWithOctetsRO.wrap(buffer, 0, offset);
-
-        assertNull(wrapped.octets3());
-        assertNull(wrapped.octets4());
-    }
 
     @Test
-    public void shouldFailToResetFixed1() throws Exception
+    public void shouldFailToBuildWhenOctets1NotSet() throws Exception
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
+        expectedException.expectMessage("octets1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .fixed1(101)
-            .build();
+                .build();
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WithInsufficientSpaceToDefaultPriorField()
+    {
+        flatWithOctetsRW.wrap(buffer, 10, 11)
+                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+                .string1("");
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToSetString1WithInsufficientSpace()
+    {
+        flatWithOctetsRW.wrap(buffer, 10, 18)
+                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+                .string1("1234");
     }
 
     @Test
@@ -391,19 +201,10 @@ public class FlatWithOctetsFWTest
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
-            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .string1("value1")
-            .string1("another value")
-            .build();
-    }
-
-    @Test
-    public void shouldFailToBuildWhenOctets1NotSet() throws Exception
-    {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("octets1");
-        flatWithOctetsRW.wrap(buffer, 0, 100)
-            .build();
+                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+                .string1("value1 another value")
+                .string1("another value")
+                .build();
     }
 
     @Test
@@ -412,8 +213,8 @@ public class FlatWithOctetsFWTest
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("string1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
-            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .build();
+                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+                .build();
     }
 
     @Test
@@ -422,9 +223,9 @@ public class FlatWithOctetsFWTest
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("octets2");
         flatWithOctetsRW.wrap(buffer, 0, 100)
-            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .string1("value1")
-            .build();
+                .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
+                .string1("value1")
+                .build();
     }
 
     @Test
@@ -504,4 +305,86 @@ public class FlatWithOctetsFWTest
         assertArrayEquals(expected, actual);
     }
 
+    static void assertAllValues(FlatWithOctetsFW flyweight)
+    {
+        assertEquals(11, flyweight.fixed1());
+        assertOctetsEquals("1234567890", flyweight.octets1());
+        assertEquals((short) 2, flyweight.lengthOctets2());
+        assertEquals("value string1", flyweight.string1().asString());
+        assertOctetsEquals("xy", flyweight.octets2());
+        assertEquals(2, flyweight.lengthOctets3());
+        assertOctetsEquals("xy", flyweight.octets3());
+        assertEquals(2, flyweight.lengthOctets4());
+        assertOctetsEquals("xy", flyweight.octets4());
+        assertOctetsEquals("xy", flyweight.extension());
+    }
+
+    static void assertRequiredValuesAndDefaults(FlatWithOctetsFW flyweight)
+    {
+        assertEquals(11, flyweight.fixed1());
+        assertNull(flyweight.octets3());
+        assertNull(flyweight.octets4());
+    }
+
+    static int setAllValues(MutableDirectBuffer buffer, int offset)
+    {
+        buffer.putInt(offset,  11);
+        // TODO: allocate and fill a byte array to deal with
+        //       arbitrary long fixed length
+        buffer.putBytes(offset += 4,  "1234567890".getBytes(UTF_8));
+        buffer.putShort(offset += 10, (short) 2);
+        buffer.putShort(offset += 2, (byte) "value string1".length());
+        buffer.putBytes(offset += 1, "value string1".getBytes(UTF_8));
+        buffer.putByte(offset += "value string1".length(), (byte) 'x');
+        buffer.putByte(offset += 1, (byte) 'y');
+        buffer.putByte(offset += 1,  (byte) 4); // varint(2)
+        buffer.putByte(offset += 1, (byte) 'x');
+        buffer.putByte(offset += 1, (byte) 'y');
+        buffer.putInt(offset += 1, 2);  // lengthOctets4 null default
+        buffer.putByte(offset += 4, (byte) 'x');
+        buffer.putByte(offset += 1, (byte) 'y');
+        buffer.putByte(offset += 1, (byte) 'x');
+        buffer.putByte(offset += 1, (byte) 'y');
+
+        return offset + 1;
+    }
+
+
+    static void setAllValues(FlatWithOctetsFW.Builder builder)
+    {
+        builder.fixed1(11);
+        builder.octets1(b -> b.put("1234567890".getBytes(UTF_8)));
+        builder.string1("value string1");
+        builder.octets2(b -> b.put("xy".getBytes(UTF_8)));
+        builder.lengthOctets3(2);
+        builder.octets3(b -> b.put("xy".getBytes(UTF_8)));
+        builder.octets4(b -> b.put("xy".getBytes(UTF_8)));
+        builder.extension(b -> b.put("xy".getBytes(UTF_8)));
+    }
+
+    static int setRequiredValues(MutableDirectBuffer buffer, int offset)
+    {
+        buffer.putInt(offset,  11);
+        buffer.putBytes(offset += 4, "1234567890".getBytes(UTF_8));
+        buffer.putShort(offset += 10, (short) 1);
+        buffer.putByte(offset += 2, (byte) "value string1".length());
+        buffer.putBytes(offset += 2, "value string1".getBytes(UTF_8));
+        buffer.putByte(offset += "value string1".length(), (byte) 'x');
+        buffer.putByte(offset += 1, (byte) 'y');
+        buffer.putByte(offset += 1,  (byte) 1); // varint(-1) null default
+        buffer.putInt(offset += 1, -1);  // lengthOctets4 null default
+        buffer.putByte(offset += 1, (byte) 'x'); // extention
+        buffer.putByte(offset += 1, (byte) 'y');
+
+        return offset + 1;
+    }
+
+    static void setRequiredValues(FlatWithOctetsFW.Builder builder)
+    {
+        builder.fixed1(11);
+        builder.octets1(b -> b.put("1234567890".getBytes(UTF_8)));
+        builder.string1("value string1");
+        builder.octets2(b -> b.put("xy".getBytes(UTF_8)));
+        builder.extension(b -> b.put("xy".getBytes(UTF_8)));
+    }
 }
