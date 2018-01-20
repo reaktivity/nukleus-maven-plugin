@@ -32,6 +32,10 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 public class FlatFWTest
 {
 
+    private static enum  SetterType {
+        STRING, STRING_FW, BUFFER
+    }
+
     private static final int INDEX_FIXED1 = 0;
 
     private static final int INDEX_FIXED2 = 1;
@@ -44,17 +48,15 @@ public class FlatFWTest
 
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     {
-        // Make sure the code is not secretly relying upon memory being initialized to 0
-        buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
+    // Make sure the code is not secretly relying upon memory being initialized to 0
+    buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
     }
-
 
     MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100));
     {
         // Make sure the code is not secretly relying upon memory being initialized to 0
         expected.setMemory(0, expected.capacity(), (byte) 0xab);
     }
-
     private final FlatFW.Builder flatRW = new FlatFW.Builder();
     private final FlatFW flatRO = new FlatFW();
     private final StringFW.Builder stringRW = new StringFW.Builder();
@@ -90,15 +92,7 @@ public class FlatFWTest
     @Test
     public void shouldSetAllValues() throws Exception
     {
-        final int offset = 11;
-        int expectedLimit = setAllBufferValues(expected, offset);
-
-        Builder builder = flatRW.wrap(buffer, offset, expectedLimit);
-
-        int limit = setAllBuilderValues(builder).build().limit();
-        assertEquals(expectedLimit, limit);
-        assertEquals(expected, buffer);
-
+        checkAllBuilderValuesBySetterType(SetterType.STRING);
     }
 
     @Test
@@ -113,43 +107,13 @@ public class FlatFWTest
     @Test
     public void shouldSetStringValuesUsingStringFW() throws Exception
     {
-        final int offset = 11;
-        int expectedLimit = setAllBufferValues(expected, offset);
-
-        FlatFW.Builder builder = flatRW.wrap(buffer, offset, expectedLimit);
-
-        StringFW value1 = stringRW.wrap(valueBuffer,  offset, expectedLimit)
-                .set("value1", UTF_8)
-                .build();
-        StringFW value2 = stringRW.wrap(valueBuffer,  offset, expectedLimit)
-                .set("value2", UTF_8)
-                .build();
-
-        int limit = setStringBuilderValuesUsingStringFW(builder, value1, value2).limit();
-
-        assertEquals(expectedLimit, limit);
-        assertEquals(expected, buffer);
+        checkAllBuilderValuesBySetterType(SetterType.STRING_FW);
     }
 
     @Test
     public void shouldSetStringValuesUsingBuffer() throws Exception
     {
-        final int offset = 11;
-        int expectedLimit = setAllRequiredBufferValues(expected, offset);
-
-        valueBuffer.putStringWithoutLengthUtf8(0, "value1");
-        valueBuffer.putStringWithoutLengthUtf8(6, "value2");
-        int limit = flatRW.wrap(buffer, offset, expectedLimit)
-                .fixed1(10)
-                .fixed2(20)
-                .string1(valueBuffer, 0, 6)
-                .fixed3(30)
-                .string2(valueBuffer, 10, 6)
-                .build()
-                .limit();
-
-        assertEquals(expectedLimit, limit);
-        assertEquals(expected, buffer);
+        checkAllBuilderValuesBySetterType(SetterType.BUFFER);
     }
 
     @Test
@@ -317,6 +281,46 @@ public class FlatFWTest
                 .build();
     }
 
+    private void checkAllBuilderValuesBySetterType(SetterType setterType)
+    {
+        final int offset = 11;
+        int expectedLimit = setAllBufferValues(expected, offset);
+
+        Builder builder = flatRW.wrap(buffer, offset, expectedLimit);
+
+        builder.fixed1(10);
+        builder.fixed2(20);
+
+        switch (setterType)
+        {
+            case STRING: builder.string1("value1")
+                .fixed3(30)
+                .string2("value2");
+                break;
+            case STRING_FW:
+                StringFW value1 = stringRW.wrap(valueBuffer,  offset, expectedLimit)
+                        .set("value1", UTF_8)
+                        .build();
+                StringFW value2 = stringRW.wrap(valueBuffer,  offset, expectedLimit)
+                        .set("value2", UTF_8)
+                        .build();
+                builder.string1(value1)
+                    .fixed3(30)
+                    .string2(value2);
+                break;
+            case BUFFER:
+                builder.string1(valueBuffer, 0, 6)
+                        .fixed3(30)
+                        .string2(valueBuffer, 10, 6);
+
+        }
+
+        int limit = builder.build().limit();
+
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+    }
+
     static int setRequiredBuilderValues(FlatFW.Builder builder)
     {
         return builder.fixed1(10)
@@ -370,25 +374,6 @@ public class FlatFWTest
         }
 
         return builder;
-    }
-
-    static FlatFW.Builder setAllBuilderValues(FlatFW.Builder builder)
-    {
-        return builder.fixed1(10)
-                .fixed2(20)
-                .string1("value1")
-                .fixed3(30)
-                .string2("value2");
-    }
-
-    static FlatFW.Builder setStringBuilderValuesUsingStringFW(FlatFW.Builder builder, StringFW string1, StringFW string2)
-    {
-
-        return builder.fixed1(10)
-                .fixed2(20)
-                .string1(string1)
-                .fixed3(30)
-                .string2(string2);
     }
 
     static void assertRequiredValuesAndDefaults(FlatFW flyweight)
