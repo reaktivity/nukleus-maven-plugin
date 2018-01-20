@@ -42,21 +42,19 @@ public class FlatFWTest
 
     private static final int INDEX_STRING2 = 4;
 
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
+        // Make sure the code is not secretly relying upon memory being initialized to 0
+        buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
+    }
 
-    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
+
+    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100));
     {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
+        // Make sure the code is not secretly relying upon memory being initialized to 0
+        expected.setMemory(0, expected.capacity(), (byte) 0xab);
+    }
+
     private final FlatFW.Builder flatRW = new FlatFW.Builder();
     private final FlatFW flatRO = new FlatFW();
     private final StringFW.Builder stringRW = new StringFW.Builder();
@@ -84,6 +82,8 @@ public class FlatFWTest
         int limit = setAllRequiredBuilderFields(builder, INDEX_FIXED3).build().limit();
 
         assertEquals(expectedLimit, limit);
+        assertEquals(0, expected.compareTo(buffer));
+        System.out.println("expected.class = " + expected.getClass() + " buffer.class = " + buffer.getClass());
         assertEquals(expected, buffer);
     }
 
@@ -147,7 +147,7 @@ public class FlatFWTest
                 .string2(valueBuffer, 10, 6)
                 .build()
                 .limit();
-        
+
         assertEquals(expectedLimit, limit);
         assertEquals(expected, buffer);
     }
@@ -395,14 +395,5 @@ public class FlatFWTest
     {
         assertEquals(222, flyweight.fixed2());
         assertEquals(333, flyweight.fixed3());
-    }
-
-    static void assertAllValues(FlatFW flatFW)
-    {
-        assertEquals(10, flatFW.fixed1());
-        assertEquals(20, flatFW.fixed2());
-        assertEquals("value1", flatFW.string1().asString());
-        assertEquals(30, flatFW.fixed3());
-        assertEquals("value2", flatFW.string2().asString());
     }
 }
