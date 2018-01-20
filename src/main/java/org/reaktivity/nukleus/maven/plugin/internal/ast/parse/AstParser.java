@@ -46,6 +46,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_ty
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
@@ -62,7 +63,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_member_with_defaultContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_list_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
@@ -300,6 +300,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
+    public AstNode visitList_member(
+            List_memberContext ctx)
+    {
+        memberBuilder.type(AstType.LIST);
+        return super.visitList_member(ctx);
+    }
+
+    @Override
     public AstNode visitDefault_null(
         Default_nullContext ctx)
     {
@@ -481,14 +489,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.type(AstType.OCTETS);
         return super.visitUnbounded_octets_type(ctx);
-    }
-
-    @Override
-    public AstNode visitUnbounded_list_type(
-        Unbounded_list_typeContext ctx)
-    {
-        memberBuilder.type(AstType.LIST);
-        return super.visitUnbounded_list_type(ctx);
     }
 
     @Override
