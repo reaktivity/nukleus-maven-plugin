@@ -84,7 +84,7 @@ public class FlatFWTest
         int limit = setAllRequiredBuilderFields(builder, INDEX_FIXED3).build().limit();
 
         assertEquals(expectedLimit, limit);
-        assertEquals(0, expected.compareTo(buffer));
+        assertEquals(expected, buffer);
     }
 
     @Test
@@ -97,7 +97,7 @@ public class FlatFWTest
 
         int limit = setAllBuilderValues(builder).build().limit();
         assertEquals(expectedLimit, limit);
-        assertEquals(0, expected.compareTo(buffer));
+        assertEquals(expected, buffer);
 
     }
 
@@ -128,8 +128,7 @@ public class FlatFWTest
         int limit = setStringBuilderValuesUsingStringFW(builder, value1, value2).limit();
 
         assertEquals(expectedLimit, limit);
-        flatRO.wrap(buffer,  offset,  expectedLimit);
-        assertAllValues(flatRO);
+        assertEquals(expected, buffer);
     }
 
     @Test
@@ -148,9 +147,9 @@ public class FlatFWTest
                 .string2(valueBuffer, 10, 6)
                 .build()
                 .limit();
+        
         assertEquals(expectedLimit, limit);
-        flatRO.wrap(buffer,  offset,  expectedLimit);
-        assertAllValues(flatRO);
+        assertEquals(expected, buffer);
     }
 
     @Test
