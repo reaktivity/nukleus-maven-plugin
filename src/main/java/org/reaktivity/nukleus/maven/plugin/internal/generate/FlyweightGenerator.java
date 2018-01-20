@@ -147,7 +147,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
     private MethodSpec wrapMethod()
     {
         return methodBuilder("wrap")
-                  .addModifiers(PROTECTED)
+                  .addModifiers(PUBLIC)
                   .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                   .addParameter(int.class, "offset")
                   .addParameter(int.class, "maxLimit")
@@ -330,7 +330,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec wrapMethod()
         {
             return methodBuilder("wrap")
-                      .addModifiers(PROTECTED)
+                      .addModifiers(PUBLIC)
                       .returns(thisName)
                       .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                       .addParameter(int.class, "offset")

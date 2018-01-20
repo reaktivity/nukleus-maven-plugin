@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
@@ -37,7 +38,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberC
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 
 public class AstParserTest
 {
@@ -559,8 +559,9 @@ public class AstParserTest
     public void shouldParseListMember()
     {
         NukleusParser parser = newParser("list<string> field;");
-        Unbounded_memberContext ctx = parser.unbounded_member();
-        AstMemberNode actual = new AstParser().visitUnbounded_member(ctx);
+
+        MemberContext ctx = parser.member();
+        AstNode actual = new AstParser().visitMember(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.LIST)
@@ -575,8 +576,8 @@ public class AstParserTest
     public void shouldParseListMemberString16()
     {
         NukleusParser parser = newParser("list<string16> field;");
-        Unbounded_memberContext ctx = parser.unbounded_member();
-        AstMemberNode actual = new AstParser().visitUnbounded_member(ctx);
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.LIST)
