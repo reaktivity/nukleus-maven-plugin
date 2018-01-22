@@ -32,7 +32,7 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 public class FlatFWTest
 {
 
-    private static enum  SetterType {
+    private enum  SetterType {
         STRING, STRING_FW, BUFFER
     }
 
@@ -312,7 +312,6 @@ public class FlatFWTest
                 builder.string1(valueBuffer, 0, 6)
                         .fixed3(30)
                         .string2(valueBuffer, 10, 6);
-
         }
 
         int limit = builder.build().limit();
@@ -328,7 +327,6 @@ public class FlatFWTest
                 .string2("value2")
                 .build()
                 .limit();
-
     }
 
     static int setAllRequiredBufferValues(MutableDirectBuffer buffer, int offset)

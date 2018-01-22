@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
 import org.agrona.MutableDirectBuffer;
@@ -25,57 +26,59 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.NestedFW;
 
+
 public class NestedFWTest
 {
+    private static final int INDEX_FLAT = 1;
+    private static final int INDEX_FIXED5 = 2;
+
     private final NestedFW.Builder nestedRW = new NestedFW.Builder();
     private final NestedFW nestedRO = new NestedFW();
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
+        // Make sure the code is not secretly relying upon memory being initialized to 0
+        buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
+    }
+
+    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100));
+    {
+        // Make sure the code is not secretly relying upon memory being initialized to 0
+        expected.setMemory(0, expected.capacity(), (byte) 0xab);
+    }
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
     @Test
+    public void shouldSetAllValues() throws Exception
+    {
+        int offset = 11;
+        int expectedLimit = setAllBufferValues(expected, offset);
+
+        NestedFW.Builder builder1 = setAllBuilderValues(nestedRW.wrap(buffer, offset, expectedLimit));
+
+        int limit = builder1.build().limit();
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+
+        nestedRO.wrap(buffer,  offset,  limit);
+        assertAllValues(nestedRO);
+    }
+
+    @Test
     public void shouldDefaultValues() throws Exception
     {
-        // Set an explicit value first in the same memory to make sure it really
-        // gets set to the default value next time round
-        int limit1 = nestedRW.wrap(buffer, 0, buffer.capacity())
-                .fixed4(40)
-                .flat(flat -> flat
-                    .fixed1(10)
-                    .fixed2(20)
-                    .string1("value1")
-                    .fixed3(30)
-                    .string2("value2")
-                 )
-                .fixed5(50)
-                .build()
-                .limit();
-        nestedRO.wrap(buffer,  0,  limit1);
-        assertEquals(40, nestedRO.fixed4());
-        assertEquals(20, nestedRO.flat().fixed2());
+        int offset = 11;
+        int expectedLimit = setAllRequiredBufferValues(expected, offset);
 
-        int limit2 = nestedRW.wrap(buffer, 0, 100)
-                .flat(flat -> flat
-                    .fixed1(10)
-                    .string1("value1")
-                    //.fixed3(30)
-                    .string2("value2")
-                )
-                .fixed5(50)
-                .build()
-                .limit();
-        nestedRO.wrap(buffer,  0,  limit2);
-        assertEquals(444, nestedRO.fixed4());
-        assertEquals(222, nestedRO.flat().fixed2());
-        assertEquals(333, nestedRO.flat().fixed3());
-        assertEquals(limit1, limit2);
+        NestedFW.Builder builder = setAllRequiredBuilderField(nestedRW.wrap(buffer, offset, expectedLimit), INDEX_FIXED5);
+        int limit = builder.build().limit();
+
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+
+        nestedRO.wrap(buffer,  offset,  limit);
+        assertAllDefaultValues(nestedRO);
     }
 
     @Test
@@ -151,30 +154,84 @@ public class NestedFWTest
             .build();
     }
 
-    @Test
-    public void shouldSetAllValues() throws Exception
+    static int setAllBufferValues(MutableDirectBuffer buffer, int offset)
     {
-        int limit = nestedRW.wrap(buffer, 0, buffer.capacity())
-                .fixed4(40)
-                .flat(flat -> flat
-                    .fixed1(10)
-                    .fixed2(20)
-                    .string1("value1")
-                    .fixed3(30)
-                    .string2("value2")
-                 )
-                .fixed5(50)
-                .build()
-                .limit();
-        nestedRO.wrap(buffer,  0,  limit);
-        assertEquals(40, nestedRO.fixed4());
-        assertEquals(10, nestedRO.flat().fixed1());
-        assertEquals(20, nestedRO.flat().fixed2());
-        assertEquals("value1", nestedRO.flat().string1().asString());
-        assertEquals(30, nestedRO.flat().fixed3());
-        assertEquals("value2", nestedRO.flat().string2().asString());
-        assertEquals(50, nestedRO.fixed5());
-        assertEquals(nestedRO.flat().string2().limit() + 8, limit);
+        buffer.putLong(offset, 10);
+        buffer.putLong(offset += 8, 20);
+        buffer.putShort(offset += 8, (short) 30);
+        buffer.putByte(offset += 2, (byte) "value1".length());
+        buffer.putBytes(offset += 1, "value1".getBytes(UTF_8));
+        buffer.putInt(offset+=6, 40);
+        buffer.putByte(offset += 4, (byte) "value2".length());
+        buffer.putBytes(offset += 1, "value2".getBytes(UTF_8));
+        buffer.putLong(offset += 6, 50);
+
+        return offset + 8;
     }
 
+    static int setAllRequiredBufferValues(MutableDirectBuffer buffer, int offset)
+    {
+        buffer.putLong(offset, 444);
+        buffer.putLong(offset += 8, 20);
+        buffer.putShort(offset += 8, (short) 222);
+        buffer.putByte(offset += 2, (byte) "value1".length());
+        buffer.putBytes(offset += 1, "value1".getBytes(UTF_8));
+        buffer.putInt(offset+=6, 333);
+        buffer.putByte(offset += 4, (byte) "value2".length());
+        buffer.putBytes(offset += 1, "value2".getBytes(UTF_8));
+        buffer.putLong(offset += 6, 50);
+
+        return offset + 8;
+    }
+
+    static NestedFW.Builder setAllRequiredBuilderField(NestedFW.Builder builder, int fieldIndex)
+    {
+        switch (fieldIndex)
+        {
+            case INDEX_FLAT: builder.flat(t -> t
+                    .fixed1(20)
+                    .string1("value1")
+                    .string2("value2"));
+                break;
+            case INDEX_FIXED5:builder.flat(t -> t
+                    .fixed1(20)
+                    .string1("value1")
+                    .string2("value2"));
+                builder.fixed5(50);
+                break;
+        }
+
+        return builder;
+    }
+
+
+    static NestedFW.Builder setAllBuilderValues(NestedFW.Builder builder)
+    {
+        return builder.fixed4(10)
+                    .flat(flat -> flat
+                    .fixed1(20)
+                    .fixed2(30)
+                    .string1("value1")
+                    .fixed3(40)
+                    .string2("value2"))
+                    .fixed5(50);
+    }
+
+    static void assertAllValues (NestedFW nestedFW)
+    {
+        assertEquals(10, nestedFW.fixed4());
+        assertEquals(20, nestedFW.flat().fixed1());
+        assertEquals(30, nestedFW.flat().fixed2());
+        assertEquals("value1", nestedFW.flat().string1().asString());
+        assertEquals(40, nestedFW.flat().fixed3());
+        assertEquals("value2", nestedFW.flat().string2().asString());
+        assertEquals(50, nestedFW.fixed5());
+    }
+
+    static void assertAllDefaultValues (NestedFW nestedFW)
+    {
+        assertEquals(444, nestedFW.fixed4());
+        assertEquals(222, nestedFW.flat().fixed2());
+        assertEquals(333, nestedFW.flat().fixed3());
+    }
 }
