@@ -25,6 +25,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatFW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatFW.Builder;
 
@@ -89,6 +90,34 @@ public class FlatFWTest
         int expectedLimit = setAllBufferValues(expected, offset);
 
         Builder builder = setAllFieldsValue(flatRW.wrap(buffer, offset, expectedLimit));
+
+        int limit = builder.build().limit();
+
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+    }
+
+    @Test
+    public void shouldSetAllValues1() throws Exception
+    {
+        final int offset = 0;
+        int expectedLimit = setAllBufferValues(expected, offset);
+
+        Builder builder = setAllFieldsValue1(flatRW.wrap(buffer, offset, expectedLimit));
+
+        int limit = builder.build().limit();
+
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+    }
+
+    @Test
+    public void shouldSetAllValues2() throws Exception
+    {
+        final int offset = 0;
+        int expectedLimit = setAllBufferValues(expected, offset);
+
+        Builder builder = setAllFieldsValue2(flatRW.wrap(buffer, offset, expectedLimit));
 
         int limit = builder.build().limit();
 
@@ -307,6 +336,42 @@ public class FlatFWTest
         return builder;
     }
 
+    static FlatFW.Builder setAllFieldsValue1(FlatFW.Builder builder)
+    {
+        final StringFW.Builder stringRW = new StringFW.Builder();
+        final MutableDirectBuffer valueBuffer1 = new UnsafeBuffer(allocateDirect(100));
+        final MutableDirectBuffer valueBuffer2 = new UnsafeBuffer(allocateDirect(100));
+        StringFW value1 = stringRW.wrap(valueBuffer1,  0, valueBuffer1.capacity())
+                .set("value1", UTF_8)
+                .build();
+        StringFW value2 = stringRW.wrap(valueBuffer2,  0, valueBuffer2.capacity())
+                .set("value2", UTF_8)
+                .build();
+
+        builder.fixed1(10);
+        builder.fixed2(20);
+        builder.string1(value1);
+        builder.fixed3(30);
+        builder.string2(value2);
+
+        return builder;
+    }
+
+    static FlatFW.Builder setAllFieldsValue2(FlatFW.Builder builder)
+    {
+        final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
+        valueBuffer.putStringWithoutLengthUtf8(0, "value1");
+        valueBuffer.putStringWithoutLengthUtf8(10, "value2");
+
+        builder.fixed1(10);
+        builder.fixed2(20);
+        builder.string1(valueBuffer, 0, 6);
+        builder.fixed3(30);
+        builder.string2(valueBuffer, 10, 6);
+
+        return builder;
+    }
+
     static FlatFW.Builder setRequiredFields(FlatFW.Builder builder, int toFieldIndex)
     {
         if(toFieldIndex >= INDEX_FIXED1)
@@ -329,8 +394,8 @@ public class FlatFWTest
     {
         assertEquals(10, flyweight.fixed1());
         assertEquals(222, flyweight.fixed2());
-        assertEquals("value1", flyweight.string1());
+        assertEquals("value1", flyweight.string1().asString());
         assertEquals(333, flyweight.fixed3());
-        assertEquals("value2", flyweight.string2());
+        assertEquals("value2", flyweight.string2().asString());
     }
 }
