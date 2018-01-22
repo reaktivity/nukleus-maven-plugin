@@ -81,6 +81,13 @@ public class NestedFWTest
         assertAllDefaultValues(nestedRO);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToSetFixed4WithLowerValue()
+    {
+        nestedRW.wrap(buffer, 10, 10)
+                .fixed4(-1);
+    }
+
     @Test
     public void shouldFailToSetFixed2BeforeFixed1() throws Exception
     {
