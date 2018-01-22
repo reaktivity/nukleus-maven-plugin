@@ -29,6 +29,7 @@ import org.reaktivity.reaktor.internal.test.types.inner.NestedFW;
 
 public class NestedFWTest
 {
+    private static final int INDEX_FIXED4 = 0;
     private static final int INDEX_FLAT = 1;
     private static final int INDEX_FIXED5 = 2;
 
@@ -55,9 +56,9 @@ public class NestedFWTest
         int offset = 11;
         int expectedLimit = setAllBufferValues(expected, offset);
 
-        NestedFW.Builder builder1 = setAllBuilderValues(nestedRW.wrap(buffer, offset, expectedLimit));
+        NestedFW.Builder builder = setAllFieldsValues(nestedRW.wrap(buffer, offset, expectedLimit));
 
-        int limit = builder1.build().limit();
+        int limit = builder.build().limit();
         assertEquals(expectedLimit, limit);
         assertEquals(expected, buffer);
 
@@ -71,7 +72,7 @@ public class NestedFWTest
         int offset = 11;
         int expectedLimit = setAllRequiredBufferValues(expected, offset);
 
-        NestedFW.Builder builder = setAllRequiredBuilderField(nestedRW.wrap(buffer, offset, expectedLimit), INDEX_FIXED5);
+        NestedFW.Builder builder = setRequiredFields(nestedRW.wrap(buffer, offset, expectedLimit), INDEX_FIXED5);
         int limit = builder.build().limit();
 
         assertEquals(expectedLimit, limit);
@@ -191,28 +192,25 @@ public class NestedFWTest
         return offset + 8;
     }
 
-    static NestedFW.Builder setAllRequiredBuilderField(NestedFW.Builder builder, int fieldIndex)
+    static NestedFW.Builder setRequiredFields(NestedFW.Builder builder, int fieldToIndex)
     {
-        switch (fieldIndex)
+        if(fieldToIndex >= INDEX_FLAT)
         {
-            case INDEX_FLAT: builder.flat(t -> t
+            builder.flat(t -> t
                     .fixed1(20)
                     .string1("value1")
                     .string2("value2"));
-                break;
-            case INDEX_FIXED5:builder.flat(t -> t
-                    .fixed1(20)
-                    .string1("value1")
-                    .string2("value2"));
-                builder.fixed5(50);
-                break;
+        }
+        if(fieldToIndex >= INDEX_FIXED5)
+        {
+            builder.fixed5(50);
         }
 
         return builder;
     }
 
 
-    static NestedFW.Builder setAllBuilderValues(NestedFW.Builder builder)
+    static NestedFW.Builder setAllFieldsValues(NestedFW.Builder builder)
     {
         return builder.fixed4(10)
                     .flat(flat -> flat
@@ -224,7 +222,7 @@ public class NestedFWTest
                     .fixed5(50);
     }
 
-    static void assertAllValues (NestedFW nestedFW)
+    static void assertAllValues(NestedFW nestedFW)
     {
         assertEquals(10, nestedFW.fixed4());
         assertEquals(20, nestedFW.flat().fixed1());
@@ -235,10 +233,14 @@ public class NestedFWTest
         assertEquals(50, nestedFW.fixed5());
     }
 
-    static void assertAllDefaultValues (NestedFW nestedFW)
+    static void assertAllDefaultValues(NestedFW nestedFW)
     {
         assertEquals(444, nestedFW.fixed4());
+        assertEquals(20, nestedFW.flat().fixed1());
         assertEquals(222, nestedFW.flat().fixed2());
+        assertEquals("value1", nestedFW.flat().string1().asString());
         assertEquals(333, nestedFW.flat().fixed3());
+        assertEquals("value2", nestedFW.flat().string2().asString());
+        assertEquals(50, nestedFW.fixed5());
     }
 }
