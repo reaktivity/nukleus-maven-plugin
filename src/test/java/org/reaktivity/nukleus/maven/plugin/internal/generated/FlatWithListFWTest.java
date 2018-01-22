@@ -18,6 +18,8 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,6 +63,7 @@ public class FlatWithListFWTest
         AtomicInteger listSize = new AtomicInteger(0);
         flatRO.list1().forEach(s -> listSize.incrementAndGet());
         assertEquals(0, listSize.get());
+        assertTrue(flatRO.list1().isEmpty());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -161,6 +164,7 @@ public class FlatWithListFWTest
                 .build()
                 .limit();
         flatRO.wrap(buffer,  0,  limit);
+        assertFalse(flatRO.list1().isEmpty());
         assertEquals(10, flatRO.fixed1());
         assertEquals("value1", flatRO.string1().asString());
         final List<String> listValues = new ArrayList<>();

@@ -65,7 +65,25 @@ public class Generator
         Generator generator = new Generator();
         generator.error(System.out::println)
                  .warn(System.out::println);
-        if (args.length > 0 && args[0].equals("-v"))
+        boolean verbose = false;
+        if (args.length > 0)
+        {
+            for (int i = 0; i < args.length; i++)
+            {
+                switch(args[i])
+                {
+                    case "-v":
+                        verbose = true;
+                        break;
+                    case "-d":
+                        final String baseDir = args[i + 1];
+                        i++;
+                        generator.inputDirectory = new File(baseDir + "/src/test/resources/test-project");
+                        generator.outputDirectory = new File(baseDir + "/target/generated-test-sources/test-reaktivity");
+                }
+            }
+        }
+        if (verbose)
         {
             generator.debug(System.out::println);
         }
