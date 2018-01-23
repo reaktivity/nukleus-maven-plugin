@@ -44,6 +44,7 @@ scope test
             uint64 fixed1 = 111;
             string string1;
             list<string> list1;
+            int32 fixed2 = 5;
         }
     
         struct FlatWithOctets
@@ -57,6 +58,13 @@ scope test
             octets[lengthOctets3] octets3 = null;
             int32 lengthOctets4;
             octets[lengthOctets4] octets4 = null;
+            octets extension;
+        }
+        
+        struct OctetsDefaultedNoAnchor
+        {
+            int32 length;
+            octets[length] payload = null;
             octets extension;
         }
         

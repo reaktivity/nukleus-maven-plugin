@@ -242,6 +242,7 @@
         <configuration>
           <mainClass>org.reaktivity.nukleus.maven.plugin.internal.Generator</mainClass>
           <testSourceRoot>${project.build.directory}/generated-test-sources/test-reaktivity</testSourceRoot>
+          <commandlineArgs>-d ${project.basedir} -v</commandlineArgs>
         </configuration>
       </plugin>
       <plugin>
