@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -30,6 +31,13 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 public class FlatFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xab);
+        }
+    };
+    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
@@ -272,10 +280,24 @@ public class FlatFWTest
     @Test
     public void shouldSetStringValuesToNull() throws Exception
     {
-        flatRW.wrap(buffer, 0, buffer.capacity())
+        final int offset = 0;
+        int limit = flatRW.wrap(buffer, offset, buffer.capacity())
             .fixed1(10)
-            .fixed2(20)
-            .string1((String) null);
+            .string1((String) null)
+            .string2((StringFW) null)
+            .build()
+            .limit();
+        expected.putLong(offset, 10);
+        expected.putShort(offset + 8, (short) 222);
+        expected.putByte(offset + 10, (byte) -1);
+        expected.putInt(offset + 11, 333);
+        expected.putByte(offset + 15, (byte) -1);
+
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+
+        flatRO.wrap(buffer, offset, limit);
+        assertNull(flatRO.string1().asString());
+        assertNull(flatRO.string2().asString());
     }
 
     @Test
