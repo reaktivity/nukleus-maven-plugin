@@ -152,6 +152,11 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                   .addParameter(int.class, "offset")
                   .addParameter(int.class, "maxLimit")
                   .returns(thisName)
+                  .beginControlFlow("if (offset > maxLimit)")
+                  .addStatement("final String msg = String.format(\"offset=%d is beyond maxLimit=%d\", " +
+                          "offset, maxLimit)")
+                  .addStatement("throw new IndexOutOfBoundsException(msg)")
+                  .endControlFlow()
                   .addStatement("this.buffer = buffer")
                   .addStatement("this.offset = offset")
                   .addStatement("this.maxLimit = maxLimit")
