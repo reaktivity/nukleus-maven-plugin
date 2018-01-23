@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -73,7 +74,7 @@ public class NestedFWTest
         int limit = builder.build().limit();
 
         assertEquals(expectedLimit, limit);
-        //assertEquals(expected, buffer);
+        assertEquals(expected, buffer);
 
         nestedRO.wrap(buffer,  offset,  limit);
         assertAllDefaultValues(nestedRO);
@@ -153,6 +154,12 @@ public class NestedFWTest
         nestedRW.wrap(buffer, 0, 100)
             .flat(flat -> FlatFWTest.setRequiredFields(flat, Integer.MAX_VALUE))
             .build();
+    }
+
+    @Test
+    public void shouldReturnString() throws Exception
+    {
+        assertNotNull(nestedRO.toString());
     }
 
     static int setAllBufferValues(MutableDirectBuffer buffer, int offset)

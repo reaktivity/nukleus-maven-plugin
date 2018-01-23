@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 import org.agrona.MutableDirectBuffer;
@@ -130,6 +131,7 @@ public class FlatFWTest
         int limit = setAllRequiredBufferValues(buffer, offset);
         assertSame(flatRO, flatRO.wrap(buffer,  offset,  limit));
         assertRequiredValuesAndDefaults(flatRO);
+
     }
 
 
@@ -265,6 +267,12 @@ public class FlatFWTest
         expectedException.expectMessage("string2");
         setRequiredFields(flatRW.wrap(buffer, 0, 100), INDEX_STRING2)
                 .build();
+    }
+
+    @Test
+    public void shouldReturnString() throws Exception
+    {
+        assertNotNull(flatRO.toString());
     }
 
     static int setAllRequiredBufferValues(MutableDirectBuffer buffer, int offset)

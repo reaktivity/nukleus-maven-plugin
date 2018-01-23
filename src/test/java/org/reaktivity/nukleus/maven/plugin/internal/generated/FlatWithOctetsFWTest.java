@@ -17,10 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -289,6 +286,12 @@ public class FlatWithOctetsFWTest
         flatWithOctetsRO.wrap(buffer,  0,  limit);
         assertEquals(5, flatWithOctetsRO.fixed1());
         assertEquals("value1", flatWithOctetsRO.string1().asString());
+    }
+
+    @Test
+    public void shouldReturnString() throws Exception
+    {
+        assertNotNull(flatWithOctetsRO.toString());
     }
 
     static DirectBuffer asBuffer(String value)
