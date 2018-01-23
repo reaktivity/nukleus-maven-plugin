@@ -43,7 +43,7 @@ public class FlatFWTest
 
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     {
-    buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
+        buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
     }
 
     MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100));
@@ -87,7 +87,7 @@ public class FlatFWTest
         final int offset = 11;
         int expectedLimit = setAllBufferValues(expected, offset);
 
-        Builder builder = setAllFieldValues1(flatRW.wrap(buffer, offset, buffer.capacity() ));
+        Builder builder = setAllFieldValues1(flatRW.wrap(buffer, offset, buffer.capacity()));
 
         int limit = builder.build().limit();
 
