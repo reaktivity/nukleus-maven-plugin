@@ -19,6 +19,10 @@ The Nukleus Maven plugin is used to generate flyweight classes from IDL files de
   - fields of type list (default to empty)
   - fields of type octets with no specified size (must appear last in their structure, default to empty)
   - fixed width integer fields used to hold the size of a subsequent octets field (automatically set to the correct value when the corresponding octets field is set)
+
+## Setting fields to null
+- octets fields which default to null may be explicitly set to null using the <fieldName>(OctetsFW) method on the Builder, for example: `data.payload((OctetsFW) null)`
+- string and string16 field may be set to null by passing a null value into the mutator methods taking a String or StringFW value parameter.
   
 ## Field types
 
