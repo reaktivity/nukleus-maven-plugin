@@ -2579,7 +2579,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.endControlFlow();
                     }
                     code.addStatement("checkFieldsSet(0, $L)", index(name))
-                        .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                        .beginControlFlow("if (!fieldsSet.get($L))", index(name))
+                            .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                        .endControlFlow()
                         .addStatement("$LRW.item(mutator)", name)
                         .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("fieldsSet.set($L)", index(name))
