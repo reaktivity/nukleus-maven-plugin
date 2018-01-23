@@ -1701,7 +1701,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type, usedAsSize, size, sizeName, sizeType, priorDefaulted, defaultPriorField);
+                    addNonPrimitiveMember(name, type, usedAsSize, size, sizeName, sizeType, defaultValue, priorDefaulted,
+                            defaultPriorField);
                 }
                 return this;
             }
@@ -2204,13 +2205,15 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 int size,
                 String sizeName,
                 TypeName sizeType,
+                Object defaultValue,
                 String priorDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 if (type instanceof ClassName)
                 {
                     ClassName className = (ClassName) type;
-                    addClassType(name, className, usedAsSize, size, sizeName, sizeType, priorDefaulted, defaultPriorField);
+                    addClassType(name, className, usedAsSize, size, sizeName, sizeType, defaultValue, priorDefaulted,
+                            defaultPriorField);
                 }
                 else if (type instanceof ParameterizedTypeName)
                 {
@@ -2237,6 +2240,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 int size,
                 String sizeName,
                 TypeName sizeType,
+                Object defaultValue,
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
@@ -2252,7 +2256,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if ("OctetsFW".equals(className.simpleName()))
                 {
-                    addOctetsType(className, name, size, sizeName, sizeType);
+                    addOctetsType(className, name, size, sizeName, sizeType, defaultValue);
                 }
                 else
                 {
@@ -2298,15 +2302,113 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
             }
 
+
+
             private void addOctetsType(
+                ClassName className,
+                String name,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                Object defaultValue)
+            {
+                addOctetsOctetsFWMutator(className, name, size, sizeName, sizeType, defaultValue);
+                addOctetsConsumerBuilderMutator(className, name, size, sizeName, sizeType);
+                addOctetsBufferMutator(className, name, size, sizeName, sizeType);
+            }
+
+            private void addOctetsOctetsFWMutator(
+                ClassName className,
+                String name,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                Object defaultValue)
+            {
+                ClassName builderType = className.nestedClass("Builder");
+                CodeBlock.Builder code = CodeBlock.builder();
+                if (size >= 0)
+                {
+                    code.addStatement("$T $LRW = $L()", builderType, name, methodName(name))
+                        .addStatement("$LRW.set(value)", name)
+                        .addStatement("int expectedLimit = $LRW.maxLimit()", name)
+                        .addStatement("int actualLimit = $LRW.build().limit()", name)
+                        .beginControlFlow("if (actualLimit != expectedLimit)")
+                        .addStatement("throw new IllegalStateException(String.format($S, " +
+                                      "actualLimit - limit(), expectedLimit - limit()))",
+                            format("%%d instead of %%d bytes have been set for field \"%s\"", name))
+                        .endControlFlow()
+                        .addStatement("limit($LRW.maxLimit())", name);
+                }
+                else if (sizeName != null)
+                {
+                    code.addStatement("int size$$")
+                        .addStatement("int newLimit")
+                        .addStatement("$T $LRW = $L()", builderType, name, methodName(name));
+                    if (defaultValue == NULL_DEFAULT)
+                    {
+                        code.beginControlFlow("if (value == null)")
+                            .addStatement("size$$ = -1")
+                            .addStatement("newLimit = limit()")
+                            .nextControlFlow("else")
+                            .addStatement("$LRW.set(value)", name)
+                            .addStatement("newLimit = $LRW.build().limit()", name)
+                            .addStatement("size$$ = newLimit - limit()")
+                            .endControlFlow();
+                    }
+                    else
+                    {
+                        code.beginControlFlow("if (value == null)")
+                            .addStatement("throw new IllegalArgumentException($S)",
+                                    format("value cannot be null for field \"%s\" that does not default to null", name))
+                            .endControlFlow();
+                        code.addStatement("newLimit = $LRW.build().limit()", name)
+                            .addStatement("size$$ = newLimit - limit()");
+                    }
+
+                    if (isVarintType(sizeType))
+                    {
+                        code.beginControlFlow("if (size$$ != $L)", dynamicValue(sizeName))
+                            .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
+                                format("%%d bytes have been set for field \"%s\", does not match value %%d set in %%s",
+                                        name),
+                                dynamicValue(sizeName),
+                                sizeName)
+                            .endControlFlow();
+                    }
+                    else
+                    {
+                        code.addStatement("limit($L)", dynamicOffset(sizeName))
+                            .addStatement("$L(size$$)", sizeName);
+                    }
+                    code.addStatement("limit(newLimit)");
+                }
+                else
+                {
+                    code.addStatement("$T $LRW = $L()", builderType, name, methodName(name))
+                        .addStatement("$LRW.set(value)", name)
+                        .addStatement("limit($LRW.build().limit())", name);
+                }
+                code.addStatement("fieldsSet.set($L)", index(name))
+                    .addStatement("return this");
+
+                builder.addMethod(methodBuilder(methodName(name))
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addParameter(className, "value")
+                        .addCode(code.build())
+                        .build());
+            }
+
+            private void addOctetsConsumerBuilderMutator(
                 ClassName className,
                 String name,
                 int size,
                 String sizeName,
                 TypeName sizeType)
             {
-                ClassName consumerType = ClassName.get(Consumer.class);
                 ClassName builderType = className.nestedClass("Builder");
+                ClassName consumerType = ClassName.get(Consumer.class);
                 TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
                 CodeBlock.Builder code = CodeBlock.builder();
                 code.addStatement("$T $LRW = $L()", builderType, name, methodName(name))
@@ -2329,7 +2431,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                     if (isVarintType(sizeType))
                     {
-                        code.beginControlFlow("if (size$$ > $L)", dynamicValue(sizeName))
+                        code.beginControlFlow("if (size$$ != $L)", dynamicValue(sizeName))
                             .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
                                 format("%%d bytes have been set for field \"%s\", does not match value %%d set in %%s",
                                         name),
@@ -2357,55 +2459,64 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(mutatorType, "mutator")
                         .addCode(code.build())
                         .build());
+            }
 
-                    CodeBlock.Builder code2 = CodeBlock.builder();
-                    code2.addStatement("$T $LRW = $L()", builderType, name, methodName(name));
-                    if (size >= 0)
-                    {
-                        code2.addStatement("int fieldSize = $LRW.maxLimit() - limit()", name)
-                             .beginControlFlow("if (length != fieldSize)")
-                             .addStatement("throw new IllegalArgumentException(String.format($S, length, fieldSize))",
-                                format("Invalid length %%d for field \"%s\", expected %%d", name))
-                             .endControlFlow();
-                    }
-                    code2.addStatement("$LRW.set(buffer, offset, length)", name);
-                    if (sizeName != null)
-                    {
-                        code2.addStatement("int newLimit = $LRW.build().limit()", name)
-                             .addStatement("int size$$ = newLimit - limit()");
+            private void addOctetsBufferMutator(
+                ClassName className,
+                String name,
+                int size,
+                String sizeName,
+                TypeName sizeType)
+            {
+                ClassName builderType = className.nestedClass("Builder");
+                CodeBlock.Builder code = CodeBlock.builder();
+                code.addStatement("$T $LRW = $L()", builderType, name, methodName(name));
+                if (size >= 0)
+                {
+                    code.addStatement("int fieldSize = $LRW.maxLimit() - limit()", name)
+                        .beginControlFlow("if (length != fieldSize)")
+                        .addStatement("throw new IllegalArgumentException(String.format($S, length, fieldSize))",
+                           format("Invalid length %%d for field \"%s\", expected %%d", name))
+                        .endControlFlow();
+                }
+                code.addStatement("$LRW.set(buffer, offset, length)", name);
+                if (sizeName != null)
+                {
+                    code.addStatement("int newLimit = $LRW.build().limit()", name)
+                        .addStatement("int size$$ = newLimit - limit()");
 
-                        if (isVarintType(sizeType))
-                        {
-                            code2.beginControlFlow("if (size$$ > $L)", dynamicValue(sizeName))
-                                 .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
-                                    format("%%d bytes have been set for field \"%s\", does not match value %%d set in %%s",
-                                            name),
-                                    dynamicValue(sizeName),
-                                    sizeName)
-                                 .endControlFlow();
-                        }
-                        else
-                        {
-                            code2.addStatement("limit($L)", dynamicOffset(sizeName))
-                                 .addStatement("$L(size$$)", sizeName);
-                        }
-                        code2.addStatement("limit(newLimit)");
+                    if (isVarintType(sizeType))
+                    {
+                        code.beginControlFlow("if (size$$ != $L)", dynamicValue(sizeName))
+                            .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
+                               format("%%d bytes have been set for field \"%s\", does not match value %%d set in %%s",
+                                       name),
+                               dynamicValue(sizeName),
+                               sizeName)
+                           .endControlFlow();
                     }
                     else
                     {
-                        code2.addStatement("limit($LRW.build().limit())", name);
+                        code.addStatement("limit($L)", dynamicOffset(sizeName))
+                            .addStatement("$L(size$$)", sizeName);
                     }
-                    code2.addStatement("fieldsSet.set($L)", index(name))
-                         .addStatement("return this");
+                    code.addStatement("limit(newLimit)");
+                }
+                else
+                {
+                    code.addStatement("limit($LRW.build().limit())", name);
+                }
+                code.addStatement("fieldsSet.set($L)", index(name))
+                    .addStatement("return this");
 
-                    builder.addMethod(methodBuilder(methodName(name))
-                            .addModifiers(PUBLIC)
-                            .returns(thisType)
-                            .addParameter(DIRECT_BUFFER_TYPE, "buffer")
-                            .addParameter(int.class, "offset")
-                            .addParameter(int.class, "length")
-                            .addCode(code2.build())
-                            .build());
+                builder.addMethod(methodBuilder(methodName(name))
+                       .addModifiers(PUBLIC)
+                       .returns(thisType)
+                       .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                       .addParameter(int.class, "offset")
+                       .addParameter(int.class, "length")
+                       .addCode(code.build())
+                       .build());
             }
 
             private void addStringType(
