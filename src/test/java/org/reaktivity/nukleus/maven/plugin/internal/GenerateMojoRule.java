@@ -61,6 +61,12 @@ public class GenerateMojoRule extends MojoRule
         return this;
     }
 
+    GenerateMojoRule outputTestDirectory(String outputTestDirectory)
+    {
+        configuration.addChild("outputTestDirectory", outputTestDirectory);
+        return this;
+    }
+
     public void generate() throws Exception
     {
         configureMojo(mojo, configuration);

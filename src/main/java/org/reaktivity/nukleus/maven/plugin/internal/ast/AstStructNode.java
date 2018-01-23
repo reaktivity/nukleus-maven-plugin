@@ -164,7 +164,6 @@ public final class AstStructNode extends AstNode
                     else if (defaultsToNull && !size.type().isSignedInteger())
                     {
                         Object sizeType = size.type();
-                        System.out.println(sizeType);
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
                                 member.sizeName(), member.name()));

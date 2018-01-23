@@ -82,6 +82,7 @@ public abstract class AstNode
         public R visitStruct(
             AstStructNode structNode)
         {
+            // TODO this effectively looses the information that a member can have other members
             return structNode.members()
                              .stream()
                              .map(this::visitMember)

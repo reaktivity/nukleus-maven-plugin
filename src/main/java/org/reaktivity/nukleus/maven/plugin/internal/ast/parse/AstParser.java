@@ -19,7 +19,10 @@ import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATI
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
@@ -46,6 +49,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_ty
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
@@ -62,7 +66,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_member_with_defaultContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_list_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
@@ -82,6 +85,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
     private Builder caseBuilder;
     private AstByteOrder byteOrder;
+
+    private Map<String, AstNode> scopedNameAstNodes = new HashMap<>();
 
     public AstParser()
     {
@@ -198,8 +203,26 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstStructNode visitStruct_type(
         Struct_typeContext ctx)
     {
+        Iterator it = scopeBuilders.iterator();
+        StringBuilder scopedNameBuilder = new StringBuilder();
+        while (it.hasNext())
+        {
+            scopedNameBuilder.append(((AstScopeNode.Builder)it.next()).name()).append("::");
+        }
+
         structBuilder = new AstStructNode.Builder();
         structBuilder.name(ctx.ID().getText());
+
+        System.out.println("visitStruct_type.ctx.ID().getText(): " + ctx.ID().getText());
+        System.out.println("visitStruct_type.ctx.scoped_name(): " + ctx.scoped_name());
+        if (ctx.parent != null)
+        {
+            System.out.println("visitStruct_type.ctx.parent.getText(): " + ctx.parent.getText());
+        }
+        // TODO track struct nodes to be matched with member nodes by scoped name
+        System.out.println("visitStruct_type.SCOPED_STRUCT: " + scopedNameBuilder.toString() + ctx.ID().getText());
+        System.out.println();
+
 
         Scoped_nameContext scopedName = ctx.scoped_name();
         if (scopedName != null)
@@ -208,18 +231,20 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         super.visitStruct_type(ctx);
-
+        AstStructNode structNode;
         AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
         if (scopeBuilder != null)
         {
             AstStructNode struct = structBuilder.build();
             scopeBuilder.struct(struct);
-            return struct;
+            structNode = struct;
         }
         else
         {
-            return structBuilder.build();
+            structNode = structBuilder.build();
         }
+        scopedNameAstNodes.put(scopedNameBuilder.toString() + ctx.ID().getText(), structNode);
+        return structNode;
     }
 
     @Override
@@ -297,6 +322,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             memberBuilder.sizeName(ctx.ID().getText());
         }
         return super.visitInteger_array_member(ctx);
+    }
+
+    @Override
+    public AstNode visitList_member(
+            List_memberContext ctx)
+    {
+        memberBuilder.type(AstType.LIST);
+        return super.visitList_member(ctx);
     }
 
     @Override
@@ -484,19 +517,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitUnbounded_list_type(
-        Unbounded_list_typeContext ctx)
-    {
-        memberBuilder.type(AstType.LIST);
-        return super.visitUnbounded_list_type(ctx);
-    }
-
-    @Override
     public AstNode visitScoped_name(
         Scoped_nameContext ctx)
     {
         if (memberBuilder != null)
         {
+            System.out.println("visitScoped_name: " + ctx.getText());
+            System.out.println("visitScoped_name: " + scopedNameAstNodes.containsKey(ctx.getText()));
+            System.out.println();
             memberBuilder.type(AstType.dynamicType(ctx.getText()));
         }
         return super.visitScoped_name(ctx);

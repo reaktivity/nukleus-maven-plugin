@@ -36,12 +36,12 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGener
 
 import com.squareup.javapoet.ClassName;
 
-public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
+public class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
-    private final String scopeName;
-    private final String packageName;
-    private final TypeResolver resolver;
-    private final List<String> targetScopes;
+    final String scopeName;
+    final String packageName;
+    final TypeResolver resolver;
+    final List<String> targetScopes;
     private final Collection<TypeSpecGenerator<?>> defaultResult;
 
     public ScopeVisitor(
@@ -76,7 +76,14 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String nestedName = scopeNode.name();
         String subscopeName = String.format("%s::%s", scopeName, nestedName);
         String subpackageName = String.format("%s.%s", packageName, nestedName);
-        return new ScopeVisitor(subscopeName, subpackageName, resolver, targetScopes).visitScope(scopeNode);
+        return nestedScopeVisitor(subscopeName, subpackageName).visitScope(scopeNode);
+    }
+
+    protected ScopeVisitor nestedScopeVisitor(
+        String subscopeName,
+        String subpackageName)
+    {
+        return new ScopeVisitor(subscopeName, subpackageName, resolver, targetScopes);
     }
 
     @Override
@@ -91,10 +98,16 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = structNode.name();
         AstType structType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName structName = resolver.resolveClass(structType);
-        StructFlyweightGenerator generator = new StructFlyweightGenerator(structName, resolver.flyweightName(), baseName);
-        generator.typeId(findTypeId(structNode));
 
-        return new StructVisitor(generator, resolver).visitStruct(structNode);
+        StructFlyweightGenerator generatorFlyweight = new StructFlyweightGenerator(
+            structName,
+            resolver.flyweightName(),
+            baseName);
+        generatorFlyweight.typeId(findTypeId(structNode));
+
+        return new StructVisitor(
+            generatorFlyweight,
+            resolver).visitStruct(structNode);
     }
 
     @Override
@@ -153,13 +166,13 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         return aggregate;
     }
 
-    private boolean shouldVisit(
+    boolean shouldVisit(
         String target)
     {
         return target.equals(scopeName) || scopeName.startsWith(target + "::") || target.startsWith(scopeName + "::");
     }
 
-    private int findTypeId(
+    int findTypeId(
         AstStructNode structNode)
     {
         AstStructNode currentNode = structNode;

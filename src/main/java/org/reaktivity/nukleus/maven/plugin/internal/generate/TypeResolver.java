@@ -226,6 +226,15 @@ public final class TypeResolver
                 ClassName className = ClassName.get(classPackage, simpleName);
                 namesByType.put(type, className);
 
+
+                String scopedNameTest = String.join("::", scopedNames) + "Test";
+                AstType typeTest = AstType.dynamicType(scopedNameTest);
+
+                String simpleNameTest = nodeName + "FWTest";
+                ClassName classNameTest = ClassName.get(classPackage, simpleNameTest);
+                namesByType.put(typeTest, classNameTest);
+
+
                 return visit.apply(node);
             }
             finally

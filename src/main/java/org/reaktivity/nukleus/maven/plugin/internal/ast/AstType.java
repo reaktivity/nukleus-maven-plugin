@@ -21,32 +21,35 @@ import java.util.Objects;
 
 public final class AstType
 {
-    public static final AstType INT8 = new AstType("int8");
-    public static final AstType INT16 = new AstType("int16");
-    public static final AstType INT32 = new AstType("int32");
-    public static final AstType INT64 = new AstType("int64");
-    public static final AstType VARINT32 = new AstType("varint32");
-    public static final AstType VARINT64 = new AstType("varint64");
+    public static final AstType INT8 = new AstType("int8", false);
+    public static final AstType INT16 = new AstType("int16", false);
+    public static final AstType INT32 = new AstType("int32", false);
+    public static final AstType INT64 = new AstType("int64", false);
+    public static final AstType VARINT32 = new AstType("varint32", false);
+    public static final AstType VARINT64 = new AstType("varint64", false);
 
-    public static final AstType UINT8 = new AstType("uint8");
-    public static final AstType UINT16 = new AstType("uint16");
-    public static final AstType UINT32 = new AstType("uint32");
-    public static final AstType UINT64 = new AstType("uint64");
+    public static final AstType UINT8 = new AstType("uint8", false);
+    public static final AstType UINT16 = new AstType("uint16", false);
+    public static final AstType UINT32 = new AstType("uint32", false);
+    public static final AstType UINT64 = new AstType("uint64", false);
 
-    public static final AstType OCTETS = new AstType("octets");
-    public static final AstType STRING = new AstType("string");
-    public static final AstType STRING16 = new AstType("string16");
+    public static final AstType OCTETS = new AstType("octets", false);
+    public static final AstType STRING = new AstType("string", false);
+    public static final AstType STRING16 = new AstType("string16", false);
 
-    public static final AstType LIST = new AstType("list");
-    public static final AstType ARRAY = new AstType("array");
-    public static final AstType STRUCT = new AstType("struct");
+    public static final AstType LIST = new AstType("list", false);
+    public static final AstType ARRAY = new AstType("array", false);
+    public static final AstType STRUCT = new AstType("struct", false);
 
     private final String name;
+    private final boolean isDynamic;
 
     private AstType(
-        String name)
+        String name,
+        boolean isDynamic)
     {
         this.name = requireNonNull(name);
+        this.isDynamic = isDynamic;
     }
 
     public String name()
@@ -92,6 +95,11 @@ public final class AstType
     public static AstType dynamicType(
         String scopedName)
     {
-        return new AstType(scopedName);
+        return new AstType(scopedName, true);
+    }
+
+    public boolean isDynamic()
+    {
+        return isDynamic;
     }
 }
