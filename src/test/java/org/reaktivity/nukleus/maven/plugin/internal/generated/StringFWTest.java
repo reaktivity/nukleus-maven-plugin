@@ -94,19 +94,6 @@ public class StringFWTest
     }
 
     @Test
-    public void shouldSetToEmptyString() throws Exception
-    {
-        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                .set("", UTF_8)
-                .build()
-                .limit();
-        stringRO.wrap(buffer,  0,  limit);
-        assertEquals(LENGTH_SIZE, stringRO.limit());
-        assertEquals(LENGTH_SIZE, stringRO.sizeof());
-        assertEquals("", stringRO.asString());
-    }
-
-    @Test
     public void shouldDefaultAfterRewrap() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
@@ -125,6 +112,18 @@ public class StringFWTest
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
                 .build()
                 .limit();
+        stringRO.wrap(buffer,  0,  limit);
+        assertLengthSize(stringRO);
+    }
+
+    @Test
+    public void shouldSetToNull() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(null, UTF_8)
+                .build()
+                .limit();
+        assertEquals(1, limit);
         stringRO.wrap(buffer,  0,  limit);
         assertLengthSize(stringRO);
     }
@@ -191,18 +190,6 @@ public class StringFWTest
             assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(10 + LENGTH_SIZE));
         }
-    }
-
-    @Test
-    public void shouldSetToNull() throws Exception
-    {
-        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                .set(null, UTF_8)
-                .build()
-                .limit();
-        assertEquals(1, limit);
-        stringRO.wrap(buffer,  0,  limit);
-        assertLengthSize(stringRO);
     }
 
     @Test(expected = IllegalArgumentException.class)
