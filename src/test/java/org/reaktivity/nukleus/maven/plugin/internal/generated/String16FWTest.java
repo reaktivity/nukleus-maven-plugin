@@ -41,12 +41,12 @@ public class String16FWTest
 {
     private static final int LENGTH_SIZE = 2;
 
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(1000));
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100000));
     {
         buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
     }
 
-    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(1000));
+    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100000));
     {
         expected.setMemory(0, expected.capacity(), (byte) 0xab);
     }
@@ -73,8 +73,7 @@ public class String16FWTest
     public void shouldBuildLargeString() throws Exception
     {
         String str = String.format("%65534s", "0");
-        stringRW.wrap(buffer, 0, buffer.capacity())
-                .set(str, UTF_8);
+        setFieldValue(str);
     }
 
     @Test
@@ -83,10 +82,7 @@ public class String16FWTest
         int offset = 0;
         int expectedLimit = setBufferValue(expected, offset);
 
-        int limit = stringRW.wrap(buffer, offset, buffer.capacity())
-                .set("value1", UTF_8)
-                .build()
-                .limit();
+        int limit = setFieldValue("value");
         stringRO.wrap(buffer,  0,  limit);
 
         assertEquals(expectedLimit, limit);
@@ -128,10 +124,7 @@ public class String16FWTest
     @Test
     public void shouldDefaultAfterRewrap() throws Exception
     {
-        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                .set("Hello, world", UTF_8)
-                .build()
-                .limit();
+        int limit = setFieldValue("Hello, world");
 
         String16FW string = stringRW.wrap(buffer, 0, limit)
                 .build();
@@ -145,28 +138,24 @@ public class String16FWTest
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
-        assertEquals(LENGTH_SIZE, stringRO.limit());
-        assertEquals(LENGTH_SIZE, stringRO.sizeof());
+        assertLengthSize(stringRO);
     }
 
 
     @Test
     public void shouldSetToNullUsingStringSetter() throws Exception
     {
-        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                .set(null, UTF_8)
-                .build()
-                .limit();
+        int limit = setFieldValue(null);
         assertEquals(2, limit);
         stringRO.wrap(buffer,  0,  limit);
         assertLengthSize(stringRO);
     }
 
     @Test
-    public void shouldSetToNull() throws Exception
+    public void shouldSetToNullWithoutCharacterSet() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                .set(null, UTF_8)
+                .set(null)
                 .build()
                 .limit();
         assertEquals(2, limit);
@@ -253,6 +242,13 @@ public class String16FWTest
         assertNotNull(stringRO.toString());
     }
 
+    int setFieldValue(String value)
+    {
+        return stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(value, UTF_8)
+                .build()
+                .limit();
+    }
 
     private static MutableDirectBuffer asBuffer(String value)
     {
@@ -273,6 +269,7 @@ public class String16FWTest
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
         return new String16FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
+
 
     static void assertStringValue(String16FW string16FW)
     {

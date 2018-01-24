@@ -19,6 +19,7 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
@@ -28,13 +29,14 @@ import org.reaktivity.reaktor.internal.test.types.OctetsFW;
 
 public class OctetsFWTest
 {
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
+        buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
+    }
+    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100));
+    {
+        expected.setMemory(0, expected.capacity(), (byte) 0xab);
+    }
     private final OctetsFW.Builder octetsRW = new OctetsFW.Builder();
     private final OctetsFW octetsRO = new OctetsFW();
 
@@ -46,7 +48,6 @@ public class OctetsFWTest
                 .limit();
         octetsRO.wrap(buffer,  0,  limit);
         assertEquals(0, octetsRO.sizeof());
-
     }
 
     @Test
@@ -54,7 +55,156 @@ public class OctetsFWTest
     {
         octetsRW.wrap(buffer, 10, 10);
         octetsRO.wrap(buffer,  10, 10);
-        assertEquals(0, octetsRO.sizeof());    }
+        assertEquals(0, octetsRO.sizeof());
+    }
+
+    @Test
+    public void shouldSetUsingOctetsFW() throws Exception
+    {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, offset, buffer.capacity())
+                .set(asOctetsFW("value1"))
+                .build()
+                .limit();
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        octetsRO.wrap(buffer,  0,  limit);
+        assertSetValue(octetsRO);
+    }
+
+    @Test
+    public void shouldSetUsingBuffer() throws Exception
+    {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
+                .set(asBuffer("value1"), 0, "value1".length())
+                .build()
+                .limit();
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        octetsRO.wrap(buffer,  0,  limit);
+        assertSetValue(octetsRO);
+    }
+
+    @Test
+    public void shouldSetUsingByteArray() throws Exception
+    {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
+                .set("value1".getBytes(UTF_8))
+                .build()
+                .limit();
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        octetsRO.wrap(buffer,  0,  limit);
+        assertSetValue(octetsRO);
+    }
+
+    @Test
+    public void shouldSetUsingVisitor() throws Exception
+    {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
+                .set((b, o, l) ->
+                {
+                    b.putBytes(o, "value1".getBytes(UTF_8));
+                    return 6;
+                })
+                .build()
+                .limit();
+        octetsRO.wrap(buffer, 0, limit);
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        assertSetValue(octetsRO);
+    }
+
+    @Test
+    public void shouldGetUsingVisitor() throws Exception
+    {
+        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
+                .set((b, o, l) ->
+                {
+                    b.putBytes(o, "value1".getBytes(UTF_8));
+                    return 6;
+                })
+                .build()
+                .limit();
+    }
+
+    @Test
+    public void shouldPutUsingOctetsFW() throws Exception
+    {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, offset, buffer.capacity())
+                .put(asOctetsFW("val"))
+                .put(asOctetsFW("ue1"))
+                .build()
+                .limit();
+        octetsRO.wrap(buffer,  0,  limit);
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        assertSetValue(octetsRO);
+    }
+
+    @Test
+    public void shouldPutUsingBuffer() throws Exception
+    {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
+                .put(asBuffer("val"), 0, "val".length())
+                .put(asBuffer("ue1"), 0, "ue1".length())
+                .build()
+                .limit();
+        octetsRO.wrap(buffer,  0,  limit);
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        assertSetValue(octetsRO);
+    }
+
+    @Test
+    public void shouldPutUsingByteArray() throws Exception
+    {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
+                .put("val".getBytes(UTF_8))
+                .put("ue1".getBytes(UTF_8))
+                .build()
+                .limit();
+        octetsRO.wrap(buffer,  0,  limit);
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        assertSetValue(octetsRO);
+    }
+
+    @Test
+    public void shouldPutUsingVisitor() throws Exception {
+        int offset = 0;
+        int expectedLimit = setBufferValue(expected, offset);
+        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
+                .put((b, o, l) ->
+                {
+                    b.putBytes(o, "val".getBytes(UTF_8));
+                    return 3;
+                })
+                .put((b, o, l) ->
+                {
+                    b.putBytes(o, "ue1".getBytes(UTF_8));
+                    return 3;
+                })
+                .build()
+                .limit();
+        octetsRO.wrap(buffer, 0, limit);
+        assertEquals(expectedLimit, limit);
+        assertEquals(expected, buffer);
+        assertSetValue(octetsRO);
+    }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUsingMutatorWhenExceedsMaxLimit()
@@ -62,7 +212,7 @@ public class OctetsFWTest
         try
         {
             octetsRW.wrap(buffer, 10, 11)
-                .set((b, o, l) ->
+                    .set((b, o, l) ->
                     { b.putBytes(o, "12".getBytes(UTF_8)); return 2; });
         }
         finally
@@ -71,7 +221,7 @@ public class OctetsFWTest
             buffer.getBytes(10, bytes);
             // Memory does get written beyond maxLimit in this case because the visitor violated the contract
             assertNotEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
-                         0, buffer.getByte(11));
+                    0, buffer.getByte(11));
         }
     }
 
@@ -111,47 +261,6 @@ public class OctetsFWTest
             assertEquals("Buffer shows memory was written beyond maxLimit: " + BitUtil.toHex(bytes),
                          0, buffer.getByte(11));
         }
-    }
-
-    @Test
-    public void shouldSetUsingOctetsFW() throws Exception
-    {
-        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
-                .set(asOctetsFW("value1"))
-                .build()
-                .limit();
-        octetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, octetsRO.sizeof());
-        assertEquals("value1", asString(octetsRO));
-    }
-
-    @Test
-    public void shouldSetUsingBuffer() throws Exception
-    {
-        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
-                .set(asBuffer("value1"), 0, "value1".length())
-                .build()
-                .limit();
-        octetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, octetsRO.sizeof());
-        assertEquals("value1", asString(octetsRO));
-    }
-
-    @Test
-    public void shouldSetUsingByteArray() throws Exception
-    {
-        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
-                .set("value1".getBytes(UTF_8))
-                .build()
-                .limit();
-        octetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, octetsRO.sizeof());
-        assertEquals("value1", asString(octetsRO));
-    }
-
-    @Test
-    public void shouldSetUsingVisitor() throws Exception
-    {
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -216,57 +325,17 @@ public class OctetsFWTest
     }
 
     @Test
-    public void shouldPutUsingOctetsFW() throws Exception
+    public void shouldReturnString() throws Exception
     {
-        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
-                .put(asOctetsFW("val"))
-                .put(asOctetsFW("ue1"))
-                .build()
-                .limit();
-        octetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, octetsRO.sizeof());
-        assertEquals("value1", asString(octetsRO));
+        assertNotNull(octetsRO.toString());
     }
 
-    @Test
-    public void shouldPutUsingBuffer() throws Exception
+    static int setBufferValue(MutableDirectBuffer buffer, int offset)
     {
-        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
-                .put(asBuffer("val"), 0, "val".length())
-                .put(asBuffer("ue1"), 0, "ue1".length())
-                .build()
-                .limit();
-        octetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, octetsRO.sizeof());
-        assertEquals("value1", asString(octetsRO));
+        String value = "value1";
+        buffer.putBytes(offset, value.getBytes(UTF_8), offset, value.length() );
+        return offset + value.length();
     }
-
-    @Test
-    public void shouldPutUsingByteArray() throws Exception
-    {
-        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
-                .put("val".getBytes(UTF_8))
-                .put("ue1".getBytes(UTF_8))
-                .build()
-                .limit();
-        octetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, octetsRO.sizeof());
-        assertEquals("value1", asString(octetsRO));
-    }
-
-    @Test
-    public void shouldPutUsingVisitor() throws Exception
-    {
-        int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
-                .put((b, o, l) ->
-                     { b.putBytes(o, "val".getBytes(UTF_8)); return 3; })
-                .put((b, o, l) ->
-                     { b.putBytes(o, "ue1".getBytes(UTF_8)); return 3; })
-                .build()
-                .limit();
-        octetsRO.wrap(buffer,  0,  limit);
-        assertEquals(6, octetsRO.sizeof());
-        assertEquals("value1", asString(octetsRO));    }
 
     private static MutableDirectBuffer asBuffer(String value)
     {
@@ -286,6 +355,12 @@ public class OctetsFWTest
         byte[] bytes = new byte[octets.sizeof()];
         octets.buffer().getBytes(octets.offset(), bytes);
         return new String(bytes, UTF_8);
+    }
+
+    private void assertSetValue(OctetsFW octetsFW)
+    {
+        assertEquals(6, octetsFW.sizeof());
+        assertEquals("value1", asString(octetsFW));
     }
 
 }

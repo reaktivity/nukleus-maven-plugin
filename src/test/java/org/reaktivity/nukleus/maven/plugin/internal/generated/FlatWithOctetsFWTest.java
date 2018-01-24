@@ -130,7 +130,7 @@ public class FlatWithOctetsFWTest
         buffer.putByte(offset += 1,  (byte) 1); // lengthOctets3 varint(-1)
         buffer.putInt(offset += 1, -1); // lengthOctets4
 
-        FlatWithOctetsFW wrapped = flatWithOctetsRO.wrap(buffer, 0, offset);
+        FlatWithOctetsFW wrapped = flatWithOctetsRO.wrap(buffer, 0, offset+1);
 
         assertNull(wrapped.octets3());
         assertNull(wrapped.octets4());

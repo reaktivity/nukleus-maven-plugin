@@ -115,6 +115,17 @@ public class StringFWTest
         stringRO.wrap(buffer,  0,  limit);
         assertLengthSize(stringRO);
     }
+    @Test
+    public void shouldSetToNullWithoutCharacterSet() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(null)
+                .build()
+                .limit();
+        assertEquals(1, limit);
+        stringRO.wrap(buffer,  0,  limit);
+        assertLengthSize(stringRO);
+    }
 
     @Test
     public void shouldSetToNull() throws Exception
