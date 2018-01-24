@@ -51,6 +51,7 @@ public class FlatFWTest
     {
         expected.setMemory(0, expected.capacity(), (byte) 0xab);
     }
+
     private final FlatFW.Builder flatRW = new FlatFW.Builder();
     private final FlatFW flatRO = new FlatFW();
 

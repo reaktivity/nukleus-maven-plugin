@@ -192,6 +192,20 @@ public class StringFWTest
         }
     }
 
+    @Test
+    public void shouldSetToNullUsingStringSetter() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(null, UTF_8)
+                .build()
+                .limit();
+        assertEquals(1, limit);
+        stringRO.wrap(buffer,  0,  limit);
+        assertEquals(LENGTH_SIZE, stringRO.limit());
+        assertEquals(LENGTH_SIZE, stringRO.sizeof());
+        assertNull(stringRO.asString());
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void shouldFailToBuildLargeString() throws Exception
     {

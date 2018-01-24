@@ -61,6 +61,13 @@ scope test
             octets extension;
         }
         
+        struct OctetsDefaultedNoAnchor
+        {
+            int32 length;
+            octets[length] payload = null;
+            octets extension;
+        }
+        
         union UnionOctets switch (uint8)
         {
             case 1: octets[4] octets4;

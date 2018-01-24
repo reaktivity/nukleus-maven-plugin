@@ -149,6 +149,19 @@ public class String16FWTest
         assertEquals(LENGTH_SIZE, stringRO.sizeof());
     }
 
+
+    @Test
+    public void shouldSetToNullUsingStringSetter() throws Exception
+    {
+        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(null, UTF_8)
+                .build()
+                .limit();
+        assertEquals(2, limit);
+        stringRO.wrap(buffer,  0,  limit);
+        assertLengthSize(stringRO);
+    }
+
     @Test
     public void shouldSetToNull() throws Exception
     {
@@ -224,6 +237,7 @@ public class String16FWTest
                          0, buffer.getByte(10 + LENGTH_SIZE));
         }
     }
+
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldFailToBuildLargeString() throws Exception
