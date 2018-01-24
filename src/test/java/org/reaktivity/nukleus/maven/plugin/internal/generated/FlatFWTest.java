@@ -316,19 +316,18 @@ public class FlatFWTest
     static FlatFW.Builder setAllFieldValues2(FlatFW.Builder builder)
     {
         final StringFW.Builder stringRW = new StringFW.Builder();
-        final MutableDirectBuffer valueBuffer1 = new UnsafeBuffer(allocateDirect(100));
-        final MutableDirectBuffer valueBuffer2 = new UnsafeBuffer(allocateDirect(100));
-        StringFW value1 = stringRW.wrap(valueBuffer1,  0, valueBuffer1.capacity())
-                .set("value1", UTF_8)
-                .build();
-        StringFW value2 = stringRW.wrap(valueBuffer2,  0, valueBuffer2.capacity())
-                .set("value2", UTF_8)
-                .build();
+        final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
 
         builder.fixed1(10);
         builder.fixed2(20);
+        StringFW value1 = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+                .set("value1", UTF_8)
+                .build();
         builder.string1(value1);
         builder.fixed3(30);
+        StringFW value2 = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+                .set("value2", UTF_8)
+                .build();
         builder.string2(value2);
 
         return builder;

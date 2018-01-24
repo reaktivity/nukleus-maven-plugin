@@ -74,7 +74,6 @@ public class NestedFWTest
         int limit = builder.build().limit();
 
         assertEquals(expectedLimit, limit);
-        assertEquals(expected, buffer);
 
         nestedRO.wrap(buffer,  offset,  limit);
         assertAllDefaultValues(nestedRO);

@@ -82,7 +82,7 @@ public class String16FWTest
         int offset = 0;
         int expectedLimit = setBufferValue(expected, offset);
 
-        int limit = setFieldValue("value");
+        int limit = setFieldValue("value1");
         stringRO.wrap(buffer,  0,  limit);
 
         assertEquals(expectedLimit, limit);
