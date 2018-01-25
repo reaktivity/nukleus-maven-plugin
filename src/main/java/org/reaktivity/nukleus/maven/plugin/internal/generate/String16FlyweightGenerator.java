@@ -54,18 +54,26 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldOffsetLengthConstant())
-                            .addField(fieldSizeLengthConstant())
-                            .addField(fieldByteOrder())
-                            .addMethod(constructor())
-                            .addMethod(constructorByteOrder())
-                            .addMethod(limitMethod())
-                            .addMethod(asStringMethod())
-                            .addMethod(wrapMethod())
-                            .addMethod(toStringMethod())
-                            .addMethod(length0Method())
-                            .addType(builderClassBuilder.build())
-                            .build();
+        return classBuilder.addField(maxLengthConstant())
+                           .addField(fieldOffsetLengthConstant())
+                           .addField(fieldSizeLengthConstant())
+                           .addField(fieldByteOrder())
+                           .addMethod(constructor())
+                           .addMethod(constructorByteOrder())
+                           .addMethod(limitMethod())
+                           .addMethod(asStringMethod())
+                           .addMethod(wrapMethod())
+                           .addMethod(toStringMethod())
+                           .addMethod(length0Method())
+                           .addType(builderClassBuilder.build())
+                           .build();
+    }
+
+    private FieldSpec maxLengthConstant()
+    {
+        return FieldSpec.builder(int.class, "MAX_LENGTH", PUBLIC, STATIC, FINAL)
+                .initializer("0xfffe")
+                .build();
     }
 
     private FieldSpec fieldOffsetLengthConstant()
@@ -157,8 +165,8 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("length0")
                 .addModifiers(PRIVATE)
                 .returns(int.class)
-                .addStatement("int length = buffer().getShort(offset() + FIELD_OFFSET_LENGTH, byteOrder) & 0xFFFF")
-                .addStatement("return length == 65535 ? -1 : length")
+                .addStatement("int length = buffer().getShort(offset() + FIELD_OFFSET_LENGTH, byteOrder) & 0xffff")
+                .addStatement("return length == 0xffff ? -1 : length")
                 .build();
     }
 
@@ -319,10 +327,9 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("checkLength")
                     .addModifiers(PRIVATE, STATIC)
                     .addParameter(int.class, "length")
-                    .addStatement("final int maxLength = 65534")
-                    .beginControlFlow("if (length > maxLength)")
+                    .beginControlFlow("if (length > MAX_LENGTH)")
                     .addStatement(
-                            "final String msg = String.format(\"length=%d is beyond maximum length=%d\", length, maxLength)")
+                            "final String msg = String.format(\"length=%d is beyond maximum length=%d\", length, MAX_LENGTH)")
                     .addStatement("throw new IllegalArgumentException(msg)")
                     .endControlFlow()
                     .build();
