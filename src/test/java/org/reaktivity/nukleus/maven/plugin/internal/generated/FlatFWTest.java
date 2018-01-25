@@ -150,7 +150,6 @@ public class FlatFWTest
         final int offset = 11;
         int limit = setAllBufferValues(buffer, offset);
         String result = flatRO.wrap(buffer, offset, limit).toString();
-        System.out.println(flatRO.toString());
         assertNotNull(result);
         for (String fieldName : FIELD_NAMES)
         {
