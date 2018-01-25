@@ -184,7 +184,8 @@ public class OctetsFWTest
     }
 
     @Test
-    public void shouldPutUsingVisitor() throws Exception {
+    public void shouldPutUsingVisitor() throws Exception
+    {
         int offset = 0;
         int expectedLimit = setBufferValue(expected, offset);
         int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
@@ -333,7 +334,7 @@ public class OctetsFWTest
     static int setBufferValue(MutableDirectBuffer buffer, int offset)
     {
         String value = "value1";
-        buffer.putBytes(offset, value.getBytes(UTF_8), offset, value.length() );
+        buffer.putBytes(offset, value.getBytes(UTF_8), offset, value.length());
         return offset + value.length();
     }
 

@@ -70,27 +70,33 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
         MethodSpec asStringFW = asStringFW();
 
         return classBuilder.addField(fieldConstantLengthSize())
-            .addField(fieldBuffer())
-            .addField(fieldString16Builder())
-            .addField(fieldString16ReadOnly())
-            .addMethod(values())
-            .addMethod(shouldDefaultAfterRewrap())
-            .addMethod(shouldDefaultToEmpty())
-            .addMethod(shouldFailToWrapWithInsufficientLength())
-            .addMethod(shouldWrapWithSufficientLength())
-            .addMethod(shouldFailToSetUsingStringWhenExceedsMaxLimit())
-            .addMethod(shouldFailToSetUsingStringFWWhenExceedsMaxLimit(asStringFW))
-            .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
-            .addMethod(shouldSetToNull())
-            .addMethod(shouldFailToBuildLargeString())
-            .addMethod(shouldBuildLargeString())
-            .addMethod(shouldSetToEmptyString())
-            .addMethod(shouldSetUsingString())
-            .addMethod(shouldSetUsingStringFW(asStringFW))
-            .addMethod(shouldSetUsingBuffer(asBuffer))
-            .addMethod(asBuffer)
-            .addMethod(asStringFW)
-            .build();
+                .addField(fieldBuffer())
+                .addField(fieldExpected())
+                .addField(fieldString16Builder())
+                .addField(fieldString16ReadOnly())
+                .addMethod(values())
+                .addMethod(shouldBuildLargeString())
+                .addMethod(shouldSetUsingString())
+                .addMethod(shouldSetUsingStringFW(asStringFW))
+                .addMethod(shouldSetUsingBuffer(asBuffer))
+                .addMethod(shouldDefaultAfterRewrap())
+                .addMethod(shouldDefaultToEmpty())
+                .addMethod(shouldSetToNullUsingStringSetter())
+                .addMethod(shouldSetToNullWithoutCharacterSet())
+                .addMethod(shouldFailToWrapWithInsufficientLength())
+                .addMethod(shouldWrapWithSufficientLength())
+                .addMethod(shouldFailToSetUsingStringWhenExceedsMaxLimit())
+                .addMethod(shouldFailToSetUsingStringFWWhenExceedsMaxLimit(asStringFW))
+                .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
+                .addMethod(shouldSetToNull())
+                .addMethod(shouldFailToBuildLargeString())
+                .addMethod(setFieldValue())
+                .addMethod(asBuffer)
+                .addMethod(asStringFW)
+                .addMethod(setBufferValue())
+                .addMethod(assertStringValue())
+                .addMethod(assertLengthSize())
+                .build();
     }
 
     private FieldSpec fieldString16Builder()
@@ -120,13 +126,20 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
     private FieldSpec fieldBuffer()
     {
         return FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
-            .initializer("new $T($T.allocateDirect(100000)) \n" +
+            .initializer("new $T($T.allocateDirect(100000)); \n" +
                 "{\n" +
-                "    {\n" +
-                "        // Make sure the code is not secretly relying upon memory being initialized to 0\n" +
-                "        setMemory(0, capacity(), (byte) 0xF);\n" +
-                "    }\n" +
+                "    buffer.setMemory(0, buffer.capacity(), (byte) 0xF);\n" +
                 "}", UnsafeBuffer.class, ByteBuffer.class)
+            .build();
+    }
+
+    private FieldSpec fieldExpected()
+    {
+        return FieldSpec.builder(MutableDirectBuffer.class, "expected", PRIVATE, FINAL)
+            .initializer("new $T($T.allocateDirect(100000)); \n" +
+                    "{\n" +
+                    "    expected.setMemory(0, expected.capacity(), (byte) 0xF);\n" +
+                    "}", UnsafeBuffer.class, ByteBuffer.class)
             .build();
     }
 
@@ -159,15 +172,9 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
             .addModifiers(PUBLIC)
             .addAnnotation(Test.class)
             .addException(Exception.class)
-            .addStatement(
-                "  int limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
-                    "    .set(\"Hello, world\", $T.UTF_8)\n" +
-                    "    .build()\n" +
-                    "    .limit()", StandardCharsets.class)
+            .addStatement("$T limit = $N(\"Hello World\")", int.class, setFieldValue())
             .addStatement("String16FW string = stringRW.wrap(buffer, 0, limit).build()")
-            .addStatement("$T.assertNull(string.asString())", Assert.class)
-            .addStatement("$T.assertEquals(LENGTH_SIZE, string.limit())", Assert.class)
-            .addStatement("$T.assertEquals(LENGTH_SIZE, string.sizeof())", Assert.class)
+            .addStatement("$N(string)", assertLengthSize())
             .build();
     }
 
@@ -181,8 +188,36 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                               "    .build()\n" +
                               "    .limit()")
                 .addStatement("stringRO.wrap(buffer, 0, limit)")
-                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
-                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
+                .addStatement("$N(stringRO)", assertLengthSize())
+                .build();
+    }
+
+    private MethodSpec shouldSetToNullUsingStringSetter()
+    {
+        return MethodSpec.methodBuilder("shouldSetToNullUsingStringSetter")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("int limit = $N(null)", setFieldValue())
+                .addStatement("$T.assertEquals(2, limit);", Assert.class)
+                .addStatement("stringRO.wrap(buffer,  0,  limit)")
+                .addStatement("$N(stringRO)", assertLengthSize())
+                .build();
+    }
+
+    private MethodSpec shouldSetToNullWithoutCharacterSet()
+    {
+        return MethodSpec.methodBuilder("shouldSetToNullWithoutCharacterSet")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("int limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
+                        "                .set(null)\n" +
+                        "                .build()\n" +
+                        "                .limit()")
+                .addStatement("$T.assertEquals(2, limit);", Assert.class)
+                .addStatement("stringRO.wrap(buffer,  0,  limit)")
+                .addStatement("$N(stringRO)", assertLengthSize())
                 .build();
     }
 
@@ -225,7 +260,6 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .beginControlFlow("finally")
                 .addStatement("$1T[] bytes = new $1T[1 + LENGTH_SIZE]", byte.class)
                 .addStatement("buffer.getBytes(10, bytes)")
-                .addComment("Make sure memory was not written beyond maxLimit")
                 .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + " +
                         "$T.toHex(bytes), 0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
                 .endControlFlow()
@@ -249,7 +283,6 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .beginControlFlow("finally")
                 .addStatement("$1T[] bytes = new $1T[1 + LENGTH_SIZE]", byte.class)
                 .addStatement("buffer.getBytes(10, bytes)")
-                .addComment("Make sure memory was not written beyond maxLimit")
                 .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + " +
                         "$T.toHex(bytes),\n0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
                 .endControlFlow()
@@ -273,7 +306,6 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .beginControlFlow("finally")
                 .addStatement("$1T[] bytes = new $1T[1 + LENGTH_SIZE]", byte.class)
                 .addStatement("buffer.getBytes(10, bytes)")
-                .addComment("Make sure memory was not written beyond maxLimit")
                 .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + " +
                         "$T.toHex(bytes),\n0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
                 .endControlFlow()
@@ -295,6 +327,16 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
                 .addStatement("$T.assertEquals(null, stringRO.asString())", Assert.class)
+                .build();
+    }
+
+    private MethodSpec shouldReturnString()
+    {
+        return MethodSpec.methodBuilder("shouldReturnString")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("$T.assertNotNull(stringRO.toString())", Assert.class)
                 .build();
     }
 
@@ -321,25 +363,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("$1T str = $1T.format(\"%65534s\", \"0\")", String.class)
-                .addStatement("stringRW.wrap(buffer, 0, buffer.capacity())\n" +
-                        ".set(str, $T.UTF_8)", StandardCharsets.class)
-                .build();
-    }
-
-    private MethodSpec shouldSetToEmptyString()
-    {
-        return MethodSpec.methodBuilder("shouldSetToEmptyString")
-                .addModifiers(PUBLIC)
-                .addAnnotation(Test.class)
-                .addException(Exception.class)
-                .addStatement("$T limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
-                        ".set(\"\", $T.UTF_8)\n" +
-                        ".build()\n" +
-                        ".limit()", int.class, StandardCharsets.class)
-                .addStatement("stringRO.wrap(buffer,  0,  limit)")
-                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
-                .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
-                .addStatement("$T.assertEquals(\"\", stringRO.asString())", Assert.class)
+                .addStatement("$N(str)", setFieldValue())
                 .build();
     }
 
@@ -349,14 +373,12 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
-                .addStatement("$T limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
-                        ".set(\"value1\", $T.UTF_8)\n" +
-                        ".build()\n" +
-                        ".limit()", int.class, StandardCharsets.class)
+                .addStatement("$T offset = 0", int.class)
+                .addStatement("$T expectedLimit = $N(expected, offset)", int.class, setBufferValue())
+                .addStatement("$T limit = $N(\"value1\")", int.class, setFieldValue())
                 .addStatement("stringRO.wrap(buffer,  0,  limit)")
-                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.limit())", Assert.class)
-                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.sizeof())", Assert.class)
-                .addStatement("$T.assertEquals(\"value1\", stringRO.asString())", Assert.class)
+                .addStatement("$T.assertEquals(expectedLimit, limit)", Assert.class)
+                .addStatement("$N(stringRO)", assertStringValue())
                 .build();
     }
 
@@ -366,14 +388,15 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
-                .addStatement("$T limit = stringRW.wrap(buffer, 0, 50)\n" +
+                .addStatement("$T offset = 0", int.class)
+                .addStatement("$T expectedLimit = $N(expected, offset)", int.class, setBufferValue())
+                .addStatement("$T limit = stringRW.wrap(buffer, offset, buffer.capacity())\n" +
                         ".set($N(\"value1\"))\n" +
                         ".build()\n" +
                         ".limit()", int.class, asStringFW)
                 .addStatement("stringRO.wrap(buffer,  0,  limit)")
-                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.limit())", Assert.class)
-                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.sizeof())", Assert.class)
-                .addStatement("$T.assertEquals(\"value1\", stringRO.asString())", Assert.class)
+                .addStatement("$T.assertEquals(expectedLimit, limit)", Assert.class)
+                .addStatement("$N(stringRO)", assertStringValue())
                 .build();
     }
 
@@ -383,14 +406,15 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
+                .addStatement("$T offset = 0", int.class)
+                .addStatement("$T expectedLimit = $N(expected, offset)", int.class, setBufferValue())
                 .addStatement("$T limit = stringRW.wrap(buffer, 0, 50)\n" +
                         ".set($N(\"value1\"), 0, 6)\n" +
                         ".build()\n" +
                         ".limit()", int.class, asBuffer)
                 .addStatement("stringRO.wrap(buffer,  0,  limit)")
-                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.limit())", Assert.class)
-                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, stringRO.sizeof())", Assert.class)
-                .addStatement("$T.assertEquals(\"value1\", stringRO.asString())", Assert.class)
+                .addStatement("$T.assertEquals(expectedLimit, limit)", Assert.class)
+                .addStatement("$N(stringRO)", assertStringValue())
                 .build();
     }
 
@@ -417,6 +441,53 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                         MutableDirectBuffer.class, UnsafeBuffer.class, java.nio.ByteBuffer.class, Byte.class)
                 .addStatement("return new $T.Builder().wrap(buffer, 0, buffer.capacity()).set(value, $T.UTF_8).build()",
                         string16FlyweightClassName, StandardCharsets.class)
+                .build();
+    }
+
+    private MethodSpec setFieldValue()
+    {
+        return MethodSpec.methodBuilder("setFieldValue")
+                .addParameter(String.class, "value")
+                .returns(int.class)
+                .addStatement("return stringRW.wrap(buffer, 0, buffer.capacity())\n" +
+                        "                .set(value, $T.UTF_8)\n" +
+                        "                .build()\n" +
+                        "                .limit()", StandardCharsets.class)
+                .build();
+    }
+
+    private MethodSpec setBufferValue()
+    {
+        return MethodSpec.methodBuilder("setBufferValue")
+                .addModifiers(STATIC)
+                .addParameter(MutableDirectBuffer.class, "buffer")
+                .addParameter(int.class, "offset")
+                .returns(int.class)
+                .addStatement("buffer.putShort(offset, (short) \"value1\".length())")
+                .addStatement("buffer.putBytes(offset +=8, \"value1\".getBytes($T.UTF_8))", StandardCharsets.class)
+                .addStatement("return offset")
+                .build();
+    }
+
+    private MethodSpec assertStringValue()
+    {
+        return MethodSpec.methodBuilder("assertStringValue")
+                .addModifiers(STATIC)
+                .addParameter(string16FlyweightClassName, "string16FW")
+                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, string16FW.limit())", Assert.class)
+                .addStatement("$T.assertEquals(6 + LENGTH_SIZE, string16FW.sizeof())", Assert.class)
+                .addStatement("$T.assertEquals(\"value1\", string16FW.asString())", Assert.class)
+                .build();
+    }
+
+    private MethodSpec assertLengthSize()
+    {
+        return MethodSpec.methodBuilder("assertLengthSize")
+                .addModifiers(STATIC)
+                .addParameter(string16FlyweightClassName, "string16FW")
+                .addStatement("$T.assertNull(string16FW.asString())", Assert.class)
+                .addStatement("$T.assertEquals(LENGTH_SIZE, string16FW.limit())", Assert.class)
+                .addStatement("$T.assertEquals(LENGTH_SIZE, string16FW.sizeof())", Assert.class)
                 .build();
     }
 

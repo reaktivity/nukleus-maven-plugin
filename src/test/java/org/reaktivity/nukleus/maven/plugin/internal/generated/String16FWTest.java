@@ -257,17 +257,18 @@ public class String16FWTest
         return buffer;
     }
 
-    static int setBufferValue(MutableDirectBuffer buffer, int offset)
-    {
-        buffer.putShort(offset, (short) "value1".length());
-        buffer.putBytes(offset +=2, "value1".getBytes(UTF_8));
-        return offset + 6;
-    }
 
     private static String16FW asStringFW(String value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
         return new String16FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+    }
+
+    static int setBufferValue(MutableDirectBuffer buffer, int offset)
+    {
+        buffer.putShort(offset, (short) "value1".length());
+        buffer.putBytes(offset +=8, "value1".getBytes(UTF_8));
+        return offset;
     }
 
 
