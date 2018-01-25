@@ -97,87 +97,87 @@ public class Generator
 
     void generate(ClassLoader loader) throws IOException
     {
-            List<String> targetScopes = unmodifiableList(asList(scopeNames.split("\\s+")));
-            List<AstSpecificationNode> specifications = parser.parseAST(targetScopes, loader);
+        List<String> targetScopes = unmodifiableList(asList(scopeNames.split("\\s+")));
+        List<AstSpecificationNode> specifications = parser.parseAST(targetScopes, loader);
 
-            TypeResolver resolver = new TypeResolver(packageName);
-            specifications.forEach(resolver::visit);
+        TypeResolver resolver = new TypeResolver(packageName);
+        specifications.forEach(resolver::visit);
 
-            Collection<TypeSpecGenerator<?>> typeSpecs = new HashSet<>();
-            Collection<TypeSpecGenerator<?>> testTypeSpecs = new HashSet<>();
+        Collection<TypeSpecGenerator<?>> typeSpecs = new HashSet<>();
+        Collection<TypeSpecGenerator<?>> testTypeSpecs = new HashSet<>();
 
-            for (AstSpecificationNode specification : specifications)
-            {
-                String scopeName = specification.scope().name();
-                AstNodeLocator nodeLocator = new AstNodeLocator(specification.scope());
-                ScopeVisitor visitor = new ScopeVisitor(scopeName, packageName, resolver, targetScopes);
-                typeSpecs.addAll(specification.accept(visitor));
-                ScopeTestVisitor testVisitor = new ScopeTestVisitor(scopeName, packageName, resolver, targetScopes, nodeLocator);
-                testTypeSpecs.addAll(specification.accept(testVisitor));
-            }
+        for (AstSpecificationNode specification : specifications)
+        {
+            String scopeName = specification.scope().name();
+            AstNodeLocator nodeLocator = new AstNodeLocator(specification.scope());
+            ScopeVisitor visitor = new ScopeVisitor(scopeName, packageName, resolver, targetScopes);
+            typeSpecs.addAll(specification.accept(visitor));
+            ScopeTestVisitor testVisitor = new ScopeTestVisitor(scopeName, packageName, resolver, targetScopes, nodeLocator);
+            testTypeSpecs.addAll(specification.accept(testVisitor));
+        }
 
-            typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new OctetsFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new ListFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-            typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new OctetsFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new ListFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
-            testTypeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
-            System.out.println("Generating flyweights to " + outputDirectory);
-            System.out.println("Generating tests to " + outputTestDirectory);
+        testTypeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        System.out.println("Generating flyweights to " + outputDirectory);
+        System.out.println("Generating tests to " + outputTestDirectory);
 
-            if (outputDirectory.exists())
-            {
-                Files.walk(outputDirectory.toPath())
-                     .map(Path::toFile)
-                     .filter(File::isFile)
-                     .forEach(f -> f.setWritable(true));
-            }
+        if (outputDirectory.exists())
+        {
+            Files.walk(outputDirectory.toPath())
+                 .map(Path::toFile)
+                 .filter(File::isFile)
+                 .forEach(f -> f.setWritable(true));
+        }
 
-            if (outputTestDirectory.exists())
-            {
-                Files.walk(outputTestDirectory.toPath())
-                    .map(Path::toFile)
-                    .filter(File::isFile)
-                    .forEach(f -> f.setWritable(true));
-            }
+        if (outputTestDirectory.exists())
+        {
+            Files.walk(outputTestDirectory.toPath())
+                .map(Path::toFile)
+                .filter(File::isFile)
+                .forEach(f -> f.setWritable(true));
+        }
 
-            for (TypeSpecGenerator<?> typeSpec : typeSpecs)
-            {
-                JavaFile sourceFile = JavaFile.builder(typeSpec.className().packageName(), typeSpec.generate())
-                        .addFileComment("TODO: license")
-                        .skipJavaLangImports(true)
-                        .build();
-                sourceFile.writeTo(outputDirectory);
-            }
-
-            for (TypeSpecGenerator<?> testTypeSpec : testTypeSpecs)
-            {
-                JavaFile sourceFile = JavaFile.builder(testTypeSpec.className().packageName(), testTypeSpec.generate())
+        for (TypeSpecGenerator<?> typeSpec : typeSpecs)
+        {
+            JavaFile sourceFile = JavaFile.builder(typeSpec.className().packageName(), typeSpec.generate())
                     .addFileComment("TODO: license")
                     .skipJavaLangImports(true)
                     .build();
-                sourceFile.writeTo(outputTestDirectory);
-            }
+            sourceFile.writeTo(outputDirectory);
+        }
 
-            if (outputDirectory.exists())
-            {
-                Files.walk(outputDirectory.toPath())
-                     .map(Path::toFile)
-                     .filter(File::isFile)
-                     .forEach(f -> f.setWritable(false));
-            }
+        for (TypeSpecGenerator<?> testTypeSpec : testTypeSpecs)
+        {
+            JavaFile sourceFile = JavaFile.builder(testTypeSpec.className().packageName(), testTypeSpec.generate())
+                .addFileComment("TODO: license")
+                .skipJavaLangImports(true)
+                .build();
+            sourceFile.writeTo(outputTestDirectory);
+        }
 
-            if (outputTestDirectory.exists())
-            {
-                Files.walk(outputTestDirectory.toPath())
-                    .map(Path::toFile)
-                    .filter(File::isFile)
-                    .forEach(f -> f.setWritable(false));
-            }
+        if (outputDirectory.exists())
+        {
+            Files.walk(outputDirectory.toPath())
+                 .map(Path::toFile)
+                 .filter(File::isFile)
+                 .forEach(f -> f.setWritable(false));
+        }
+
+        if (outputTestDirectory.exists())
+        {
+            Files.walk(outputTestDirectory.toPath())
+                .map(Path::toFile)
+                .filter(File::isFile)
+                .forEach(f -> f.setWritable(false));
+        }
     }
 
     Generator debug(Consumer<String> debug)

@@ -90,6 +90,8 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
                 .addMethod(shouldSetToNull())
                 .addMethod(shouldFailToSetValueExceedingMaximumLength())
+                .addMethod(shouldFailToBuildLargeString())
+                .addMethod(shouldReturnString())
                 .addMethod(setFieldValue())
                 .addMethod(asBuffer)
                 .addMethod(asStringFW)
