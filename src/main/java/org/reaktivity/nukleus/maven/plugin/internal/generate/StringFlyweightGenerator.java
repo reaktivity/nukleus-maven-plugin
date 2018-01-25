@@ -53,7 +53,8 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldOffsetLengthConstant())
+        return classBuilder.addField(maxLengthConstant())
+                            .addField(fieldOffsetLengthConstant())
                             .addField(fieldSizeLengthConstant())
                             .addMethod(limitMethod())
                             .addMethod(asStringMethod())
@@ -62,6 +63,13 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                             .addMethod(length0Method())
                             .addType(builderClassBuilder.build())
                             .build();
+    }
+
+    private FieldSpec maxLengthConstant()
+    {
+        return FieldSpec.builder(int.class, "MAX_LENGTH", PUBLIC, STATIC, FINAL)
+                .initializer("0xff")
+                .build();
     }
 
     private FieldSpec fieldOffsetLengthConstant()
@@ -130,8 +138,8 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("length0")
                 .addModifiers(PRIVATE)
                 .returns(int.class)
-                .addStatement("int length = buffer().getByte(offset() + FIELD_OFFSET_LENGTH) & 0xFF")
-                .addStatement("return length == 255 ? -1 : length")
+                .addStatement("int length = buffer().getByte(offset() + FIELD_OFFSET_LENGTH) & 0xff")
+                .addStatement("return length == 0xff ? -1 : length")
                 .build();
     }
 
@@ -270,10 +278,9 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("checkLength")
                     .addModifiers(PRIVATE, STATIC)
                     .addParameter(int.class, "length")
-                    .addStatement("final int maxLength = 254")
-                    .beginControlFlow("if (length > maxLength)")
+                    .beginControlFlow("if (length > MAX_LENGTH)")
                     .addStatement(
-                            "final String msg = String.format(\"length=%d is beyond maximum length=%d\", length, maxLength)")
+                            "final String msg = String.format(\"length=%d is beyond maximum length=%d\", length, MAX_LENGTH)")
                     .addStatement("throw new IllegalArgumentException(msg)")
                     .endControlFlow()
                     .build();

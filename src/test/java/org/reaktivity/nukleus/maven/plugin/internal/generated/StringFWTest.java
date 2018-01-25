@@ -27,15 +27,17 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 
+import java.nio.charset.StandardCharsets;
+
 public class StringFWTest
 {
     private static final int LENGTH_SIZE = 1;
 
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(256));
     {
         buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
     }
-    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100));
+    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(256));
     {
         expected.setMemory(0, expected.capacity(), (byte) 0xab);
     }
@@ -43,15 +45,20 @@ public class StringFWTest
     private final StringFW stringRO = new StringFW();
 
     @Test
+    public void shouldBuildStringWithMaximumLength() throws Exception
+    {
+        int tooLong = StringFW.MAX_LENGTH;
+        String str = String.format("%" + Integer.toString(tooLong) + "s", "0");
+        setFieldValue(str);
+    }
+
+    @Test
     public void shouldSetUsingString() throws Exception
     {
         int offset = 0;
         int expectedLimit = setBufferValue(expected, offset);
 
-        int limit = stringRW.wrap(buffer, offset, buffer.capacity())
-                .set("value1", UTF_8)
-                .build()
-                .limit();
+        int limit = setFieldValue("value1");
         stringRO.wrap(buffer,  0,  limit);
 
         assertEquals(expectedLimit, limit);
@@ -96,10 +103,7 @@ public class StringFWTest
     @Test
     public void shouldDefaultAfterRewrap() throws Exception
     {
-        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                .set("Hello, world", UTF_8)
-                .build()
-                .limit();
+        int limit = setFieldValue("Hello World");
 
         StringFW string = stringRW.wrap(buffer, 0, limit)
                 .build();
@@ -130,10 +134,7 @@ public class StringFWTest
     @Test
     public void shouldSetToNull() throws Exception
     {
-        int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                .set(null, UTF_8)
-                .build()
-                .limit();
+        int limit = setFieldValue(null);
         assertEquals(1, limit);
         stringRO.wrap(buffer,  0,  limit);
         assertLengthSize(stringRO);
@@ -242,6 +243,14 @@ public class StringFWTest
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
         return new StringFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+    }
+
+    int setFieldValue(String value)
+    {
+        return stringRW.wrap(buffer, 0, buffer.capacity())
+                .set(value, StandardCharsets.UTF_8)
+                .build()
+                .limit();
     }
 
     static int setBufferValue(MutableDirectBuffer buffer, int offset)
