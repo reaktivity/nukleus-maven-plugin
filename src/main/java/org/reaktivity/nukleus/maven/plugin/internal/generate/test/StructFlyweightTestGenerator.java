@@ -47,10 +47,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNodeLocator;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecMixinGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.MethodSpecGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.*;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -89,17 +86,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
     private final String baseName;
     private final TypeSpec.Builder builder;
+    private final MemberConstantGenerator memberConstant;
     private final TypeIdTestGenerator typeId;
     private final BufferGenerator buffer;
     private final ExpectedBufferGenerator expectedBuffer;
     private final FieldRWGenerator fieldRW;
     private final FieldROGenerator fieldRO;
     private final MemberFieldGenerator memberField;
-    private final MemberSizeConstantGenerator memberSizeConstant;
-    private final MemberOffsetConstantGenerator memberOffsetConstant;
     private final MemberAccessorGenerator memberAccessor;
-    private final WrapMethodGenerator wrapMethod;
-    private final LimitMethodGenerator limitMethod;
     private final ToStringMethodGenerator toStringMethod;
     private final ShouldDefaultValuesMethodGenerator shouldDefaultValuesMethodGenerator;
     private final AstNodeLocator astNodeLocator;
@@ -112,17 +106,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         super(structName);
         this.baseName = baseName + "Test";
         this.builder = classBuilder(structName).addModifiers(PUBLIC, FINAL);
+        this.memberConstant = new MemberConstantGenerator(structName, builder);
+        this.typeId = new TypeIdTestGenerator(structName, builder); // should add tests for correct type set
         this.buffer = new BufferGenerator(structName, builder); // should add tests for correct type set
         this.expectedBuffer = new ExpectedBufferGenerator(structName, builder);
         this.fieldRW = new FieldRWGenerator(structName, builder, baseName);
         this.fieldRO = new FieldROGenerator(structName, builder, baseName);
-        this.typeId = new TypeIdTestGenerator(structName, builder); // should add tests for correct type set
-        this.memberSizeConstant = new MemberSizeConstantGenerator(structName, builder);
-        this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
         this.memberField = new MemberFieldGenerator(structName, builder);
         this.memberAccessor = new MemberAccessorGenerator(structName, builder);
-        this.wrapMethod = new WrapMethodGenerator(structName);
-        this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
         this.shouldDefaultValuesMethodGenerator = new ShouldDefaultValuesMethodGenerator();
         this.astNodeLocator = astNodeLocator;
@@ -167,12 +158,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         // TODO: build fields and methods here
+        memberConstant.build();
         buffer.build();
         expectedBuffer.build();
         fieldRW.build();
         fieldRO.build();
-        memberOffsetConstant.build();
-        memberSizeConstant.build();
         memberField.build();
         memberAccessor.build();
 
@@ -1215,6 +1205,91 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
     }
 
+    private static final class MemberConstantGenerator extends ClassSpecMixinGenerator
+    {
+        private int nextIndex;
+        private CodeBlock.Builder fieldsWithDefaultsInitializer = CodeBlock.builder();
+        private List<String> fieldNames = new ArrayList<>();
+
+        private MemberConstantGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder)
+        {
+            super(thisType, builder);
+        }
+
+        public MemberConstantGenerator addMember(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                int size,
+                String sizeName,
+                Object defaultValue)
+        {
+            builder.addField(
+                    FieldSpec.builder(int.class, index(name), PRIVATE, STATIC, FINAL)
+                            .initializer(Integer.toString(nextIndex++))
+                            .build());
+            fieldNames.add(name);
+            boolean isOctetsType = isOctetsType(type);
+            if (defaultValue != null && !isOctetsType)
+            {
+                Object defaultValueToSet = defaultValue == NULL_DEFAULT ? null : defaultValue;
+                TypeName generateType = (unsignedType != null) ? unsignedType : type;
+                if (size != -1 || sizeName != null)
+                {
+                    generateType = generateType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
+                            : INT_ITERATOR_CLASS_NAME;
+                }
+                if (isVarint32Type(type))
+                {
+                    generateType = TypeName.INT;
+                }
+                else if (isVarint64Type(type))
+                {
+                    generateType = TypeName.LONG;
+                }
+                builder.addField(
+                        FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
+                                .initializer(Objects.toString(defaultValueToSet))
+                                .build());
+                fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
+            }
+            else if (isImplicitlyDefaulted(type, size, sizeName))
+            {
+                fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
+            }
+            return this;
+        }
+
+        @Override
+        public TypeSpec.Builder build()
+        {
+            builder.addField(
+                    FieldSpec.builder(int.class, "FIELD_COUNT", PRIVATE, STATIC, FINAL)
+                            .initializer(Integer.toString(nextIndex))
+                            .build())
+                    .addField(
+                            FieldSpec.builder(BitSet.class, "FIELDS_WITH_DEFAULTS", PRIVATE, STATIC, FINAL)
+                                    .addAnnotation(SUPPRESS_WARNINGS_SERIAL)
+                                    .initializer(CodeBlock.builder()
+                                            .add("new BitSet(FIELD_COUNT)")
+                                            .beginControlFlow(" ")
+                                            .beginControlFlow(" ")
+                                            .add(fieldsWithDefaultsInitializer.build())
+                                            .endControlFlow()
+                                            .endControlFlow()
+                                            .build())
+                                    .build())
+                    .addField(
+                            FieldSpec.builder(String[].class, "FIELD_NAMES", PRIVATE, STATIC, FINAL)
+                                    .initializer("{\n  \"" + String.join("\",\n  \"", fieldNames) + "\"\n}")
+                                    .build());
+
+            return super.build();
+        }
+    }
+
     private final class ShouldDefaultValuesMethodGenerator extends MethodSpecGenerator
     {
         private class FieldDefinition
@@ -1610,6 +1685,13 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return fieldName.replaceAll("([^_A-Z])([A-Z])", "$1_$2").toUpperCase();
     }
 
+    private static boolean isVarint32Type(
+            TypeName type)
+    {
+        return type instanceof ClassName && "Varint32FW".equals(((ClassName) type).simpleName());
+    }
+
+
     private static String dynamicLimit(String fieldName)
     {
         return "limit" + initCap(fieldName);
@@ -1618,6 +1700,61 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private static String iterator(String fieldName)
     {
         return "iterator" + initCap(fieldName);
+    }
+
+    private static boolean isOctetsType(
+            TypeName type)
+    {
+        return type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName());
+    }
+
+    private static boolean isVarint64Type(
+            TypeName type)
+    {
+        return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static String defaultName(
+            String fieldName)
+    {
+        return String.format("DEFAULT_%s", constant(fieldName));
+    }
+
+    private static boolean isImplicitlyDefaulted(
+        TypeName type,
+        int size,
+        String sizeName)
+    {
+        boolean result = false;
+        if (type instanceof ClassName && !isStringType((ClassName) type) && !isVarintType(type))
+        {
+            ClassName classType = (ClassName) type;
+            if ("OctetsFW".equals(classType.simpleName()))
+            {
+                result = (size == -1 && sizeName == null);
+            }
+            else
+            {
+                result = true;
+            }
+        }
+        if (type instanceof ParameterizedTypeName)
+        {
+            ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+            if ("ListFW".equals(parameterizedType.rawType.simpleName())
+                    || "ArrayFW".equals(parameterizedType.rawType.simpleName()))
+            {
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    private static boolean isVarintType(
+            TypeName type)
+    {
+        return type instanceof ClassName && "Varint32FW".equals(((ClassName) type).simpleName())
+                || type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
     }
 
     private static ClassName iteratorClass(
