@@ -75,7 +75,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addField(fieldString16Builder())
                 .addField(fieldString16ReadOnly())
                 .addMethod(values())
-                .addMethod(shouldBuildLargeString())
+                .addMethod(shouldBuildStringWithMaximumLength())
                 .addMethod(shouldSetUsingString())
                 .addMethod(shouldSetUsingStringFW(asStringFW))
                 .addMethod(shouldSetUsingBuffer(asBuffer))
@@ -89,6 +89,7 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .addMethod(shouldFailToSetUsingStringFWWhenExceedsMaxLimit(asStringFW))
                 .addMethod(shouldFailToSetUsingBufferWhenExceedsMaxLimit())
                 .addMethod(shouldSetToNull())
+                .addMethod(shouldFailToSetValueExceedingMaximumLength())
                 .addMethod(shouldFailToBuildLargeString())
                 .addMethod(shouldReturnString())
                 .addMethod(setFieldValue())
@@ -341,29 +342,32 @@ public final class String16FlyweightTestGenerator extends ClassSpecGenerator
                 .build();
     }
 
-    private MethodSpec shouldFailToBuildLargeString()
+    private MethodSpec shouldFailToSetValueExceedingMaximumLength()
     {
         AnnotationSpec testAnnotation = AnnotationSpec.builder(Test.class)
                 .addMember("expected", "$T.class", IllegalArgumentException.class)
                 .build();
 
-        return MethodSpec.methodBuilder("shouldFailToBuildLargeString")
+
+        return MethodSpec.methodBuilder("shouldFailToSetValueExceedingMaximumLength")
                 .addModifiers(PUBLIC)
                 .addAnnotation(testAnnotation)
                 .addException(Exception.class)
-                .addStatement("$1T str = $1T.format(\"%65535s\", \"0\")", String.class)
+                .addStatement("int tooLong = String16FW.MAX_LENGTH + 1")
+                .addStatement("$1T str = $1T.format(\"%\" + Integer.toString(tooLong) + \"s\", \"0\")", String.class)
                 .addStatement("stringRW.wrap(buffer, 0, buffer.capacity())\n" +
                         ".set(str, $T.UTF_8)", StandardCharsets.class)
                 .build();
     }
 
-    private MethodSpec shouldBuildLargeString()
+    private MethodSpec shouldBuildStringWithMaximumLength()
     {
-        return MethodSpec.methodBuilder("shouldBuildLargeString")
+        return MethodSpec.methodBuilder("shouldBuildStringWithMaximumLength")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
-                .addStatement("$1T str = $1T.format(\"%65534s\", \"0\")", String.class)
+                .addStatement("int tooLong = String16FW.MAX_LENGTH")
+                .addStatement("$1T str = $1T.format(\"%\" + Integer.toString(tooLong) + \"s\", \"0\")", String.class)
                 .addStatement("$N(str)", setFieldValue())
                 .build();
     }

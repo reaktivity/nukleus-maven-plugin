@@ -22,6 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -163,6 +164,15 @@ public class String16FWTest
         assertLengthSize(stringRO);
     }
 
+    @Test
+    public void shouldReturnValueFromToString() throws Exception
+    {
+        int limit = setFieldValue("value1");
+        stringRO.wrap(buffer,  0,  limit);
+        assertNotNull(stringRO.toString());
+        assertTrue(stringRO.toString().equals("\"value1\""));
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToWrapWithInsufficientLength()
     {
@@ -236,12 +246,6 @@ public class String16FWTest
                 .set(str, UTF_8);
     }
 
-    @Test
-    public void shouldReturnString() throws Exception
-    {
-        assertNotNull(stringRO.toString());
-    }
-
     int setFieldValue(String value)
     {
         return stringRW.wrap(buffer, 0, buffer.capacity())
@@ -256,7 +260,6 @@ public class String16FWTest
         buffer.putStringWithoutLengthUtf8(0, value);
         return buffer;
     }
-
 
     private static String16FW asStringFW(String value)
     {

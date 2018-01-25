@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -31,6 +32,12 @@ public class NestedFWTest
 {
     private static final int INDEX_FLAT = 1;
     private static final int INDEX_FIXED5 = 2;
+
+    private static final String[] FIELD_NAMES = {
+      "fixed4",
+      "flat",
+      "fixed5"
+    };
 
     private final NestedFW.Builder nestedRW = new NestedFW.Builder();
     private final NestedFW nestedRO = new NestedFW();
@@ -77,6 +84,19 @@ public class NestedFWTest
 
         nestedRO.wrap(buffer,  offset,  limit);
         assertAllDefaultValues(nestedRO);
+    }
+
+    @Test
+    public void shouldReportAllFieldValuesInToString() throws Exception
+    {
+        final int offset = 11;
+        int limit = setAllBufferValues(buffer, offset);
+        String result = nestedRO.wrap(buffer, offset, limit).toString();
+        assertNotNull(result);
+        for (String fieldName : FIELD_NAMES)
+        {
+            assertTrue(String.format("toString is missing %s", fieldName), result.contains(fieldName));
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -153,12 +173,6 @@ public class NestedFWTest
         nestedRW.wrap(buffer, 0, 100)
             .flat(flat -> FlatFWTest.setRequiredFields(flat, Integer.MAX_VALUE))
             .build();
-    }
-
-    @Test
-    public void shouldReturnString() throws Exception
-    {
-        assertNotNull(nestedRO.toString());
     }
 
     static int setAllBufferValues(MutableDirectBuffer buffer, int offset)

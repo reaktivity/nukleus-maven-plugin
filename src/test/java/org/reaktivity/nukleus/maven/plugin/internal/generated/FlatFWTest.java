@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -41,6 +42,14 @@ public class FlatFWTest
     private static final int INDEX_FIXED3 = 3;
 
     private static final int INDEX_STRING2 = 4;
+
+    private static final String[] FIELD_NAMES = {
+      "fixed1",
+      "fixed2",
+      "string1",
+      "fixed3",
+      "string2"
+    };
 
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     {
@@ -135,6 +144,18 @@ public class FlatFWTest
 
     }
 
+    @Test
+    public void shouldReportAllFieldValuesInToString() throws Exception
+    {
+        final int offset = 11;
+        int limit = setAllBufferValues(buffer, offset);
+        String result = flatRO.wrap(buffer, offset, limit).toString();
+        assertNotNull(result);
+        for (String fieldName : FIELD_NAMES)
+        {
+            assertTrue(String.format("toString is missing %s", fieldName), result.contains(fieldName));
+        }
+    }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetFixed1WithInsufficientSpace()
@@ -268,12 +289,6 @@ public class FlatFWTest
         expectedException.expectMessage("string2");
         setRequiredFields(flatRW.wrap(buffer, 0, 100), INDEX_STRING2)
                 .build();
-    }
-
-    @Test
-    public void shouldReturnString() throws Exception
-    {
-        assertNotNull(flatRO.toString());
     }
 
     static int setAllRequiredBufferValues(MutableDirectBuffer buffer, int offset)

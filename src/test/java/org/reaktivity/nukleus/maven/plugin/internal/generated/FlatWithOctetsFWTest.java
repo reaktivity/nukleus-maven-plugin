@@ -40,6 +40,19 @@ public class FlatWithOctetsFWTest
     private static final int INDEX_LENGTH_OCTETS3 = 5;
     private static final int INDEX_LENGTH_OCTETS4 = 7;
 
+    private static final String[] FIELD_NAMES = {
+      "fixed1",
+      "octets1",
+      "lengthOctets2",
+      "string1",
+      "octets2",
+      "lengthOctets3",
+      "octets3",
+      "lengthOctets4",
+      "octets4",
+      "extension"
+    };
+
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
     {
         buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
@@ -145,6 +158,19 @@ public class FlatWithOctetsFWTest
 
         assertNull(wrapped.octets3());
         assertNull(wrapped.octets4());
+    }
+
+    @Test
+    public void shouldReportAllFieldValuesInToString() throws Exception
+    {
+        final int offset = 11;
+        int limit = setAllBufferValues(buffer, offset);
+        String result = flatWithOctetsRO.wrap(buffer, offset, limit).toString();
+        assertNotNull(result);
+        for (String fieldName : FIELD_NAMES)
+        {
+            assertTrue(String.format("toString is missing %s", fieldName), result.contains(fieldName));
+        }
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -460,12 +486,6 @@ public class FlatWithOctetsFWTest
                 .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
                 .string1("value1")
                 .octets2(valueBuffer, 0, 65536);
-    }
-
-    @Test
-    public void shouldReturnString() throws Exception
-    {
-        assertNotNull(flatWithOctetsRO.toString());
     }
 
     static DirectBuffer asBuffer(String value)
