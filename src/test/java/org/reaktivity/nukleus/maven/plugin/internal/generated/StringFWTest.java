@@ -33,11 +33,11 @@ public class StringFWTest
 {
     private static final int LENGTH_SIZE = 1;
 
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(256));
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(StringFW.MAX_LENGTH+1));
     {
         buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
     }
-    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(256));
+    MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(StringFW.MAX_LENGTH+1));
     {
         expected.setMemory(0, expected.capacity(), (byte) 0xab);
     }
