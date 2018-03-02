@@ -71,9 +71,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final AstNodeLocator astNodeLocator;
 
     public StructFlyweightTestGenerator(
-        ClassName structName,
-        String baseName,
-        AstNodeLocator astNodeLocator)
+            ClassName structName,
+            String baseName,
+            AstNodeLocator astNodeLocator)
     {
         super(structName);
         this.baseName = baseName + "Test";
@@ -98,16 +98,16 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     }
 
     public StructFlyweightTestGenerator addMember(
-        AstType memberType,
-        String name,
-        TypeName type,
-        TypeName unsignedType,
-        int size,
-        String sizeName,
-        TypeName sizeType,
-        boolean usedAsSize,
-        Object defaultValue,
-        AstByteOrder byteOrder)
+            AstType memberType,
+            String name,
+            TypeName type,
+            TypeName unsignedType,
+            int size,
+            String sizeName,
+            TypeName sizeType,
+            boolean usedAsSize,
+            Object defaultValue,
+            AstByteOrder byteOrder)
     {
         if (memberType.isDynamic())
         {
@@ -123,6 +123,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         }
         catch (UnsupportedOperationException uoe)
         {
+
         }
         return this;
     }
@@ -131,13 +132,13 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         // TODO: build fields and methods here
-            memberConstant.build();
-            buffer.build();
-            expectedBuffer.build();
-            fieldRW.build();
-            fieldRO.build();
-            expectedException.build();
-            setBufferValuesMethodGenerator.build();
+        memberConstant.build();
+        buffer.build();
+        expectedBuffer.build();
+        fieldRW.build();
+        fieldRO.build();
+        expectedException.build();
+        setBufferValuesMethodGenerator.build();
 
 
         return builder
@@ -150,14 +151,15 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         private int typeId;
 
         private TypeIdTestGenerator(
-            ClassName thisType,
-            TypeSpec.Builder builder)
+                ClassName thisType,
+                TypeSpec.Builder builder)
         {
             super(thisType, builder);
+
         }
 
         public void typeId(
-            int typeId)
+                int typeId)
         {
             this.typeId = typeId;
         }
@@ -184,27 +186,27 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private static final class BufferGenerator extends ClassSpecMixinGenerator
     {
 
-    private BufferGenerator(
-            ClassName thisType,
-            TypeSpec.Builder builder)
-    {
-        super(thisType, builder);
-    }
+        private BufferGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder)
+        {
+            super(thisType, builder);
+        }
 
-    @Override
-    public TypeSpec.Builder build()
-    {
-        FieldSpec bufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
-                .initializer("new $T($T.allocateDirect(100)); \n" +
-                        "{\n"+
-                        "    buffer.setMemory(0, buffer.capacity(), (byte) 0xF);\n" +
-                        "}", UnsafeBuffer.class, ByteBuffer.class)
-                .build();
-        builder.addField(bufferFieldSpec);
+        @Override
+        public TypeSpec.Builder build()
+        {
+            FieldSpec bufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
+                    .initializer("new $T($T.allocateDirect(100)); \n" +
+                            "{\n" +
+                            "    buffer.setMemory(0, buffer.capacity(), (byte) 0xF);\n" +
+                            "}", UnsafeBuffer.class, ByteBuffer.class)
+                    .build();
+            builder.addField(bufferFieldSpec);
 
-        return builder;
+            return builder;
+        }
     }
-}
 
     private static final class ExpectedBufferGenerator extends ClassSpecMixinGenerator
     {
@@ -221,7 +223,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             FieldSpec expectedBufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "expectedBuffer", PRIVATE, FINAL)
                     .initializer("new $T($T.allocateDirect(100)); \n" +
-                            "{\n"+
+                            "{\n" +
                             "    expectedBuffer.setMemory(0, expectedBuffer.capacity(), (byte) 0xF);\n" +
                             "}", UnsafeBuffer.class, ByteBuffer.class)
                     .build();
@@ -295,7 +297,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         @Override
         public TypeSpec.Builder build()
         {
-            FieldSpec fieldRWFieldSpec = FieldSpec.builder(fieldFWClassName,  "fieldRO", PRIVATE, FINAL)
+            FieldSpec fieldRWFieldSpec = FieldSpec.builder(fieldFWClassName, "fieldRO", PRIVATE, FINAL)
                     .initializer("new $T()", fieldFWClassName)
                     .build();
             builder.addField(fieldRWFieldSpec);
@@ -364,8 +366,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         public TypeSpec.Builder build()
         {
             builder.addField(FieldSpec.builder(String[].class, "FIELD_NAMES", PRIVATE, STATIC, FINAL)
-                                    .initializer("{\n  \"" + String.join("\",\n  \"", fieldNames) + "\"\n}")
-                                    .build());
+                    .initializer("{\n  \"" + String.join("\",\n  \"", fieldNames) + "\"\n}")
+                    .build());
 
             return super.build();
         }
@@ -376,8 +378,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         private static final Map<TypeName, String> PUTTER_NAMES;
         private static final Map<TypeName, String> TYPE_SIZE;
         private static final Map<TypeName, String> SIZEOF_BY_NAME = initSizeofByName();
-
-        private boolean checkFollowingFieldsNotSetMethodIsRequired;
 
         static
         {
@@ -405,9 +405,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             TYPE_SIZE = unmodifiableMap(sizeNames);
         }
 
-
-        private final List<String> setAllBufferFormats = new LinkedList<>();
-        private final List<String> setRequiredBufferFormats = new LinkedList<>();
+        private final CodeBlock.Builder setAllBufferCode = CodeBlock.builder();
+        private final CodeBlock.Builder setRequiredBufferCode = CodeBlock.builder();
         private int valueIncrement = 0;
         private String priorValueSize = "0";
 
@@ -435,51 +434,25 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 if (sizeName != null)
                 {
-                   //TODO: Add IntegerVariableArray
-                }
-                else if (size != -1)
+                    //TODO: Add IntegerVariableArray
+                } else if (size != -1)
                 {
                     //TODO: Add integerFixedArrayIterator member
                 }
                 else
                 {
                     //TODO: Add primitive member
-                    String putterName = PUTTER_NAMES.get(type);
-                    if (putterName == null)
-                    {
-                        throw new IllegalStateException("member type not supported: " + type);
-                    }
-
-                    setAllBufferFormats.add(String.format("buffer.%s(offset += %s, (%s) %d0)",
-                            putterName,
-                            priorValueSize,
-                            SIZEOF_BY_NAME.get(type).toLowerCase(),
-                            valueIncrement));
-                    if(defaultValue != null)
-                    {
-                        setRequiredBufferFormats.add(String.format("buffer.%s(offset += %s, (%s) %s)",
-                                putterName,
-                                priorValueSize,
-                                SIZEOF_BY_NAME.get(type).toLowerCase(),
-                                defaultValue.toString()));
-                    }
-                    else
-                    {
-                        setRequiredBufferFormats.add(String.format("buffer.%s(offset += %s, (%s) %d0)",
-                                putterName,
-                                priorValueSize,
-                                SIZEOF_BY_NAME.get(type).toLowerCase(),
-                                valueIncrement));
-                    }
-
-                    priorValueSize = TYPE_SIZE.get(type);
+                    setPremitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                             byteOrder, null, setAllBufferCode);
+                    setPremitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                             byteOrder, defaultValue, setRequiredBufferCode);
                 }
             }
             else
             {
-               //TODO: Add nonprimative member
-                setNonPremitiveValue(setAllBufferFormats);
-                setNonPremitiveValue(setRequiredBufferFormats);
+                //TODO: Add nonprimative member
+                setNonPremitiveValue(setAllBufferCode);
+                setNonPremitiveValue(setRequiredBufferCode);
             }
 
             return this;
@@ -488,33 +461,63 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         @Override
         public TypeSpec.Builder build()
         {
-            addSetAllBufferValuesMember();
-            addSetRequiredBufferValuesMember();
+            addSetAllBufferValuesMember(setAllBufferCode);
+            addSetRequiredBufferValuesMember(setRequiredBufferCode);
 
             return super.build();
         }
 
-        private void setNonPremitiveValue(List<String> list)
+        private void setPremitiveValue(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue,
+                CodeBlock.Builder code)
         {
-            String byteValue = String.format("buffer.putByte(offset += %s, (byte) \"value%d\".length())",
-                    priorValueSize,
-                    valueIncrement);
-            String bytesValue = String.format("buffer.putBytes(offset += 1, \"value%d\".getBytes(%s.UTF_8))",
-                    valueIncrement,
-                    StandardCharsets.class.getName());
-            list.add(byteValue);
-            list.add(bytesValue);
-            priorValueSize =  Integer.toString(("value"+valueIncrement).length());
-        }
-
-        private void addSetAllBufferValuesMember()
-        {
-            CodeBlock.Builder code = CodeBlock.builder();
-            for (String format : setAllBufferFormats)
+            String putterName = PUTTER_NAMES.get(type);
+            if (putterName == null)
             {
-                code.addStatement(format);
+                throw new IllegalStateException("member type not supported: " + type);
             }
 
+            if (defaultValue != null)
+            {
+                code.addStatement("buffer.$L(offset += $L, ($L) $L)",
+                        putterName,
+                        priorValueSize,
+                        SIZEOF_BY_NAME.get(type).toLowerCase(),
+                        defaultValue.toString());
+            }
+            else
+            {
+                code.addStatement("buffer.$L(offset += $L, ($L) $L0)",
+                        putterName,
+                        priorValueSize,
+                        SIZEOF_BY_NAME.get(type).toLowerCase(),
+                        valueIncrement);
+            }
+
+            priorValueSize = TYPE_SIZE.get(type);
+        }
+
+        private void setNonPremitiveValue(CodeBlock.Builder code)
+        {
+            code.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
+                    priorValueSize,
+                    valueIncrement);
+            code.addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
+                    valueIncrement,
+                    StandardCharsets.class);
+            priorValueSize = Integer.toString(("value" + valueIncrement).length());
+        }
+
+        private void addSetAllBufferValuesMember(CodeBlock.Builder code)
+        {
             builder.addMethod(methodBuilder("setAllBufferValues")
                     .addModifiers(STATIC)
                     .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
@@ -526,14 +529,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
         }
 
-        private void addSetRequiredBufferValuesMember()
+        private void addSetRequiredBufferValuesMember(CodeBlock.Builder code)
         {
-            CodeBlock.Builder code = CodeBlock.builder();
-            for (String format : setRequiredBufferFormats)
-            {
-                code.addStatement(format);
-            }
-
             builder.addMethod(methodBuilder("setRequiredBufferValues")
                     .addModifiers(STATIC)
                     .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
@@ -559,16 +556,16 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         public MethodSpec generate()
         {
             return builder.addStatement("final int offset = 11")
-                   .addStatement("int limit = setAllBufferValues(buffer, offset)")
-                   .addStatement("String result = fieldRO.wrap(buffer, offset, limit).toString()")
-                   .addStatement("$T.assertNotNull(result)", Assert.class)
-                   .addStatement(String.format("for (String fieldName : FIELD_NAMES)" +
-                           "\n{" +
-                           "\n  %s.%s" +
-                           "\n}",
-                           Assert.class.getName(),
-                           "assertTrue(String.format(\"toString is missing %s\", fieldName), result.contains(fieldName));"))
-                   .build();
+                    .addStatement("int limit = setAllBufferValues(buffer, offset)")
+                    .addStatement("String result = fieldRO.wrap(buffer, offset, limit).toString()")
+                    .addStatement("$T.assertNotNull(result)", Assert.class)
+                    .addStatement(String.format("for (String fieldName : FIELD_NAMES)" +
+                                    "\n{" +
+                                    "\n  %s.%s" +
+                                    "\n}",
+                            Assert.class.getName(),
+                            "assertTrue(String.format(\"toString is missing %s\", fieldName), result.contains(fieldName));"))
+                    .build();
         }
     }
 
