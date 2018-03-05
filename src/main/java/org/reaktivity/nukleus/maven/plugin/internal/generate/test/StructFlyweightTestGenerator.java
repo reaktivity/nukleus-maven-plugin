@@ -47,6 +47,20 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.*;
 
 public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 {
+    private enum StringSetterVariant
+    {
+       STRINGFW,
+       BUFFER,
+       STRING
+    }
+
+    private enum OctetsSetterVariant
+    {
+        OCTETSFW,
+        BUFFER,
+        ARRAY,
+        VISITOR
+    }
 
     private static final Set<String> RESERVED_METHOD_NAMES = new HashSet<>(Arrays.asList(new String[]
             {
@@ -67,8 +81,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final ExpectedExceptionGenerator expectedException;
     private final FieldRWGenerator fieldRW;
     private final FieldROGenerator fieldRO;
-    private final SetBufferValuesMethodGenerator setBufferValuesMethodGenerator;
-    private final SetBuilderValuesMethodGenerator setBuilderValuesMethodGenerator;
+    private final SetBufferValuesMethodGenerator setAllBufferValuesMethodGenerator;
+    private final SetBufferValuesMethodGenerator setRequiredBufferValuesMethodGenerator;
+    private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGenerator;
     private final ToStringTestMethodGenerator toStringTestMethodGenerator;
     private final AstNodeLocator astNodeLocator;
 
@@ -87,8 +102,13 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         this.expectedException = new ExpectedExceptionGenerator(structName, builder);
         this.fieldRW = new FieldRWGenerator(structName, builder, baseName);
         this.fieldRO = new FieldROGenerator(structName, builder, baseName);
-        this.setBufferValuesMethodGenerator = new SetBufferValuesMethodGenerator(structName, builder);
-        this.setBuilderValuesMethodGenerator = new SetBuilderValuesMethodGenerator(structName, builder, baseName);
+        this.setAllBufferValuesMethodGenerator = new SetBufferValuesMethodGenerator(true);
+        this.setRequiredBufferValuesMethodGenerator = new SetBufferValuesMethodGenerator(false);
+
+
+        this.setAllBuilderValuesMethodGenerator = new SetAllBuilderValuesMethodGenerator(StringSetterVariant.STRING,
+                OctetsSetterVariant.OCTETSFW);
+
         this.toStringTestMethodGenerator = new ToStringTestMethodGenerator(baseName);
         this.astNodeLocator = astNodeLocator;
     }
@@ -121,9 +141,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         try
         {
             memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
-            setBufferValuesMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+            setAllBufferValuesMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue);
-            setBuilderValuesMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+            setRequiredBufferValuesMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                    byteOrder, defaultValue);
+            setAllBuilderValuesMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue);
         }
         catch (UnsupportedOperationException uoe)
@@ -143,11 +165,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         fieldRW.build();
         fieldRO.build();
         expectedException.build();
-        setBufferValuesMethodGenerator.build();
-        setBuilderValuesMethodGenerator.build();
-
+        setAllBuilderValuesMethodGenerator.build();
 
         return builder
+                .addMethod(setAllBufferValuesMethodGenerator.generate())
+                .addMethod(setRequiredBufferValuesMethodGenerator.generate())
                 .addMethod(toStringTestMethodGenerator.generate())
                 .build();
     }
@@ -379,7 +401,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         }
     }
 
-    private static final class SetBufferValuesMethodGenerator extends ClassSpecMixinGenerator
+    private static final class SetBufferValuesMethodGenerator extends MethodSpecGenerator
     {
         private static final Map<TypeName, String> PUTTER_NAMES;
         private static final Map<TypeName, String> TYPE_SIZE;
@@ -411,16 +433,20 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             TYPE_SIZE = unmodifiableMap(sizeNames);
         }
 
-        private final CodeBlock.Builder setAllBufferCode = CodeBlock.builder();
-        private final CodeBlock.Builder setRequiredBufferCode = CodeBlock.builder();
         private int valueIncrement = 0;
         private String priorValueSize = "0";
+        private final boolean allFields;
 
         private SetBufferValuesMethodGenerator(
-                ClassName thisType,
-                TypeSpec.Builder builder)
+                boolean allFields)
         {
-            super(thisType, builder);
+            super(methodBuilder(allFields ? "setAllBufferValues" : "setRequiredBufferValues")
+                    .addModifiers(STATIC)
+                    .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
+                    .addParameter(int.class, "offset")
+                    .returns(int.class)
+                    .addModifiers(PUBLIC));
+            this.allFields = allFields;
         }
 
         public SetBufferValuesMethodGenerator addMember(
@@ -448,32 +474,28 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 else
                 {
                     //TODO: Add primitive member
-                    addSetPremitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                            byteOrder, null, setAllBufferCode);
-                    addSetPremitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                            byteOrder, defaultValue, setRequiredBufferCode);
+                    if(allFields)
+                    {
+                        addSetPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                                byteOrder, null);
+                    }
+                    else
+                    {
+                        addSetPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                                byteOrder, defaultValue);
+                    }
                 }
             }
             else
             {
                 //TODO: Add nonprimative member
-                addSetNonPremitiveValue(setAllBufferCode);
-                addSetNonPremitiveValue(setRequiredBufferCode);
+                addSetNonPrimitiveValue();
             }
 
             return this;
         }
 
-        @Override
-        public TypeSpec.Builder build()
-        {
-            addSetAllBufferValuesMember(setAllBufferCode);
-            addSetRequiredBufferValuesMember(setRequiredBufferCode);
-
-            return super.build();
-        }
-
-        private void addSetPremitiveValue(
+        private void addSetPrimitiveValue(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -482,8 +504,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 String sizeName,
                 TypeName sizeType,
                 AstByteOrder byteOrder,
-                Object defaultValue,
-                CodeBlock.Builder code)
+                Object defaultValue)
         {
             String putterName = PUTTER_NAMES.get(type);
             if (putterName == null)
@@ -493,7 +514,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
             if (defaultValue != null)
             {
-                code.addStatement("buffer.$L(offset += $L, ($L) $L)",
+                builder.addStatement("buffer.$L(offset += $L, ($L) $L)",
                         putterName,
                         priorValueSize,
                         SIZEOF_BY_NAME.get(type).toLowerCase(),
@@ -501,7 +522,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-                code.addStatement("buffer.$L(offset += $L, ($L) $L0)",
+                builder.addStatement("buffer.$L(offset += $L, ($L) $L0)",
                         putterName,
                         priorValueSize,
                         SIZEOF_BY_NAME.get(type).toLowerCase(),
@@ -511,45 +532,26 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             priorValueSize = TYPE_SIZE.get(type);
         }
 
-        private void addSetNonPremitiveValue(CodeBlock.Builder code)
+        private void addSetNonPrimitiveValue()
         {
-            code.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
+            builder.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
                     priorValueSize,
                     valueIncrement);
-            code.addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
+            builder.addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
                     valueIncrement,
                     StandardCharsets.class);
             priorValueSize = Integer.toString(("value" + valueIncrement).length());
         }
 
-        private void addSetAllBufferValuesMember(CodeBlock.Builder code)
+        @Override
+        public MethodSpec generate()
         {
-            builder.addMethod(methodBuilder("setAllBufferValues")
-                    .addModifiers(STATIC)
-                    .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
-                    .addParameter(int.class, "offset")
-                    .returns(int.class)
-                    .addCode(code.build())
-                    .addStatement("return offset + " + priorValueSize)
-                    .build());
-
-        }
-
-        private void addSetRequiredBufferValuesMember(CodeBlock.Builder code)
-        {
-            builder.addMethod(methodBuilder("setRequiredBufferValues")
-                    .addModifiers(STATIC)
-                    .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
-                    .addParameter(int.class, "offset")
-                    .returns(int.class)
-                    .addCode(code.build())
-                    .addStatement("return offset + " + priorValueSize)
-                    .build());
+            return builder.addStatement("return offset + " + priorValueSize).build();
         }
     }
 
 
-    private static final class SetBuilderValuesMethodGenerator extends ClassSpecMixinGenerator
+    private static final class SetAllBuilderValuesMethodGenerator extends ClassSpecMixinGenerator
     {
         private final ClassName fieldFWBuilderClassName;
         private final CodeBlock.Builder setAllBuilderCode = CodeBlock.builder();
@@ -560,7 +562,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         private boolean hasPrimiteve = false;
         private boolean hasStringType = false;
 
-        private SetBuilderValuesMethodGenerator(
+        private SetAllBuilderValuesMethodGenerator(
                 ClassName thisType,
                 TypeSpec.Builder builder,
                 String baseName)
@@ -571,7 +573,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             setAllBuilderCodeString.add(CodeBlock.builder());
         }
 
-        public SetBuilderValuesMethodGenerator addMember(
+        public SetAllBuilderValuesMethodGenerator addMember(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -617,13 +619,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         @Override
         public TypeSpec.Builder build()
         {
+            buildAllBuilderValuesMember(setAllBuilderCode);
             if(hasStringType)
             {
                 buildAllBuilderStringVariantsMembers();
             }
-            buildAllBuilderValuesMember(setAllBuilderCode);
-
-
             return super.build();
         }
 
