@@ -78,6 +78,7 @@ public class String16FWTest
                 .build();
 
         assertNull(string.asString());
+        assertNull(string.value());
         assertEquals(LENGTH_SIZE, string.limit());
         assertEquals(LENGTH_SIZE, string.sizeof());
     }
@@ -174,7 +175,8 @@ public class String16FWTest
         stringRO.wrap(buffer,  0,  limit);
         assertEquals(LENGTH_SIZE, stringRO.limit());
         assertEquals(LENGTH_SIZE, stringRO.sizeof());
-        assertEquals(null, stringRO.asString());
+        assertNull(stringRO.asString());
+        assertNull(stringRO.value());
     }
 
     @Test
@@ -188,7 +190,8 @@ public class String16FWTest
         stringRO.wrap(buffer,  0,  limit);
         assertEquals(LENGTH_SIZE, stringRO.limit());
         assertEquals(LENGTH_SIZE, stringRO.sizeof());
-        assertEquals(null, stringRO.asString());
+        assertNull(stringRO.asString());
+        assertNull(stringRO.value());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -218,6 +221,7 @@ public class String16FWTest
         assertEquals(LENGTH_SIZE, stringRO.limit());
         assertEquals(LENGTH_SIZE, stringRO.sizeof());
         assertEquals("", stringRO.asString());
+        assertEquals("", stringRO.value().getStringWithoutLengthUtf8(0, stringRO.value().capacity()));
     }
 
     @Test
@@ -231,6 +235,7 @@ public class String16FWTest
         assertEquals(6 + LENGTH_SIZE, stringRO.limit());
         assertEquals(6 + LENGTH_SIZE, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
+        assertEquals("value1", stringRO.value().getStringWithoutLengthUtf8(0, stringRO.value().capacity()));
     }
 
     @Test
@@ -244,6 +249,7 @@ public class String16FWTest
         assertEquals(6 + LENGTH_SIZE, stringRO.limit());
         assertEquals(6 + LENGTH_SIZE, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
+        assertEquals("value1", stringRO.value().getStringWithoutLengthUtf8(0, stringRO.value().capacity()));
     }
 
     @Test
@@ -257,6 +263,7 @@ public class String16FWTest
         assertEquals(6 + LENGTH_SIZE, stringRO.limit());
         assertEquals(6 + LENGTH_SIZE, stringRO.sizeof());
         assertEquals("value1", stringRO.asString());
+        assertEquals("value1", stringRO.value().getStringWithoutLengthUtf8(0, stringRO.value().capacity()));
     }
 
     private static MutableDirectBuffer asBuffer(String value)
