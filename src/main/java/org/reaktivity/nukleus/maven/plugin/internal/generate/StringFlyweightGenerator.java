@@ -25,6 +25,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
+import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -55,9 +56,11 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     {
         return classBuilder.addField(fieldOffsetLengthConstant())
                             .addField(fieldSizeLengthConstant())
+                            .addField(valueField())
                             .addMethod(limitMethod())
                             .addMethod(asStringMethod())
                             .addMethod(wrapMethod())
+                            .addMethod(valueMethod())
                             .addMethod(toStringMethod())
                             .addMethod(length0Method())
                             .addType(builderClassBuilder.build())
@@ -75,6 +78,13 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     {
         return FieldSpec.builder(int.class, "FIELD_SIZE_LENGTH", PRIVATE, STATIC, FINAL)
                 .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
+                .build();
+    }
+
+    private FieldSpec valueField()
+    {
+        return FieldSpec.builder(DIRECT_BUFFER_TYPE, "valueRO", PRIVATE, FINAL)
+                .initializer("new $T(0L, 0)", UNSAFE_BUFFER_TYPE)
                 .build();
     }
 
@@ -111,7 +121,20 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
                 .addStatement("checkLimit(limit(), maxLimit)")
+                .addStatement("int length0 = length0()")
+                .beginControlFlow("if (length0 != -1)")
+                .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0)")
+                .endControlFlow()
                 .addStatement("return this")
+                .build();
+    }
+
+    private MethodSpec valueMethod()
+    {
+        return methodBuilder("value")
+                .addModifiers(PUBLIC)
+                .returns(DIRECT_BUFFER_TYPE)
+                .addStatement("return length0() == -1 ? null : valueRO")
                 .build();
     }
 
