@@ -29,6 +29,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MU
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Consumer;
 
 import com.squareup.javapoet.*;
 import org.agrona.BitUtil;
@@ -40,7 +41,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNodeLocator;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.*;
@@ -83,13 +83,22 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final FieldROGenerator fieldRO;
     private final SetBufferValuesMethodGenerator setAllBufferValuesMethodGenerator;
     private final SetBufferValuesMethodGenerator setRequiredBufferValuesMethodGenerator;
+
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorPrimary;
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorStringFW;
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorBuffer;
+
+    private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorPrimary;
+    private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorStringFW;
+    private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorBuffer;
+
+    private final ExceptionTestMethodGenerator exceptionTestMethodGenerator;
+    private final DefaultValuesTestMethodGenerator defaultValuesTestMethodGenerator;
+    private final ToStringTestMethodGenerator toStringTestMethodGenerator;
+    private final ReadDefaultedValuesTestMethodGenerator readDefaultedValuesTestMethodGenerator;
+    private final SetFieldUpToIndexMethodGenerator setFieldUpToIndexMethodGenerator;
     private final SetRequiredBuilderFieldMethodGenerator setRequiredBuilderFieldMethodGenerator;
     private final AssertRequiredValuesAndDefaultsMethodGenerator assertRequiredValuesAndDefaultsMethodGenerator;
-    private final ToStringTestMethodGenerator toStringTestMethodGenerator;
-    private final AstNodeLocator astNodeLocator;
 
     public StructFlyweightTestGenerator(
             ClassName structName,
@@ -108,6 +117,16 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         this.fieldRO = new FieldROGenerator(structName, builder, baseName);
         this.setAllBufferValuesMethodGenerator = new SetBufferValuesMethodGenerator(true);
         this.setRequiredBufferValuesMethodGenerator = new SetBufferValuesMethodGenerator(false);
+
+        this.setFieldUpToIndexMethodGenerator = new SetFieldUpToIndexMethodGenerator(structName, builder, baseName);
+        this.setRequiredBuilderFieldMethodGenerator = new SetRequiredBuilderFieldMethodGenerator(structName, builder, baseName);
+        this.assertRequiredValuesAndDefaultsMethodGenerator = new AssertRequiredValuesAndDefaultsMethodGenerator(structName,
+                builder, baseName);
+        this.toStringTestMethodGenerator = new ToStringTestMethodGenerator();
+        this.defaultValuesTestMethodGenerator = new DefaultValuesTestMethodGenerator(structName, builder, baseName);
+        this.readDefaultedValuesTestMethodGenerator = new ReadDefaultedValuesTestMethodGenerator();
+        this.exceptionTestMethodGenerator = new ExceptionTestMethodGenerator(structName, builder, baseName);
+
         this.setAllBuilderValuesMethodGeneratorPrimary = new SetAllBuilderValuesMethodGenerator(structName, builder, baseName,
                 StringSetterVariant.STRING,
                 OctetsSetterVariant.OCTETSFW);
@@ -117,11 +136,19 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         this.setAllBuilderValuesMethodGeneratorBuffer = new SetAllBuilderValuesMethodGenerator(structName, builder, baseName,
                 StringSetterVariant.BUFFER,
                 OctetsSetterVariant.BUFFER);
-        this.setRequiredBuilderFieldMethodGenerator = new SetRequiredBuilderFieldMethodGenerator(structName, builder, baseName);
-        this.assertRequiredValuesAndDefaultsMethodGenerator = new AssertRequiredValuesAndDefaultsMethodGenerator(structName,
-                builder, baseName);
-        this.toStringTestMethodGenerator = new ToStringTestMethodGenerator(baseName);
-        this.astNodeLocator = astNodeLocator;
+
+        this.setAllFieldsValueTestMethodGeneratorPrimary = new SetAllFieldsValueTestMethodGenerator(
+                structName, builder, baseName,
+                StringSetterVariant.STRING,
+                OctetsSetterVariant.OCTETSFW);
+        this.setAllFieldsValueTestMethodGeneratorStringFW = new SetAllFieldsValueTestMethodGenerator(
+                structName, builder, baseName,
+                StringSetterVariant.STRINGFW,
+                OctetsSetterVariant.VISITOR);
+        this.setAllFieldsValueTestMethodGeneratorBuffer = new SetAllFieldsValueTestMethodGenerator(
+                structName, builder, baseName,
+                StringSetterVariant.BUFFER,
+                OctetsSetterVariant.BUFFER);
     }
 
     public StructFlyweightTestGenerator addMember(
@@ -136,11 +163,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             Object defaultValue,
             AstByteOrder byteOrder)
     {
-        if (memberType.isDynamic())
-        {
-            AstNode memberNode = astNodeLocator.locateNode(null, memberType.name(), null);
-            System.out.println("memberNode for " + memberType.name() + " is " + memberNode);
-        }
 
         try
         {
@@ -155,9 +177,13 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     byteOrder, defaultValue);
             setAllBuilderValuesMethodGeneratorBuffer.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue);
+            setFieldUpToIndexMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                    byteOrder, defaultValue);
             setRequiredBuilderFieldMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue);
             assertRequiredValuesAndDefaultsMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName,
+                    sizeType, byteOrder, defaultValue);
+            exceptionTestMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName,
                     sizeType, byteOrder, defaultValue);
         }
         catch (UnsupportedOperationException uoe)
@@ -178,20 +204,27 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         fieldRO.build();
         expectedException.build();
         typeIdTestGenerator.build();
+        exceptionTestMethodGenerator.build();
 
         if(setAllBuilderValuesMethodGeneratorStringFW.hasVariant())
         {
             builder.addMethod(setAllBuilderValuesMethodGeneratorStringFW.generate());
+            builder.addMethod(setAllFieldsValueTestMethodGeneratorStringFW.generate());
         }
         if(setAllBuilderValuesMethodGeneratorBuffer.hasVariant())
         {
             builder.addMethod(setAllBuilderValuesMethodGeneratorBuffer.generate());
+            builder.addMethod(setAllFieldsValueTestMethodGeneratorBuffer.generate());
         }
 
         return builder
+                .addMethod(setAllFieldsValueTestMethodGeneratorPrimary.generate())
+                .addMethod(defaultValuesTestMethodGenerator.generate())
+                .addMethod(readDefaultedValuesTestMethodGenerator.generate())
                 .addMethod(toStringTestMethodGenerator.generate())
                 .addMethod(setAllBufferValuesMethodGenerator.generate())
                 .addMethod(setRequiredBufferValuesMethodGenerator.generate())
+                .addMethod(setFieldUpToIndexMethodGenerator.generate())
                 .addMethod(setRequiredBuilderFieldMethodGenerator.generate())
                 .addMethod(setAllBuilderValuesMethodGeneratorPrimary.generate())
                 .addMethod(assertRequiredValuesAndDefaultsMethodGenerator.generate())
@@ -234,9 +267,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 builder.addMethod(methodBuilder("shouldProvideTypeId")
                         .addModifiers(PUBLIC)
                         .addAnnotation(Test.class)
-                        .addStatement("$T limit = setRequiredFields(fieldRW.wrap(buffer, 0, buffer.capacity()), $T.MAX_VALUE)" +
+                        .addStatement("$T limit = setRequiredFields(fieldRW.wrap(buffer, 0, buffer.capacity()))" +
                                 ".build()" +
-                                ".limit()", int.class, Integer.class)
+                                ".limit()", int.class)
                         .addStatement("fieldRO.wrap(buffer,  0,  limit)")
                         .addStatement("$T.assertEquals($L, $LFW.TYPE_ID)", Assert.class, String.format("0x%08x", typeId),
                                 baseName)
@@ -526,7 +559,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             else
             {
                 //TODO: Add nonprimative member
-                addSetNonPrimitiveValue();
+                addSetNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                        byteOrder, defaultValue);
             }
 
             return this;
@@ -569,15 +603,95 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             priorValueSize = TYPE_SIZE.get(type);
         }
 
-        private void addSetNonPrimitiveValue()
+        private void addSetNonPrimitiveValue(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
         {
-            builder.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
-                    priorValueSize,
-                    valueIncrement);
-            builder.addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
-                    valueIncrement,
-                    StandardCharsets.class);
-            priorValueSize = Integer.toString(("value" + valueIncrement).length());
+            if (type instanceof ClassName)
+            {
+                ClassName className = (ClassName) type;
+                addClassType(name, className, usedAsSize, size, sizeName, sizeType, defaultValue);
+            }
+            else if (type instanceof ParameterizedTypeName)
+            {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                addParameterizedType(name, parameterizedType, defaultValue);
+            }
+
+        }
+
+        private void addParameterizedType(
+                String name,
+                ParameterizedTypeName parameterizedType,
+                Object defaultValue)
+        {
+            ClassName rawType = parameterizedType.rawType;
+            ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+            ClassName builderRawType = rawType.nestedClass("Builder");
+            ClassName itemBuilderType = itemType.nestedClass("Builder");
+            ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+            ClassName consumerType = ClassName.get(Consumer.class);
+            TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+
+            if ("ListFW".equals(rawType.simpleName()))
+            {
+                // Add a method to append list items
+            }
+        }
+
+        private void addClassType(
+                String name,
+                ClassName className,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                Object defaultValue)
+        {
+            if (isStringType(className))
+            {
+                builder.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
+                        priorValueSize,
+                        valueIncrement);
+                builder.addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
+                        valueIncrement,
+                        StandardCharsets.class);
+                priorValueSize = Integer.toString(("value" + valueIncrement).length());
+            }
+            else if (DIRECT_BUFFER_TYPE.equals(className))
+            {
+                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
+                // so I suspect this is dead code and should be removed
+            }
+            else if ("OctetsFW".equals(className.simpleName()))
+            {
+
+            }
+            else
+            {
+                if (!isVarintType(className))
+                {
+                    if(this.allFields)
+                    {
+                        builder.addStatement("offset = $TTest.setAllBufferValues(buffer, offset += $L) ",
+                                className, priorValueSize);
+                    }
+                    else
+                    {
+                        builder.addStatement("offset = $TTest.setRequiredBufferValues(buffer, offset += $L)",
+                                className, priorValueSize);
+                    }
+                    priorValueSize = "0";
+                }
+            }
         }
 
         @Override
@@ -605,7 +719,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 StringSetterVariant stringSetterVariant,
                 OctetsSetterVariant octetsSetterVariant)
         {
-            super(methodBuilder("setAllValues" + stringSetterVariant + "_" + octetsSetterVariant)
+            super(methodBuilder("setAllFieldsValue" + stringSetterVariant + "_" + octetsSetterVariant)
                         .addModifiers(STATIC)
                         .addParameter(thisType.peerClass(baseName + "FW.Builder"), "builder")
                         .returns(thisType.peerClass(baseName + "FW.Builder")));
@@ -766,7 +880,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-
+                if (!isVarintType(className))
+                {
+                    builder.addStatement("builder.$L(field -> $TTest.setAllFieldsValue" + stringSetterVariant + "_" +
+                                   octetsSetterVariant + "(field))",
+                            methodName(name), className);
+                }
             }
         }
 
@@ -793,7 +912,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             super(methodBuilder("setRequiredFields")
                     .addModifiers(STATIC)
                     .addParameter(thisType.peerClass(baseName + "FW.Builder"), "builder")
-                    .addParameter(int.class, "toFieldIndex")
                     .returns(thisType.peerClass(baseName + "FW.Builder")));
         }
 
@@ -810,11 +928,159 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             valueIncrement++;
 
-            if(defaultValue != null || RESERVED_METHOD_NAMES.contains(name) || usedAsSize)
+            if(defaultValue != null || usedAsSize)
             {
                 return this;
             }
-            name = methodName(name);
+            priorDefaulted = name;
+
+            if (type.isPrimitive())
+            {
+                if (sizeName != null)
+                {
+                    //TODO: Add IntegerVariableArray
+                } else if (size != -1)
+                {
+                    //TODO: Add integerFixedArrayIterator member
+                }
+                else
+                {
+                    setPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, null);
+                }
+            }
+            else
+            {
+                //TODO: Add nonprimative member
+                setNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                        byteOrder, null, priorDefaulted);
+            }
+
+            return this;
+        }
+
+        private void setPrimitiveValue(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            builder.addStatement("builder.$L(($L)$L0)",
+                    methodName(name),
+                    type.toString().toLowerCase(),
+                    valueIncrement);
+            hasPrimiteve = true;
+        }
+
+        private void setNonPrimitiveValue(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue,
+                String priorDefaulted)
+        {
+            if (type instanceof ClassName)
+            {
+                ClassName className = (ClassName) type;
+                addClassType(name, className, usedAsSize, size, sizeName, sizeType, defaultValue, priorDefaulted);
+
+            }
+            else if (type instanceof ParameterizedTypeName)
+            {
+
+            }
+        }
+
+        private void addClassType(
+                String name,
+                ClassName className,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                Object defaultValue,
+                String priorFieldIfDefaulted)
+        {
+            if (isStringType(className))
+            {
+                builder.addStatement("builder.$L(\"value$L\")",
+                        methodName(name),
+                        valueIncrement);
+            }
+            else if (DIRECT_BUFFER_TYPE.equals(className))
+            {
+                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
+                // so I suspect this is dead code and should be removed
+            }
+            else if ("OctetsFW".equals(className.simpleName()))
+            {
+
+            }
+            else
+            {
+                if (!isVarintType(className))
+                {
+                    builder.addStatement("builder.$L(field -> $TTest.setRequiredFields(field))",
+                            methodName(name), className);
+                }
+
+            }
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            return builder.addStatement("return builder").build();
+        }
+    }
+
+    private static final class SetFieldUpToIndexMethodGenerator extends MethodSpecGenerator
+    {
+        private String priorDefaulted;
+        private int valueIncrement = 0;
+        private int stringBufferOffset = 0;
+        private boolean hasPrimiteve = false;
+        private boolean hasStringType = false;
+
+        private SetFieldUpToIndexMethodGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder,
+                String baseName)
+        {
+            super(methodBuilder("setFieldUpToIndex")
+                    .addModifiers(STATIC)
+                    .addParameter(thisType.peerClass(baseName + "FW.Builder"), "builder")
+                    .addParameter(int.class, "toFieldIndex")
+                    .returns(thisType.peerClass(baseName + "FW.Builder")));
+        }
+
+        public SetFieldUpToIndexMethodGenerator addMember(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            valueIncrement++;
+
+            if(usedAsSize)
+            {
+                return this;
+            }
             priorDefaulted = name;
 
             if (type.isPrimitive())
@@ -854,8 +1120,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 Object defaultValue)
         {
             builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
-            builder.addStatement("builder.$L($L0)",
-                    name,
+            builder.addStatement("builder.$L(($L)$L0)",
+                    methodName(name),
+                    type.toString().toLowerCase(),
                     valueIncrement);
             builder.endControlFlow();
             hasPrimiteve = true;
@@ -899,7 +1166,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
                 builder.addStatement("builder.$L(\"value$L\")",
-                        name,
+                        methodName(name),
                         valueIncrement);
                 builder.endControlFlow();
 
@@ -915,7 +1182,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-
+                if (!isVarintType(className))
+                {
+                    builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
+                    builder.addStatement("builder.$L(field -> $TTest.setRequiredFields(field))",
+                            methodName(name),
+                            className);
+                    builder.endControlFlow();
+                }
             }
         }
 
@@ -956,9 +1230,13 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 Object defaultValue)
         {
 
-            name = methodName(name);
             valueIncrement++;
+            if(usedAsSize)
+            {
+                return this;
+            }
             priorDefaulted = name;
+            name = methodName(name);
 
             if (type.isPrimitive())
             {
@@ -971,11 +1249,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    if(!usedAsSize)
-                    {
-                        setPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                                byteOrder, null);
-                    }
+                    setPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
             }
             else
@@ -1082,27 +1357,329 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
     private final class ToStringTestMethodGenerator extends MethodSpecGenerator
     {
-        private ToStringTestMethodGenerator(String baseName)
+        private ToStringTestMethodGenerator()
         {
             super(methodBuilder("shouldReportAllFieldValuesInToString")
                     .addAnnotation(Test.class)
-                    .addModifiers(PUBLIC));
+                    .addModifiers(PUBLIC)
+                    .addStatement("final $T offset = 11", int.class)
+                    .addStatement("int limit = setAllBufferValues(buffer, offset)")
+                    .addStatement("$T result = fieldRO.wrap(buffer, offset, limit).toString()", String.class)
+                    .addStatement("$T.assertNotNull(result)", Assert.class)
+                    .beginControlFlow("for ($T fieldName : FIELD_NAMES)", String.class)
+                    .addStatement("$T.assertTrue($T.format(\"toString is missing %s\", fieldName), " +
+                            "result.contains(fieldName))", Assert.class, String.class)
+                    .endControlFlow());
         }
 
         @Override
         public MethodSpec generate()
         {
-            return builder.addStatement("final int offset = 11")
-                    .addStatement("int limit = setAllBufferValues(buffer, offset)")
-                    .addStatement("String result = fieldRO.wrap(buffer, offset, limit).toString()")
-                    .addStatement("$T.assertNotNull(result)", Assert.class)
-                    .addStatement(String.format("for (String fieldName : FIELD_NAMES)" +
-                                    "\n{" +
-                                    "\n  %s.%s" +
-                                    "\n}",
-                            Assert.class.getName(),
-                            "assertTrue(String.format(\"toString is missing %s\", fieldName), result.contains(fieldName));"))
-                    .build();
+            return builder.build();
+        }
+    }
+
+    private final class DefaultValuesTestMethodGenerator extends MethodSpecGenerator
+    {
+        private DefaultValuesTestMethodGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder,
+                String baseName)
+        {
+            super(methodBuilder("shouldDefaultValues")
+                    .addAnnotation(Test.class)
+                    .addModifiers(PUBLIC)
+                    .addStatement("final $T offset = 11", int.class)
+                    .addStatement("$T expectedLimit = setRequiredBufferValues(expectedBuffer, offset)", int.class)
+                    .addStatement("$T builder = fieldRW.wrap(buffer, offset, buffer.capacity())",
+                            thisType.peerClass(baseName + "FW.Builder"))
+                    .addStatement("$T limit = setRequiredFields(builder).build().limit()",
+                            int.class)
+                    .addStatement("$T.assertEquals(expectedLimit, limit)", Assert.class)
+                    .addStatement("$T.assertEquals(0, expectedBuffer.compareTo(buffer))", Assert.class)
+                    .addStatement("$T.assertEquals(expectedBuffer, buffer)", Assert.class)
+            );
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            return builder.build();
+        }
+    }
+
+    private final class ReadDefaultedValuesTestMethodGenerator extends MethodSpecGenerator
+    {
+        private ReadDefaultedValuesTestMethodGenerator()
+        {
+            super(methodBuilder("shouldReadDefaultedValues")
+                    .addAnnotation(Test.class)
+                    .addModifiers(PUBLIC)
+                    .addStatement("final $T offset = 11", int.class)
+                    .addStatement("$T limit = setRequiredBufferValues(buffer, offset)", int.class)
+                    .addStatement("$T.assertSame(fieldRO, fieldRO.wrap(buffer,  offset,  limit))", Assert.class)
+                    .addStatement("assertRequiredValuesAndDefaults(fieldRO)")
+            );
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            return builder.build();
+        }
+    }
+
+    private final class SetAllFieldsValueTestMethodGenerator extends MethodSpecGenerator
+    {
+        private SetAllFieldsValueTestMethodGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder,
+                String baseName,
+                StringSetterVariant stringSetterVariant,
+                OctetsSetterVariant octetsSetterVariant
+                )
+        {
+            super(methodBuilder("shouldSetAllFieldsValues" + stringSetterVariant + "_" + octetsSetterVariant)
+                    .addAnnotation(Test.class)
+                    .addModifiers(PUBLIC)
+                    .addStatement("final $T offset = 11", int.class)
+                    .addStatement("$T expectedLimit = setAllBufferValues(expectedBuffer, offset)", int.class)
+                    .addStatement("$T builder = setAllFieldsValue$L_$L(fieldRW.wrap(buffer, offset, buffer.capacity()))",
+                            thisType.peerClass(baseName + "FW.Builder"), stringSetterVariant, octetsSetterVariant)
+                    .addStatement("$T limit = builder.build().limit()", int.class)
+                    .addStatement("$T.assertEquals(expectedLimit, limit)", Assert.class)
+                    .addStatement("$T.assertEquals(expectedBuffer, buffer)", Assert.class)
+            );
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            return builder.build();
+        }
+    }
+
+    private static final class ExceptionTestMethodGenerator extends ClassSpecMixinGenerator
+    {
+        private final String baseName;
+        private String priorDefaulted;
+        private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
+
+        static
+        {
+            Map<TypeName, String[]> unsigned = new HashMap<>();
+            unsigned.put(TypeName.BYTE, new String[]{"0", "0XFF"});
+            unsigned.put(TypeName.SHORT, new String[]{"0", "0xFFFF"});
+            unsigned.put(TypeName.INT, new String[]{"0", "0xFFFFFFFFL"});
+            unsigned.put(TypeName.LONG, new String[]{"0L", null});
+            UNSIGNED_INT_RANGES = unmodifiableMap(unsigned);
+        }
+
+        private ExceptionTestMethodGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder,
+                String baseName)
+        {
+            super(thisType, builder);
+            this.baseName = baseName;
+        }
+
+        public ExceptionTestMethodGenerator addMember(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            priorDefaulted = name;
+
+            if (type.isPrimitive())
+            {
+                if (sizeName != null)
+                {
+                    //TODO: Add IntegerVariableArray
+                } else if (size != -1)
+                {
+                    //TODO: Add integerFixedArrayIterator member
+                }
+                else
+                {
+                    if(!usedAsSize)
+                    {
+                        setPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                                byteOrder, defaultValue, priorDefaulted);
+                    }
+                }
+            }
+            else
+            {
+                //TODO: Add nonprimative member
+                setNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                        byteOrder, defaultValue, priorDefaulted);
+            }
+
+            return this;
+        }
+
+        private void setPrimitiveValue(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue,
+                String priorDefaulted)
+        {
+            String[] range = UNSIGNED_INT_RANGES.get(type);
+            if (unsignedType != null)
+            {
+
+                builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WithValueTooLow")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                        .addStatement("fieldRW.wrap(buffer, 10, 10).$L($L)", methodName(name), range[0]+"-0x1")
+                .build());
+                if (range[1] != null)
+                {
+                    builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WithValueTooHigh")
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                            .addStatement("expectedException.expectMessage(\"$L\")", name)
+                            .addStatement("fieldRW.wrap(buffer, 10, 10).$L($L)", methodName(name), range[1]+"+0x1")
+                            .build());
+                }
+            }
+
+            if (defaultValue == null)
+            {
+                builder.addMethod(methodBuilder("shouldFailToBuildWhen"+name.toUpperCase() + "NotSet")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L).build()", index(name))
+                        .build());
+            }
+
+            builder.addMethod(methodBuilder("shouldFailToReset"+name.toUpperCase())
+                    .addAnnotation(Test.class)
+                    .addModifiers(PUBLIC)
+                    .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                    .addStatement("expectedException.expectMessage(\"$L\")", name)
+                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L+1)\n" +
+                            "                .$L(($L)$L)\n" +
+                            "                .build()", index(name), methodName(name), type.toString().toLowerCase(), range[0])
+                    .build());
+        }
+
+        private void setNonPrimitiveValue(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue,
+                String priorDefaulted)
+        {
+            if (type instanceof ClassName)
+            {
+                ClassName className = (ClassName) type;
+                addClassType(name, className, usedAsSize, size, sizeName, sizeType, defaultValue, priorDefaulted);
+
+            }
+            else if (type instanceof ParameterizedTypeName)
+            {
+
+            }
+        }
+
+        private void addClassType(
+                String name,
+                ClassName className,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                Object defaultValue,
+                String priorFieldIfDefaulted)
+        {
+            if (isStringType(className))
+            {
+                if (defaultValue == null)
+                {
+                    builder.addMethod(methodBuilder("shouldFailToBuildWhen"+name.toUpperCase() + "NotSet")
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                            .addStatement("expectedException.expectMessage(\"$L\")", name)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L).build()", index(name))
+                            .build());
+                }
+
+                builder.addMethod(methodBuilder("shouldFailToReset"+name.toUpperCase())
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L+1)\n" +
+                                "                .$L(\"value\")\n" +
+                                "                .build()", index(name), methodName(name))
+                        .build());
+
+            }
+            else if (DIRECT_BUFFER_TYPE.equals(className))
+            {
+                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
+                // so I suspect this is dead code and should be removed
+            }
+            else if ("OctetsFW".equals(className.simpleName()))
+            {
+
+            }
+            else
+            {
+                if (!isVarintType(className))
+                {
+                      //TODO: Clarification needed
+//                    if (defaultValue == null)
+//                    {
+//                        builder.addMethod(methodBuilder("shouldFailToBuildWhen"+name.toUpperCase() + "NotSet")
+//                                .addAnnotation(Test.class)
+//                                .addModifiers(PUBLIC)
+//                                .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+//                                .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L).build()", index(name))
+//                                .build());
+//                    }
+
+                    builder.addMethod(methodBuilder("shouldFailToReset"+name.toUpperCase())
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                            .addStatement("expectedException.expectMessage(\"$L\")", name)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L+1)" +
+                                            ".$L(field -> $TTest.setRequiredFields(field)).build()",
+                                    index(name), methodName(name), className)
+                            .build());
+                }
+            }
+        }
+
+        @Override
+        public TypeSpec.Builder build()
+        {
+            return builder;
         }
     }
 
@@ -1247,17 +1824,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return result;
     }
 
-    private static String dynamicOffset(
-            String fieldName)
-    {
-        return String.format("dynamicOffset%s", initCap(fieldName));
-    }
-
-    private static String dynamicValue(
-            String fieldName)
-    {
-        return String.format("dynamicValue%s", initCap(fieldName));
-    }
 
     private static Map<TypeName, String> initSizeofByName()
     {
