@@ -45,6 +45,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.ArrayFlyweightTestGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.test.String16FlyweightTestGenerator;
 
 import com.squareup.javapoet.JavaFile;
@@ -126,6 +127,7 @@ public class Generator
         typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
         testTypeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        testTypeSpecs.add(new ArrayFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
         System.out.println("Generating flyweights to " + outputDirectory);
         System.out.println("Generating tests to " + outputTestDirectory);
 
