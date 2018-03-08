@@ -23,8 +23,10 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import com.squareup.javapoet.*;
 import org.agrona.BitUtil;
@@ -35,6 +37,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecGenerator;
+
 
 public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
 {
@@ -61,9 +64,17 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addField(fieldExpected())
                 .addField(fieldExpectedException())
                 .addField(fieldRW())
+                .addField(fieldRWWithByteOrder())
                 .addField(fieldRO())
-                .addMethod(shouldBuildEmptyList())
-                .addMethod(shouldReadEmptyList())
+                .addField(fieldROWithByteOrder())
+                .addMethod(shouldBuildEmptyList(false))
+                .addMethod(shouldBuildEmptyList(true))
+                .addMethod(shouldReadEmptyList(false))
+                .addMethod(shouldReadEmptyList(true))
+                .addMethod(shouldMatchItems(true))
+                .addMethod(shouldMatchItems(false))
+                .addMethod(shouldMatchFirstItem(true))
+                .addMethod(shouldMatchFirstItem(false))
                 .addMethod(shouldFailWrapWhenListSizeIsNegative())
                 .addMethod(shouldSetItems())
                 .addMethod(shouldReadItems())
@@ -122,6 +133,20 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .build();
     }
 
+    private FieldSpec fieldRWWithByteOrder()
+    {
+        TypeName builderClass = ParameterizedTypeName.get(
+                arrayFlyweightBuilderClassName, flyweightType.peerClass("Varint64FW.Builder"),
+                flyweightType.peerClass("Varint64FW"));
+        return FieldSpec
+                .builder(builderClass, "arrayByteOrderRW", PRIVATE, FINAL)
+                .initializer("new $T<>(new $T(), new $T(), $T.nativeOrder())", arrayFlyweightBuilderClassName,
+                        flyweightType.peerClass("Varint64FW.Builder"), flyweightType.peerClass("Varint64FW"),
+                        ByteOrder.class)
+                .build();
+    }
+
+
     private FieldSpec fieldRO()
     {
         TypeName builderClass = ParameterizedTypeName.get(
@@ -132,33 +157,45 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .build();
     }
 
-    private MethodSpec shouldBuildEmptyList()
+    private FieldSpec fieldROWithByteOrder()
     {
-        return MethodSpec.methodBuilder("shouldBuildEmptyList")
+        TypeName builderClass = ParameterizedTypeName.get(
+                arrayFlyweightClassName, flyweightType.peerClass("Varint64FW"));
+        return FieldSpec
+                .builder(builderClass, "arrayByteOrderRO", PRIVATE, FINAL)
+                .initializer("new $T<>(new $T(), $T.nativeOrder())", arrayFlyweightClassName,
+                        flyweightType.peerClass("Varint64FW"), ByteOrder.class)
+                .build();
+    }
+
+    private MethodSpec shouldBuildEmptyList(boolean isBuiltWithByteOrder)
+    {
+        return MethodSpec.methodBuilder("shouldBuildEmptyList" + (isBuiltWithByteOrder ? "WithByteOrder" : ""))
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("$T offset = 12", int.class)
-                .addStatement("$T limit = arrayRW.wrap(buffer, offset, buffer.capacity())\n" +
+                .addStatement("$T limit = array$LRW.wrap(buffer, offset, buffer.capacity())\n" +
                         "                .build()\n" +
-                        "                .limit();", int.class)
+                        "                .limit();", int.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
                 .addStatement("$T.assertEquals(offset + 4, limit)", Assert.class)
                 .addStatement("expected.putInt(offset, 0)")
                 .addStatement("$T.assertEquals(expected.byteBuffer(), buffer.byteBuffer())", Assert.class)
                 .build();
     }
 
-    private MethodSpec shouldReadEmptyList()
+    private MethodSpec shouldReadEmptyList(boolean isBuiltWithByteOrder)
     {
-        return MethodSpec.methodBuilder("shouldReadEmptyList")
+        return MethodSpec.methodBuilder("shouldReadEmptyList" + (isBuiltWithByteOrder ? "WithByteOrder" : ""))
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("buffer.putInt(10,  0)")
-                .addStatement("arrayRO.wrap(buffer, 10, buffer.capacity())")
-                .addStatement("$T.assertEquals(14, arrayRO.limit())", Assert.class)
+                .addStatement("array$LRO.wrap(buffer, 10, buffer.capacity())", (isBuiltWithByteOrder ? "ByteOrder" : ""))
+                .addStatement("$T.assertEquals(14, array$LRO.limit())", Assert.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
                 .addStatement("$T<$T> contents = new $T<$T>()", List.class, Long.class, ArrayList.class, Long.class)
-                .addStatement("arrayRO.forEach(v -> contents.add(v.value()))")
+                .addStatement("array$LRO.forEach(v -> contents.add(v.value()))", (isBuiltWithByteOrder ? "ByteOrder" : ""))
+                .addStatement("$T.assertTrue(array$LRO.isEmpty())", Assert.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
                 .addStatement("$T.assertEquals(0, contents.size())", Assert.class)
                 .build();
     }
@@ -221,6 +258,63 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("$T.assertEquals(-1L, contents.get(1).longValue())", Assert.class)
                 .addStatement("$T.assertEquals(12L, contents.get(2).longValue())", Assert.class)
                 .build();
+    }
+
+    private MethodSpec shouldMatchItems(boolean shouldMatch)
+    {
+        return MethodSpec.methodBuilder("should" + (shouldMatch ? "" : "Not") + "MatchItems")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("final $T offset = 23", int.class)
+                .addStatement("buffer.putInt(offset, 1)")
+                .addStatement("buffer.putByte(offset + 4, (byte) 2)")
+                .addStatement("buffer.putByte(offset + 5, (byte) 4)")
+                .addStatement("arrayRO.wrap(buffer, offset, buffer.capacity())")
+                .addStatement("$T varint64FW = new $T()", flyweightType.peerClass("Varint64FW"),
+                        flyweightType.peerClass("Varint64FW"))
+                .addStatement("expected.putInt(offset, 1)")
+                .addStatement("expected.putByte(offset + 4, (byte) $L)", (shouldMatch ? 2 : 3))
+                .addStatement("varint64FW.wrap(expected, offset + 4, expected.capacity())")
+                .beginControlFlow("$T<$T> varint64FWPredicate = p -> ", Predicate.class,
+                        flyweightType.peerClass("Varint64FW"))
+                .addStatement("return p.value() == varint64FW.value()")
+                .endControlFlow("")
+                .addStatement("$T.assert$L(arrayRO.anyMatch(varint64FWPredicate))", Assert.class,
+                        (shouldMatch ? "True" : "False"))
+                .build();
+    }
+
+    private MethodSpec shouldMatchFirstItem(boolean shouldMatch)
+    {
+         MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder("should" + (shouldMatch ? "" : "Not") + "MatchFirstItem")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addException(Exception.class)
+                .addStatement("final $T offset = 23", int.class)
+                .addStatement("buffer.putInt(offset, 2)")
+                .addStatement("buffer.putByte(offset + 4, (byte) 2)")
+                .addStatement("buffer.putByte(offset + 5, (byte) 4)")
+                .addStatement("arrayRO.wrap(buffer, offset, buffer.capacity())")
+                .addStatement("$T varint64FW = new $T()", flyweightType.peerClass("Varint64FW"),
+                        flyweightType.peerClass("Varint64FW"))
+                .addStatement("expected.putInt(offset, 1)")
+                .addStatement("expected.putByte(offset + 4, (byte) $L)", (shouldMatch ? 2 : 3))
+                .addStatement("varint64FW.wrap(expected, offset + 4, expected.capacity())")
+                .beginControlFlow("$T<$T> varint64FWPredicate = p -> ", Predicate.class,
+                        flyweightType.peerClass("Varint64FW"))
+                .addStatement("return p.value() == varint64FW.value()")
+                .endControlFlow("");
+        if(shouldMatch)
+        {
+            methodBuilder.addStatement("$T.assertEquals(varint64FW.value(), arrayRO.matchFirst(varint64FWPredicate).value())",
+                    Assert.class);
+        }
+        else
+        {
+            methodBuilder.addStatement("$T.assertNull(arrayRO.matchFirst(varint64FWPredicate))", Assert.class);
+        }
+        return methodBuilder.build();
     }
 
     private MethodSpec shouldDefaultToEmptyAfterRewrap()
@@ -300,6 +394,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                         "                .item(b -> b.set(-1L))\n" +
                         "                .item(b -> b.set(123L))\n" +
                         "                .build()", arrayFlyweightClassName, flyweightType.peerClass("Varint64FW"))
+                .addStatement("$T.assertTrue(array.toString().equals(\"ARRAY containing 4 bytes of data\"))", Assert.class)
                 .build();
     }
 }
