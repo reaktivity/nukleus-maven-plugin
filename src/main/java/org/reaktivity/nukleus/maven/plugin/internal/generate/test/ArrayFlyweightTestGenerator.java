@@ -42,19 +42,21 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecGenerator;
 public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
-    private final ClassName arrayFlyweightClassName;
-    private final ClassName arrayFlyweightBuilderClassName;
+    private final ClassName typeFlyweightClassName;
+    private final ClassName typeFlyweightBuilderClassName;
     private final ClassName flyweightType;
 
     public ArrayFlyweightTestGenerator(
-            ClassName flyweightType)
+            ClassName flyweightType,
+            String baseName)
     {
-        super(flyweightType.peerClass("ArrayFWTest"));
+        super(flyweightType.peerClass(baseName + "Test"));
         this.flyweightType = flyweightType;
-        this.arrayFlyweightClassName = flyweightType.peerClass("ArrayFW");
-        this.arrayFlyweightBuilderClassName = flyweightType.peerClass("ArrayFW.Builder");
+        this.typeFlyweightClassName = flyweightType.peerClass(baseName);
+        this.typeFlyweightBuilderClassName = flyweightType.peerClass(baseName + ".Builder");
         this.classBuilder = classBuilder(thisName).addModifiers(PUBLIC, FINAL);
     }
+
 
     @Override
     public TypeSpec generate()
@@ -124,11 +126,11 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
     private FieldSpec fieldRW()
     {
         TypeName builderClass = ParameterizedTypeName.get(
-                arrayFlyweightBuilderClassName, flyweightType.peerClass("Varint64FW.Builder"),
+                typeFlyweightBuilderClassName, flyweightType.peerClass("Varint64FW.Builder"),
                 flyweightType.peerClass("Varint64FW"));
         return FieldSpec
-                .builder(builderClass, "arrayRW", PRIVATE, FINAL)
-                .initializer("new $T<>(new $T(), new $T())", arrayFlyweightBuilderClassName,
+                .builder(builderClass, "fieldRW", PRIVATE, FINAL)
+                .initializer("new $T<>(new $T(), new $T())", typeFlyweightBuilderClassName,
                         flyweightType.peerClass("Varint64FW.Builder"), flyweightType.peerClass("Varint64FW"))
                 .build();
     }
@@ -136,11 +138,11 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
     private FieldSpec fieldRWWithByteOrder()
     {
         TypeName builderClass = ParameterizedTypeName.get(
-                arrayFlyweightBuilderClassName, flyweightType.peerClass("Varint64FW.Builder"),
+                typeFlyweightBuilderClassName, flyweightType.peerClass("Varint64FW.Builder"),
                 flyweightType.peerClass("Varint64FW"));
         return FieldSpec
-                .builder(builderClass, "arrayByteOrderRW", PRIVATE, FINAL)
-                .initializer("new $T<>(new $T(), new $T(), $T.nativeOrder())", arrayFlyweightBuilderClassName,
+                .builder(builderClass, "fieldByteOrderRW", PRIVATE, FINAL)
+                .initializer("new $T<>(new $T(), new $T(), $T.nativeOrder())", typeFlyweightBuilderClassName,
                         flyweightType.peerClass("Varint64FW.Builder"), flyweightType.peerClass("Varint64FW"),
                         ByteOrder.class)
                 .build();
@@ -150,20 +152,20 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
     private FieldSpec fieldRO()
     {
         TypeName builderClass = ParameterizedTypeName.get(
-                arrayFlyweightClassName, flyweightType.peerClass("Varint64FW"));
+                typeFlyweightClassName, flyweightType.peerClass("Varint64FW"));
         return FieldSpec
-                .builder(builderClass, "arrayRO", PRIVATE, FINAL)
-                .initializer("new $T<>(new $T())", arrayFlyweightClassName, flyweightType.peerClass("Varint64FW"))
+                .builder(builderClass, "fieldRO", PRIVATE, FINAL)
+                .initializer("new $T<>(new $T())", typeFlyweightClassName, flyweightType.peerClass("Varint64FW"))
                 .build();
     }
 
     private FieldSpec fieldROWithByteOrder()
     {
         TypeName builderClass = ParameterizedTypeName.get(
-                arrayFlyweightClassName, flyweightType.peerClass("Varint64FW"));
+                typeFlyweightClassName, flyweightType.peerClass("Varint64FW"));
         return FieldSpec
-                .builder(builderClass, "arrayByteOrderRO", PRIVATE, FINAL)
-                .initializer("new $T<>(new $T(), $T.nativeOrder())", arrayFlyweightClassName,
+                .builder(builderClass, "fieldByteOrderRO", PRIVATE, FINAL)
+                .initializer("new $T<>(new $T(), $T.nativeOrder())", typeFlyweightClassName,
                         flyweightType.peerClass("Varint64FW"), ByteOrder.class)
                 .build();
     }
@@ -175,7 +177,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("$T offset = 12", int.class)
-                .addStatement("$T limit = array$LRW.wrap(buffer, offset, buffer.capacity())\n" +
+                .addStatement("$T limit = field$LRW.wrap(buffer, offset, buffer.capacity())\n" +
                         "                .build()\n" +
                         "                .limit();", int.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
                 .addStatement("$T.assertEquals(offset + 4, limit)", Assert.class)
@@ -191,11 +193,11 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("buffer.putInt(10,  0)")
-                .addStatement("array$LRO.wrap(buffer, 10, buffer.capacity())", (isBuiltWithByteOrder ? "ByteOrder" : ""))
-                .addStatement("$T.assertEquals(14, array$LRO.limit())", Assert.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
+                .addStatement("field$LRO.wrap(buffer, 10, buffer.capacity())", (isBuiltWithByteOrder ? "ByteOrder" : ""))
+                .addStatement("$T.assertEquals(14, field$LRO.limit())", Assert.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
                 .addStatement("$T<$T> contents = new $T<$T>()", List.class, Long.class, ArrayList.class, Long.class)
-                .addStatement("array$LRO.forEach(v -> contents.add(v.value()))", (isBuiltWithByteOrder ? "ByteOrder" : ""))
-                .addStatement("$T.assertTrue(array$LRO.isEmpty())", Assert.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
+                .addStatement("field$LRO.forEach(v -> contents.add(v.value()))", (isBuiltWithByteOrder ? "ByteOrder" : ""))
+                .addStatement("$T.assertTrue(field$LRO.isEmpty())", Assert.class, (isBuiltWithByteOrder ? "ByteOrder" : ""))
                 .addStatement("$T.assertEquals(0, contents.size())", Assert.class)
                 .build();
     }
@@ -209,7 +211,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.putInt(10,  -1)")
                 .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
                 .addStatement("expectedException.expectMessage(\"size < 0\")")
-                .addStatement("arrayRO.wrap(buffer, 10, buffer.capacity())")
+                .addStatement("fieldRO.wrap(buffer, 10, buffer.capacity())")
                 .build();
     }
 
@@ -220,7 +222,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("final $T offset = 0", int.class)
-                .addStatement("final $T limit = arrayRW.wrap(buffer, offset, buffer.capacity())\n" +
+                .addStatement("final $T limit = fieldRW.wrap(buffer, offset, buffer.capacity())\n" +
                         "                .item(b -> b.set(1L))\n" +
                         "                .item(b -> b.set(-1L))\n" +
                         "                .item(b -> b.set(12L))\n" +
@@ -249,10 +251,10 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.putByte(offset + 4, (byte) 2)")
                 .addStatement("buffer.putByte(offset + 5, (byte) 1)")
                 .addStatement("buffer.putByte(offset + 6, (byte) 0x18)")
-                .addStatement("arrayRO.wrap(buffer, offset, buffer.capacity())")
-                .addStatement("$T.assertEquals(offset + LENGTH_SIZE + 3, arrayRO.limit())", Assert.class)
+                .addStatement("fieldRO.wrap(buffer, offset, buffer.capacity())")
+                .addStatement("$T.assertEquals(offset + LENGTH_SIZE + 3, fieldRO.limit())", Assert.class)
                 .addStatement("$T<$T> contents = new $T<$T>()", List.class, Long.class, ArrayList.class, Long.class)
-                .addStatement("arrayRO.forEach(v -> contents.add(v.value()))")
+                .addStatement("fieldRO.forEach(v -> contents.add(v.value()))")
                 .addStatement("$T.assertEquals(3, contents.size())", Assert.class)
                 .addStatement("$T.assertEquals(1L, contents.get(0).longValue())", Assert.class)
                 .addStatement("$T.assertEquals(-1L, contents.get(1).longValue())", Assert.class)
@@ -270,7 +272,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.putInt(offset, 1)")
                 .addStatement("buffer.putByte(offset + 4, (byte) 2)")
                 .addStatement("buffer.putByte(offset + 5, (byte) 4)")
-                .addStatement("arrayRO.wrap(buffer, offset, buffer.capacity())")
+                .addStatement("fieldRO.wrap(buffer, offset, buffer.capacity())")
                 .addStatement("$T varint64FW = new $T()", flyweightType.peerClass("Varint64FW"),
                         flyweightType.peerClass("Varint64FW"))
                 .addStatement("expected.putInt(offset, 1)")
@@ -280,7 +282,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                         flyweightType.peerClass("Varint64FW"))
                 .addStatement("return p.value() == varint64FW.value()")
                 .endControlFlow("")
-                .addStatement("$T.assert$L(arrayRO.anyMatch(varint64FWPredicate))", Assert.class,
+                .addStatement("$T.assert$L(fieldRO.anyMatch(varint64FWPredicate))", Assert.class,
                         (shouldMatch ? "True" : "False"))
                 .build();
     }
@@ -295,7 +297,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.putInt(offset, 2)")
                 .addStatement("buffer.putByte(offset + 4, (byte) 2)")
                 .addStatement("buffer.putByte(offset + 5, (byte) 4)")
-                .addStatement("arrayRO.wrap(buffer, offset, buffer.capacity())")
+                .addStatement("fieldRO.wrap(buffer, offset, buffer.capacity())")
                 .addStatement("$T varint64FW = new $T()", flyweightType.peerClass("Varint64FW"),
                         flyweightType.peerClass("Varint64FW"))
                 .addStatement("expected.putInt(offset, 1)")
@@ -307,12 +309,12 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .endControlFlow("");
         if(shouldMatch)
         {
-            methodBuilder.addStatement("$T.assertEquals(varint64FW.value(), arrayRO.matchFirst(varint64FWPredicate).value())",
+            methodBuilder.addStatement("$T.assertEquals(varint64FW.value(), fieldRO.matchFirst(varint64FWPredicate).value())",
                     Assert.class);
         }
         else
         {
-            methodBuilder.addStatement("$T.assertNull(arrayRO.matchFirst(varint64FWPredicate))", Assert.class);
+            methodBuilder.addStatement("$T.assertNull(fieldRO.matchFirst(varint64FWPredicate))", Assert.class);
         }
         return methodBuilder.build();
     }
@@ -324,16 +326,16 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("$T offset = 10", int.class)
-                .addStatement("$T limit = arrayRW.wrap(buffer, offset, buffer.capacity())\n" +
+                .addStatement("$T limit = fieldRW.wrap(buffer, offset, buffer.capacity())\n" +
                         "                .item(b -> b.set(12L))\n" +
                         "                .build()\n" +
                         "                .limit()", int.class)
-                .addStatement("$T<$T> array = arrayRW.wrap(buffer, offset, limit)\n" +
-                        "                .build()", arrayFlyweightClassName, flyweightType.peerClass("Varint64FW"))
-                .addStatement("$T.assertEquals(offset + LENGTH_SIZE, array.limit())", Assert.class)
-                .addStatement("$T.assertEquals(LENGTH_SIZE, array.sizeof())", Assert.class)
+                .addStatement("$T<$T> field = fieldRW.wrap(buffer, offset, limit)\n" +
+                        "                .build()", typeFlyweightClassName, flyweightType.peerClass("Varint64FW"))
+                .addStatement("$T.assertEquals(offset + LENGTH_SIZE, field.limit())", Assert.class)
+                .addStatement("$T.assertEquals(LENGTH_SIZE, field.sizeof())", Assert.class)
                 .addStatement("$T<$T> contents = new $T<$T>()", List.class, Long.class, ArrayList.class, Long.class)
-                .addStatement("array.forEach(v -> contents.add(v.value()))")
+                .addStatement("field.forEach(v -> contents.add(v.value()))")
                 .addStatement("$T.assertEquals(0, contents.size())", Assert.class)
                 .build();
     }
@@ -345,7 +347,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("expectedException.expect($T.class)", IndexOutOfBoundsException.class)
-                .addStatement("arrayRW.wrap(buffer, 10, 13)")
+                .addStatement("fieldRW.wrap(buffer, 10, 13)")
                 .build();
     }
 
@@ -355,7 +357,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
-                .addStatement("$T limit = arrayRW.wrap(buffer, 10, 10 + LENGTH_SIZE).limit()", int.class)
+                .addStatement("$T limit = fieldRW.wrap(buffer, 10, 10 + LENGTH_SIZE).limit()", int.class)
                 .addStatement("$T.assertEquals(14, limit)", Assert.class)
                 .build();
     }
@@ -370,7 +372,7 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.setMemory(0,  buffer.capacity(), (byte) 0x00)")
                 .addStatement("final $T offset = 10", int.class)
                 .beginControlFlow("try")
-                .addStatement("arrayRW.wrap(buffer, offset, offset + LENGTH_SIZE + 4)\n" +
+                .addStatement("fieldRW.wrap(buffer, offset, offset + LENGTH_SIZE + 4)\n" +
                         "                .item(b -> b.set(Integer.MAX_VALUE))")
                 .endControlFlow()
                 .beginControlFlow("finally")
@@ -389,12 +391,12 @@ public final class ArrayFlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("$T offset = 0", int.class)
-                .addStatement("$T<$T> array = arrayRW.wrap(buffer, offset, buffer.capacity())\n" +
+                .addStatement("$T<$T> field = fieldRW.wrap(buffer, offset, buffer.capacity())\n" +
                         "                .item(b -> b.set(1L))\n" +
                         "                .item(b -> b.set(-1L))\n" +
                         "                .item(b -> b.set(123L))\n" +
-                        "                .build()", arrayFlyweightClassName, flyweightType.peerClass("Varint64FW"))
-                .addStatement("$T.assertTrue(array.toString().equals(\"ARRAY containing 4 bytes of data\"))", Assert.class)
+                        "                .build()", typeFlyweightClassName, flyweightType.peerClass("Varint64FW"))
+                .addStatement("$T.assertTrue(field.toString().equals(\"ARRAY containing 4 bytes of data\"))", Assert.class)
                 .build();
     }
 }
