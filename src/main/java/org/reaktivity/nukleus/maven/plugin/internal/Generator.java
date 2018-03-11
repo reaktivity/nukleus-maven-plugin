@@ -131,6 +131,7 @@ public class Generator
         testTypeSpecs.add(new ArrayFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT), "ListFW"));
         testTypeSpecs.add(new OctetsFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
         testTypeSpecs.add(new FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        testTypeSpecs.add(new Variant32FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
         System.out.println("Generating flyweights to " + outputDirectory);
         System.out.println("Generating tests to " + outputTestDirectory);
 

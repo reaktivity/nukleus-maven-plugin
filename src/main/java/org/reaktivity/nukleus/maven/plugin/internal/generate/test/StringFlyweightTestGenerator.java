@@ -19,6 +19,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Assert;
@@ -60,8 +61,8 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldBuffer())
-                .addField(fieldConstantLengthSize())
+        return classBuilder.addField(fieldConstantLengthSize())
+                .addField(fieldBuffer())
                 .addField(fieldExpected())
                 .addField(fieldOctetsBuilder())
                 .addField(fieldOctetsReadOnly())
@@ -114,20 +115,20 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
     private FieldSpec fieldBuffer()
     {
         return FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
-            .initializer("new $T($T.allocateDirect(100)); \n" +
+            .initializer("new $T($T.allocateDirect($T.MAX_LENGTH+1)); \n" +
                 "{\n" +
                 "    buffer.setMemory(0, buffer.capacity(), (byte) 0xF);\n" +
-                "}", UnsafeBuffer.class, ByteBuffer.class)
+                "}", UnsafeBuffer.class, ByteBuffer.class, stringFlyweightClassName)
             .build();
     }
 
     private FieldSpec fieldExpected()
     {
         return FieldSpec.builder(MutableDirectBuffer.class, "expected", PRIVATE, FINAL)
-            .initializer("new $T($T.allocateDirect(100)); \n" +
+            .initializer("new $T($T.allocateDirect($T.MAX_LENGTH+1)); \n" +
                     "{\n" +
                     "    expected.setMemory(0, expected.capacity(), (byte) 0xF);\n" +
-                    "}", UnsafeBuffer.class, ByteBuffer.class)
+                    "}", UnsafeBuffer.class, ByteBuffer.class, stringFlyweightClassName)
             .build();
     }
 
@@ -181,7 +182,7 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
         methodSpec.addStatement("stringRO.wrap(buffer,  0,  limit)")
                 .addStatement("$T.assertEquals(expectedLimit, limit)", Assert.class)
                 .addStatement("$T.assertEquals(expected, buffer)", Assert.class)
-                .addStatement("$T.assertStringValue(stringRO)", Assert.class);
+                .addStatement("assertStringValue(stringRO)");
 
         return methodSpec.build();
     }
@@ -244,11 +245,11 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
 
     private MethodSpec shouldFailToWrapWithInsufficientLength()
     {
-        return MethodSpec.methodBuilder("shouldSetToNull")
+        return MethodSpec.methodBuilder("shouldFailToWrapWithInsufficientLength")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
-                .addStatement("expectedException.expected($T.class)", IndexOutOfBoundsException.class)
+                .addStatement("expectedException.expect($T.class)", IndexOutOfBoundsException.class)
                 .addStatement("stringRW.wrap(buffer, 10, 10)")
                 .build();
     }
@@ -259,7 +260,7 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
                 "WhenExceedsMaxLimit")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
-                .addStatement("expectedException.expected($T.class)", IndexOutOfBoundsException.class)
+                .addStatement("expectedException.expect($T.class)", IndexOutOfBoundsException.class)
                 .addStatement("buffer.setMemory(0,  buffer.capacity(), (byte) 0x00)")
                 .beginControlFlow("try");
         switch(setterVariant)
@@ -277,10 +278,14 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
                         "                .set(buffer, 0, 1)");
                 break;
         }
-        methodSpec.addStatement("$T[] bytes = new $T[1 + LENGTH_SIZE]", byte.class, byte.class)
+
+        methodSpec.endControlFlow()
+                .beginControlFlow("finally")
+                .addStatement("$T[] bytes = new $T[1 + LENGTH_SIZE]", byte.class, byte.class)
                 .addStatement("buffer.getBytes(10, bytes)")
-                .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + BitUtil.toHex(bytes),\n" +
-                        "                         0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class);
+                .addStatement("$T.assertEquals(\"Buffer shows memory was written beyond maxLimit: \" + $T.toHex(bytes),\n" +
+                        "                         0, buffer.getByte(10 + LENGTH_SIZE))", Assert.class, BitUtil.class)
+                .endControlFlow();
 
         return methodSpec.build();
     }
@@ -292,14 +297,14 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addException(Exception.class)
                 .addStatement("$T limit = stringRW.wrap(buffer, 0, buffer.capacity())\n" +
-                        "                .set(null, UTF_8)\n" +
+                        "                .set(null, $T.UTF_8)\n" +
                         "                .build()\n" +
-                        "                .limit()", int.class)
-                .addStatement("$T.assertEquals(1, limit)")
+                        "                .limit()", int.class, StandardCharsets.class)
+                .addStatement("$T.assertEquals(1, limit)", Assert.class)
                 .addStatement("stringRO.wrap(buffer,  0,  limit)")
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.limit())", Assert.class)
                 .addStatement("$T.assertEquals(LENGTH_SIZE, stringRO.sizeof())", Assert.class)
-                .addStatement("$T.assertNull(stringRO.asString())")
+                .addStatement("$T.assertNull(stringRO.asString())", Assert.class)
                 .build();
     }
 
@@ -308,7 +313,7 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldFailToBuildLargeString")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
-                .addStatement("expectedException.expected($T.class)", IllegalArgumentException.class)
+                .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
                 .addStatement("$T str = String.format(\"%270s\", \"0\")", String.class)
                 .addStatement("stringRW.wrap(buffer, 0, buffer.capacity())\n" +
                         "                .set(str, $T.UTF_8)", StandardCharsets.class)
@@ -330,6 +335,10 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PRIVATE, STATIC)
                 .returns(MutableDirectBuffer.class)
                 .addParameter(String.class, "value")
+                .addStatement("$T buffer = new $T($T.allocateDirect(value.length()))", MutableDirectBuffer.class,
+                        UnsafeBuffer.class, ByteBuffer.class)
+                .addStatement("buffer.putStringWithoutLengthUtf8(0, value)")
+                .addStatement("return buffer")
                 .build();
     }
 
