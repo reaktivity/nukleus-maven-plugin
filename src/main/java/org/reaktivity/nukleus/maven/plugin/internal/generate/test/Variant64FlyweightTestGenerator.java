@@ -57,11 +57,13 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addField(fieldOctetsReadOnly())
                 .addField(fieldExpectedException())
                 .addMethod(shouldNotWrapZeroLengthBuffer())
-                .addMethod(shouldNotWrapValueWith33bits())
+                .addMethod(shouldNotWrapValueWith65bits())
                 .addMethod(shouldReadOneByteValue())
                 .addMethod(shouldFailToGetValueWithExceedingSize())
                 .addMethod(shouldFailToBuildWithoutSettingValue())
                 .addMethod(shouldReadTwoByteValue())
+                .addMethod(shouldReadFiveBytePositiveValue())
+                .addMethod(shouldReadFiveByteNegativeValue())
                 .addMethod(shouldReadMostPositiveValue())
                 .addMethod(shouldReadMostNegativeValue())
                 .addMethod(shouldSetMostPositiveValue())
@@ -76,14 +78,14 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
 
     private FieldSpec fieldOctetsBuilder()
     {
-        return FieldSpec.builder(octetsFlyweightBuilderClassName, "varint64RW", PRIVATE, FINAL)
+        return FieldSpec.builder(octetsFlyweightBuilderClassName, "varintRW", PRIVATE, FINAL)
                 .initializer("new $T()", octetsFlyweightBuilderClassName)
                 .build();
     }
 
     private FieldSpec fieldOctetsReadOnly()
     {
-        return FieldSpec.builder(octetsFlyweightClassName, "varint64RO", PRIVATE, FINAL)
+        return FieldSpec.builder(octetsFlyweightClassName, "varintRO", PRIVATE, FINAL)
                 .initializer("new $T()", octetsFlyweightClassName)
                 .build();
     }
@@ -123,38 +125,24 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addStatement("expectedException.expect($T.class)", IndexOutOfBoundsException.class)
                 .addStatement("buffer.putByte(10,  (byte) 0x18)")
-                .addStatement("varint32RO.wrap(buffer,  10,  10)")
+                .addStatement("varintRO.wrap(buffer,  10,  10)")
                 .build();
     }
 
-    private MethodSpec shouldNotWrapValueWith33bits()
+    private MethodSpec shouldNotWrapValueWith65bits()
     {
-        return MethodSpec.methodBuilder("shouldNotWrapValueWith33bits")
+        return MethodSpec.methodBuilder("shouldNotWrapValueWith65bits")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
-                .addStatement("buffer.putByte(50, (byte) 0xfe)")
-                .addStatement("buffer.putByte(51, (byte) 0xff)")
-                .addStatement("buffer.putByte(52, (byte) 0xff)")
-                .addStatement("buffer.putByte(53, (byte) 0xff)")
-                .addStatement("buffer.putByte(54, (byte) 0x1f)")
-                .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
-                .addStatement("expectedException.expectMessage(\"offset 50 exceeds 32 bits\")")
-                .addStatement("varint32RO.wrap(buffer,  50,  buffer.capacity())")
-                .addStatement("$T.assertEquals(Integer.MAX_VALUE, varint32RO.value())", Assert.class)
-                .build();
-    }
-
-    private MethodSpec shouldReadOneByteValue()
-    {
-        return MethodSpec.methodBuilder("shouldReadOneByteValue")
-                .addModifiers(PUBLIC)
-                .addAnnotation(Test.class)
-                .addStatement("$T offset = 13", int.class)
-                .addStatement("buffer.putByte(offset,  (byte) 0x18)")
-                .addStatement("$T.assertEquals(offset + 1, varint32RO.wrap(buffer,  offset,  21).limit())",
-                        Assert.class)
-                .addStatement("$T.assertEquals(12, varint32RO.value())", Assert.class)
+                .addStatement("expectedException.expectMessage(\"offset 37 exceeds 64 bits\")")
+                .addStatement("$T offset = 37", int.class)
+                .addStatement("buffer.putByte(offset, (byte) 0xfe)")
+                .beginControlFlow("for ($T i=0; i < 9; i++)", int.class)
+                .addStatement("buffer.putByte(offset + i, (byte) 0xff)")
+                .endControlFlow()
+                .addStatement("buffer.putByte(offset + 9, (byte) 0x02)")
+                .addStatement("varintRO.wrap(buffer,  offset,  buffer.capacity())")
                 .build();
     }
 
@@ -173,8 +161,8 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.putByte(55, (byte) 0x0f)")
                 .addStatement("buffer.putByte(56, (byte) 0xff)")
                 .addStatement("buffer.putByte(57, (byte) 0xff)")
-                .addStatement("varint32RO.wrap(buffer,  50,  buffer.capacity())")
-                .addStatement("varint32RO.value()")
+                .addStatement("varintRO.wrap(buffer,  50,  buffer.capacity())")
+                .addStatement("varintRO.value()")
                 .build();
     }
 
@@ -187,8 +175,20 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("expectedException.expectMessage(\"value not set\")")
                 .addStatement("expected.putByte(50, (byte) 0xfe)")
                 .addStatement("expected.putByte(51, (byte) 0xff)")
-                .addStatement("varint32RW.wrap(buffer,  50,  buffer.capacity())\n" +
+                .addStatement("varintRW.wrap(buffer,  50,  buffer.capacity())\n" +
                         "                .build()")
+                .build();
+    }
+
+    private MethodSpec shouldReadOneByteValue()
+    {
+        return MethodSpec.methodBuilder("shouldReadOneByteValue")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addStatement("buffer.putByte(10,  (byte) 0x18)")
+                .addStatement("$T.assertEquals(11, varintRO.wrap(buffer,  10,  21).limit())",
+                        Assert.class)
+                .addStatement("$T.assertEquals(12L, varintRO.value())", Assert.class)
                 .build();
     }
 
@@ -199,9 +199,39 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addStatement("buffer.putByte(50, (byte) 0x83)")
                 .addStatement("buffer.putByte(51, (byte) 0x01)")
-                .addStatement("$T.assertEquals(52, varint32RO.wrap(buffer,  50,  buffer.capacity()).limit())",
+                .addStatement("$T.assertEquals(52, varintRO.wrap(buffer,  50,  buffer.capacity()).limit())",
                         Assert.class)
-                .addStatement("$T.assertEquals(-66, varint32RO.value())", Assert.class)
+                .addStatement("$T.assertEquals(-66L, varintRO.value())", Assert.class)
+                .build();
+    }
+
+    private MethodSpec shouldReadFiveBytePositiveValue()
+    {
+        return MethodSpec.methodBuilder("shouldReadFiveBytePositiveValue")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addStatement("buffer.putByte(50, (byte) 0xfe)")
+                .addStatement("buffer.putByte(51, (byte) 0xff)")
+                .addStatement("buffer.putByte(52, (byte) 0xff)")
+                .addStatement("buffer.putByte(53, (byte) 0xff)")
+                .addStatement("buffer.putByte(54, (byte) 0x0f)")
+                .addStatement("varintRO.wrap(buffer,  50,  buffer.capacity())")
+                .addStatement("$T.assertEquals($T.MAX_VALUE, varintRO.value())", Assert.class, Integer.class)
+                .build();
+    }
+
+    private MethodSpec shouldReadFiveByteNegativeValue()
+    {
+        return MethodSpec.methodBuilder("shouldReadFiveByteNegativeValue")
+                .addModifiers(PUBLIC)
+                .addAnnotation(Test.class)
+                .addStatement("buffer.putByte(50, (byte) 0xff)")
+                .addStatement("buffer.putByte(51, (byte) 0xff);")
+                .addStatement("buffer.putByte(52, (byte) 0xff)")
+                .addStatement("buffer.putByte(53, (byte) 0xff)")
+                .addStatement("buffer.putByte(54, (byte) 0x0f)")
+                .addStatement("varintRO.wrap(buffer,  50,  buffer.capacity())")
+                .addStatement("$T.assertEquals($T.MIN_VALUE, varintRO.value())", Assert.class, Integer.class)
                 .build();
     }
 
@@ -210,14 +240,14 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldReadMostPositiveValue")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
-                .addStatement("buffer.putByte(50, (byte) 0xfe)")
-                .addStatement("buffer.putByte(51, (byte) 0xff)")
-                .addStatement("buffer.putByte(52, (byte) 0xff)")
-                .addStatement("buffer.putByte(53, (byte) 0xff)")
-                .addStatement("buffer.putByte(54, (byte) 0x0f)")
-                .addStatement("$T.assertEquals(55, varint32RO.wrap(buffer,  50,  buffer.capacity()).limit())",
-                        Assert.class)
-                .addStatement("$T.assertEquals($T.MAX_VALUE, varint32RO.value())", Assert.class, Integer.class)
+                .addStatement("$T offset = 37", int.class)
+                .addStatement("buffer.putByte(offset, (byte) 0xfe)")
+                .beginControlFlow("for ($T i=1; i < 9; i++)", int.class)
+                .addStatement("buffer.putByte(offset + i, (byte) 0xff)")
+                .endControlFlow()
+                .addStatement("buffer.putByte(offset + 9, (byte) 0x01)")
+                .addStatement("varintRO.wrap(buffer,  offset,  buffer.capacity())")
+                .addStatement("$T.assertEquals($T.MAX_VALUE, varintRO.value())", Assert.class, Long.class)
                 .build();
     }
 
@@ -226,13 +256,13 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldReadMostNegativeValue")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
-                .addStatement("buffer.putByte(50, (byte) 0xff)")
-                .addStatement("buffer.putByte(51, (byte) 0xff);")
-                .addStatement("buffer.putByte(52, (byte) 0xff)")
-                .addStatement("buffer.putByte(53, (byte) 0xff)")
-                .addStatement("buffer.putByte(54, (byte) 0x0f)")
-                .addStatement("varint32RO.wrap(buffer,  50,  buffer.capacity())")
-                .addStatement("$T.assertEquals($T.MIN_VALUE, varint32RO.value())", Assert.class, Integer.class)
+                .addStatement("$T offset = 10", int.class)
+                .beginControlFlow("for ($T i=0; i < 9; i++)", int.class)
+                .addStatement("buffer.putByte(offset + i, (byte) 0xff)")
+                .endControlFlow()
+                .addStatement("buffer.putByte(offset + 9, (byte) 0x01)")
+                .addStatement("varintRO.wrap(buffer,  offset,  buffer.capacity())")
+                .addStatement("$T.assertEquals($T.MIN_VALUE, varintRO.value())", Assert.class, Long.class)
                 .build();
     }
 
@@ -241,14 +271,15 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldSetMostPositiveValue")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
-                .addStatement("expected.putByte(50, (byte) 0xfe)")
-                .addStatement("expected.putByte(51, (byte) 0xff)")
-                .addStatement("expected.putByte(52, (byte) 0xff)")
-                .addStatement("expected.putByte(53, (byte) 0xff)")
-                .addStatement("expected.putByte(54, (byte) 0x0f)")
-                .addStatement("varint32RW.wrap(buffer,  50,  buffer.capacity())\n" +
-                        "            .set($T.MAX_VALUE)\n" +
-                        "            .build()", Integer.class)
+                .addStatement("int offset = 0")
+                .addStatement("expected.putByte(offset, (byte) 0xfe)")
+                .beginControlFlow("for (int i=1; i < 9; i++)")
+                .addStatement("expected.putByte(offset + i, (byte) 0xff)")
+                .endControlFlow()
+                .addStatement("expected.putByte(offset + 9, (byte) 0x01)")
+                .addStatement("varintRW.wrap(buffer, offset, buffer.capacity())\n" +
+                        "            .set(Long.MAX_VALUE)\n" +
+                        "            .build()")
                 .addStatement("$T.assertEquals(expected.byteBuffer(), buffer.byteBuffer())", Assert.class)
                 .build();
     }
@@ -258,14 +289,14 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
         return MethodSpec.methodBuilder("shouldSetMostNegativeValue")
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
-                .addStatement("expected.putByte(50, (byte) 0xff)")
-                .addStatement("expected.putByte(51, (byte) 0xff)")
-                .addStatement("expected.putByte(52, (byte) 0xff)")
-                .addStatement("expected.putByte(53, (byte) 0xff)")
-                .addStatement("expected.putByte(54, (byte) 0x0f)")
-                .addStatement("varint32RW.wrap(buffer,  50,  buffer.capacity())\n" +
-                        "            .set($T.MIN_VALUE)\n" +
-                        "            .build()", Integer.class)
+                .addStatement("int offset = 0")
+                .beginControlFlow("for (int i=0; i < 9; i++)")
+                .addStatement("expected.putByte(offset + i, (byte) 0xff)")
+                .endControlFlow()
+                .addStatement("expected.putByte(offset + 9, (byte) 0x01)")
+                .addStatement("varintRW.wrap(buffer, offset, buffer.capacity())\n" +
+                        "            .set(Long.MIN_VALUE)\n" +
+                        "            .build()")
                 .addStatement("$T.assertEquals(expected.byteBuffer(), buffer.byteBuffer())", Assert.class)
                 .build();
     }
@@ -276,7 +307,7 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addAnnotation(Test.class)
                 .addStatement("expected.putByte(10, (byte) 0x18)")
-                .addStatement("varint32RW.wrap(buffer, 10, 21)\n" +
+                .addStatement("varintRW.wrap(buffer, 10, 21)\n" +
                         "            .set(12)\n" +
                         "            .build()")
                 .addStatement("$T.assertEquals(expected.byteBuffer(), buffer.byteBuffer())", Assert.class)
@@ -290,7 +321,7 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addStatement("expected.putByte(0, (byte) 0x83)")
                 .addStatement("expected.putByte(1, (byte) 0x01)")
-                .addStatement("varint32RW.wrap(buffer, 0, buffer.capacity())\n" +
+                .addStatement("varintRW.wrap(buffer, 0, buffer.capacity())\n" +
                         "            .set(-66)\n" +
                         "            .build()")
                 .addStatement("$T.assertEquals(expected.byteBuffer(), buffer.byteBuffer())", Assert.class)
@@ -306,8 +337,8 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addStatement("buffer.putByte(51, (byte) 0xff)")
                 .addStatement("buffer.putByte(52, (byte) 0xff)")
                 .addStatement("buffer.putByte(53, (byte) 0xff)")
-                .addStatement("varint32RO.wrap(buffer,  50,  buffer.capacity())")
-                .addStatement("$T.assertEquals($T.toString($T.MAX_VALUE), varint32RO.toString())",
+                .addStatement("varintRO.wrap(buffer,  50,  buffer.capacity())")
+                .addStatement("$T.assertEquals($T.toString($T.MAX_VALUE), varintRO.toString())",
                         Assert.class, Integer.class, Integer.class)
                 .build();
     }
@@ -319,7 +350,7 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addStatement("expectedException.expect($T.class)", IndexOutOfBoundsException.class)
                 .addStatement("expected.putByte(10, (byte) 0x18)")
-                .addStatement("varint32RW.wrap(buffer, 10, 10)")
+                .addStatement("varintRW.wrap(buffer, 10, 10)")
                 .build();
     }
 
@@ -330,7 +361,7 @@ public final class Variant64FlyweightTestGenerator extends ClassSpecGenerator
                 .addAnnotation(Test.class)
                 .addStatement("expectedException.expect($T.class)", IndexOutOfBoundsException.class)
                 .addStatement("expected.putByte(10, (byte) 0x18)")
-                .addStatement("varint32RW.wrap(buffer, 10, 11)\n" +
+                .addStatement("varintRW.wrap(buffer, 10, 11)\n" +
                         "            .set(70)")
                 .build();
     }

@@ -79,6 +79,34 @@ public class Varint32FWTest
     }
 
     @Test
+    public void shouldFailToGetValueWithExceedingSize()
+    {
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("varint32 value too long");
+        buffer.putByte(50, (byte) 0xff);
+        buffer.putByte(51, (byte) 0xff);
+        buffer.putByte(52, (byte) 0xff);
+        buffer.putByte(53, (byte) 0xff);
+        buffer.putByte(54, (byte) 0xff);
+        buffer.putByte(55, (byte) 0x0f);
+        buffer.putByte(56, (byte) 0xff);
+        buffer.putByte(57, (byte) 0xff);
+        varint32RO.wrap(buffer,  50,  buffer.capacity());
+        varint32RO.value();
+    }
+
+    @Test
+    public void shouldFailToBuildWithoutSettingValue()
+    {
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("value not set");
+        expected.putByte(50, (byte) 0xfe);
+        expected.putByte(51, (byte) 0xff);
+        varint32RW.wrap(buffer,  50,  buffer.capacity())
+                .build();
+    }
+
+    @Test
     public void shouldReadTwoByteValue() throws Exception
     {
         // Actual value is -66, zigzagged value is 132-1 = 131 = 0x83
