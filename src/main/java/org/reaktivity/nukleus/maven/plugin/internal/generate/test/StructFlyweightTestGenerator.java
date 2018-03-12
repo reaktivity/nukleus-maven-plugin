@@ -504,7 +504,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         }
 
         private int valueIncrement = 0;
-        private String priorValueSize = "0";
+        private int priorValueSize = 0;
         private final boolean allFields;
 
         private SetBufferValuesMethodGenerator(
@@ -600,7 +600,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         valueIncrement);
             }
 
-            priorValueSize = TYPE_SIZE.get(type);
+            priorValueSize = Integer.parseInt(TYPE_SIZE.get(type));
         }
 
         private void addSetNonPrimitiveValue(
@@ -644,6 +644,29 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             if ("ListFW".equals(rawType.simpleName()))
             {
                 // Add a method to append list items
+                if ("StringFW".equals(itemType.simpleName()))
+                {
+                    if (allFields)
+                    {
+                        builder.addStatement("buffer.putInt(offset += $L, 14)", priorValueSize)
+                                .addStatement("buffer.putByte(offset += 4, (byte) \"value$L\".length())",
+                                        valueIncrement)
+                                .addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
+                                        valueIncrement,
+                                        StandardCharsets.class)
+                                .addStatement("buffer.putByte(offset += 6, (byte) \"value$L\".length())",
+                                        valueIncrement)
+                                .addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
+                                        valueIncrement,
+                                        StandardCharsets.class);
+                        priorValueSize = ("value" + valueIncrement).length();
+                    }
+                    else
+                    {
+                        builder.addStatement("buffer.putInt(offset += $L, 0)", priorValueSize);
+                        priorValueSize = 4;
+                    }
+                }
             }
         }
 
@@ -660,11 +683,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 builder.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
                         priorValueSize,
-                        valueIncrement);
-                builder.addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
+                        valueIncrement)
+                    .addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
                         valueIncrement,
                         StandardCharsets.class);
-                priorValueSize = Integer.toString(("value" + valueIncrement).length());
+                priorValueSize = ("value" + valueIncrement).length();
             }
             else if (DIRECT_BUFFER_TYPE.equals(className))
             {
@@ -689,7 +712,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         builder.addStatement("offset = $TTest.setRequiredBufferValues(buffer, offset += $L)",
                                 className, priorValueSize);
                     }
-                    priorValueSize = "0";
+                    priorValueSize = 0;
                 }
             }
         }
@@ -812,7 +835,39 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else if (type instanceof ParameterizedTypeName)
             {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                addParameterizedType(name, parameterizedType, defaultValue);
+            }
+        }
 
+        private void addParameterizedType(
+                String name,
+                ParameterizedTypeName parameterizedType,
+                Object defaultValue)
+        {
+            ClassName rawType = parameterizedType.rawType;
+            ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+            ClassName builderRawType = rawType.nestedClass("Builder");
+            ClassName itemBuilderType = itemType.nestedClass("Builder");
+            ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+            ClassName consumerType = ClassName.get(Consumer.class);
+            TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+
+            if ("ListFW".equals(rawType.simpleName()))
+            {
+                // Add a method to append list items
+                if ("StringFW".equals(itemType.simpleName()))
+                {
+                    builder.addStatement("builder.$L(b -> b.item(i -> i.set(\"value$L\", $T.UTF_8)))",
+                            methodName(name),
+                            valueIncrement,
+                            StandardCharsets.class)
+                        .addStatement("builder.$LItem(b -> b.set(\"value$L\", $T.UTF_8))",
+                            methodName(name),
+                            valueIncrement,
+                            StandardCharsets.class);
+                }
             }
         }
 
@@ -997,7 +1052,28 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else if (type instanceof ParameterizedTypeName)
             {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                addParameterizedType(name, parameterizedType, defaultValue);
+            }
+        }
 
+        private void addParameterizedType(
+                String name,
+                ParameterizedTypeName parameterizedType,
+                Object defaultValue)
+        {
+            ClassName rawType = parameterizedType.rawType;
+            ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+            ClassName builderRawType = rawType.nestedClass("Builder");
+            ClassName itemBuilderType = itemType.nestedClass("Builder");
+            ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+            ClassName consumerType = ClassName.get(Consumer.class);
+            TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+
+            if ("ListFW".equals(rawType.simpleName()))
+            {
+                // Add a method to append list items
             }
         }
 
@@ -1148,7 +1224,41 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else if (type instanceof ParameterizedTypeName)
             {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                addParameterizedType(name, parameterizedType, defaultValue);
+            }
+        }
 
+        private void addParameterizedType(
+                String name,
+                ParameterizedTypeName parameterizedType,
+                Object defaultValue)
+        {
+            ClassName rawType = parameterizedType.rawType;
+            ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+            ClassName builderRawType = rawType.nestedClass("Builder");
+            ClassName itemBuilderType = itemType.nestedClass("Builder");
+            ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+            ClassName consumerType = ClassName.get(Consumer.class);
+            TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+
+            if ("ListFW".equals(rawType.simpleName()))
+            {
+                // Add a method to append list items
+                if ("StringFW".equals(itemType.simpleName()))
+                {
+                    builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                            .addStatement("builder.$L(b -> b.item(i -> i.set(\"value$L\", $T.UTF_8)))",
+                                    methodName(name),
+                                    valueIncrement,
+                                    StandardCharsets.class)
+                            .addStatement("builder.$LItem(b -> b.set(\"value$L\", $T.UTF_8))",
+                                methodName(name),
+                                valueIncrement,
+                                StandardCharsets.class)
+                            .endControlFlow();
+                }
             }
         }
 
@@ -1184,11 +1294,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 if (!isVarintType(className))
                 {
-                    builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
-                    builder.addStatement("builder.$L(field -> $TTest.setRequiredFields(field))",
-                            methodName(name),
-                            className);
-                    builder.endControlFlow();
+                    builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                        .addStatement("builder.$L(field -> $TTest.setRequiredFields(field))",
+                                methodName(name),
+                                className)
+                        .endControlFlow();
                 }
             }
         }
@@ -1601,7 +1711,51 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else if (type instanceof ParameterizedTypeName)
             {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                addParameterizedType(name, parameterizedType, defaultValue);
+            }
+        }
 
+        private void addParameterizedType(
+                String name,
+                ParameterizedTypeName parameterizedType,
+                Object defaultValue)
+        {
+            ClassName rawType = parameterizedType.rawType;
+            ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+            ClassName builderRawType = rawType.nestedClass("Builder");
+            ClassName itemBuilderType = itemType.nestedClass("Builder");
+            ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+            ClassName consumerType = ClassName.get(Consumer.class);
+            TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+
+            if ("ListFW".equals(rawType.simpleName()))
+            {
+                if ("StringFW".equals(itemType.simpleName()))
+                {
+                    // Add a method to append list items
+                    builder.addMethod(methodBuilder("shouldFailToReset"+name.toUpperCase())
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                            .addStatement("expectedException.expectMessage(\"$L\")", name)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L+1)\n" +
+                                    "                .$L(b -> b.item(i -> i.set(\"value\", $T.UTF_8)))" +
+                                    "                .build()", index(name), methodName(name), StandardCharsets.class)
+                            .build());
+
+                    builder.addMethod(methodBuilder("shouldGenerateDefaultValueFor"+name.toUpperCase() +
+                            "ItemIf" + name.toUpperCase() + "IsNotSet")
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("$T limit = setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                    "                .$LItem(b -> b.set(\"value\", $T.UTF_8)).build().limit()",
+                                    int.class, index(name), methodName(name), StandardCharsets.class)
+                            .addStatement("fieldRO.wrap(buffer,  0,  limit)")
+                            .addStatement("$T.assertFalse(fieldRO.$L().isEmpty())", Assert.class, methodName(name))
+                            .build());
+                }
             }
         }
 
