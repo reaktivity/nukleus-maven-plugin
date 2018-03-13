@@ -171,8 +171,6 @@ public final class OptFlatWithOctetsFW extends Flyweight
 
         private static final int INDEX_LENGTH_OCTETS3 = 4;
 
-        private static final int DEFAULT_LENGTH_OCTETS3 = 0;
-
         private static final int INDEX_OCTETS3 = 5;
 
         private static final int DEFAULT_LENGTH_OCTETS4 = 0;

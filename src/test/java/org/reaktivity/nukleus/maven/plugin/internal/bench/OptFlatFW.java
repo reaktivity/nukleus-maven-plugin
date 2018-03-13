@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.bench;
 
 import java.nio.charset.StandardCharsets;
-import java.util.BitSet;
+
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -121,23 +121,11 @@ public final class OptFlatFW extends Flyweight
 
         private static final int FIELD_COUNT = 5;
 
-        @SuppressWarnings("serial")
-        private static final BitSet FIELDS_WITH_DEFAULTS = new BitSet(FIELD_COUNT)
-        {
-            {
-                set(INDEX_FIXED2);
-                set(INDEX_FIXED3);
-            }
-        };
-
-        private static final String[] FIELD_NAMES =
-        {"fixed1", "fixed2", "string1", "fixed3", "string2"};
+        private int lastFieldSet = -1;
 
         private final StringFW.Builder string1RW = new StringFW.Builder();
 
         private final StringFW.Builder string2RW = new StringFW.Builder();
-
-        private final BitSet fieldsSet = new BitSet(FIELD_COUNT);
 
         public Builder()
         {
@@ -147,16 +135,15 @@ public final class OptFlatFW extends Flyweight
         public Builder fixed1(
             long value)
         {
-            checkFieldNotSet(INDEX_FIXED1);
+            assert lastFieldSet == INDEX_FIXED1 - 1;
             if (value < 0L)
             {
                 throw new IllegalArgumentException(String.format("Value %d too low for field \"fixed1\"", value));
             }
-            checkFieldsSet(0, INDEX_FIXED1);
             int newLimit = limit() + FIELD_SIZE_FIXED1;
             checkLimit(newLimit, maxLimit());
             buffer().putLong(limit(), value);
-            fieldsSet.set(INDEX_FIXED1);
+            lastFieldSet = INDEX_FIXED1;
             limit(newLimit);
             return this;
         }
@@ -164,7 +151,7 @@ public final class OptFlatFW extends Flyweight
         public Builder fixed2(
             int value)
         {
-            checkFieldNotSet(INDEX_FIXED2);
+            assert lastFieldSet == INDEX_FIXED2 - 1;
             if (value < 0)
             {
                 throw new IllegalArgumentException(String.format("Value %d too low for field \"fixed2\"", value));
@@ -173,23 +160,21 @@ public final class OptFlatFW extends Flyweight
             {
                 throw new IllegalArgumentException(String.format("Value %d too high for field \"fixed2\"", value));
             }
-            checkFieldsSet(0, INDEX_FIXED2);
             int newLimit = limit() + FIELD_SIZE_FIXED2;
             checkLimit(newLimit, maxLimit());
             buffer().putShort(limit(), (short) (value & 0xFFFF));
-            fieldsSet.set(INDEX_FIXED2);
+            lastFieldSet = INDEX_FIXED2;
             limit(newLimit);
             return this;
         }
 
         private StringFW.Builder string1()
         {
-            checkFieldNotSet(INDEX_STRING1);
-            if (!fieldsSet.get(INDEX_FIXED2))
+            assert lastFieldSet < INDEX_STRING1;
+            if (lastFieldSet < INDEX_FIXED2)
             {
                 fixed2(DEFAULT_FIXED2);
             }
-            checkFieldsSet(0, INDEX_STRING1);
             return string1RW.wrap(buffer(), limit(), maxLimit());
         }
 
@@ -198,7 +183,7 @@ public final class OptFlatFW extends Flyweight
         {
             StringFW.Builder string1RW = string1();
             string1RW.set(value, StandardCharsets.UTF_8);
-            fieldsSet.set(INDEX_STRING1);
+            lastFieldSet = INDEX_STRING1;
             limit(string1RW.build().limit());
             return this;
         }
@@ -208,7 +193,7 @@ public final class OptFlatFW extends Flyweight
         {
             StringFW.Builder string1RW = string1();
             string1RW.set(value);
-            fieldsSet.set(INDEX_STRING1);
+            lastFieldSet = INDEX_STRING1;
             limit(string1RW.build().limit());
             return this;
         }
@@ -220,7 +205,7 @@ public final class OptFlatFW extends Flyweight
         {
             StringFW.Builder string1RW = string1();
             string1RW.set(buffer, offset, length);
-            fieldsSet.set(INDEX_STRING1);
+            lastFieldSet = INDEX_STRING1;
             limit(string1RW.build().limit());
             return this;
         }
@@ -228,24 +213,22 @@ public final class OptFlatFW extends Flyweight
         public Builder fixed3(
             int value)
         {
-            checkFieldNotSet(INDEX_FIXED3);
-            checkFieldsSet(0, INDEX_FIXED3);
+            assert lastFieldSet == INDEX_FIXED3 - 1;
             int newLimit = limit() + FIELD_SIZE_FIXED3;
             checkLimit(newLimit, maxLimit());
             buffer().putInt(limit(), value);
-            fieldsSet.set(INDEX_FIXED3);
+            lastFieldSet = INDEX_FIXED3;
             limit(newLimit);
             return this;
         }
 
         private StringFW.Builder string2()
         {
-            checkFieldNotSet(INDEX_STRING2);
-            if (!fieldsSet.get(INDEX_FIXED3))
+            assert lastFieldSet < INDEX_STRING2;
+            if (lastFieldSet < INDEX_FIXED3)
             {
                 fixed3(DEFAULT_FIXED3);
             }
-            checkFieldsSet(0, INDEX_STRING2);
             return string2RW.wrap(buffer(), limit(), maxLimit());
         }
 
@@ -254,7 +237,7 @@ public final class OptFlatFW extends Flyweight
         {
             StringFW.Builder string2RW = string2();
             string2RW.set(value, StandardCharsets.UTF_8);
-            fieldsSet.set(INDEX_STRING2);
+            lastFieldSet = INDEX_STRING2;
             limit(string2RW.build().limit());
             return this;
         }
@@ -264,7 +247,7 @@ public final class OptFlatFW extends Flyweight
         {
             StringFW.Builder string2RW = string2();
             string2RW.set(value);
-            fieldsSet.set(INDEX_STRING2);
+            lastFieldSet = INDEX_STRING2;
             limit(string2RW.build().limit());
             return this;
         }
@@ -276,7 +259,7 @@ public final class OptFlatFW extends Flyweight
         {
             StringFW.Builder string2RW = string2();
             string2RW.set(buffer, offset, length);
-            fieldsSet.set(INDEX_STRING2);
+            lastFieldSet = INDEX_STRING2;
             limit(string2RW.build().limit());
             return this;
         }
@@ -287,7 +270,7 @@ public final class OptFlatFW extends Flyweight
             int offset,
             int maxLimit)
         {
-            fieldsSet.clear();
+            lastFieldSet = -1;
             super.wrap(buffer, offset, maxLimit);
             limit(offset);
             return this;
@@ -296,35 +279,9 @@ public final class OptFlatFW extends Flyweight
         @Override
         public OptFlatFW build()
         {
-            checkFieldsSet(0, FIELD_COUNT);
-            fieldsSet.clear();
+            assert lastFieldSet == FIELD_COUNT - 1;
+            lastFieldSet = -1;
             return super.build();
-        }
-
-        private void checkFieldNotSet(
-            int index)
-        {
-            if (fieldsSet.get(index))
-            {
-                throw new IllegalStateException(String.format("Field \"%s\" has already been set", FIELD_NAMES[index]));
-            }
-        }
-
-        private void checkFieldsSet(
-            int fromIndex,
-            int toIndex)
-        {
-            int fieldNotSet = fromIndex - 1;
-            do
-            {
-                fieldNotSet = fieldsSet.nextClearBit(fieldNotSet + 1);
-            }
-            while (fieldNotSet < toIndex && FIELDS_WITH_DEFAULTS.get(fieldNotSet));
-            if (fieldNotSet < toIndex)
-            {
-                throw new IllegalStateException(
-                        String.format("Required field \"%s\" is not set", FIELD_NAMES[fieldNotSet]));
-            }
         }
     }
 }
