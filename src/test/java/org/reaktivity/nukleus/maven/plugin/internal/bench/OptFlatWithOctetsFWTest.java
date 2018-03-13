@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNull;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -136,24 +135,20 @@ public class OptFlatWithOctetsFWTest
                 .octets1(asBuffer("123456789"), 0, 9);
     }
 
-    @Ignore
     @Test
     public void shouldFailToResetFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
+        expectedException.expect(AssertionError.class);
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .fixed1(10)
             .fixed1(101)
             .build();
     }
 
-    @Ignore
     @Test
     public void shouldFailToResetString1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
+        expectedException.expect(AssertionError.class);
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .string1("value1")
@@ -161,33 +156,27 @@ public class OptFlatWithOctetsFWTest
             .build();
     }
 
-    @Ignore
     @Test
     public void shouldFailToBuildWhenOctets1NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("octets1");
+        expectedException.expect(AssertionError.class);
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .build();
     }
 
-    @Ignore
     @Test
     public void shouldFailToBuildWhenString1NotSet() throws Exception
     {
         expectedException.expect(AssertionError.class);
-        expectedException.expectMessage("string1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .build();
     }
 
-    @Ignore
     @Test
     public void shouldFailToBuildWhenOctets2NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("octets2");
+        expectedException.expect(AssertionError.class);
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .string1("value1")

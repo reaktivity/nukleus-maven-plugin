@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.bench;
 
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
+
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -162,44 +163,27 @@ public final class OptFlatWithOctetsFW extends Flyweight
 
         private static final int INDEX_OCTETS1 = 1;
 
-        private static final int INDEX_LENGTH_OCTETS2 = 2;
-
         private static final int DEFAULT_LENGTH_OCTETS2 = 0;
 
-        private static final int INDEX_STRING1 = 3;
+        private static final int INDEX_STRING1 = 2;
 
-        private static final int INDEX_OCTETS2 = 4;
+        private static final int INDEX_OCTETS2 = 3;
 
-        private static final int INDEX_LENGTH_OCTETS3 = 5;
+        private static final int INDEX_LENGTH_OCTETS3 = 4;
 
         private static final int DEFAULT_LENGTH_OCTETS3 = 0;
 
-        private static final int INDEX_OCTETS3 = 6;
-
-        private static final int INDEX_LENGTH_OCTETS4 = 7;
+        private static final int INDEX_OCTETS3 = 5;
 
         private static final int DEFAULT_LENGTH_OCTETS4 = 0;
 
-        private static final int INDEX_OCTETS4 = 8;
+        private static final int INDEX_OCTETS4 = 6;
 
-        private static final int INDEX_EXTENSION = 9;
+        private static final int INDEX_EXTENSION = 7;
 
-        private static final int FIELD_COUNT = 10;
+        private static final int FIELD_COUNT = 8;
 
         private int lastFieldSet = -1;
-
-        private static final String[] FIELD_NAMES = {
-          "fixed1",
-          "octets1",
-          "lengthOctets2",
-          "string1",
-          "octets2",
-          "lengthOctets3",
-          "octets3",
-          "lengthOctets4",
-          "octets4",
-          "extension"
-        };
 
         private final OctetsFW.Builder octets1RW = new OctetsFW.Builder();
 
@@ -229,8 +213,7 @@ public final class OptFlatWithOctetsFW extends Flyweight
         public Builder fixed1(
             long value)
         {
-            assert lastFieldSet == INDEX_FIXED1 - 1 :
-                String.format("Field \"%s\" has already been set", FIELD_NAMES[INDEX_FIXED1]);
+            assert lastFieldSet == INDEX_FIXED1 - 1;
             if (value < 0)
             {
                 throw new IllegalArgumentException(String.format("Value %d too low for field \"fixed1\"", value));
@@ -253,8 +236,7 @@ public final class OptFlatWithOctetsFW extends Flyweight
             {
                 fixed1(DEFAULT_FIXED1);
             }
-            assert lastFieldSet == INDEX_OCTETS1 - 1 :
-                String.format("Prior required fields not set or field \"%s\" has already been set", FIELD_NAMES[INDEX_FIXED1]);
+            assert lastFieldSet == INDEX_OCTETS1 - 1;
             int newLimit = limit() + 10;
             checkLimit(newLimit, maxLimit());
             return octets1RW.wrap(buffer(), limit(), newLimit);
@@ -313,18 +295,14 @@ public final class OptFlatWithOctetsFW extends Flyweight
             checkLimit(newLimit, maxLimit());
             buffer().putShort(limit(), (short) (value & 0xFFFF));
             dynamicOffsetLengthOctets2 = limit();
-            lastFieldSet = INDEX_LENGTH_OCTETS2;
             limit(newLimit);
             return this;
         }
 
         private StringFW.Builder string1()
         {
-            if (lastFieldSet < INDEX_LENGTH_OCTETS2)
-            {
-                lengthOctets2(DEFAULT_LENGTH_OCTETS2);
-            }
             assert lastFieldSet == INDEX_STRING1 - 1;
+            lengthOctets2(DEFAULT_LENGTH_OCTETS2);
             return string1RW.wrap(buffer(), limit(), maxLimit());
         }
 
@@ -410,10 +388,6 @@ public final class OptFlatWithOctetsFW extends Flyweight
 
         private OctetsFW.Builder octets3()
         {
-            if (lastFieldSet < INDEX_LENGTH_OCTETS3)
-            {
-                lengthOctets3(DEFAULT_LENGTH_OCTETS3);
-            }
             assert lastFieldSet == INDEX_OCTETS3 - 1;
             return octets3RW.wrap(buffer(), limit(), maxLimit());
         }
@@ -468,17 +442,14 @@ public final class OptFlatWithOctetsFW extends Flyweight
             checkLimit(newLimit, maxLimit());
             buffer().putInt(limit(), value);
             dynamicOffsetLengthOctets4 = limit();
-            lastFieldSet = INDEX_LENGTH_OCTETS4;
             limit(newLimit);
             return this;
         }
 
         private OctetsFW.Builder octets4()
         {
-            if (lastFieldSet < INDEX_LENGTH_OCTETS4)
-            {
-                lengthOctets4(DEFAULT_LENGTH_OCTETS4);
-            }
+            assert lastFieldSet < INDEX_OCTETS4;
+            lengthOctets4(DEFAULT_LENGTH_OCTETS4);
             assert lastFieldSet == INDEX_OCTETS4 - 1;
             return octets4RW.wrap(buffer(), limit(), maxLimit());
         }
@@ -517,16 +488,9 @@ public final class OptFlatWithOctetsFW extends Flyweight
         {
             if (lastFieldSet < INDEX_OCTETS4)
             {
-                octets4(b ->
-                {
-                });
-                int limit = limit();
-                limit(dynamicOffsetLengthOctets4);
                 lengthOctets4(-1);
-                limit(limit);
                 lastFieldSet = INDEX_OCTETS4;
             }
-            assert lastFieldSet == INDEX_EXTENSION - 1;
             return extensionRW.wrap(buffer(), limit(), maxLimit());
         }
 
@@ -574,7 +538,7 @@ public final class OptFlatWithOctetsFW extends Flyweight
                 {
                 });
             }
-            assert lastFieldSet == FIELD_COUNT - 1 : String.format("%s is not set", FIELD_NAMES[lastFieldSet + 1]);
+            assert lastFieldSet == FIELD_COUNT - 1;
             lastFieldSet = -1;
             return super.build();
         }
