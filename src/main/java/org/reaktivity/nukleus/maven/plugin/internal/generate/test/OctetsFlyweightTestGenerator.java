@@ -367,7 +367,7 @@ public final class OctetsFlyweightTestGenerator extends ClassSpecGenerator
     private MethodSpec setBufferValue()
     {
         return MethodSpec.methodBuilder("setBufferValue")
-                .addModifiers(STATIC)
+                .addModifiers(PUBLIC, STATIC)
                 .returns(int.class)
                 .addParameter(MutableDirectBuffer.class, "buffer")
                 .addParameter(int.class, "offset")
@@ -381,7 +381,7 @@ public final class OctetsFlyweightTestGenerator extends ClassSpecGenerator
     private MethodSpec asOctetsFW()
     {
         return MethodSpec.methodBuilder("asOctetsFW")
-                .addModifiers(STATIC)
+                .addModifiers(PUBLIC, STATIC)
                 .returns(octetsFlyweightClassName)
                 .addParameter(String.class, "value")
                 .addStatement("$T buffer = new $T($T.allocateDirect($T.SIZE + value.length()))",
@@ -394,7 +394,7 @@ public final class OctetsFlyweightTestGenerator extends ClassSpecGenerator
     private MethodSpec asBuffer()
     {
         return MethodSpec.methodBuilder("asBuffer")
-                .addModifiers(STATIC)
+                .addModifiers(PUBLIC, STATIC)
                 .returns(MutableDirectBuffer.class)
                 .addParameter(String.class, "value")
                 .addStatement("$T buffer = new $T($T.allocateDirect(value.length()))", MutableDirectBuffer.class,
@@ -407,7 +407,7 @@ public final class OctetsFlyweightTestGenerator extends ClassSpecGenerator
     private MethodSpec asString()
     {
         return MethodSpec.methodBuilder("asString")
-                .addModifiers(STATIC)
+                .addModifiers(PUBLIC, STATIC)
                 .returns(String.class)
                 .addParameter(octetsFlyweightClassName, "octets")
                 .addStatement("$T[] bytes = new $T[octets.sizeof()]", byte.class, byte.class)

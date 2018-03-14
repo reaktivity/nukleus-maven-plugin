@@ -87,10 +87,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorPrimary;
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorStringFW;
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorBuffer;
+    private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorArray;
 
     private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorPrimary;
     private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorStringFW;
     private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorBuffer;
+    private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorArray;
 
     private final ExceptionTestMethodGenerator exceptionTestMethodGenerator;
     private final DefaultValuesTestMethodGenerator defaultValuesTestMethodGenerator;
@@ -136,6 +138,10 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         this.setAllBuilderValuesMethodGeneratorBuffer = new SetAllBuilderValuesMethodGenerator(structName, builder, baseName,
                 StringSetterVariant.BUFFER,
                 OctetsSetterVariant.BUFFER);
+        this.setAllBuilderValuesMethodGeneratorArray = new SetAllBuilderValuesMethodGenerator(structName, builder, baseName,
+                StringSetterVariant.STRING,
+                OctetsSetterVariant.ARRAY);
+
 
         this.setAllFieldsValueTestMethodGeneratorPrimary = new SetAllFieldsValueTestMethodGenerator(
                 structName, builder, baseName,
@@ -149,6 +155,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 structName, builder, baseName,
                 StringSetterVariant.BUFFER,
                 OctetsSetterVariant.BUFFER);
+        this.setAllFieldsValueTestMethodGeneratorArray = new SetAllFieldsValueTestMethodGenerator(structName, builder, baseName,
+                StringSetterVariant.STRING,
+                OctetsSetterVariant.ARRAY);
     }
 
     public StructFlyweightTestGenerator addMember(
@@ -177,6 +186,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     byteOrder, defaultValue);
             setAllBuilderValuesMethodGeneratorBuffer.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue);
+            setAllBuilderValuesMethodGeneratorArray.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                byteOrder, defaultValue);
             setFieldUpToIndexMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue);
             setRequiredBuilderFieldMethodGenerator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
@@ -215,6 +226,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             builder.addMethod(setAllBuilderValuesMethodGeneratorBuffer.generate());
             builder.addMethod(setAllFieldsValueTestMethodGeneratorBuffer.generate());
+        }
+        if(setAllBuilderValuesMethodGeneratorArray.hasVariant())
+        {
+            builder.addMethod(setAllBuilderValuesMethodGeneratorArray.generate());
+            builder.addMethod(setAllFieldsValueTestMethodGeneratorArray.generate());
         }
 
         return builder
@@ -270,7 +286,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         .addStatement("$T limit = setRequiredFields(fieldRW.wrap(buffer, 0, buffer.capacity()))" +
                                 ".build()" +
                                 ".limit()", int.class)
-                        .addStatement("fieldRO.wrap(buffer,  0,  limit)")
+                        .addStatement("fieldRO.wrap(buffer, 0, limit)")
                         .addStatement("$T.assertEquals($L, $LFW.TYPE_ID)", Assert.class, String.format("0x%08x", typeId),
                                 baseName)
                         .addStatement("$T.assertEquals($L, fieldRO.typeId())",
@@ -476,6 +492,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         private static final Map<TypeName, String> PUTTER_NAMES;
         private static final Map<TypeName, String> TYPE_SIZE;
         private static final Map<TypeName, String> SIZEOF_BY_NAME = initSizeofByName();
+        private final CodeBlock.Builder defaultValueBuilder;
+        private final CodeBlock.Builder codeBuilder;
 
         static
         {
@@ -517,6 +535,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     .returns(int.class)
                     .addModifiers(PUBLIC));
             this.allFields = allFields;
+            this.defaultValueBuilder = CodeBlock.builder();
+            this.codeBuilder = CodeBlock.builder();
         }
 
         public SetBufferValuesMethodGenerator addMember(
@@ -546,12 +566,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     //TODO: Add primitive member
                     if(allFields)
                     {
-                        addSetPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                        addPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                                 byteOrder, null);
                     }
                     else
                     {
-                        addSetPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                        addPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                                 byteOrder, defaultValue);
                     }
                 }
@@ -559,14 +579,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             else
             {
                 //TODO: Add nonprimative member
-                addSetNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                addNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                         byteOrder, defaultValue);
             }
 
             return this;
         }
 
-        private void addSetPrimitiveValue(
+        private void addPrimitiveValue(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -585,25 +605,36 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
             if (defaultValue != null)
             {
-                builder.addStatement("buffer.$L(offset += $L, ($L) $L)",
+                codeBuilder.addStatement("buffer.$L(offset += $L, ($L) $L)",
                         putterName,
                         priorValueSize,
                         SIZEOF_BY_NAME.get(type).toLowerCase(),
                         defaultValue.toString());
+                priorValueSize = Integer.parseInt(TYPE_SIZE.get(type));
             }
             else
             {
-                builder.addStatement("buffer.$L(offset += $L, ($L) $L0)",
-                        putterName,
-                        priorValueSize,
-                        SIZEOF_BY_NAME.get(type).toLowerCase(),
-                        valueIncrement);
+                if(usedAsSize)
+                {
+                    codeBuilder.addStatement("buffer.$L(offset += $L, ($L) $L)",
+                            putterName,
+                            priorValueSize,
+                            SIZEOF_BY_NAME.get(type).toLowerCase(),
+                            dynamicValue(name));
+                }
+                else
+                {
+                    codeBuilder.addStatement("buffer.$L(offset += $L, ($L) $L)",
+                            putterName,
+                            priorValueSize,
+                            SIZEOF_BY_NAME.get(type).toLowerCase(),
+                            valueIncrement);
+                }
+                priorValueSize = Integer.parseInt(TYPE_SIZE.get(type));
             }
-
-            priorValueSize = Integer.parseInt(TYPE_SIZE.get(type));
         }
 
-        private void addSetNonPrimitiveValue(
+        private void addNonPrimitiveValue(
                 String name,
                 TypeName type,
                 TypeName unsignedType,
@@ -648,7 +679,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 {
                     if (allFields)
                     {
-                        builder.addStatement("buffer.putInt(offset += $L, 14)", priorValueSize)
+                        codeBuilder.addStatement("buffer.putInt(offset += $L, 14)", priorValueSize)
                                 .addStatement("buffer.putByte(offset += 4, (byte) \"value$L\".length())",
                                         valueIncrement)
                                 .addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
@@ -663,7 +694,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     }
                     else
                     {
-                        builder.addStatement("buffer.putInt(offset += $L, 0)", priorValueSize);
+                        codeBuilder.addStatement("buffer.putInt(offset += $L, 0)", priorValueSize);
                         priorValueSize = 4;
                     }
                 }
@@ -681,7 +712,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             if (isStringType(className))
             {
-                builder.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
+                codeBuilder.addStatement("buffer.putByte(offset += $L, (byte) \"value$L\".length())",
                         priorValueSize,
                         valueIncrement)
                     .addStatement("buffer.putBytes(offset += 1, \"value$L\".getBytes($T.UTF_8))",
@@ -689,27 +720,87 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         StandardCharsets.class);
                 priorValueSize = ("value" + valueIncrement).length();
             }
-            else if (DIRECT_BUFFER_TYPE.equals(className))
-            {
-                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
-                // so I suspect this is dead code and should be removed
-            }
             else if ("OctetsFW".equals(className.simpleName()))
             {
+                if (size >= 0)
+                {
+                    String value = "";
+                    for (int i = 0; i < size; i++)
+                    {
+                        value += i;
+                    }
 
+                    codeBuilder.addStatement("buffer.putBytes(offset += $L, \"$L\".getBytes($T.UTF_8))",
+                            priorValueSize, value, StandardCharsets.class);
+                    priorValueSize = size;
+                }
+                else if (sizeName != null)
+                {
+                    if (defaultValue == NULL_DEFAULT && !allFields)
+                    {
+                        if(isVarintType(sizeType))
+                        {
+                            defaultValueBuilder.addStatement("int $L = 1", dynamicValue(sizeName));
+                        }
+                        else
+                        {
+                            defaultValueBuilder.addStatement("int $L = -1", dynamicValue(sizeName));
+                        }
+
+                    }
+                    else
+                    {
+                        if (isVarintType(sizeType) && allFields)
+                        {
+                            defaultValueBuilder.addStatement("$T $L = 4", int.class, dynamicValue(sizeName));
+                            codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) 'x')", priorValueSize, byte.class)
+                                    .addStatement("buffer.putByte(offset += 1, ($T) 'y')", byte.class);
+                            priorValueSize = 1;
+                        }
+                        else
+                        {
+                            defaultValueBuilder.addStatement("$T $L = 2", sizeType, dynamicValue(sizeName));
+                            codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) 'x')",
+                                            priorValueSize, byte.class)
+                                    .addStatement("buffer.putByte(offset += 1, ($T) 'y')", byte.class);
+                            priorValueSize = 1;
+                        }
+                    }
+                }
+                else
+                {
+                    codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) 'x')",
+                            priorValueSize, byte.class);
+                    priorValueSize = 1;
+                }
             }
             else
             {
-                if (!isVarintType(className))
+                if (isVarintType(className))
+                {
+                    if(usedAsSize)
+                    {
+                        codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) $L)",
+                                priorValueSize, byte.class, dynamicValue(name));
+                    }
+                    else
+                    {
+                        codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) $L)",
+                                priorValueSize, byte.class, valueIncrement);
+                    }
+
+                    priorValueSize = 1;
+                }
+                else
                 {
                     if(this.allFields)
                     {
-                        builder.addStatement("offset = $TTest.setAllBufferValues(buffer, offset += $L) ",
+                        codeBuilder.addStatement("offset = $TTest.setAllBufferValues(buffer, offset += $L) ",
                                 className, priorValueSize);
                     }
                     else
                     {
-                        builder.addStatement("offset = $TTest.setRequiredBufferValues(buffer, offset += $L)",
+                        codeBuilder.addStatement("offset = $TTest.setRequiredBufferValues(buffer, offset += $L)",
                                 className, priorValueSize);
                     }
                     priorValueSize = 0;
@@ -720,7 +811,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            return builder.addStatement("return offset + " + priorValueSize).build();
+            return builder.addCode(defaultValueBuilder.build())
+                    .addCode(codeBuilder.build())
+                    .addStatement("return offset + " + priorValueSize).build();
         }
     }
 
@@ -809,7 +902,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 Object defaultValue)
         {
-            builder.addStatement("builder.$L(($L)$L0)",
+            builder.addStatement("builder.$L(($L)$L)",
                     name,
                     type.toString().toLowerCase(),
                     valueIncrement);
@@ -924,21 +1017,55 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                 valueIncrement);
                 }
             }
-            else if (DIRECT_BUFFER_TYPE.equals(className))
-            {
-                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
-                // so I suspect this is dead code and should be removed
-            }
             else if ("OctetsFW".equals(className.simpleName()))
             {
-
+                hasOctetsType = true;
+                String value = "";
+                if (size >= 0)
+                {
+                    for (int i = 0; i < size; i++)
+                    {
+                        value += i;
+                    }
+                }
+                else if (sizeName != null)
+                {
+                    value = "xy";
+                }
+                else
+                {
+                    value = "x";
+                }
+                switch (octetsSetterVariant)
+                {
+                    case OCTETSFW:
+                        builder.addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                                className.peerClass("OctetsFWTest"), value);
+                        break;
+                    case BUFFER:
+                        builder.addStatement("builder.$L($T.asBuffer(\"$L\"), 0, \"$L\".length())", methodName(name),
+                                className.peerClass("OctetsFWTest"), value, value);
+                        break;
+                    case VISITOR:
+                        builder.addStatement("builder.$L(b -> b.put(\"$L\".getBytes($T.UTF_8)))", methodName(name),
+                                value, StandardCharsets.class);
+                        break;
+                    case ARRAY:
+                        builder.addStatement("builder.$L(b -> b.set(\"$L\".getBytes($T.UTF_8)))", methodName(name),
+                                value, StandardCharsets.class);
+                        break;
+                }
             }
             else
             {
-                if (!isVarintType(className))
+                if (isVarintType(className))
+                {
+                    builder.addStatement("builder.$L(2)", methodName(name));
+                }
+                else
                 {
                     builder.addStatement("builder.$L(field -> $TTest.setAllFieldsValue" + stringSetterVariant + "_" +
-                                   octetsSetterVariant + "(field))",
+                                    octetsSetterVariant + "(field))",
                             methodName(name), className);
                 }
             }
@@ -1025,7 +1152,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 Object defaultValue)
         {
-            builder.addStatement("builder.$L(($L)$L0)",
+            builder.addStatement("builder.$L(($L)$L)",
                     methodName(name),
                     type.toString().toLowerCase(),
                     valueIncrement);
@@ -1093,14 +1220,34 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         methodName(name),
                         valueIncrement);
             }
-            else if (DIRECT_BUFFER_TYPE.equals(className))
-            {
-                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
-                // so I suspect this is dead code and should be removed
-            }
             else if ("OctetsFW".equals(className.simpleName()))
             {
+                String value = "";
+                if (size >= 0)
+                {
+                    for (int i = 0; i < size; i++)
+                    {
+                        value += i;
+                    }
+                    builder.addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                            className.peerClass("OctetsFWTest"), value);
+                }
+                else if (sizeName != null)
+                {
+                    value = "xy";
+                    if (defaultValue != NULL_DEFAULT)
+                    {
+                        builder.addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                                className.peerClass("OctetsFWTest"), value);
 
+                    }
+                }
+                else
+                {
+                    value = "x";
+                    builder.addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                            className.peerClass("OctetsFWTest"), value);
+                }
             }
             else
             {
@@ -1109,7 +1256,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     builder.addStatement("builder.$L(field -> $TTest.setRequiredFields(field))",
                             methodName(name), className);
                 }
-
             }
         }
 
@@ -1124,9 +1270,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     {
         private String priorDefaulted;
         private int valueIncrement = 0;
-        private int stringBufferOffset = 0;
-        private boolean hasPrimiteve = false;
-        private boolean hasStringType = false;
 
         private SetFieldUpToIndexMethodGenerator(
                 ClassName thisType,
@@ -1152,11 +1295,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 Object defaultValue)
         {
             valueIncrement++;
-
-            if(usedAsSize)
-            {
-                return this;
-            }
             priorDefaulted = name;
 
             if (type.isPrimitive())
@@ -1195,13 +1333,15 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 Object defaultValue)
         {
-            builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
-            builder.addStatement("builder.$L(($L)$L0)",
-                    methodName(name),
-                    type.toString().toLowerCase(),
-                    valueIncrement);
-            builder.endControlFlow();
-            hasPrimiteve = true;
+            if(!usedAsSize)
+            {
+                builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
+                builder.addStatement("builder.$L(($L)$L)",
+                        methodName(name),
+                        type.toString().toLowerCase(),
+                        valueIncrement);
+                builder.endControlFlow();
+            }
         }
 
         private void setNonPrimitiveValue(
@@ -1274,31 +1414,77 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         {
             if (isStringType(className))
             {
-                builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
-                builder.addStatement("builder.$L(\"value$L\")",
+                builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                    .addStatement("builder.$L(\"value$L\")",
                         methodName(name),
-                        valueIncrement);
-                builder.endControlFlow();
+                        valueIncrement)
+                    .endControlFlow();
 
-            }
-            else if (DIRECT_BUFFER_TYPE.equals(className))
-            {
-                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
-                // so I suspect this is dead code and should be removed
             }
             else if ("OctetsFW".equals(className.simpleName()))
             {
+                String value = "";
+                if (size >= 0)
+                {
+                    for (int i = 0; i < size; i++)
+                    {
+                        value += i;
+                    }
 
+                    builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                            .addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                                className.peerClass("OctetsFWTest"), value)
+                            .endControlFlow();
+                }
+                else if (sizeName != null)
+                {
+                    value = "xy";
+
+                    if(isVarintType(sizeType))
+                    {
+                        builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                                .addStatement("builder.$L(2)", methodName(sizeName))
+                                .addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                                        className.peerClass("OctetsFWTest"), value)
+                                .endControlFlow();
+                    }
+                    else
+                    {
+                        builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                                .addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                                        className.peerClass("OctetsFWTest"), value)
+                                .endControlFlow();
+                    }
+
+
+                }
+                else
+                {
+                    value = "x";
+                    builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                                .addStatement("builder.$L($T.asOctetsFW(\"$L\"))", methodName(name),
+                            className.peerClass("OctetsFWTest"), value)
+                            .endControlFlow();
+                }
             }
             else
             {
-                if (!isVarintType(className))
+                if (isVarintType(className))
+                {
+                    if(!usedAsSize)
+                    {
+                        builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
+                                .addStatement("builder.$L(2)", methodName(name))
+                                .endControlFlow();
+                    }
+                }
+                else
                 {
                     builder.beginControlFlow("if(toFieldIndex > $L)", index(name))
-                        .addStatement("builder.$L(field -> $TTest.setRequiredFields(field))",
-                                methodName(name),
-                                className)
-                        .endControlFlow();
+                            .addStatement("builder.$L(field -> $TTest.setRequiredFields(field))",
+                                    methodName(name),
+                                    className)
+                            .endControlFlow();
                 }
             }
         }
@@ -1393,7 +1579,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-                builder.addStatement("$T.assertEquals($L0, flyweight.$L())",
+                builder.addStatement("$T.assertEquals($L, flyweight.$L())",
                         Assert.class,
                         valueIncrement,
                         name);
@@ -1793,30 +1979,64 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         .build());
 
             }
-            else if (DIRECT_BUFFER_TYPE.equals(className))
-            {
-                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
-                // so I suspect this is dead code and should be removed
-            }
             else if ("OctetsFW".equals(className.simpleName()))
             {
 
+                String value = "";
+                if (size >= 0)
+                {
+                    for (int i = 0; i < size; i++)
+                    {
+                        value += i;
+                    }
+
+                    addOctetsFixedSizeExceptionMethod(name, className, usedAsSize, size, sizeName, sizeType, defaultValue,
+                            priorDefaulted, value);
+
+                }
+                else if (sizeName != null)
+                {
+                    value = "xy";
+                    if(isVarintType(sizeType))
+                    {
+                        addOctetsVariantsDynamicSizeExceptionMethod(name, className, usedAsSize, size, sizeName, sizeType,
+                                defaultValue, priorDefaulted, value);
+                    }
+                    addOctetsDynamicSizeExceptionMethod(name, className, usedAsSize, size, sizeName, sizeType, defaultValue,
+                            priorDefaulted, value);
+                }
+                else
+                {
+                    value = "x";
+                }
+
+                builder.addMethod(methodBuilder("shouldFailToReset"+name.toUpperCase())
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L+1)\n" +
+                                "                .$L($T.asOctetsFW(\"$L\"))\n" +
+                                "                .build()", index(name), methodName(name),
+                                className.peerClass("OctetsFWTest"), value)
+                        .build());
             }
             else
             {
-                if (!isVarintType(className))
+                if (isVarintType(className))
                 {
-                      //TODO: Clarification needed
-//                    if (defaultValue == null)
-//                    {
-//                        builder.addMethod(methodBuilder("shouldFailToBuildWhen"+name.toUpperCase() + "NotSet")
-//                                .addAnnotation(Test.class)
-//                                .addModifiers(PUBLIC)
-//                                .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
-//                                .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L).build()", index(name))
-//                                .build());
-//                    }
-
+                    builder.addMethod(methodBuilder("shouldFailToReset"+name.toUpperCase())
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                            .addStatement("expectedException.expectMessage(\"$L\")", name)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L+1)\n" +
+                                            "                .$L(2)\n" +
+                                            "                .build()", index(name), methodName(name))
+                            .build());
+                }
+                else
+                {
                     builder.addMethod(methodBuilder("shouldFailToReset"+name.toUpperCase())
                             .addAnnotation(Test.class)
                             .addModifiers(PUBLIC)
@@ -1827,6 +2047,191 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                     index(name), methodName(name), className)
                             .build());
                 }
+            }
+        }
+
+        private void addOctetsVariantsDynamicSizeExceptionMethod(String name,
+                                                       ClassName className,
+                                                       boolean usedAsSize,
+                                                       int size,
+                                                       String sizeName,
+                                                       TypeName sizeType,
+                                                       Object defaultValue,
+                                                       String priorFieldIfDefaulted,
+                                                       String value)
+        {
+            for (OctetsSetterVariant setterVariant : OctetsSetterVariant.values())
+            {
+                if(setterVariant != OctetsSetterVariant.ARRAY)
+                {
+
+                    MethodSpec.Builder methodBuilderLonger = MethodSpec.methodBuilder(
+                            "shouldFailToSet" + name.toUpperCase() + "WithValueLongerThanSizeUsing" +
+                                    setterVariant)
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)",
+                                    IllegalStateException.class);
+
+                    switch (setterVariant)
+                    {
+                        case OCTETSFW:
+                            methodBuilderLonger.addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                                    "                .$L(4)\n" +
+                                                    "                .$L($T.asOctetsFW(\"$L\"))\n" +
+                                                    "                .build()", index(name), methodName(sizeName),
+                                    methodName(name), className.peerClass("OctetsFWTest"), value);
+                            break;
+                        case BUFFER:
+                            methodBuilderLonger.addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                                    "                .$L(4)\n" +
+                                                    "                .$L($T.asBuffer(\"$L\"),  0, \"$L\".length())\n" +
+                                                    "                .build()", index(name), methodName(sizeName),
+                                    methodName(name), className.peerClass("OctetsFWTest"), value + "11", value);
+                            break;
+                        case VISITOR:
+                            methodBuilderLonger.addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                                    "                .$L(4)\n" +
+                                                    "                .$L(b -> b.set(\"$L\".getBytes($T.UTF_8)))\n" +
+                                                    "                .build()", index(name), methodName(sizeName),
+                                    methodName(name), value, StandardCharsets.class);
+                            break;
+                    }
+
+                    builder.addMethod(methodBuilderLonger.build());
+                }
+            }
+        }
+
+        private void addOctetsFixedSizeExceptionMethod(String name,
+                                                       ClassName className,
+                                                       boolean usedAsSize,
+                                                       int size,
+                                                       String sizeName,
+                                                       TypeName sizeType,
+                                                       Object defaultValue,
+                                                       String priorFieldIfDefaulted,
+                                                       String value)
+        {
+            for (OctetsSetterVariant setterVariant : OctetsSetterVariant.values())
+            {
+                if(setterVariant != OctetsSetterVariant.ARRAY)
+                {
+                    MethodSpec.Builder methodBuilderShorter = MethodSpec.methodBuilder(
+                            "shouldFailToSet" + name.toUpperCase() + "WithValueShorterThanSizeUsing" +
+                            setterVariant)
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC);
+
+
+                    MethodSpec.Builder methodBuilderLonger = MethodSpec.methodBuilder(
+                            "shouldFailToSet" + name.toUpperCase() + "WithValueLongerThanSizeUsing" +
+                            setterVariant)
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC);
+
+                    switch (setterVariant)
+                    {
+                        case OCTETSFW:
+                            methodBuilderShorter.addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L($T.asOctetsFW(\"$L\"))\n" +
+                                            "                .build()", index(name), methodName(name),
+                                    className.peerClass("OctetsFWTest"), removeLastChar(value));
+
+                            methodBuilderLonger.addStatement("expectedException.expect($T.class)",
+                                    IndexOutOfBoundsException.class)
+                                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L($T.asOctetsFW(\"$L\"))\n" +
+                                            "                .build()", index(name), methodName(name),
+                                    className.peerClass("OctetsFWTest"), value + "11");
+                            break;
+                        case BUFFER:
+                            methodBuilderShorter.addStatement("expectedException.expect($T.class)",
+                                    IllegalArgumentException.class)
+                                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L($T.asBuffer(\"$L\"),  0, \"$L\".length())\n" +
+                                            "                .build()", index(name), methodName(name),
+                                    className.peerClass("OctetsFWTest"), removeLastChar(value), removeLastChar(value));
+
+                            methodBuilderLonger.addStatement("expectedException.expect($T.class)",
+                                    IllegalArgumentException.class)
+                                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L($T.asBuffer(\"$L\"),  0, \"$L\".length())\n" +
+                                            "                .build()", index(name), methodName(name),
+                                    className.peerClass("OctetsFWTest"), value + "11", value + "11");
+                            break;
+                        case VISITOR:
+                            methodBuilderShorter.addStatement("expectedException.expect($T.class)", IllegalStateException.class)
+                                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L(b -> b.set(\"$L\".getBytes($T.UTF_8)))\n" +
+                                            "                .build()", index(name), methodName(name), removeLastChar(value),
+                                    StandardCharsets.class);
+
+                            methodBuilderLonger.addStatement("expectedException.expect($T.class)",
+                                    IndexOutOfBoundsException.class)
+                                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L(b -> b.set(\"$L\".getBytes($T.UTF_8)))\n" +
+                                            "                .build()", index(name), methodName(name), value + "11",
+                                    StandardCharsets.class);
+                            break;
+                    }
+
+                    builder.addMethod(methodBuilderShorter.build());
+                    builder.addMethod(methodBuilderLonger.build());
+                }
+            }
+        }
+
+        private void addOctetsDynamicSizeExceptionMethod(String name,
+                                                       ClassName className,
+                                                       boolean usedAsSize,
+                                                       int size,
+                                                       String sizeName,
+                                                       TypeName sizeType,
+                                                       Object defaultValue,
+                                                       String priorFieldIfDefaulted,
+                                                       String value)
+        {
+            if (defaultValue == NULL_DEFAULT)
+            {
+                if(isVarintType(sizeType))
+                {
+                    builder.addMethod(methodBuilder("shouldSetNull"+name.toUpperCase())
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L(-1)\n" +
+                                            "                .$L(($T) null)\n" +
+                                            "                .build()", index(name), methodName(sizeName),
+                                    methodName(name), className.peerClass("OctetsFW"))
+                            .addStatement("$T.assertNull(fieldRO.$L())", Assert.class, methodName(name))
+                            .build());
+                }
+                else
+                {
+                    builder.addMethod(methodBuilder("shouldSetNull"+name.toUpperCase())
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L(($T) null)\n" +
+                                            "                .build()", index(name), methodName(name),
+                                    className.peerClass("OctetsFW"))
+                            .addStatement("$T.assertNull(fieldRO.$L())", Assert.class, methodName(name))
+                            .build());
+                }
+            }
+            else
+            {
+                builder.addMethod(methodBuilder("shouldFailToSetNull"+name.toUpperCase())
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                        .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                        "                .$L(($T) null)\n" +
+                                        "                .build()", index(name), methodName(name),
+                                className.peerClass("OctetsFW"))
+                        .build());
             }
         }
 
@@ -1948,6 +2353,18 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return String.format("DEFAULT_%s", constant(fieldName));
     }
 
+    private static String dynamicValue(
+            String fieldName)
+    {
+        return String.format("dynamicValue%s", initCap(fieldName));
+    }
+
+    private static String dynamicOffset(
+            String fieldName)
+    {
+        return String.format("dynamicOffset%s", initCap(fieldName));
+    }
+
     private static boolean isImplicitlyDefaulted(
             TypeName type,
             int size,
@@ -1978,6 +2395,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return result;
     }
 
+    private static String removeLastChar(String s)
+    {
+        if (s == null || s.length() == 0)
+        {
+            return s;
+        }
+        return s.substring(0, s.length()-1);
+    }
 
     private static Map<TypeName, String> initSizeofByName()
     {
