@@ -30,6 +30,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import com.squareup.javapoet.*;
 import org.agrona.BitUtil;
@@ -67,9 +69,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     "offset", "buffer", "limit", "sizeof", "maxLimit", "wrap", "checkLimit", "build"
             }));
 
-    private static final ClassName INT_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfInt.class);
+    private static final ClassName INT_ITERATOR_CLASS_NAME = ClassName.get(IntStream.class);
 
-    private static final ClassName LONG_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfLong.class);
+    private static final ClassName LONG_ITERATOR_CLASS_NAME = ClassName.get(LongStream.class);
 
 
     private final String baseName;
@@ -88,6 +90,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorStringFW;
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorBuffer;
     private final SetAllBuilderValuesMethodGenerator setAllBuilderValuesMethodGeneratorArray;
+
 
     private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorPrimary;
     private final SetAllFieldsValueTestMethodGenerator setAllFieldsValueTestMethodGeneratorStringFW;
@@ -311,7 +314,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         public TypeSpec.Builder build()
         {
             FieldSpec bufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "buffer", PRIVATE, FINAL)
-                    .initializer("new $T($T.allocateDirect(100)); \n" +
+                    .initializer("new $T($T.allocateDirect(150)); \n" +
                             "{\n" +
                             "    buffer.setMemory(0, buffer.capacity(), (byte) 0xF);\n" +
                             "}", UnsafeBuffer.class, ByteBuffer.class)
@@ -336,7 +339,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         public TypeSpec.Builder build()
         {
             FieldSpec expectedBufferFieldSpec = FieldSpec.builder(MutableDirectBuffer.class, "expectedBuffer", PRIVATE, FINAL)
-                    .initializer("new $T($T.allocateDirect(100)); \n" +
+                    .initializer("new $T($T.allocateDirect(150)); \n" +
                             "{\n" +
                             "    expectedBuffer.setMemory(0, expectedBuffer.capacity(), (byte) 0xF);\n" +
                             "}", UnsafeBuffer.class, ByteBuffer.class)
@@ -557,13 +560,15 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 if (sizeName != null)
                 {
                     //TODO: Add IntegerVariableArray
+
                 } else if (size != -1)
                 {
                     //TODO: Add integerFixedArrayIterator member
+                    addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
                 else
                 {
-                    //TODO: Add primitive member
                     if(allFields)
                     {
                         addPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
@@ -578,7 +583,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-                //TODO: Add nonprimative member
                 addNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                         byteOrder, defaultValue);
             }
@@ -630,6 +634,34 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                             SIZEOF_BY_NAME.get(type).toLowerCase(),
                             valueIncrement);
                 }
+                priorValueSize = Integer.parseInt(TYPE_SIZE.get(type));
+            }
+        }
+
+        private void addIntegerFixedArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            String putterName = PUTTER_NAMES.get(type);
+            if (putterName == null)
+            {
+                throw new IllegalStateException("member type not supported: " + type);
+            }
+
+            for(int i = 0; i < size; i++)
+            {
+                codeBuilder.addStatement("buffer.$L(offset += $L, ($L) $L)",
+                        putterName,
+                        priorValueSize,
+                        SIZEOF_BY_NAME.get(type).toLowerCase(),
+                        valueIncrement);
                 priorValueSize = Integer.parseInt(TYPE_SIZE.get(type));
             }
         }
@@ -785,8 +817,17 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     }
                     else
                     {
-                        codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) $L)",
-                                priorValueSize, byte.class, valueIncrement);
+                        if(allFields)
+                        {
+                            codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) $L)",
+                                    priorValueSize, byte.class, 4);
+                        }
+                        else
+                        {
+                            codeBuilder.addStatement("buffer.putByte(offset += $L, ($T) $L)",
+                                    priorValueSize, byte.class, defaultValue);
+                        }
+
                     }
 
                     priorValueSize = 1;
@@ -870,7 +911,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     //TODO: Add IntegerVariableArray
                 } else if (size != -1)
                 {
-                    //TODO: Add integerFixedArrayIterator member
+                    addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
                 else
                 {
@@ -889,6 +931,26 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
 
             return this;
+        }
+
+        private void addIntegerFixedArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            for (int i = 0; i < size; i++)
+            {
+                builder.addStatement("builder.$L(($L)$L)",
+                        appendMethodName(name),
+                        type.toString().toLowerCase(),
+                        valueIncrement);
+            }
         }
 
         private void setPrimitiveValue(
@@ -1121,9 +1183,11 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 if (sizeName != null)
                 {
                     //TODO: Add IntegerVariableArray
-                } else if (size != -1)
+                }
+                else if (size != -1)
                 {
-                    //TODO: Add integerFixedArrayIterator member
+                    addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
                 else
                 {
@@ -1157,6 +1221,33 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     type.toString().toLowerCase(),
                     valueIncrement);
             hasPrimiteve = true;
+        }
+
+        private void addIntegerFixedArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            TypeName inputType = (unsignedType != null) ? unsignedType : type;
+            TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
+                    : INT_ITERATOR_CLASS_NAME;
+
+            String value = "";
+            for (int i = 0; i < size; i++)
+            {
+                value += " " + valueIncrement + ",";
+            }
+
+            builder.addStatement("builder.$L($T.of($L).iterator())",
+                    methodName(name),
+                    iteratorType,
+                    removeLastChar(value));
         }
 
         private void setNonPrimitiveValue(
@@ -1304,7 +1395,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     //TODO: Add IntegerVariableArray
                 } else if (size != -1)
                 {
-                    //TODO: Add integerFixedArrayIterator member
+                    addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
                 else
                 {
@@ -1320,6 +1412,28 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
 
             return this;
+        }
+
+        private void addIntegerFixedArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            builder.beginControlFlow("if(toFieldIndex > $L)", index(name));
+            for (int i = 0; i < size; i++)
+            {
+                builder.addStatement("builder.$L(($L)$L)",
+                        appendMethodName(name),
+                        type.toString().toLowerCase(),
+                        valueIncrement);
+            }
+            builder.endControlFlow();
         }
 
         private void setPrimitiveValue(
@@ -1732,8 +1846,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 TypeSpec.Builder builder,
                 String baseName,
                 StringSetterVariant stringSetterVariant,
-                OctetsSetterVariant octetsSetterVariant
-                )
+                OctetsSetterVariant octetsSetterVariant)
         {
             super(methodBuilder("shouldSetAllFieldsValues" + stringSetterVariant + "_" + octetsSetterVariant)
                     .addAnnotation(Test.class)
