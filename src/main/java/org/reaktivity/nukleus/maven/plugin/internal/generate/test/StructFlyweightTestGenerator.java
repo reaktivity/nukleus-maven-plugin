@@ -17,13 +17,14 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate.test;
 
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static java.lang.Long.highestOneBit;
+import static java.lang.Long.numberOfTrailingZeros;
 import static java.util.Collections.unmodifiableMap;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode.NULL_DEFAULT;
-import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
 import java.nio.ByteBuffer;
@@ -69,10 +70,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     "offset", "buffer", "limit", "sizeof", "maxLimit", "wrap", "checkLimit", "build"
             }));
 
-    private static final ClassName INT_ITERATOR_CLASS_NAME = ClassName.get(IntStream.class);
-
-    private static final ClassName LONG_ITERATOR_CLASS_NAME = ClassName.get(LongStream.class);
-
+    private static final ClassName INT_STREAM_CLASS_NAME = ClassName.get(IntStream.class);
+    private static final ClassName LONG_STREAM_CLASS_NAME = ClassName.get(LongStream.class);
+    private static final ClassName LONG_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfLong.class);
 
     private final String baseName;
     private final TypeSpec.Builder builder;
@@ -455,8 +455,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 TypeName generateType = (unsignedType != null) ? unsignedType : type;
                 if (size != -1 || sizeName != null)
                 {
-                    generateType = generateType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
-                            : INT_ITERATOR_CLASS_NAME;
+                    generateType = generateType == TypeName.LONG ? LONG_STREAM_CLASS_NAME
+                            : INT_STREAM_CLASS_NAME;
                 }
                 if (isVarint32Type(type))
                 {
@@ -559,11 +559,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 if (sizeName != null)
                 {
-                    //TODO: Add IntegerVariableArray
+                    addIntegerVariableArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
 
-                } else if (size != -1)
+                }
+                else if (size != -1)
                 {
-                    //TODO: Add integerFixedArrayIterator member
                     addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                             byteOrder, defaultValue);
                 }
@@ -666,6 +667,46 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
         }
 
+        private void addIntegerVariableArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            String putterName = PUTTER_NAMES.get(type);
+            if (putterName == null)
+            {
+                throw new IllegalStateException("member type not supported: " + type);
+            }
+
+            TypeName inputType = (unsignedType != null) ? unsignedType : type;
+            if (defaultValue == NULL_DEFAULT && !allFields)
+            {
+                size = -1;
+                defaultValueBuilder.addStatement("$T $L = $L", sizeType, dynamicValue(sizeName), size);
+            }
+            else
+            {
+                size = 2;
+                defaultValueBuilder.addStatement("$T $L = $L", sizeType, dynamicValue(sizeName), size);
+            }
+
+            for(int i = 0; i < size; i++)
+            {
+                codeBuilder.addStatement("buffer.$L(offset += $L, ($L) $L)",
+                        putterName,
+                        priorValueSize,
+                        inputType,
+                        valueIncrement);
+                priorValueSize = Integer.parseInt(TYPE_SIZE.get(type));
+            }
+        }
+
         private void addNonPrimitiveValue(
                 String name,
                 TypeName type,
@@ -729,6 +770,16 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         codeBuilder.addStatement("buffer.putInt(offset += $L, 0)", priorValueSize);
                         priorValueSize = 4;
                     }
+                }
+            }
+            else if ("ArrayFW".equals(rawType.simpleName()))
+            {
+                if (itemType.simpleName().contains("Varint"))
+                {
+                    codeBuilder.addStatement("buffer.putInt(offset += $L, 2)", priorValueSize)
+                            .addStatement("buffer.putByte(offset += 4, (byte) 2)")
+                            .addStatement("buffer.putByte(offset += 1, (byte) 4)");
+                    priorValueSize = 1;
                 }
             }
         }
@@ -908,8 +959,10 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 if (sizeName != null)
                 {
-                    //TODO: Add IntegerVariableArray
-                } else if (size != -1)
+                    addIntegerVariableArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
+                }
+                else if (size != -1)
                 {
                     addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                             byteOrder, defaultValue);
@@ -931,6 +984,27 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
 
             return this;
+        }
+
+        private void addIntegerVariableArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            builder.addStatement("builder.$L(($L)$L)",
+                        appendMethodName(name),
+                        type.toString().toLowerCase(),
+                        valueIncrement)
+                    .addStatement("builder.$L(($L)$L)",
+                        appendMethodName(name),
+                        type.toString().toLowerCase(),
+                        valueIncrement);
         }
 
         private void addIntegerFixedArray(
@@ -1022,6 +1096,20 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                             methodName(name),
                             valueIncrement,
                             StandardCharsets.class);
+                }
+            }
+            else if ("ArrayFW".equals(rawType.simpleName()))
+            {
+                if (itemType.simpleName().contains("Varint32"))
+                {
+                    builder.addStatement("builder.$L(a -> a.item(b -> b.set(1))\n" +
+                            "                        .item(b -> b.set(2)))", methodName(name));
+
+                }
+                else if (itemType.simpleName().contains("Varint64"))
+                {
+                    builder.addStatement("builder.$L(a -> a.item(b -> b.set(1L))\n" +
+                            "                        .item(b -> b.set(2L)))", methodName(name));
                 }
             }
         }
@@ -1182,7 +1270,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             {
                 if (sizeName != null)
                 {
-                    //TODO: Add IntegerVariableArray
+                    addIntegerVariableArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
                 else if (size != -1)
                 {
@@ -1197,12 +1286,32 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-                //TODO: Add nonprimative member
                 setNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                         byteOrder, null, priorDefaulted);
             }
 
             return this;
+        }
+
+        private void addIntegerVariableArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            builder.addStatement("builder.$L(($L)$L)",
+                    appendMethodName(name),
+                    type.toString().toLowerCase(),
+                    valueIncrement)
+                    .addStatement("builder.$L(($L)$L)",
+                            appendMethodName(name),
+                            type.toString().toLowerCase(),
+                            valueIncrement);
         }
 
         private void setPrimitiveValue(
@@ -1235,8 +1344,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 Object defaultValue)
         {
             TypeName inputType = (unsignedType != null) ? unsignedType : type;
-            TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
-                    : INT_ITERATOR_CLASS_NAME;
+            TypeName iteratorType = inputType == TypeName.LONG ? LONG_STREAM_CLASS_NAME
+                    : INT_STREAM_CLASS_NAME;
 
             String value = "";
             for (int i = 0; i < size; i++)
@@ -1247,7 +1356,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             builder.addStatement("builder.$L($T.of($L).iterator())",
                     methodName(name),
                     iteratorType,
-                    removeLastChar(value));
+                    removeChars(value, 1));
         }
 
         private void setNonPrimitiveValue(
@@ -1655,7 +1764,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     //TODO: Add IntegerVariableArray
                 } else if (size != -1)
                 {
-                    //TODO: Add integerFixedArrayIterator member
+                    addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
                 else
                 {
@@ -1665,12 +1775,40 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-                //TODO: Add nonprimative member
                 setNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                         byteOrder, null, priorDefaulted);
             }
 
             return this;
+        }
+
+        private void addIntegerFixedArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+
+            TypeName generateType = (unsignedType != null) ? unsignedType : type;
+            if (generateType == TypeName.LONG)
+            {
+                builder.addStatement("$T.assertEquals($L, flyweight.$L().nextLong())",
+                        Assert.class,
+                        valueIncrement,
+                        methodName(name));
+            }
+            else
+            {
+                builder.addStatement("$T.assertEquals($L, flyweight.$L().nextInt())",
+                        Assert.class,
+                        valueIncrement,
+                        methodName(name));
+            }
         }
 
         private void setPrimitiveValue(
@@ -1689,14 +1827,14 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 builder.addStatement("$T.assertEquals($L, flyweight.$L())",
                         Assert.class,
                         defaultValue.toString(),
-                        name);
+                        methodName(name));
             }
             else
             {
                 builder.addStatement("$T.assertEquals($L, flyweight.$L())",
                         Assert.class,
                         valueIncrement,
-                        name);
+                        methodName(name));
             }
 
             hasPrimiteve = true;
@@ -1742,11 +1880,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                         Assert.class,
                         valueIncrement,
                         name);
-            }
-            else if (DIRECT_BUFFER_TYPE.equals(className))
-            {
-                // TODO: What IDL type does this correspond to? I don't see it in TypeResolver
-                // so I suspect this is dead code and should be removed
             }
             else if ("OctetsFW".equals(className.simpleName()))
             {
@@ -1913,7 +2046,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     //TODO: Add IntegerVariableArray
                 } else if (size != -1)
                 {
-                    //TODO: Add integerFixedArrayIterator member
+                    addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                            byteOrder, defaultValue);
                 }
                 else
                 {
@@ -1926,12 +2060,100 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else
             {
-                //TODO: Add nonprimative member
                 setNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                         byteOrder, defaultValue, priorDefaulted);
             }
 
             return this;
+        }
+
+        private void addIntegerFixedArray(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WithValueToNull")
+                    .addAnnotation(Test.class)
+                    .addModifiers(PUBLIC)
+                    .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                    .addStatement("expectedException.expectMessage(\"$L\")", name)
+                    .addStatement("fieldRW.wrap(buffer, 10, 10).$L($L)", methodName(name), null)
+                    .build());
+
+            TypeName inputType = (unsignedType != null) ? unsignedType : type;
+            TypeName iteratorType = inputType == TypeName.LONG ? LONG_STREAM_CLASS_NAME
+                    : INT_STREAM_CLASS_NAME;
+
+            String value = "";
+            for (int i = 0; i < size - 1; i++)
+            {
+                value += " " + i + ",";
+            }
+
+            builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WithNotHavingEnoughValue")
+                    .addAnnotation(Test.class)
+                    .addModifiers(PUBLIC)
+                    .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                    .addStatement("expectedException.expectMessage(\"$L\")", name)
+                    .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                            "                .$L($T.of($L).iterator())\n" +
+                            "                .build()", index(name), methodName(name), iteratorType,
+                            removeChars(value, 1))
+                    .build());
+
+            TypeName generateType = (unsignedType != null) ? unsignedType : type;
+            if (generateType == TypeName.LONG)
+            {
+                MethodSpec.Builder methodBuilder = methodBuilder("shouldFailToRead"+name.toUpperCase()+"WhenThereNoData")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", NoSuchElementException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("setRequiredFields(fieldRW.wrap(buffer, 0, buffer.capacity())).build()")
+                        .addStatement("$T $L = fieldRO.$L()", LONG_ITERATOR_CLASS_NAME, methodName(name), methodName(name));
+
+                for (int i = 0; i < size + 1; i++)
+                {
+                    methodBuilder.addStatement("$L.nextLong()", methodName(name));
+                }
+                builder.addMethod(methodBuilder.build());
+            }
+
+
+            if (unsignedType != null)
+            {
+                String[] range = UNSIGNED_INT_RANGES.get(type);
+
+                builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WithValueTooLow")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                "                .$L(($L) $L)\n" +
+                                "                .build()", index(name), appendMethodName(name), inputType, range[0]+" - 0x1")
+                        .build());
+
+                if (range[1] != null)
+                {
+                    builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WithValueTooHigh")
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                            .addStatement("expectedException.expectMessage(\"$L\")", name)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                            "                .$L(($L) $L)\n" +
+                                            "                .build()", index(name), appendMethodName(name), inputType,
+                                    range[1]+" + 0x1")
+                            .build());
+                }
+            }
         }
 
         private void setPrimitiveValue(
@@ -2250,7 +2472,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                     .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
                                             "                .$L($T.asOctetsFW(\"$L\"))\n" +
                                             "                .build()", index(name), methodName(name),
-                                    className.peerClass("OctetsFWTest"), removeLastChar(value));
+                                    className.peerClass("OctetsFWTest"), removeChars(value, 1));
 
                             methodBuilderLonger.addStatement("expectedException.expect($T.class)",
                                     IndexOutOfBoundsException.class)
@@ -2265,7 +2487,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                     .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
                                             "                .$L($T.asBuffer(\"$L\"),  0, \"$L\".length())\n" +
                                             "                .build()", index(name), methodName(name),
-                                    className.peerClass("OctetsFWTest"), removeLastChar(value), removeLastChar(value));
+                                    className.peerClass("OctetsFWTest"), removeChars(value, 1), removeChars(value, 1));
 
                             methodBuilderLonger.addStatement("expectedException.expect($T.class)",
                                     IllegalArgumentException.class)
@@ -2278,7 +2500,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                             methodBuilderShorter.addStatement("expectedException.expect($T.class)", IllegalStateException.class)
                                     .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
                                             "                .$L(b -> b.set(\"$L\".getBytes($T.UTF_8)))\n" +
-                                            "                .build()", index(name), methodName(name), removeLastChar(value),
+                                            "                .build()", index(name), methodName(name), removeChars(value, 1),
                                     StandardCharsets.class);
 
                             methodBuilderLonger.addStatement("expectedException.expect($T.class)",
@@ -2508,13 +2730,13 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return result;
     }
 
-    private static String removeLastChar(String s)
+    private static String removeChars(String s, int numberOfChars)
     {
         if (s == null || s.length() == 0)
         {
             return s;
         }
-        return s.substring(0, s.length()-1);
+        return s.substring(0, s.length()-numberOfChars);
     }
 
     private static Map<TypeName, String> initSizeofByName()
@@ -2531,4 +2753,108 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return sizeofByName;
     }
 
+    public static byte[] varint(
+            long value)
+    {
+        final long bits = (value << 1) ^ (value >> 63);
+
+        switch (bits != 0L ? (int) Math.ceil((1 + numberOfTrailingZeros(highestOneBit(bits))) / 7.0) : 1)
+        {
+            case 1:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f)
+                        };
+            case 2:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f)
+                        };
+            case 3:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f)
+                        };
+            case 4:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f | 0x80),
+                                (byte) ((bits >> 21) & 0x7f)
+                        };
+            case 5:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f | 0x80),
+                                (byte) ((bits >> 21) & 0x7f | 0x80),
+                                (byte) ((bits >> 28) & 0x7f)
+                        };
+            case 6:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f | 0x80),
+                                (byte) ((bits >> 21) & 0x7f | 0x80),
+                                (byte) ((bits >> 28) & 0x7f | 0x80),
+                                (byte) ((bits >> 35) & 0x7f)
+                        };
+            case 7:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f | 0x80),
+                                (byte) ((bits >> 21) & 0x7f | 0x80),
+                                (byte) ((bits >> 28) & 0x7f | 0x80),
+                                (byte) ((bits >> 35) & 0x7f | 0x80),
+                                (byte) ((bits >> 42) & 0x7f)
+                        };
+            case 8:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f | 0x80),
+                                (byte) ((bits >> 21) & 0x7f | 0x80),
+                                (byte) ((bits >> 28) & 0x7f | 0x80),
+                                (byte) ((bits >> 35) & 0x7f | 0x80),
+                                (byte) ((bits >> 42) & 0x7f | 0x80),
+                                (byte) ((bits >> 49) & 0x7f),
+                        };
+            case 9:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f | 0x80),
+                                (byte) ((bits >> 21) & 0x7f | 0x80),
+                                (byte) ((bits >> 28) & 0x7f | 0x80),
+                                (byte) ((bits >> 35) & 0x7f | 0x80),
+                                (byte) ((bits >> 42) & 0x7f | 0x80),
+                                (byte) ((bits >> 49) & 0x7f | 0x80),
+                                (byte) ((bits >> 56) & 0x7f),
+                        };
+            default:
+                return new byte[]
+                        {
+                                (byte) ((bits >> 0) & 0x7f | 0x80),
+                                (byte) ((bits >> 7) & 0x7f | 0x80),
+                                (byte) ((bits >> 14) & 0x7f | 0x80),
+                                (byte) ((bits >> 21) & 0x7f | 0x80),
+                                (byte) ((bits >> 28) & 0x7f | 0x80),
+                                (byte) ((bits >> 35) & 0x7f | 0x80),
+                                (byte) ((bits >> 42) & 0x7f | 0x80),
+                                (byte) ((bits >> 49) & 0x7f | 0x80),
+                                (byte) ((bits >> 56) & 0x7f | 0x80),
+                                (byte) ((bits >> 63) & 0x01)
+                        };
+        }
+    }
 }
