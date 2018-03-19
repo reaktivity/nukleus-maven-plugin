@@ -26,7 +26,12 @@ public class GenerateMojoTest
     public GenerateMojoRule generator = new GenerateMojoRule()
             .packageName("org.reaktivity.reaktor.internal.test.types")
             .inputDirectory("src/test/resources/test-project")
-            .outputDirectory("target/generated-test-sources/reaktivity/flyweights")
+            .outputDirectory("target/generated-test-sources/test-reaktivity");
+
+    @Rule
+    public TestGenerateMojoRule testGenerator = new TestGenerateMojoRule()
+            .packageName("org.reaktivity.reaktor.internal.test.types")
+            .inputDirectory("src/test/resources/test-project")
             .outputTestDirectory("target/generated-test-sources/reaktivity/tests");
 
     public GenerateMojoTest() throws Exception
@@ -40,6 +45,8 @@ public class GenerateMojoTest
     {
         generator.scopeNames("test")
             .generate();
+        testGenerator.scopeNames("test")
+                .generate();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -90,5 +97,4 @@ public class GenerateMojoTest
         generator.scopeNames("invalidUnrecognizedType")
             .generate();
     }
-
 }

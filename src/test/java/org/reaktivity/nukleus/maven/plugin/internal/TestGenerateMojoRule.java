@@ -15,56 +15,56 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal;
 
-import static org.junit.Assert.assertNotNull;
-
-import java.io.File;
-
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-public class GenerateMojoRule extends MojoRule
+import java.io.File;
+
+import static org.junit.Assert.assertNotNull;
+
+public class TestGenerateMojoRule extends MojoRule
 {
 
     private PlexusConfiguration configuration;
-    private GenerateMojo mojo;
+    private TestGenerateMojo testMojo;
 
-    public GenerateMojoRule() throws Exception
+    public TestGenerateMojoRule() throws Exception
     {
         File pom = new File("src/test/resources/test-project/pom.xml");
         configuration = extractPluginConfiguration("nukleus-maven-plugin", pom);
     }
 
-    GenerateMojoRule scopeNames(String scopeNames)
+    TestGenerateMojoRule scopeNames(String scopeNames)
     {
         configuration.addChild("scopeNames", scopeNames);
         return this;
     }
 
-    GenerateMojoRule packageName(String packageName)
+    TestGenerateMojoRule packageName(String packageName)
     {
         configuration.addChild("packageName", packageName);
         return this;
     }
 
-    GenerateMojoRule inputDirectory(String inputDirectory)
+    TestGenerateMojoRule inputDirectory(String inputDirectory)
     {
         configuration.addChild("inputDirectory", inputDirectory);
         return this;
     }
 
-    GenerateMojoRule outputDirectory(String outputDirectory)
+    TestGenerateMojoRule outputTestDirectory(String outputDirectory)
     {
-        configuration.addChild("outputDirectory", outputDirectory);
+        configuration.addChild("outputTestDirectory", outputDirectory);
         return this;
     }
 
     public void generate() throws Exception
     {
-        configureMojo(mojo, configuration);
-        mojo.execute();
+        configureMojo(testMojo, configuration);
+        testMojo.execute();
     }
 
     @Override
@@ -79,8 +79,8 @@ public class GenerateMojoRule extends MojoRule
             public void evaluate() throws Throwable
             {
                 MavenProject project = readMavenProject(new File("src/test/resources/test-project"));
-                mojo = (GenerateMojo) lookupConfiguredMojo(project, "generate");
-                assertNotNull(mojo);
+                testMojo = (TestGenerateMojo) lookupConfiguredMojo(project, "test-generate");
+                assertNotNull(testMojo);
                 base.evaluate();
             }
 

@@ -45,26 +45,32 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.test.*;
 
 import com.squareup.javapoet.JavaFile;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.FlyweightTestGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.String16FlyweightTestGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.Variant32FlyweightTestGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.Variant64FlyweightTestGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.OctetsFlyweightTestGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.ArrayFlyweightTestGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.StringFlyweightTestGenerator;
 
 public class Generator
 {
     private String scopeNames = "test";
     private File inputDirectory = new File("src/test/resources/test-project");
-    private File outputDirectory = new File("target/generated-test-sources/reaktivity/flyweights");
+    private File outputDirectory = new File("target/generated-test-sources/test-reaktivity");
     private File outputTestDirectory = new File("target/generated-test-sources/reaktivity/tests");
     private String packageName = "org.reaktivity.reaktor.internal.test.types";
 
     private Parser parser = new Parser();
 
     public static void main(
-        String[] args) throws IOException
+            String[] args) throws IOException
     {
         Generator generator = new Generator();
         generator.error(System.out::println)
-                 .warn(System.out::println);
+                .warn(System.out::println);
         boolean verbose = false;
         if (args.length > 0)
         {
@@ -80,6 +86,7 @@ public class Generator
                         i++;
                         generator.inputDirectory = new File(baseDir + "/src/test/resources/test-project");
                         generator.outputDirectory = new File(baseDir + "/target/generated-test-sources/test-reaktivity");
+                        generator.outputTestDirectory = new File(baseDir + "/target/generated-test-sources/reaktivity/tests");
                 }
             }
         }
@@ -88,11 +95,72 @@ public class Generator
             generator.debug(System.out::println);
         }
         generator.generate();
+        generator.testGenerate();
     }
 
     void generate() throws IOException
     {
         generate(createClassLoader());
+    }
+
+    void testGenerate() throws IOException
+    {
+        testGenerate(createClassLoader());
+    }
+
+    void testGenerate(ClassLoader loader) throws IOException
+    {
+        List<String> targetScopes = unmodifiableList(asList(scopeNames.split("\\s+")));
+        List<AstSpecificationNode> specifications = parser.parseAST(targetScopes, loader);
+
+        TypeResolver resolver = new TypeResolver(packageName);
+        specifications.forEach(resolver::visit);
+
+        Collection<TypeSpecGenerator<?>> testTypeSpecs = new HashSet<>();
+
+        for (AstSpecificationNode specification : specifications)
+        {
+            String scopeName = specification.scope().name();
+            AstNodeLocator nodeLocator = new AstNodeLocator(specification.scope());
+            ScopeTestVisitor testVisitor = new ScopeTestVisitor(scopeName, packageName, resolver, targetScopes, nodeLocator);
+            testTypeSpecs.addAll(specification.accept(testVisitor));
+        }
+
+        testTypeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        testTypeSpecs.add(new StringFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        testTypeSpecs.add(new ArrayFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT), "ArrayFW"));
+        testTypeSpecs.add(new ArrayFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT), "ListFW"));
+        testTypeSpecs.add(new OctetsFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        testTypeSpecs.add(new FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        testTypeSpecs.add(new Variant32FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+        testTypeSpecs.add(new Variant64FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
+
+        System.out.println("Generating tests to " + outputTestDirectory);
+
+        if (outputTestDirectory.exists())
+        {
+            Files.walk(outputTestDirectory.toPath())
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(f -> f.setWritable(true));
+        }
+
+        for (TypeSpecGenerator<?> testTypeSpec : testTypeSpecs)
+        {
+            JavaFile sourceFile = JavaFile.builder(testTypeSpec.className().packageName(), testTypeSpec.generate())
+                    .addFileComment("TODO: license")
+                    .skipJavaLangImports(true)
+                    .build();
+            sourceFile.writeTo(outputTestDirectory);
+        }
+
+        if (outputTestDirectory.exists())
+        {
+            Files.walk(outputTestDirectory.toPath())
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(f -> f.setWritable(false));
+        }
     }
 
     void generate(ClassLoader loader) throws IOException
@@ -104,16 +172,12 @@ public class Generator
         specifications.forEach(resolver::visit);
 
         Collection<TypeSpecGenerator<?>> typeSpecs = new HashSet<>();
-        Collection<TypeSpecGenerator<?>> testTypeSpecs = new HashSet<>();
 
         for (AstSpecificationNode specification : specifications)
         {
             String scopeName = specification.scope().name();
-            AstNodeLocator nodeLocator = new AstNodeLocator(specification.scope());
             ScopeVisitor visitor = new ScopeVisitor(scopeName, packageName, resolver, targetScopes);
             typeSpecs.addAll(specification.accept(visitor));
-            ScopeTestVisitor testVisitor = new ScopeTestVisitor(scopeName, packageName, resolver, targetScopes, nodeLocator);
-            testTypeSpecs.addAll(specification.accept(testVisitor));
         }
 
         typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
@@ -125,31 +189,14 @@ public class Generator
         typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
         typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
 
-        testTypeSpecs.add(new String16FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
-        testTypeSpecs.add(new StringFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
-        testTypeSpecs.add(new ArrayFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT), "ArrayFW"));
-        testTypeSpecs.add(new ArrayFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT), "ListFW"));
-        testTypeSpecs.add(new OctetsFlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
-        testTypeSpecs.add(new FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
-        testTypeSpecs.add(new Variant32FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
-        testTypeSpecs.add(new Variant64FlyweightTestGenerator(resolver.resolveClass(AstType.STRUCT)));
         System.out.println("Generating flyweights to " + outputDirectory);
-        System.out.println("Generating tests to " + outputTestDirectory);
 
         if (outputDirectory.exists())
         {
             Files.walk(outputDirectory.toPath())
-                 .map(Path::toFile)
-                 .filter(File::isFile)
-                 .forEach(f -> f.setWritable(true));
-        }
-
-        if (outputTestDirectory.exists())
-        {
-            Files.walk(outputTestDirectory.toPath())
-                .map(Path::toFile)
-                .filter(File::isFile)
-                .forEach(f -> f.setWritable(true));
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(f -> f.setWritable(true));
         }
 
         for (TypeSpecGenerator<?> typeSpec : typeSpecs)
@@ -161,29 +208,12 @@ public class Generator
             sourceFile.writeTo(outputDirectory);
         }
 
-        for (TypeSpecGenerator<?> testTypeSpec : testTypeSpecs)
-        {
-            JavaFile sourceFile = JavaFile.builder(testTypeSpec.className().packageName(), testTypeSpec.generate())
-                .addFileComment("TODO: license")
-                .skipJavaLangImports(true)
-                .build();
-            sourceFile.writeTo(outputTestDirectory);
-        }
-
         if (outputDirectory.exists())
         {
             Files.walk(outputDirectory.toPath())
-                 .map(Path::toFile)
-                 .filter(File::isFile)
-                 .forEach(f -> f.setWritable(false));
-        }
-
-        if (outputTestDirectory.exists())
-        {
-            Files.walk(outputTestDirectory.toPath())
-                .map(Path::toFile)
-                .filter(File::isFile)
-                .forEach(f -> f.setWritable(false));
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(f -> f.setWritable(false));
         }
     }
 
@@ -206,31 +236,31 @@ public class Generator
     }
 
     void setScopeNames(
-        String scopeNames)
+            String scopeNames)
     {
         this.scopeNames = scopeNames;
     }
 
     void setPackageName(
-        String packageName)
+            String packageName)
     {
         this.packageName = packageName;
     }
 
     void setInputDirectory(
-        File inputDirectory)
+            File inputDirectory)
     {
         this.inputDirectory = inputDirectory;
     }
 
     void setOutputDirectory(
-        File outputDirectory)
+            File outputDirectory)
     {
         this.outputDirectory = outputDirectory;
     }
 
     void setOutputTestDirectory(
-        File outputTestDirectory)
+            File outputTestDirectory)
     {
         this.outputTestDirectory = outputTestDirectory;
     }

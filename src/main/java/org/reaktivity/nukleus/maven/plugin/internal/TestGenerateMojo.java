@@ -15,19 +15,18 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal;
 
-import static org.apache.maven.plugins.annotations.LifecyclePhase.GENERATE_SOURCES;
-import static org.apache.maven.plugins.annotations.ResolutionScope.COMPILE;
-
-import java.io.IOException;
 import org.apache.maven.plugins.annotations.Mojo;
+import java.io.IOException;
 
-@Mojo(name = "generate",
-      defaultPhase = GENERATE_SOURCES,
-      requiresDependencyResolution = COMPILE,
+import static org.apache.maven.plugins.annotations.LifecyclePhase.GENERATE_TEST_SOURCES;
+import static org.apache.maven.plugins.annotations.ResolutionScope.TEST;
+
+@Mojo(name = "test-generate",
+      defaultPhase = GENERATE_TEST_SOURCES,
+      requiresDependencyResolution = TEST,
       requiresProject = true)
-public final class GenerateMojo extends AbstractGenerateMojo
+public final class TestGenerateMojo extends AbstractGenerateMojo
 {
-
     @Override
     protected void executeImpl() throws IOException
     {
@@ -37,10 +36,10 @@ public final class GenerateMojo extends AbstractGenerateMojo
         generator.warn(getLog()::warn);
         generator.setPackageName(packageName);
         generator.setInputDirectory(inputDirectory);
-        generator.setOutputDirectory(outputDirectory);
+        generator.setOutputDirectory(outputTestDirectory);
         generator.setOutputTestDirectory(outputTestDirectory);
         generator.setScopeNames(scopeNames);
-        generator.generate(createLoader());
-        project.addCompileSourceRoot(outputDirectory.getPath());
+        generator.testGenerate(createLoader());
+        project.addTestCompileSourceRoot(outputTestDirectory.getPath());
     }
 }
