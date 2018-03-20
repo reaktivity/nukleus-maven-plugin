@@ -44,7 +44,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNodeLocator;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ClassSpecMixinGenerator;
@@ -119,8 +118,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
     public StructFlyweightTestGenerator(
             ClassName structName,
-            String baseName,
-            AstNodeLocator astNodeLocator)
+            String baseName)
     {
         super(structName);
         this.baseName = baseName + "Test";

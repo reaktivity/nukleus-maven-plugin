@@ -25,6 +25,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.EnumFlyweightTestGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.test.StructFlyweightTestGenerator;
 
 import com.squareup.javapoet.ClassName;
@@ -64,8 +65,7 @@ public class ScopeTestVisitor extends ScopeVisitor
         ClassName structNameTest = resolver.resolveClass(structTypeTest);
         StructFlyweightTestGenerator generator = new StructFlyweightTestGenerator(
             structNameTest,
-            baseName,
-            astNodeLocator);
+            baseName);
         generator.typeId(findTypeId(structNode));
         return new StructTestVisitor(
             generator,
@@ -75,7 +75,20 @@ public class ScopeTestVisitor extends ScopeVisitor
     @Override
     public Collection<TypeSpecGenerator<?>> visitEnum(AstEnumNode enumNode)
     {
-        return defaultResult();
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        String baseName = enumNode.name();
+        AstType enumType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName + "Test"));
+        ClassName enumFlyweightName = resolver.resolveClass(enumType);
+        ClassName enumTypeName = enumFlyweightName.peerClass(baseName);
+
+        EnumFlyweightTestGenerator flyweightGenerator =
+                new EnumFlyweightTestGenerator(enumFlyweightName, resolver.flyweightName(), enumTypeName);
+
+        return new EnumTestVisitor(flyweightGenerator).visitEnum(enumNode);
     }
 
     @Override

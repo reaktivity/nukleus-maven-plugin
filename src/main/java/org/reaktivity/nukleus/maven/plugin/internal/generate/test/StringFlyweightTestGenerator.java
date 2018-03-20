@@ -182,7 +182,8 @@ public final class StringFlyweightTestGenerator extends ClassSpecGenerator
         methodSpec.addStatement("stringRO.wrap(buffer,  0,  limit)")
                 .addStatement("$T.assertEquals(expectedLimit, limit)", Assert.class)
                 .addStatement("$T.assertEquals(expected, buffer)", Assert.class)
-                .addStatement("assertStringValue(stringRO)");
+                .addStatement("assertStringValue(stringRO)")
+                .addStatement("$T.assertEquals(6, stringRO.value().capacity())", Assert.class);
 
         return methodSpec.build();
     }
