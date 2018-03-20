@@ -80,6 +80,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
 
     private static final ClassName INT_STREAM_CLASS_NAME = ClassName.get(IntStream.class);
     private static final ClassName LONG_STREAM_CLASS_NAME = ClassName.get(LongStream.class);
+    private static final ClassName INT_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfInt.class);
     private static final ClassName LONG_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfLong.class);
 
     private final String baseName;
@@ -1915,7 +1916,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             else
             {
                 setNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                        byteOrder, null, priorDefaulted);
+                        byteOrder, defaultValue, priorDefaulted);
             }
 
             return this;
@@ -2018,11 +2019,50 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 builder.addStatement("$T.assertEquals(\"value$L\", flyweight.$L().asString())",
                         Assert.class,
                         valueIncrement,
-                        name);
+                        methodName(name));
             }
             else if ("OctetsFW".equals(className.simpleName()))
             {
-
+                String value = "";
+                if (size >= 0)
+                {
+                    for (int i = 0; i < size; i++)
+                    {
+                        value += i;
+                    }
+                    builder.addStatement("$T.assertEquals(\"$L\", $T.asString(flyweight.$L()))",
+                            Assert.class,
+                            value,
+                            className.peerClass("OctetsFWTest"),
+                            methodName(name));
+                }
+                else if (sizeName != null)
+                {
+                    if (defaultValue == NULL_DEFAULT)
+                    {
+                        builder.addStatement("$T.assertNull(flyweight.$L())",
+                                Assert.class,
+                                methodName(name));
+                    }
+                    else
+                    {
+                        value = "xy";
+                        builder.addStatement("$T.assertEquals(\"$L\", $T.asString(flyweight.$L()))",
+                                Assert.class,
+                                value,
+                                className.peerClass("OctetsFWTest"),
+                                methodName(name));
+                    }
+                }
+                else
+                {
+                    value = "x";
+                    builder.addStatement("$T.assertEquals(\"$L\", $T.asString(flyweight.$L()))",
+                            Assert.class,
+                            value,
+                            className.peerClass("OctetsFWTest"),
+                            methodName(name));
+                }
             }
             else
             {
@@ -2147,6 +2187,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
     {
         private final String baseName;
         private String priorDefaulted;
+        private String priorSizeName;
+        private TypeName priorSizeType;
         private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
 
         static
@@ -2182,6 +2224,8 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorDefaulted = name;
+                priorSizeName = sizeName;
+                priorSizeType = sizeType;
             }
             else
             {
@@ -2193,26 +2237,26 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 if (sizeName != null)
                 {
                     addIntegerVariableArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                            byteOrder, defaultValue, priorDefaulted);
+                            byteOrder, defaultValue);
                 }
                 else if (size != -1)
                 {
                     addIntegerFixedArray(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                            byteOrder, defaultValue, priorDefaulted);
+                            byteOrder, defaultValue);
                 }
                 else
                 {
                     if(!usedAsSize)
                     {
                         setPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                                byteOrder, defaultValue, priorDefaulted);
+                                byteOrder, defaultValue);
                     }
                 }
             }
             else
             {
                 setNonPrimitiveValue(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                        byteOrder, defaultValue, priorDefaulted);
+                        byteOrder, defaultValue);
             }
 
             return this;
@@ -2227,13 +2271,9 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 String sizeName,
                 TypeName sizeType,
                 AstByteOrder byteOrder,
-                Object defaultValue,
-                String priorFieldIfDefaulted)
+                Object defaultValue)
         {
-            if (priorFieldIfDefaulted != null)
-            {
 
-            }
         }
 
         private void addIntegerFixedArray(
@@ -2245,8 +2285,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 String sizeName,
                 TypeName sizeType,
                 AstByteOrder byteOrder,
-                Object defaultValue,
-                String priorFieldIfDefaulted)
+                Object defaultValue)
         {
             builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WithValueToNull")
                     .addAnnotation(Test.class)
@@ -2295,6 +2334,23 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 }
                 builder.addMethod(methodBuilder.build());
             }
+            else if(generateType == TypeName.INT)
+            {
+                MethodSpec.Builder methodBuilder = methodBuilder("shouldFailToRead"+name.toUpperCase()+"WhenThereNoData")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", NoSuchElementException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("$T limit =  setRequiredBufferValues(buffer, 0)", int.class)
+                        .addStatement("$T $L = fieldRO.wrap(buffer, 0, limit).$L()", INT_ITERATOR_CLASS_NAME, methodName(name),
+                                methodName(name));
+
+                for (int i = 0; i < size + 1; i++)
+                {
+                    methodBuilder.addStatement("$L.nextInt()", methodName(name));
+                }
+                builder.addMethod(methodBuilder.build());
+            }
 
 
             if (unsignedType != null)
@@ -2336,8 +2392,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 String sizeName,
                 TypeName sizeType,
                 AstByteOrder byteOrder,
-                Object defaultValue,
-                String priorDefaulted)
+                Object defaultValue)
         {
             String[] range = UNSIGNED_INT_RANGES.get(type);
             if (unsignedType != null)
@@ -2392,13 +2447,12 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 String sizeName,
                 TypeName sizeType,
                 AstByteOrder byteOrder,
-                Object defaultValue,
-                String priorDefaulted)
+                Object defaultValue)
         {
             if (type instanceof ClassName)
             {
                 ClassName className = (ClassName) type;
-                addClassType(name, className, usedAsSize, size, sizeName, sizeType, defaultValue, priorDefaulted);
+                addClassType(name, className, usedAsSize, size, sizeName, sizeType, defaultValue);
 
             }
             else if (type instanceof ParameterizedTypeName)
@@ -2458,8 +2512,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 int size,
                 String sizeName,
                 TypeName sizeType,
-                Object defaultValue,
-                String priorFieldIfDefaulted)
+                Object defaultValue)
         {
             if (isStringType(className))
             {
@@ -2487,7 +2540,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             }
             else if ("OctetsFW".equals(className.simpleName()))
             {
-
                 String value = "";
                 if (size >= 0)
                 {
@@ -2497,7 +2549,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     }
 
                     addOctetsFixedSizeExceptionMethod(name, className, usedAsSize, size, sizeName, sizeType, defaultValue,
-                            priorDefaulted, value);
+                            value);
 
                 }
                 else if (sizeName != null)
@@ -2506,10 +2558,10 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                     if(isVarintType(sizeType))
                     {
                         addOctetsVariantsDynamicSizeExceptionMethod(name, className, usedAsSize, size, sizeName, sizeType,
-                                defaultValue, priorDefaulted, value);
+                                defaultValue, value);
                     }
                     addOctetsDynamicSizeExceptionMethod(name, className, usedAsSize, size, sizeName, sizeType, defaultValue,
-                            priorDefaulted, value);
+                            value);
                 }
                 else
                 {
@@ -2526,6 +2578,19 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                 "                .build()", index(name), methodName(name),
                                 className.peerClass("OctetsFWTest"), value)
                         .build());
+
+                if (priorDefaulted != null)
+                {
+                    if(isVarintType(this.priorSizeType))
+                    {
+                        builder.addMethod(methodBuilder("shouldSetDefaultPriorValueFor"+name.toUpperCase())
+                                .addAnnotation(Test.class)
+                                .addModifiers(PUBLIC)
+                                .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                                "                .build()", index(name))
+                                .build());
+                    }
+                }
             }
             else
             {
@@ -2563,7 +2628,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                                        String sizeName,
                                                        TypeName sizeType,
                                                        Object defaultValue,
-                                                       String priorFieldIfDefaulted,
                                                        String value)
         {
             for (OctetsSetterVariant setterVariant : OctetsSetterVariant.values())
@@ -2616,7 +2680,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                                        String sizeName,
                                                        TypeName sizeType,
                                                        Object defaultValue,
-                                                       String priorFieldIfDefaulted,
                                                        String value)
         {
             for (OctetsSetterVariant setterVariant : OctetsSetterVariant.values())
@@ -2696,7 +2759,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                                                        String sizeName,
                                                        TypeName sizeType,
                                                        Object defaultValue,
-                                                       String priorFieldIfDefaulted,
                                                        String value)
         {
             if (defaultValue == NULL_DEFAULT)
@@ -2800,48 +2862,10 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
         return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
 
-    private static String arraySize(
-            String fieldName)
-    {
-        return String.format("ARRAY_SIZE_%s", constant(fieldName));
-    }
-
-    private static String offset(
-            String fieldName)
-    {
-        return String.format("FIELD_OFFSET_%s", constant(fieldName));
-    }
-
-    private static String size(
-            String fieldName)
-    {
-        return String.format("FIELD_SIZE_%s", constant(fieldName));
-    }
-
     private static String constant(
             String fieldName)
     {
         return fieldName.replaceAll("([^_A-Z])([A-Z])", "$1_$2").toUpperCase();
-    }
-
-    private static String dynamicLimit(String fieldName)
-    {
-        return "limit" + initCap(fieldName);
-    }
-
-    private static String iterator(String fieldName)
-    {
-        return "iterator" + initCap(fieldName);
-    }
-
-    private static ClassName iteratorClass(
-            ClassName structName,
-            TypeName type,
-            TypeName unsignedType)
-    {
-        TypeName generateType = (unsignedType != null) ? unsignedType : type;
-        return generateType == TypeName.LONG ? structName.nestedClass("LongPrimitiveIterator")
-                : structName.nestedClass("IntPrimitiveIterator");
     }
 
     private static String methodName(String name)
@@ -2865,12 +2889,6 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             String fieldName)
     {
         return String.format("dynamicValue%s", initCap(fieldName));
-    }
-
-    private static String dynamicOffset(
-            String fieldName)
-    {
-        return String.format("dynamicOffset%s", initCap(fieldName));
     }
 
     private static boolean isImplicitlyDefaulted(
