@@ -529,7 +529,6 @@ public final class OptFlatWithOctetsFW extends Flyweight
         @Override
         public OptFlatWithOctetsFW build()
         {
-
             if (lastFieldSet < INDEX_EXTENSION)
             {
                 extension(b ->

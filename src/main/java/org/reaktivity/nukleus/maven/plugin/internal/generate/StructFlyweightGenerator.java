@@ -34,9 +34,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UN
 
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -1183,8 +1181,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             return builder.addMethod(constructor())
                           .addMethod(wrapMethod())
                           .addMethod(buildMethod())
-                          .addMethod(checkFieldNotSetMethod())
-                          .addMethod(checkFieldsSetMethod())
                           .build();
         }
 
@@ -1205,7 +1201,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
                     .returns(thisName)
-                    .addStatement("fieldsSet.clear()")
+                    .addStatement("lastFieldsSet = -1")
                     .addStatement("super.wrap(buffer, offset, maxLimit)")
                     .addStatement("limit(offset)")
                     .addStatement("return this")
@@ -1220,45 +1216,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .returns(structType);
             if (priorDefaulted != null)
             {
-                builder.beginControlFlow("if (!fieldsSet.get($L))", index(priorDefaulted));
+                builder.beginControlFlow("if (lastFieldSet < $L)", index(priorDefaulted));
                 CodeBlock.Builder code = CodeBlock.builder();
                 defaultPriorField(code);
                 builder.addCode(code.build());
                 builder.endControlFlow();
             }
-            return builder.addStatement("checkFieldsSet(0, FIELD_COUNT)")
-                          .addStatement("fieldsSet.clear()")
+            return builder.addStatement("assert lastFieldSet == FIELD_COUNT - 1")
+                          .addStatement("lastFieldSet = -1")
                           .addStatement("return super.build()")
                           .build();
-        }
-
-        private MethodSpec checkFieldNotSetMethod()
-        {
-            return methodBuilder("checkFieldNotSet")
-                    .addModifiers(PRIVATE)
-                    .addParameter(int.class, "index")
-                    .beginControlFlow("if (fieldsSet.get(index))")
-                    .addStatement("throw new IllegalStateException(String.format($S, FIELD_NAMES[index]))",
-                                  "Field \"%s\" has already been set")
-                    .endControlFlow()
-                    .build();
-        }
-
-        private MethodSpec checkFieldsSetMethod()
-        {
-            return methodBuilder("checkFieldsSet")
-                    .addModifiers(PRIVATE)
-                    .addParameter(int.class, "fromIndex")
-                    .addParameter(int.class, "toIndex")
-                    .addStatement("int fieldNotSet = fromIndex - 1")
-                    .beginControlFlow("do")
-                    .addStatement("fieldNotSet = fieldsSet.nextClearBit(fieldNotSet + 1)")
-                    .endControlFlow("while (fieldNotSet < toIndex && FIELDS_WITH_DEFAULTS.get(fieldNotSet))")
-                    .beginControlFlow("if (fieldNotSet < toIndex)")
-                    .addStatement("throw new IllegalStateException(String.format($S, FIELD_NAMES[fieldNotSet]))",
-                                  "Required field \"%s\" is not set")
-                    .endControlFlow()
-                    .build();
         }
 
         private static String appendMethodName(
@@ -1330,7 +1297,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (isVarintType(priorSizeType))
                     {
                         code.addStatement("$L(-1)", methodName(priorSizeName))
-                            .addStatement("fieldsSet.set($L)", index(priorDefaulted));
+                            .addStatement("lastfieldSet = $L", index(priorDefaulted));
                     }
                     else
                     {
@@ -1351,8 +1318,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private static final class MemberConstantGenerator extends ClassSpecMixinGenerator
         {
             private int nextIndex;
-            private CodeBlock.Builder fieldsWithDefaultsInitializer = CodeBlock.builder();
-            private List<String> fieldNames = new ArrayList<>();
 
             private MemberConstantGenerator(
                 ClassName thisType,
@@ -1369,11 +1334,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String sizeName,
                 Object defaultValue)
             {
-                builder.addField(
-                        FieldSpec.builder(int.class, index(name), PRIVATE, STATIC, FINAL)
-                                 .initializer(Integer.toString(nextIndex++))
-                                 .build());
-                fieldNames.add(name);
+                if (!isImplicitlyDefaulted(type, size, sizeName))
+                {
+                    builder.addField(
+                            FieldSpec.builder(int.class, index(name), PRIVATE, STATIC, FINAL)
+                                     .initializer(Integer.toString(nextIndex++))
+                                     .build());
+                }
                 boolean isOctetsType = isOctetsType(type);
                 if (defaultValue != null && !isOctetsType)
                 {
@@ -1396,11 +1363,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
                                      .initializer(Objects.toString(defaultValueToSet))
                                      .build());
-                    fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
-                }
-                else if (isImplicitlyDefaulted(type, size, sizeName))
-                {
-                    fieldsWithDefaultsInitializer.addStatement("set($L)", index(name));
                 }
                 return this;
             }
@@ -1413,24 +1375,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                  .initializer(Integer.toString(nextIndex))
                                  .build())
                         .addField(
-                        FieldSpec.builder(BitSet.class, "FIELDS_WITH_DEFAULTS", PRIVATE, STATIC, FINAL)
-                                 .addAnnotation(SUPPRESS_WARNINGS_SERIAL)
-                                 .initializer(CodeBlock.builder()
-                                             .add("new BitSet(FIELD_COUNT)")
-                                             .beginControlFlow(" ")
-                                             .beginControlFlow(" ")
-                                             .add(fieldsWithDefaultsInitializer.build())
-                                             .endControlFlow()
-                                             .endControlFlow()
-                                             .build())
-                                 .build())
-                        .addField(
-                        FieldSpec.builder(String[].class, "FIELD_NAMES", PRIVATE, STATIC, FINAL)
-                                 .initializer("{\n  \"" + String.join("\",\n  \"", fieldNames) + "\"\n}")
-                                 .build())
-                        .addField(
-                        FieldSpec.builder(BitSet.class, "fieldsSet", PRIVATE, FINAL)
-                                 .initializer("new BitSet(FIELD_COUNT)")
+                        FieldSpec.builder(int.class, "lastFieldSet", PRIVATE)
+                                 .initializer("-1")
                                  .build());
                 return super.build();
             }
@@ -1578,14 +1524,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 ClassName builderType = className.nestedClass("Builder");
 
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("checkFieldNotSet($L)", index(name));
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
-                    code.endControlFlow();
                 }
-                code.addStatement("checkFieldsSet(0, $L)", index(name));
+                code.addStatement("assert lastFieldSet == $L -1)", index(name));
 
                 if (size >= 0)
                 {
@@ -1613,14 +1556,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String fieldRW = String.format("%sRW", name);
                 TypeName builderType = classType.nestedClass("Builder");
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("checkFieldNotSet($L)", index(name));
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
-                    code.endControlFlow();
                 }
-                code.addStatement("checkFieldsSet(0, $L)", index(name))
+                code.addStatement("assert lastFieldSet == $L - 1)", index(name))
                     .addStatement("return $L.wrap(buffer(), limit(), maxLimit())", fieldRW);
                 builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PRIVATE)
@@ -1634,7 +1574,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         {
             private static final Map<TypeName, String> PUTTER_NAMES;
             private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
-            private boolean checkFollowingFieldsNotSetMethodIsRequired;
 
             static
             {
@@ -1707,16 +1646,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 return this;
             }
 
-            @Override
-            public TypeSpec.Builder build()
-            {
-                if (checkFollowingFieldsNotSetMethodIsRequired)
-                {
-                    addCheckFollowingFieldsNotSetMethod();
-                }
-                return super.build();
-            }
-
             private void addPrimitiveMember(
                 String name,
                 TypeName type,
@@ -1734,33 +1663,29 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 TypeName generateType = (unsignedType != null) ? unsignedType : type;
                 CodeBlock.Builder code = CodeBlock.builder();
-                if (!usedAsSize)
-                {
-                    code.addStatement("checkFieldNotSet($L)", index(name));
-                }
                 if (unsignedType != null)
                 {
                     String[] range = UNSIGNED_INT_RANGES.get(type);
                     code.beginControlFlow("if (value < $L)", range[0])
-                    .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
                             format("Value %%d too low for field \"%s\"", name))
                     .endControlFlow();
                     if (range[1] != null)
                     {
                         code.beginControlFlow("if (value > $L)", range[1])
-                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
-                            format("Value %%d too high for field \"%s\"", name))
+                            .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                                format("Value %%d too high for field \"%s\"", name))
                         .endControlFlow();
                     }
                 }
 
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
-                code.addStatement("checkFieldsSet(0, $L)", index(name))
+                code.addStatement("assert lastFieldSet == $L - 1)", index(name))
                     .addStatement("int newLimit = limit() + $L", size(name))
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .add("$[")
@@ -1802,7 +1727,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("$L = limit()", dynamicOffset(name));
                 }
-                code.addStatement("fieldsSet.set($L)", index(name))
+                code.addStatement("lastfieldSet = $L", index(name))
                     .addStatement("limit(newLimit)")
                     .addStatement("return this");
 
@@ -1829,7 +1754,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         : INT_ITERATOR_CLASS_NAME;
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
@@ -1904,7 +1829,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
 
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("checkFieldNotSet($L)", index(name));
                 if (unsignedType != null)
                 {
                     String[] range = UNSIGNED_INT_RANGES.get(type);
@@ -1925,11 +1849,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
-                code.addStatement("checkFieldsSet(0, $L)", index(name))
+                code.addStatement("assert lastFieldSet == $L - 1)", index(name))
                     .addStatement("$L = limit()", dynamicOffset(name))
                 .endControlFlow();
 
@@ -1937,7 +1861,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("int newSize = (newLimit - $L) / $L",  dynamicOffset(name), size(name))
                     .beginControlFlow("if (newSize == $L)", arraySize(name))
-                        .addStatement("fieldsSet.set($L)", index(name))
+                        .addStatement("lastFieldSet = $L", index(name))
                     .endControlFlow()
                     .add("$[")
                     .add("buffer().$L(limit(), ", putterName);
@@ -2002,14 +1926,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("checkFieldNotSet($L)", index(name));
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
                 TypeName valueType = inputType == TypeName.LONG ? TypeName.LONG : TypeName.INT;
                 TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
                         : INT_ITERATOR_CLASS_NAME;
                 if (defaultPriorField != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
@@ -2039,8 +1962,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.addStatement("$L(0)", methodName(sizeName));
                 }
                 code.addStatement("limit(limit)");
-                code.addStatement("checkFieldsSet(0, $L)", index(name));
-                code.addStatement("fieldsSet.set($L)", index(name));
+                code.addStatement("assert lastFieldSet == $L - 1", index(name));
+                code.addStatement("lastfieldSet = $L", index(name));
                 code.nextControlFlow("else");
                 code.beginControlFlow("while (values.hasNext())");
                 code.addStatement("$T value = values.next$L()", valueType,
@@ -2121,26 +2044,24 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                 }
 
-                code.beginControlFlow("if (!fieldsSet.get($L))", index(name));
+                code.beginControlFlow("if (lastFieldSet < $L)", index(name));
 
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
-                code.addStatement("fieldsSet.set($L)", index(sizeName))
-                    .addStatement("checkFieldsSet(0, $L)", index(name))
+                code.addStatement("lastfieldSet = $L", index(sizeName))
+                    .addStatement("assert lastFieldSet == $L - 1", index(name))
                     .addStatement("$L = limit()", dynamicOffset(name))
-                    .addStatement("fieldsSet.set($L)", index(name))
+                    .addStatement("lastfieldSet = $L", index(name))
                 .endControlFlow();
 
-                code.addStatement("checkFollowingFieldsNotSet($L)", index(name))
-                    .addStatement("int newLimit = limit() + $L", size(name))
+                code.addStatement("int newLimit = limit() + $L", size(name))
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .add("$[")
                     .add("buffer().$L(limit(), ", putterName);
-                checkFollowingFieldsNotSetMethodIsRequired = true;
 
 
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
@@ -2174,7 +2095,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.add(", $T.BIG_ENDIAN", ByteOrder.class);
                 }
                 code.add(");\n$]");
-                code.addStatement("fieldsSet.set($L)", index(name))
+                code.addStatement("lastfieldSet = $L", index(name))
                     .addStatement("limit($L)", dynamicOffset(sizeName))
                     .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name));
 
@@ -2268,14 +2189,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     String parameterName = isVarintType(className) ? "value" : "mutator";
 
                     CodeBlock.Builder code = CodeBlock.builder();
-                    code.addStatement("checkFieldNotSet($L)", index(name));
                     if (priorFieldIfDefaulted != null)
                     {
-                        code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                         defaultPriorField.accept(code);
                         code.endControlFlow();
                     }
-                    code.addStatement("checkFieldsSet(0, $L)", index(name))
+                    code.addStatement("assert lastFieldSet == $L - 1", index(name))
                         .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name);
                     if (isVarintType(className))
                     {
@@ -2290,7 +2210,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("$L.accept($LRW)", parameterName, name);
                     }
                     code.addStatement("limit($LRW.build().limit())", name)
-                        .addStatement("fieldsSet.set($L)", index(name))
+                        .addStatement("lastfieldSet = $L", index(name))
                         .addStatement("return this");
 
                     builder.addMethod(methodBuilder(methodName(name))
@@ -2389,7 +2309,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("$LRW.set(value)", name)
                         .addStatement("limit($LRW.build().limit())", name);
                 }
-                code.addStatement("fieldsSet.set($L)", index(name))
+                code.addStatement("lastfieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2450,7 +2370,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("limit($LRW.build().limit())", name);
                 }
-                code.addStatement("fieldsSet.set($L)", index(name))
+                code.addStatement("lastfieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2506,7 +2426,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("limit($LRW.build().limit())", name);
                 }
-                code.addStatement("fieldsSet.set($L)", index(name))
+                code.addStatement("lastfieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2531,7 +2451,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(String.class, "value")
                         .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                         .addStatement("$LRW.set(value, $T.UTF_8)", name, StandardCharsets.class)
-                        .addStatement("fieldsSet.set($L)", index(name))
+                        .addStatement("lastfieldSet = $L", index(name))
                         .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
@@ -2542,7 +2462,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(className, "value")
                         .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                         .addStatement("$LRW.set(value)", name)
-                        .addStatement("fieldsSet.set($L)", index(name))
+                        .addStatement("lastfieldSet = $L", index(name))
                         .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
@@ -2555,7 +2475,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(int.class, "length")
                         .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                         .addStatement("$LRW.set(buffer, offset, length)", name)
-                        .addStatement("fieldsSet.set($L)", index(name))
+                        .addStatement("lastfieldSet = $L", index(name))
                         .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
@@ -2658,18 +2578,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
 
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("checkFieldNotSet($L)", index(name));
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     defaultPriorField.accept(code);
                     code.endControlFlow();
                 }
-                code.addStatement("checkFieldsSet(0, $L)", index(name))
+                code.addStatement("assert lastFieldSet == $L - 1", index(name))
                     .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
                     .addStatement("mutator.accept($LRW)", name)
                     .addStatement("limit($LRW.build().limit())", name)
-                    .addStatement("fieldsSet.set($L)", index(name))
+                    .addStatement("lastfieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2685,17 +2604,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code = CodeBlock.builder();
                     if (priorFieldIfDefaulted != null)
                     {
-                        code.beginControlFlow("if (!fieldsSet.get($L))", index(priorFieldIfDefaulted));
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                         defaultPriorField.accept(code);
                         code.endControlFlow();
                     }
-                    code.addStatement("checkFieldsSet(0, $L)", index(name))
-                        .beginControlFlow("if (!fieldsSet.get($L))", index(name))
+                    code.addStatement("assert lastFieldSet == $L - 1", index(name))
+                        .beginControlFlow("if (lastFieldSet < $L)", index(name))
                             .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
                         .endControlFlow()
                         .addStatement("$LRW.item(mutator)", name)
                         .addStatement("limit($LRW.build().limit())", name)
-                        .addStatement("fieldsSet.set($L)", index(name))
+                        .addStatement("lastfieldSet = $L", index(name))
                         .addStatement("return this");
 
                     TypeName itemMutatorType = ParameterizedTypeName.get(consumerType, itemBuilderType);
@@ -2706,18 +2625,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addCode(code.build())
                             .build());
                 }
-            }
-
-            private void addCheckFollowingFieldsNotSetMethod()
-            {
-                builder.addMethod(methodBuilder("checkFollowingFieldsNotSet")
-                            .addModifiers(PRIVATE)
-                            .addParameter(int.class, "index")
-                            .beginControlFlow("if (fieldsSet.nextSetBit(index + 1) != -1)")
-                            .addStatement("throw new IllegalStateException(String.format($S, FIELD_NAMES[index]))",
-                                          "Fields following \"%s\" have already been set")
-                            .endControlFlow()
-                            .build());
             }
         }
     }
