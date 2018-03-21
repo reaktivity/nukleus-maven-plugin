@@ -149,8 +149,8 @@ public final class OptFlatWithOctetsFW extends Flyweight
     public String toString()
     {
         return String.format(
-                "FLAT_WITH_OCTETS [fixed1=%d, octets1=%s, lengthOctets2=%d, string1=%s, octets2=%s, " +
-                "lengthOctets3=%s, octets3=%s, lengthOctets4=%d, octets4=%s, extension=%s]",
+                "FLAT_WITH_OCTETS [fixed1=%d, octets1=%s, lengthOctets2=%d, string1=%s, octets2=%s, "
+                        + "lengthOctets3=%s, octets3=%s, lengthOctets4=%d, octets4=%s, extension=%s]",
                 fixed1(), octets1(), lengthOctets2(), string1RO.asString(), octets2(), lengthOctets3(), octets3(),
                 lengthOctets4(), octets4(), extension());
     }
@@ -238,6 +238,24 @@ public final class OptFlatWithOctetsFW extends Flyweight
             int newLimit = limit() + 10;
             checkLimit(newLimit, maxLimit());
             return octets1RW.wrap(buffer(), limit(), newLimit);
+        }
+
+        public Builder octets1(
+            OctetsFW value)
+        {
+            OctetsFW.Builder octets1RW = octets1();
+            octets1RW.set(value);
+            int expectedLimit = octets1RW.maxLimit();
+            int actualLimit = octets1RW.build().limit();
+            if (actualLimit != expectedLimit)
+            {
+                throw new IllegalStateException(
+                        String.format("%d instead of %d bytes have been set for field \"octets1\"",
+                                actualLimit - limit(), expectedLimit - limit()));
+            }
+            limit(octets1RW.maxLimit());
+            lastFieldSet = INDEX_OCTETS1;
+            return this;
         }
 
         public Builder octets1(
@@ -343,6 +361,26 @@ public final class OptFlatWithOctetsFW extends Flyweight
         }
 
         public Builder octets2(
+            OctetsFW value)
+        {
+            int sizeDoller;
+            int newLimit;
+            OctetsFW.Builder octets2RW = octets2();
+            if (value == null)
+            {
+                throw new IllegalArgumentException(
+                        "value cannot be null for field \"octets2\" that does not default to null");
+            }
+            newLimit = octets2RW.build().limit();
+            sizeDoller = newLimit - limit();
+            limit(dynamicOffsetLengthOctets2);
+            lengthOctets2(sizeDoller);
+            limit(newLimit);
+            lastFieldSet = INDEX_OCTETS2;
+            return this;
+        }
+
+        public Builder octets2(
             Consumer<OctetsFW.Builder> mutator)
         {
             OctetsFW.Builder octets2RW = octets2();
@@ -386,8 +424,40 @@ public final class OptFlatWithOctetsFW extends Flyweight
 
         private OctetsFW.Builder octets3()
         {
+            if (lastFieldSet < INDEX_LENGTH_OCTETS3)
+            {
+                lengthOctets3(-1);
+            }
             assert lastFieldSet == INDEX_OCTETS3 - 1;
             return octets3RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder octets3(
+            OctetsFW value)
+        {
+            int sizeDollar;
+            int newLimit;
+            OctetsFW.Builder octets3RW = octets3();
+            if (value == null)
+            {
+                sizeDollar = -1;
+                newLimit = limit();
+            }
+            else
+            {
+                octets3RW.set(value);
+                newLimit = octets3RW.build().limit();
+                sizeDollar = newLimit - limit();
+            }
+            if (sizeDollar != dynamicValueLengthOctets3)
+            {
+                throw new IllegalStateException(
+                        String.format("%d bytes have been set for field \"octets3\", does not match value %d set in %s",
+                                sizeDollar, dynamicValueLengthOctets3, "lengthOctets3"));
+            }
+            limit(newLimit);
+            lastFieldSet = INDEX_OCTETS3;
+            return this;
         }
 
         public Builder octets3(
@@ -450,6 +520,30 @@ public final class OptFlatWithOctetsFW extends Flyweight
             lengthOctets4(DEFAULT_LENGTH_OCTETS4);
             assert lastFieldSet == INDEX_OCTETS4 - 1;
             return octets4RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder octets4(
+            OctetsFW value)
+        {
+            int sizeDollar;
+            int newLimit;
+            OctetsFW.Builder octets4RW = octets4();
+            if (value == null)
+            {
+                sizeDollar = -1;
+                newLimit = limit();
+            }
+            else
+            {
+                octets4RW.set(value);
+                newLimit = octets4RW.build().limit();
+                sizeDollar = newLimit - limit();
+            }
+            limit(dynamicOffsetLengthOctets4);
+            lengthOctets4(sizeDollar);
+            limit(newLimit);
+            lastFieldSet = INDEX_OCTETS4;
+            return this;
         }
 
         public Builder octets4(
