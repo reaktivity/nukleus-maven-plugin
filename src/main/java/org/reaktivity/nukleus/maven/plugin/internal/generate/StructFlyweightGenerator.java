@@ -1411,15 +1411,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (usedAsSize && !isVarintType(type))
                 {
                         builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
-                                .build());
+                               .initializer("-1")
+                               .build());
                 }
                 else if (type.isPrimitive())
                 {
                     if (size != -1 || sizeName != null)
                     {
                         builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
-                                .initializer("-1")
-                                .build());
+                               .initializer("-1")
+                               .build());
                     }
                 }
                 else
@@ -1714,15 +1715,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 if (priorFieldIfDefaulted != null)
                 {
-                    if (!priorFieldIsAutomaticallySet)
+                    if (priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if ($L == -1)", dynamicOffset((priorFieldIfDefaulted)));
+                    }
+                    else
                     {
                         code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     }
                     defaultPriorField.accept(code);
-                    if (!priorFieldIsAutomaticallySet)
-                    {
-                        code.endControlFlow();
-                    }
+                    code.endControlFlow();
                 }
                 if (!automaticallySet)
                 {
@@ -1777,11 +1779,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
-                        .addModifiers(usedAsSize ? PRIVATE : PUBLIC)
-                        .addParameter(generateType, "value")
-                        .returns(thisType)
-                        .addCode(code.build())
-                        .build());
+                       .addModifiers(usedAsSize ? PRIVATE : PUBLIC)
+                       .addParameter(generateType, "value")
+                       .returns(thisType)
+                       .addCode(code.build())
+                       .build());
             }
 
             private void addIntegerFixedArrayIteratorMutator(
@@ -1803,15 +1805,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         : INT_ITERATOR_CLASS_NAME;
                 if (defaultPriorField != null)
                 {
-                    if (!priorFieldIsAutomaticallySet)
+                    if (priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if ($L == -1)", dynamicOffset((priorFieldIfDefaulted)));
+                    }
+                    else
                     {
                         code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     }
                     defaultPriorField.accept(code);
-                    if (!priorFieldIsAutomaticallySet)
-                    {
-                        code.endControlFlow();
-                    }
+                    code.endControlFlow();
                 }
                 code.beginControlFlow("if (values == null)");
                 code.addStatement("throw new $T($S)",
@@ -1908,15 +1911,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 if (defaultPriorField != null)
                 {
-                    if (!priorFieldIsAutomaticallySet)
+                    if (priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if ($L == -1)", dynamicOffset((priorFieldIfDefaulted)));
+                    }
+                    else
                     {
                         code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     }
                     defaultPriorField.accept(code);
-                    if (!priorFieldIsAutomaticallySet)
-                    {
-                        code.endControlFlow();
-                    }
+                    code.endControlFlow();
                 }
                 code.addStatement("assert lastFieldSet == $L - 1", index(name))
                     .addStatement("$L = limit()", dynamicOffset(name))
@@ -2002,15 +2006,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         : INT_ITERATOR_CLASS_NAME;
                 if (defaultPriorField != null)
                 {
-                    if (!priorFieldIsAutomaticallySet)
+                    if (priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if ($L == -1)", dynamicOffset((priorFieldIfDefaulted)));
+                    }
+                    else
                     {
                         code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     }
                     defaultPriorField.accept(code);
-                    if (!priorFieldIsAutomaticallySet)
-                    {
-                        code.endControlFlow();
-                    }
+                    code.endControlFlow();
                 }
                 if (defaultValue != null)
                 {
@@ -2129,15 +2134,16 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 if (defaultPriorField != null)
                 {
-                    if (!priorFieldIsAutomaticallySet)
+                    if (priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if ($L == -1)", dynamicOffset((priorFieldIfDefaulted)));
+                    }
+                    else
                     {
                         code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                     }
                     defaultPriorField.accept(code);
-                    if (!priorFieldIsAutomaticallySet)
-                    {
-                        code.endControlFlow();
-                    }
+                    code.endControlFlow();
                 }
                 code.addStatement("assert lastFieldSet == $L - 1", index(name))
                     .addStatement("$L = limit()", dynamicOffset(name))
