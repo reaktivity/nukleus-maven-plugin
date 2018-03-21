@@ -60,9 +60,6 @@ public class FlyweightBM
     private FlatWithOctetsFW.Builder flatWithOctetsRW = new FlatWithOctetsFW.Builder();
     private FlatWithOctetsFW flatWithOctetsRO = new FlatWithOctetsFW();
 
-    private OptFlatWithOctetsFW.Builder optFlatWithOctetsRW = new OptFlatWithOctetsFW.Builder();
-    private OptFlatWithOctetsFW optFlatWithOctetsRO = new OptFlatWithOctetsFW();
-
     @Setup(Level.Trial)
     public void init()
     {
@@ -131,22 +128,6 @@ public class FlyweightBM
             .extension(values, 100, 100)
             .build();
         return flatWithOctetsRO.wrap(buffer, 0, buffer.capacity()).fixed1();
-    }
-
-    @Benchmark
-    public long optFlatWithOctetsFW(
-        final Control control) throws Exception
-    {
-        optFlatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
-            .fixed1(++iterations)
-            .octets1(values, 0, 10)
-            .string1(values, 0, 10)
-            .octets2(values, 20, 10)
-            .lengthOctets3(30)
-            .octets3(values, 30, 30)
-            .extension(values, 100, 100)
-            .build();
-        return optFlatWithOctetsRO.wrap(buffer, 0, buffer.capacity()).fixed1();
     }
 
     public static void main(
