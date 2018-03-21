@@ -25,6 +25,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.test.UnionFlyweightTestGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.test.EnumFlyweightTestGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.test.StructFlyweightTestGenerator;
 
@@ -94,6 +95,17 @@ public class ScopeTestVisitor extends ScopeVisitor
     @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(AstUnionNode unionNode)
     {
-        return defaultResult();
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        String baseName = unionNode.name();
+        AstType unionType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+        ClassName unionName = resolver.resolveClass(unionType);
+        UnionFlyweightTestGenerator generator = new UnionFlyweightTestGenerator(unionName, resolver.flyweightName(),
+                baseName);
+
+        return new UnionTestVisitor(generator, resolver).visitUnion(unionNode);
     }
 }
