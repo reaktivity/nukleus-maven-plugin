@@ -1105,7 +1105,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private final MemberFieldGenerator memberField;
         private final MemberAccessorGenerator memberAccessor;
         private final MemberMutatorGenerator memberMutator;
-        private String priorDefaulted;
+        private String priorFieldIfDefaulted;
         private boolean priorDefaultedIsPrimitive;
         private Object priorDefaultValue;
         private String priorSizeName;
@@ -1149,17 +1149,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 defaultValue = 0;
             }
-            Consumer<CodeBlock.Builder> defaultPriorField = priorDefaulted == null ? null
+            Consumer<CodeBlock.Builder> defaultPriorField = priorFieldIfDefaulted == null ? null
                     : b -> defaultPriorField(b);
-            memberConstant.addMember(name, type, unsignedType, size, sizeName, defaultValue);
+            memberConstant.addMember(name, type, unsignedType, size, sizeName, usedAsSize, defaultValue);
             memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize, byteOrder);
-            memberAccessor.addMember(name, type, unsignedType, size, sizeName, defaultValue,
-                    priorDefaulted, defaultPriorField);
+            memberAccessor.addMember(name, type, unsignedType, usedAsSize, size, sizeName, defaultValue,
+                    priorFieldIfDefaulted, defaultPriorField);
             memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                    byteOrder, defaultValue, priorDefaulted, defaultPriorField);
+                    byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
             if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
-                priorDefaulted = name;
+                priorFieldIfDefaulted = name;
                 priorDefaultedIsPrimitive = type.isPrimitive() || isVarintType(type);
                 priorDefaultValue = defaultValue;
                 priorSizeName = sizeName;
@@ -1167,7 +1167,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                priorDefaulted = null;
+                priorFieldIfDefaulted = null;
             }
         }
 
@@ -1201,7 +1201,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
                     .returns(thisName)
-                    .addStatement("lastFieldsSet = -1")
+                    .addStatement("lastFieldSet = -1")
                     .addStatement("super.wrap(buffer, offset, maxLimit)")
                     .addStatement("limit(offset)")
                     .addStatement("return this")
@@ -1214,9 +1214,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(structType);
-            if (priorDefaulted != null)
+            if (priorFieldIfDefaulted != null)
             {
-                builder.beginControlFlow("if (lastFieldSet < $L)", index(priorDefaulted));
+                builder.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
                 CodeBlock.Builder code = CodeBlock.builder();
                 defaultPriorField(code);
                 builder.addCode(code.build());
@@ -1287,7 +1287,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         {
             if (priorDefaultValue != null && priorDefaultedIsPrimitive)
             {
-                code.addStatement("$L($L)", priorDefaulted, defaultName(priorDefaulted));
+                code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
             }
             else
             {
@@ -1297,11 +1297,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (isVarintType(priorSizeType))
                     {
                         code.addStatement("$L(-1)", methodName(priorSizeName))
-                            .addStatement("lastfieldSet = $L", index(priorDefaulted));
+                            .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
                     }
                     else
                     {
-                        code.addStatement("$L(b -> { })", priorDefaulted);
+                        code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
                         code.addStatement("int limit = limit()");
                         code.addStatement("limit($L)", dynamicOffset(priorSizeName));
                         code.addStatement("$L(-1)", methodName(priorSizeName));
@@ -1310,7 +1310,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    code.addStatement("$L(b -> { })", priorDefaulted);
+                    code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
                 }
             }
         }
@@ -1332,9 +1332,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 int size,
                 String sizeName,
+                boolean usedAsSize,
                 Object defaultValue)
             {
-                if (!isImplicitlyDefaulted(type, size, sizeName))
+                boolean automaticallySet = usedAsSize && !isVarintType(type);
+                if (!automaticallySet)
                 {
                     builder.addField(
                             FieldSpec.builder(int.class, index(name), PRIVATE, STATIC, FINAL)
@@ -1470,6 +1472,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
         private static final class MemberAccessorGenerator extends ClassSpecMixinGenerator
         {
+
+            private boolean priorFieldIsAutomaticallySet;
+
             private MemberAccessorGenerator(
                 ClassName thisType,
                 TypeSpec.Builder builder)
@@ -1481,6 +1486,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 TypeName unsignedType,
+                boolean usedAsSize,
                 int size,
                 String sizeName,
                 Object defaultValue,
@@ -1508,6 +1514,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                 defaultPriorField);
                     }
                 }
+                priorFieldIsAutomaticallySet = usedAsSize && !isVarintType(type);
                 return this;
             }
 
@@ -1526,9 +1533,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 CodeBlock.Builder code = CodeBlock.builder();
                 if (priorFieldIfDefaulted != null)
                 {
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    }
                     defaultPriorField.accept(code);
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.endControlFlow();
+                    }
                 }
-                code.addStatement("assert lastFieldSet == $L -1)", index(name));
+                code.addStatement("assert lastFieldSet == $L - 1", index(name));
 
                 if (size >= 0)
                 {
@@ -1558,9 +1573,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 CodeBlock.Builder code = CodeBlock.builder();
                 if (priorFieldIfDefaulted != null)
                 {
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    }
                     defaultPriorField.accept(code);
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.endControlFlow();
+                    }
                 }
-                code.addStatement("assert lastFieldSet == $L - 1)", index(name))
+                code.addStatement("assert lastFieldSet == $L - 1", index(name))
                     .addStatement("return $L.wrap(buffer(), limit(), maxLimit())", fieldRW);
                 builder.addMethod(methodBuilder(methodName(name))
                         .addModifiers(PRIVATE)
@@ -1595,6 +1618,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 UNSIGNED_INT_RANGES = unmodifiableMap(unsigned);
             }
 
+            private String priorRequiredField = null;
+            private boolean priorFieldIsAutomaticallySet;
+
             private MemberMutatorGenerator(
                 ClassName thisType,
                 TypeSpec.Builder builder)
@@ -1612,36 +1638,42 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName sizeType,
                 AstByteOrder byteOrder,
                 Object defaultValue,
-                String priorDefaulted,
+                String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
+                boolean automaticallySet = usedAsSize && !isVarintType(type);
                 if (type.isPrimitive())
                 {
                     if (sizeName != null)
                     {
-                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, sizeType, defaultValue,
-                                priorDefaulted, defaultPriorField);
+                        addIntegerVariableArrayIteratorMutator(name, type, unsignedType, sizeName, sizeType,
+                                defaultValue, priorFieldIfDefaulted, defaultPriorField);
                         addIntegerVariableArrayAppendMutator(name, type, unsignedType, byteOrder, sizeName, sizeType,
-                                priorDefaulted, defaultPriorField);
+                                priorFieldIfDefaulted, defaultPriorField);
                     }
                     else if (size != -1)
                     {
-                        addIntegerFixedArrayIteratorMutator(name, type, unsignedType, size, priorDefaulted,
+                        addIntegerFixedArrayIteratorMutator(name, type, unsignedType, size, priorFieldIfDefaulted,
                                 defaultPriorField);
-                        addIntegerFixedArrayAppendMutator(name, type, unsignedType, byteOrder, size, priorDefaulted,
-                                defaultPriorField);
+                        addIntegerFixedArrayAppendMutator(name, type, unsignedType, byteOrder, size,
+                                priorFieldIfDefaulted, defaultPriorField);
                     }
                     else
                     {
-                        addPrimitiveMember(name, type, unsignedType, usedAsSize, byteOrder, priorDefaulted,
+                        addPrimitiveMember(name, type, unsignedType, usedAsSize, byteOrder, priorFieldIfDefaulted,
                                 defaultPriorField);
                     }
 
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type, usedAsSize, size, sizeName, sizeType, defaultValue, priorDefaulted,
+                    addNonPrimitiveMember(name, type, usedAsSize, size, sizeName, sizeType, defaultValue, priorFieldIfDefaulted,
                             defaultPriorField);
+                }
+                priorFieldIsAutomaticallySet = automaticallySet;
+                if (defaultValue == null && !isImplicitlyDefaulted(type, size, sizeName) && !automaticallySet)
+                {
+                    priorRequiredField = name;
                 }
                 return this;
             }
@@ -1655,6 +1687,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
+                boolean automaticallySet = usedAsSize && !isVarintType(type);
                 String putterName = PUTTER_NAMES.get(type);
                 if (putterName == null)
                 {
@@ -1681,12 +1714,21 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 if (priorFieldIfDefaulted != null)
                 {
-                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    }
                     defaultPriorField.accept(code);
-                    code.endControlFlow();
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.endControlFlow();
+                    }
                 }
-                code.addStatement("assert lastFieldSet == $L - 1)", index(name))
-                    .addStatement("int newLimit = limit() + $L", size(name))
+                if (!automaticallySet)
+                {
+                    code.addStatement("assert lastFieldSet == $L - 1", index(name));
+                }
+                code.addStatement("int newLimit = limit() + $L", size(name))
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .add("$[")
                     .add("buffer().$L(limit(), ", putterName);
@@ -1727,8 +1769,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("$L = limit()", dynamicOffset(name));
                 }
-                code.addStatement("lastfieldSet = $L", index(name))
-                    .addStatement("limit(newLimit)")
+                if (!automaticallySet)
+                {
+                    code.addStatement("lastFieldSet = $L", index(name));
+                }
+                code.addStatement("limit(newLimit)")
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -1748,15 +1793,25 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 CodeBlock.Builder code = CodeBlock.builder();
+                if (priorRequiredField != null)
+                {
+                    code.addStatement("assert lastFieldSet >= $L", index(priorRequiredField));
+                }
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
                 TypeName valueType = inputType == TypeName.LONG ? TypeName.LONG : TypeName.INT;
                 TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
                         : INT_ITERATOR_CLASS_NAME;
-                if (priorFieldIfDefaulted != null)
+                if (defaultPriorField != null)
                 {
-                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    }
                     defaultPriorField.accept(code);
-                    code.endControlFlow();
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.endControlFlow();
+                    }
                 }
                 code.beginControlFlow("if (values == null)");
                 code.addStatement("throw new $T($S)",
@@ -1829,6 +1884,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
 
                 CodeBlock.Builder code = CodeBlock.builder();
+                if (priorRequiredField != null)
+                {
+                    code.addStatement("assert lastFieldSet >= $L", index(priorRequiredField));
+                }
                 if (unsignedType != null)
                 {
                     String[] range = UNSIGNED_INT_RANGES.get(type);
@@ -1847,13 +1906,19 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 code.beginControlFlow("if ($L == -1)", dynamicOffset(name));
 
-                if (priorFieldIfDefaulted != null)
+                if (defaultPriorField != null)
                 {
-                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    }
                     defaultPriorField.accept(code);
-                    code.endControlFlow();
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.endControlFlow();
+                    }
                 }
-                code.addStatement("assert lastFieldSet == $L - 1)", index(name))
+                code.addStatement("assert lastFieldSet == $L - 1", index(name))
                     .addStatement("$L = limit()", dynamicOffset(name))
                 .endControlFlow();
 
@@ -1926,15 +1991,26 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
                 CodeBlock.Builder code = CodeBlock.builder();
+                if (priorRequiredField != null)
+                {
+                    code.addStatement("assert lastFieldSet >= $L", index(priorRequiredField));
+                }
+                code.addStatement("assert lastFieldSet <= $L", index(name));
                 TypeName inputType = (unsignedType != null) ? unsignedType : type;
                 TypeName valueType = inputType == TypeName.LONG ? TypeName.LONG : TypeName.INT;
                 TypeName iteratorType = inputType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
                         : INT_ITERATOR_CLASS_NAME;
                 if (defaultPriorField != null)
                 {
-                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    }
                     defaultPriorField.accept(code);
-                    code.endControlFlow();
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.endControlFlow();
+                    }
                 }
                 if (defaultValue != null)
                 {
@@ -1963,7 +2039,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 code.addStatement("limit(limit)");
                 code.addStatement("assert lastFieldSet == $L - 1", index(name));
-                code.addStatement("lastfieldSet = $L", index(name));
+                code.addStatement("lastFieldSet = $L", index(name));
                 code.nextControlFlow("else");
                 code.beginControlFlow("while (values.hasNext())");
                 code.addStatement("$T value = values.next$L()", valueType,
@@ -2028,6 +2104,11 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
 
                 CodeBlock.Builder code = CodeBlock.builder();
+                if (priorRequiredField != null)
+                {
+                    code.addStatement("assert lastFieldSet >= $L", index(priorRequiredField));
+                }
+                code.addStatement("assert lastFieldSet <= $L", index(name));
                 if (unsignedType != null)
                 {
                     String[] range = UNSIGNED_INT_RANGES.get(type);
@@ -2046,16 +2127,21 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 code.beginControlFlow("if (lastFieldSet < $L)", index(name));
 
-                if (priorFieldIfDefaulted != null)
+                if (defaultPriorField != null)
                 {
-                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    }
                     defaultPriorField.accept(code);
-                    code.endControlFlow();
+                    if (!priorFieldIsAutomaticallySet)
+                    {
+                        code.endControlFlow();
+                    }
                 }
-                code.addStatement("lastfieldSet = $L", index(sizeName))
-                    .addStatement("assert lastFieldSet == $L - 1", index(name))
+                code.addStatement("assert lastFieldSet == $L - 1", index(name))
                     .addStatement("$L = limit()", dynamicOffset(name))
-                    .addStatement("lastfieldSet = $L", index(name))
+                    .addStatement("lastFieldSet = $L", index(name))
                 .endControlFlow();
 
                 code.addStatement("int newLimit = limit() + $L", size(name))
@@ -2095,7 +2181,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.add(", $T.BIG_ENDIAN", ByteOrder.class);
                 }
                 code.add(");\n$]");
-                code.addStatement("lastfieldSet = $L", index(name))
+                code.addStatement("lastFieldSet = $L", index(name))
                     .addStatement("limit($L)", dynamicOffset(sizeName))
                     .addStatement("int newSize = (newLimit - $L) / $L", dynamicOffset(name), size(name));
 
@@ -2145,12 +2231,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     // TODO: throw exception? I don't think we should ever get here
                     builder.addMethod(methodBuilder(methodName(name))
-                            .addModifiers(PUBLIC)
-                            .returns(thisType)
-                            .addParameter(type, "value")
-                            .addStatement("$LRW.set(value)", name)
-                            .addStatement("return this")
-                            .build());
+                           .addModifiers(PUBLIC)
+                           .returns(thisType)
+                           .addParameter(type, "value")
+                           .addStatement("$LRW.set(value)", name)
+                           .addStatement("return this")
+                           .build());
                 }
             }
 
@@ -2210,7 +2296,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("$L.accept($LRW)", parameterName, name);
                     }
                     code.addStatement("limit($LRW.build().limit())", name)
-                        .addStatement("lastfieldSet = $L", index(name))
+                        .addStatement("lastFieldSet = $L", index(name))
                         .addStatement("return this");
 
                     builder.addMethod(methodBuilder(methodName(name))
@@ -2309,7 +2395,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("$LRW.set(value)", name)
                         .addStatement("limit($LRW.build().limit())", name);
                 }
-                code.addStatement("lastfieldSet = $L", index(name))
+                code.addStatement("lastFieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2370,7 +2456,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("limit($LRW.build().limit())", name);
                 }
-                code.addStatement("lastfieldSet = $L", index(name))
+                code.addStatement("lastFieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2426,7 +2512,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 {
                     code.addStatement("limit($LRW.build().limit())", name);
                 }
-                code.addStatement("lastfieldSet = $L", index(name))
+                code.addStatement("lastFieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2451,7 +2537,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(String.class, "value")
                         .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                         .addStatement("$LRW.set(value, $T.UTF_8)", name, StandardCharsets.class)
-                        .addStatement("lastfieldSet = $L", index(name))
+                        .addStatement("lastFieldSet = $L", index(name))
                         .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
@@ -2462,7 +2548,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(className, "value")
                         .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                         .addStatement("$LRW.set(value)", name)
-                        .addStatement("lastfieldSet = $L", index(name))
+                        .addStatement("lastFieldSet = $L", index(name))
                         .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
@@ -2475,7 +2561,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(int.class, "length")
                         .addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                         .addStatement("$LRW.set(buffer, offset, length)", name)
-                        .addStatement("lastfieldSet = $L", index(name))
+                        .addStatement("lastFieldSet = $L", index(name))
                         .addStatement("limit($LRW.build().limit())", name)
                         .addStatement("return this")
                         .build());
@@ -2588,7 +2674,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
                     .addStatement("mutator.accept($LRW)", name)
                     .addStatement("limit($LRW.build().limit())", name)
-                    .addStatement("lastfieldSet = $L", index(name))
+                    .addStatement("lastFieldSet = $L", index(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2608,13 +2694,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         defaultPriorField.accept(code);
                         code.endControlFlow();
                     }
-                    code.addStatement("assert lastFieldSet == $L - 1", index(name))
+                    code.addStatement("assert lastFieldSet >= $L - 1", index(name))
                         .beginControlFlow("if (lastFieldSet < $L)", index(name))
-                            .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                            .addStatement("$LRW.wrap(buffer(), limit(), maxLimit())", name)
                         .endControlFlow()
                         .addStatement("$LRW.item(mutator)", name)
                         .addStatement("limit($LRW.build().limit())", name)
-                        .addStatement("lastfieldSet = $L", index(name))
+                        .addStatement("lastFieldSet = $L", index(name))
                         .addStatement("return this");
 
                     TypeName itemMutatorType = ParameterizedTypeName.get(consumerType, itemBuilderType);

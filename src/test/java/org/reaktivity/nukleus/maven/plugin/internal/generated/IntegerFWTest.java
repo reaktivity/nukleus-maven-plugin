@@ -124,11 +124,9 @@ public class IntegerFWTest
                .unsigned8(-1);
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetUnsigned8() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("unsigned8");
         integersRW.wrap(buffer, 0, 100)
             .unsigned8(10)
             .unsigned8(20)
@@ -180,11 +178,9 @@ public class IntegerFWTest
                .unsigned16(-1);
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetUnsigned16() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("unsigned16");
         integersRW.wrap(buffer, 0, 100)
             .unsigned16(10)
             .unsigned16(20)

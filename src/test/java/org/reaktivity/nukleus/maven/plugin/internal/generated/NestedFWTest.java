@@ -78,11 +78,9 @@ public class NestedFWTest
         assertEquals(limit1, limit2);
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetFixed2BeforeFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         nestedRW.wrap(buffer, 0, 100)
                 .flat(flat -> flat
                     .fixed2(10)
@@ -91,20 +89,16 @@ public class NestedFWTest
                 .limit();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetFixed5BeforeFlatFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         nestedRW.wrap(buffer, 0, 100)
                 .fixed5(50);
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetFlat() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("flat");
         nestedRW.wrap(buffer, 0, 100)
             .flat(flat -> flat
                 .fixed1(10)
@@ -116,32 +110,26 @@ public class NestedFWTest
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetFixed4() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed4");
         nestedRW.wrap(buffer, 0, 100)
             .fixed4(40)
             .fixed4(4)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenFlatIsNotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1"); // first required field in flat
         nestedRW.wrap(buffer, 0, 100)
             .fixed5(12L)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenFixed5IsNotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed5");
         nestedRW.wrap(buffer, 0, 100)
             .flat(flat -> flat
                 .fixed1(10)
