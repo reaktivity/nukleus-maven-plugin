@@ -149,8 +149,8 @@ public final class OptFlatWithOctetsFW extends Flyweight
     public String toString()
     {
         return String.format(
-                "FLAT_WITH_OCTETS [fixed1=%d, octets1=%s, lengthOctets2=%d, string1=%s, octets2=%s, "
-                        + "lengthOctets3=%s, octets3=%s, lengthOctets4=%d, octets4=%s, extension=%s]",
+                "FLAT_WITH_OCTETS [fixed1=%d, octets1=%s, lengthOctets2=%d, string1=%s, octets2=%s, " +
+                        "lengthOctets3=%s, octets3=%s, lengthOctets4=%d, octets4=%s, extension=%s]",
                 fixed1(), octets1(), lengthOctets2(), string1RO.asString(), octets2(), lengthOctets3(), octets3(),
                 lengthOctets4(), octets4(), extension());
     }

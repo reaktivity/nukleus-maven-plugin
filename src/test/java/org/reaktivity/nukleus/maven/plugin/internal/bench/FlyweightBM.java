@@ -39,19 +39,23 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.reaktivity.reaktor.internal.test.types.inner.FlatFW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.Throughput)
 @Fork(3)
 @Warmup(iterations = 5, time = 1, timeUnit = SECONDS)
-@Measurement(iterations = 5, time = 2, timeUnit = SECONDS)
+@Measurement(iterations = 3, time = 3, timeUnit = SECONDS)
 @OutputTimeUnit(SECONDS)
 public class FlyweightBM
 {
     private MutableDirectBuffer buffer;
     private MutableDirectBuffer values;
     private long iterations;
+
+    private FlatFW.Builder flatRW = new FlatFW.Builder();
+    private FlatFW flatRO = new FlatFW();
 
     private FlatWithOctetsFW.Builder flatWithOctetsRW = new FlatWithOctetsFW.Builder();
     private FlatWithOctetsFW flatWithOctetsRO = new FlatWithOctetsFW();
@@ -67,6 +71,34 @@ public class FlyweightBM
         this.values = new UnsafeBuffer(allocateDirect(1024).order(nativeOrder()));
         this.values.setMemory(0, 1024, (byte)new Random().nextInt(256));
         iterations = 0;
+    }
+
+    @Benchmark
+    public long flatFWUsingString(
+        final Control control) throws Exception
+    {
+        flatRW.wrap(buffer, 0, buffer.capacity())
+              .fixed1(++iterations)
+              .fixed2(20)
+              .string1("value1.............................................................................")
+              .fixed3(30)
+              .string2("value2.............................................................................")
+              .build();
+        return flatRO.wrap(buffer, 0, buffer.capacity()).fixed1();
+    }
+
+    @Benchmark
+    public long flatFWUsingBuffer(
+        final Control control) throws Exception
+    {
+        flatRW.wrap(buffer, 0, buffer.capacity())
+              .fixed1(++iterations)
+              .fixed2(20)
+              .string1(values, 0, 70)
+              .fixed3(30)
+              .string2(values, 500, 70)
+              .build();
+        return flatRO.wrap(buffer, 0, buffer.capacity()).fixed1();
     }
 
     @Benchmark
