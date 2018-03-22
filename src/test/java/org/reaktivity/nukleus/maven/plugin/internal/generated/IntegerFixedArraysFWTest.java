@@ -147,7 +147,7 @@ public class IntegerFixedArraysFWTest
           .uint16Array(null);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = AssertionError.class)
     public void shouldFailToIncompletelySetUint16ArrayUsingAppend()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -156,7 +156,7 @@ public class IntegerFixedArraysFWTest
           .appendUint32Array(13);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected =  IllegalArgumentException.class)
     public void shouldFailToIncompletelySetUint16ArrayUsingIterator()
     {
       flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -164,7 +164,7 @@ public class IntegerFixedArraysFWTest
           .uint16Array(IntStream.of(1).iterator());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWithIncompletelySetUint16ArrayUsingAppend()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -173,7 +173,7 @@ public class IntegerFixedArraysFWTest
           .build();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetInt32ArrayWithIteratorExceedingSize() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())

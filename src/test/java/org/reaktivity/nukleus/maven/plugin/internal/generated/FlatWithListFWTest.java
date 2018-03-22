@@ -28,9 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatWithListFW;
 
@@ -47,9 +45,6 @@ public class FlatWithListFWTest
     private final FlatWithListFW flatRO = new FlatWithListFW();
     private final StringFW.Builder stringRW = new StringFW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldDefaultValues() throws Exception
@@ -88,54 +83,44 @@ public class FlatWithListFWTest
                 .string1("1234");
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetList1BeforeString1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
                 .list1(b ->
                 {
                 });
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         flatRW.wrap(buffer, 0, 100)
             .fixed1(10)
             .fixed1(101)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetString1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
             .string1("value1")
             .string1("another value");
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetList1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("list1");
         flatRW.wrap(buffer, 0, 100)
             .string1("value1")
             .list1(b -> b.item(i -> i.set("listItem1", UTF_8)))
             .list1(b -> b.item(i -> i.set("updatedListItem1", UTF_8)));
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetList1AfterSettingList1Items() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("list1");
         flatRW.wrap(buffer, 0, 100)
             .string1("value1")
             .list1Item(b -> b.set("item1", UTF_8))
@@ -143,11 +128,9 @@ public class FlatWithListFWTest
                    { });
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenString1NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
             .build();
     }
