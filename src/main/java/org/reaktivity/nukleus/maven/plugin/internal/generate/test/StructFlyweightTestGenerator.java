@@ -2271,6 +2271,101 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
                 AstByteOrder byteOrder,
                 Object defaultValue)
         {
+            TypeName inputType = (unsignedType != null) ? unsignedType : type;
+
+            TypeName generateType = (unsignedType != null) ? unsignedType : type;
+            if (generateType == TypeName.LONG)
+            {
+                MethodSpec.Builder methodBuilder = methodBuilder("shouldFailToRead"+name.toUpperCase()+"WhenThereNoMoreData")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", NoSuchElementException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("$T limit =  setAllBufferValues(buffer, 0)", int.class)
+                        .addStatement("$T $L = fieldRO.wrap(buffer, 0, limit).$L()", LONG_ITERATOR_CLASS_NAME, methodName(name),
+                                methodName(name));
+
+                methodBuilder.addStatement("$L.nextLong()", methodName(name));
+                methodBuilder.addStatement("$L.nextLong()", methodName(name));
+                methodBuilder.addStatement("$L.nextLong()", methodName(name));
+                builder.addMethod(methodBuilder.build());
+            }
+            else if(generateType == TypeName.INT)
+            {
+                MethodSpec.Builder methodBuilder = methodBuilder("shouldFailToRead"+name.toUpperCase()+"WhenThereNoData")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", NoSuchElementException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("$T limit =  setAllBufferValues(buffer, 0)", int.class)
+                        .addStatement("$T $L = fieldRO.wrap(buffer, 0, limit).$L()", INT_ITERATOR_CLASS_NAME, methodName(name),
+                                methodName(name));
+
+                methodBuilder.addStatement("$L.nextInt()", methodName(name));
+                methodBuilder.addStatement("$L.nextInt()", methodName(name));
+                methodBuilder.addStatement("$L.nextInt()", methodName(name));
+                builder.addMethod(methodBuilder.build());
+            }
+
+            addIntegerVariableArrayIterator(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                    byteOrder, defaultValue);
+            addIntegerVariableArrayAppend(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                    byteOrder, defaultValue);
+
+        }
+
+        private void addIntegerVariableArrayIterator(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+
+        }
+
+        private void addIntegerVariableArrayAppend(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue)
+        {
+            if (unsignedType != null)
+            {
+                String[] range = UNSIGNED_INT_RANGES.get(type);
+                builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WhenValueTooLowForField")
+                        .addAnnotation(Test.class)
+                        .addModifiers(PUBLIC)
+                        .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                        .addStatement("expectedException.expectMessage(\"$L\")", name)
+                        .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                        "                .$L(-1)\n" +
+                                        "                .build()", index(name), appendMethodName(name))
+                        .build());
+
+                if (range[1] != null)
+                {
+                    TypeName inputType = (unsignedType != null) ? unsignedType : type;
+                    builder.addMethod(methodBuilder("shouldFailToSet"+name.toUpperCase()+"WhenValueTooHighForField")
+                            .addAnnotation(Test.class)
+                            .addModifiers(PUBLIC)
+                            .addStatement("expectedException.expect($T.class)", IllegalArgumentException.class)
+                            .addStatement("expectedException.expectMessage(\"$L\")", name)
+                            .addStatement("setFieldUpToIndex(fieldRW.wrap(buffer, 0, 100), $L)\n" +
+                                    "                .$L(($T)$L)\n" +
+                                    "                .build()", index(name), appendMethodName(name), inputType, range[1]+" + 0x1")
+                            .build());
+                }
+            }
 
         }
 
@@ -2317,7 +2412,7 @@ public final class StructFlyweightTestGenerator extends ClassSpecGenerator
             TypeName generateType = (unsignedType != null) ? unsignedType : type;
             if (generateType == TypeName.LONG)
             {
-                MethodSpec.Builder methodBuilder = methodBuilder("shouldFailToRead"+name.toUpperCase()+"WhenThereNoData")
+                MethodSpec.Builder methodBuilder = methodBuilder("shouldFailToRead"+name.toUpperCase()+"WhenThereNoMoreData")
                         .addAnnotation(Test.class)
                         .addModifiers(PUBLIC)
                         .addStatement("expectedException.expect($T.class)", NoSuchElementException.class)
