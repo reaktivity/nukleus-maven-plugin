@@ -45,6 +45,7 @@
     <checkstyle.suppressions.location>src/conf/checkstyle/suppressions.xml</checkstyle.suppressions.location>
     <antlr4.version>4.7</antlr4.version>
     <agrona.version>0.5.5</agrona.version>
+    <jmh.version>1.12</jmh.version>
     
     <jacoco.coverage.ratio>0.55</jacoco.coverage.ratio>
     <jacoco.missed.count>5</jacoco.missed.count>
@@ -98,6 +99,18 @@
       <groupId>org.agrona</groupId>
       <artifactId>Agrona</artifactId>
       <version>${agrona.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+      <version>${jmh.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-generator-annprocess</artifactId>
+      <version>${jmh.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -260,6 +273,57 @@
         <configuration>
           <argLine>@{argLine}</argLine>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.gatling</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4.4.2</version>
+        <configuration>
+          <shadeTestJar>true</shadeTestJar>
+          <outputFile>${project.build.directory}/${project.artifactId}-shaded.jar</outputFile>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.openjdk.jmh.Main</mainClass>
+                  <manifestEntries>
+                    <Class-Path>${project.build.directory}/${project.artifactId}-shaded.jar</Class-Path>
+                  </manifestEntries>
+                </transformer>
+              </transformers>
+              <artifactSet>
+                <includes>
+                  <include>org.agrona:Agrona</include>
+                  <include>org.reaktivity:nukleus-maven-plugin</include>
+                  <include>org.openjdk.jmh:jmh-core</include>
+                  <include>net.sf.jopt-simple:jopt-simple</include>
+                  <include>org.apache.commons:commons-math3</include>
+                  <include>commons-cli:commons-cli</include>
+                </includes>
+              </artifactSet>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

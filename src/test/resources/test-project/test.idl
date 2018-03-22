@@ -139,6 +139,19 @@ scope test
            octets[10] offset; 
            string limit;
         }
+        
+        struct ContiguousSizeFields
+        {
+        	    int8 length1;
+        	    int8 length2;
+        	    int8[length1] array1 = null;
+        	    int8[length2] array2 = null;
+        	    string string1;
+        	    int8 length3;
+        	    int8 length4;
+        	    int8[length3] array3 = null;
+        	    int8[length4] array4 = null;
+        }
 
     }
 }
