@@ -172,7 +172,7 @@ public class IntegerVariableArraysFWTest
     }
 
     @Test
-    public void shouldDefaultAllValuesWithDefaults()
+    public void shouldDefaultAllFieldsWithDefaults()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
             .appendSigned16Array((short) 0)
@@ -187,6 +187,13 @@ public class IntegerVariableArraysFWTest
         expected.putInt(14, 0); // varint64Array
         expected.putByte(18, (byte) -1);
         expected.putShort(19, (short) -1);
+
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+
+        buffer.setMemory(0, buffer.capacity(), (byte) 0xab);
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+        .appendSigned16Array((short) 0)
+        .build();
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
