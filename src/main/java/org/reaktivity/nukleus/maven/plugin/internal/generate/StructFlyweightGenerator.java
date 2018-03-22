@@ -1105,6 +1105,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private final MemberFieldGenerator memberField;
         private final MemberAccessorGenerator memberAccessor;
         private final MemberMutatorGenerator memberMutator;
+        private final WrapMethodGenerator wrapMethod;
         private String priorFieldIfDefaulted;
         private boolean priorDefaultedIsPrimitive;
         private Object priorDefaultValue;
@@ -1132,6 +1133,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             this.memberField = new MemberFieldGenerator(thisType, builder);
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder);
             this.memberMutator = new MemberMutatorGenerator(thisType, builder);
+            this.wrapMethod = new WrapMethodGenerator(thisType, builder);
         }
 
         private void addMember(
@@ -1157,6 +1159,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     priorFieldIfDefaulted, defaultPriorField);
             memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
+            wrapMethod.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
+                    byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
             if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorFieldIfDefaulted = name;
@@ -1179,7 +1183,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             memberAccessor.build();
             memberMutator.build();
             return builder.addMethod(constructor())
-                          .addMethod(wrapMethod())
+                          .addMethod(wrapMethod.generate())
                           .addMethod(buildMethod())
                           .build();
         }
@@ -1189,22 +1193,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             return constructorBuilder()
                     .addModifiers(PUBLIC)
                     .addStatement("super(new $T())", structType)
-                    .build();
-        }
-
-        private MethodSpec wrapMethod()
-        {
-            return methodBuilder("wrap")
-                    .addAnnotation(Override.class)
-                    .addModifiers(PUBLIC)
-                    .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
-                    .addParameter(int.class, "offset")
-                    .addParameter(int.class, "maxLimit")
-                    .returns(thisName)
-                    .addStatement("lastFieldSet = -1")
-                    .addStatement("super.wrap(buffer, offset, maxLimit)")
-                    .addStatement("limit(offset)")
-                    .addStatement("return this")
                     .build();
         }
 
@@ -1411,7 +1399,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 if (usedAsSize && !isVarintType(type))
                 {
                         builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
-                               .initializer("-1")
                                .build());
                 }
                 else if (type.isPrimitive())
@@ -1419,7 +1406,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     if (size != -1 || sizeName != null)
                     {
                         builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
-                               .initializer("-1")
                                .build());
                     }
                 }
@@ -2717,6 +2703,58 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addCode(code.build())
                             .build());
                 }
+            }
+        }
+
+
+
+        private final class WrapMethodGenerator extends MethodSpecGenerator
+        {
+
+            private WrapMethodGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder)
+            {
+                super(methodBuilder("wrap")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
+                        .addParameter(int.class, "offset")
+                        .addParameter(int.class, "maxLimit")
+                        .returns(thisName)
+                        .addStatement("super.wrap(buffer, offset, maxLimit)"));
+            }
+
+            public WrapMethodGenerator addMember(
+                String name,
+                TypeName type,
+                TypeName unsignedType,
+                boolean usedAsSize,
+                int size,
+                String sizeName,
+                TypeName sizeType,
+                AstByteOrder byteOrder,
+                Object defaultValue,
+                String priorFieldIfDefaulted,
+                Consumer<CodeBlock.Builder> defaultPriorField)
+            {
+
+                if ((usedAsSize && !isVarintType(type)) ||
+                    (type.isPrimitive() && (size != -1 || sizeName != null)))
+                {
+                        builder.addStatement("$L = -1", dynamicOffset(name));
+                }
+                return this;
+            }
+
+            @Override
+            public MethodSpec generate()
+            {
+                return builder.addStatement("lastFieldSet = -1")
+                              .addStatement("super.wrap(buffer, offset, maxLimit)")
+                              .addStatement("limit(offset)")
+                              .addStatement("return this")
+                              .build();
             }
         }
     }
