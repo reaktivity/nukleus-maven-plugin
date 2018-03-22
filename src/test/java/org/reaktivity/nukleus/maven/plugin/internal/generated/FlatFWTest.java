@@ -22,11 +22,9 @@ import static org.junit.Assert.assertNull;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.FlatFW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.FlatFW;
 
 public class FlatFWTest
 {
@@ -48,9 +46,6 @@ public class FlatFWTest
     private final FlatFW flatRO = new FlatFW();
     private final StringFW.Builder stringRW = new StringFW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldProvideTypeId() throws Exception
@@ -122,59 +117,47 @@ public class FlatFWTest
                 .fixed3(30);
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetFixed2BeforeFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         flatRW.wrap(buffer, 0, 100)
                 .fixed2(10);
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetString1BeforeFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         flatRW.wrap(buffer, 0, 100)
                 .string1("value1");
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetString2BeforeFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         flatRW.wrap(buffer, 0, 100)
                 .string2("value1");
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToSetString2BeforeString1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
                 .fixed1(10)
                 .string2("value1");
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         flatRW.wrap(buffer, 0, 100)
             .fixed1(10)
             .fixed1(101)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetString1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
             .fixed1(10)
             .fixed2(111)
@@ -183,30 +166,24 @@ public class FlatFWTest
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenFixed1NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         flatRW.wrap(buffer, 0, 100)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenString1NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatRW.wrap(buffer, 0, 100)
             .fixed1(10)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenString2NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string2");
         flatRW.wrap(buffer, 0, 100)
             .fixed1(10)
             .fixed2(111)

@@ -220,22 +220,18 @@ public class FlatWithOctetsFWTest
                 .octets3(asBuffer("678"), 0, "678".length());
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetFixed1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("fixed1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .fixed1(10)
             .fixed1(101)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToResetString1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .string1("value1")
@@ -243,30 +239,24 @@ public class FlatWithOctetsFWTest
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenOctets1NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("octets1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenString1NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("string1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenOctets2NotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("octets2");
         flatWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .string1("value1")

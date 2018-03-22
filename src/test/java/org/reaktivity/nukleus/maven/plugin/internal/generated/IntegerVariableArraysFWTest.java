@@ -135,7 +135,7 @@ public class IntegerVariableArraysFWTest
         flyweightRW.signed16Array(null);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = AssertionError.class)
     public void shouldFailToAppendUnsigned64ArrayWhenFollowingFieldsAreSet()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -144,7 +144,7 @@ public class IntegerVariableArraysFWTest
         .build();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = AssertionError.class)
     public void shouldFailToAppendSigned64ArrayWhenFollowingFieldsAreSet()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -153,7 +153,7 @@ public class IntegerVariableArraysFWTest
         .build();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = AssertionError.class)
     public void shouldFailToAppendArraytWithInt8SizeWhenFollowingFieldsAreSet()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
