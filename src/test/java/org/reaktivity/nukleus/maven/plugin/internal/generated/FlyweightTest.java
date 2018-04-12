@@ -16,6 +16,11 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -60,5 +65,51 @@ public class FlyweightTest
         expectedException.expect(IndexOutOfBoundsException.class);
         expectedException.expectMessage("offset");
         flyweigthRO.wrap(buffer,  4,  1);
+    }
+
+    @Test
+    public void shouldReturnFalseFromEqualsWithDifferentContent() throws Exception
+    {
+        buffer.putStringWithoutLengthUtf8(0, "asdf");
+        buffer.putStringWithoutLengthUtf8(10, "qwer");
+        Flyweight zis = new TestFlyweight().wrap(buffer,  0,  4);
+        Flyweight zat = new TestFlyweight().wrap(buffer,  10,  14);
+        assertFalse(zis.equals(zat));
+    }
+
+    @Test
+    public void shouldReturnFalseFromEqualsWithDifferentLength() throws Exception
+    {
+        buffer.putStringWithoutLengthUtf8(0, "asdf");
+        buffer.putStringWithoutLengthUtf8(10, "asdfg");
+        Flyweight zis = new TestFlyweight().wrap(buffer,  0,  4);
+        Flyweight zat = new TestFlyweight().wrap(buffer,  10,  15);
+        assertFalse(zis.equals(zat));
+    }
+
+    @Test
+    public void shouldReturnFalseFromEqualsWithNull() throws Exception
+    {
+        buffer.putStringWithoutLengthUtf8(0, "asdf");
+        Flyweight zis = new TestFlyweight().wrap(buffer,  0,  4);
+        assertFalse(zis.equals(null));
+    }
+
+    @Test
+    public void shouldReturnTrueFromEquals() throws Exception
+    {
+        buffer.putStringWithoutLengthUtf8(0, "asdf");
+        buffer.putStringWithoutLengthUtf8(10, "asdf");
+        Flyweight zis = new TestFlyweight().wrap(buffer,  0,  4);
+        Flyweight zat = new TestFlyweight().wrap(buffer,  10,  14);
+        assertTrue(zis.equals(zat));
+    }
+
+    @Test
+    public void shouldReturnHashCode() throws Exception
+    {
+        buffer.putStringWithoutLengthUtf8(0, "asdf");
+        Flyweight flyweight = new TestFlyweight().wrap(buffer,  0,  4);
+        assertEquals(Arrays.hashCode("asdf".getBytes()), flyweight.hashCode());
     }
 }
