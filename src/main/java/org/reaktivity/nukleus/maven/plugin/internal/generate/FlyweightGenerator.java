@@ -26,6 +26,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
+import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
 import java.util.function.Consumer;
 
@@ -54,8 +55,10 @@ public final class FlyweightGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         return classBuilder.addField(bufferField())
+                .addField(emptyBytesField())
                     .addField(offsetField())
                     .addField(maxLimitField())
+                    .addField(compareBufferField())
                     .addMethod(offsetMethod())
                     .addMethod(bufferMethod())
                     .addMethod(limitMethod())
@@ -63,6 +66,8 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                     .addMethod(maxLimitMethod())
                     .addMethod(wrapMethod())
                     .addMethod(checkLimitMethod())
+                    .addMethod(equalsMethod())
+                    .addMethod(hashCodeMethod())
                     .addType(visitorInterface())
                     .addType(builderClassBuilder.build())
                     .build();
@@ -98,6 +103,20 @@ public final class FlyweightGenerator extends ClassSpecGenerator
     private FieldSpec maxLimitField()
     {
         return FieldSpec.builder(int.class, "maxLimit", PRIVATE).build();
+    }
+
+    private FieldSpec compareBufferField()
+    {
+        return FieldSpec.builder(UNSAFE_BUFFER_TYPE, "compareBuffer", PRIVATE)
+                .initializer("new UnsafeBuffer(EMPTY_BYTES)")
+                .build();
+    }
+
+    private FieldSpec emptyBytesField()
+    {
+        return FieldSpec.builder(byte[].class, "EMPTY_BYTES", PRIVATE, STATIC)
+                .initializer("new byte[0]")
+                .build();
     }
 
     private MethodSpec maxLimitMethod()
@@ -175,6 +194,40 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                           "limit, maxLimit)")
                   .addStatement("throw new IndexOutOfBoundsException(msg)")
                   .endControlFlow()
+                  .build();
+    }
+
+    private MethodSpec equalsMethod()
+    {
+        return methodBuilder("equals")
+                  .addAnnotation(Override.class)
+                  .addModifiers(PUBLIC)
+                  .addParameter(Object.class, "obj")
+                  .returns(boolean.class)
+                  .beginControlFlow("if (this == obj)")
+                  .addStatement("return true")
+                  .nextControlFlow("else if (obj == null || !(obj instanceof Flyweight))")
+                  .addStatement("return false")
+                  .nextControlFlow("else")
+                  .addStatement("Flyweight that = (Flyweight) obj")
+                  .addStatement("compareBuffer.wrap(buffer, offset, sizeof())")
+                  .addStatement("that.compareBuffer.wrap(that.buffer, that.offset, that.sizeof())")
+                  .addStatement("return compareBuffer.equals(that.compareBuffer)")
+                  .endControlFlow()
+                  .build();
+    }
+
+    private MethodSpec hashCodeMethod()
+    {
+        return methodBuilder("hashCode")
+                  .addAnnotation(Override.class)
+                  .addModifiers(PUBLIC)
+                  .returns(int.class)
+                  .addStatement("int result = 1")
+                  .beginControlFlow("for (int i = offset; i < limit(); i++)")
+                  .addStatement("result = 31 * result + buffer.getByte(i)")
+                  .endControlFlow()
+                  .addStatement("return result")
                   .build();
     }
 
