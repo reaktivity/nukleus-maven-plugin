@@ -94,6 +94,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     private final MemberSizeConstantGenerator memberSizeConstant;
     private final MemberOffsetConstantGenerator memberOffsetConstant;
     private final MemberAccessorGenerator memberAccessor;
+    private final WrapMethodGenerator tryWrapMethod;
     private final WrapMethodGenerator wrapMethod;
     private final LimitMethodGenerator limitMethod;
     private final ToStringMethodGenerator toStringMethod;
@@ -113,7 +114,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
         this.memberField = new MemberFieldGenerator(structName, builder);
         this.memberAccessor = new MemberAccessorGenerator(structName, builder);
-        this.wrapMethod = new WrapMethodGenerator(structName);
+        this.tryWrapMethod = new WrapMethodGenerator(structName, false);
+        this.wrapMethod = new WrapMethodGenerator(structName, true);
         this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
         this.builderClass = new BuilderClassGenerator(structName, flyweightName);
@@ -142,6 +144,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder, defaultValue);
         memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName, defaultValue);
         limitMethod.addMember(name, type, unsignedType, size, sizeName);
+        tryWrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         toStringMethod.addMember(name, type, unsignedType, size, sizeName);
         builderClass.addMember(name, type, unsignedType, size, sizeName, sizeType, usedAsSize, defaultValue, byteOrder);
@@ -818,17 +821,34 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private String anchorLimit;
 
         private WrapMethodGenerator(
-            ClassName thisType)
+            ClassName thisType,
+            boolean hardFail)
         {
-            super(methodBuilder("wrap")
+            super(methodBuilder(hardFail ? "wrap" : "tryWrap")
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
-                    .returns(thisName)
-                    .addStatement("super.wrap(buffer, offset, maxLimit)"));
+                    .returns(thisName));
+            if (hardFail)
+            {
+                builder.addStatement("super.wrap(buffer, offset, maxLimit)");
+            }
+            else
+            {
+                addReturnIfNullStatement("super.tryWrap(buffer, offset, maxLimit)");
+            }
             this.thisType = thisType;
+        }
+
+        private void addReturnIfNullStatement(
+            String string,
+            Object... args)
+        {
+            builder.beginControlFlow("if (null == " + string + ")", args);
+            builder.addStatement("return null;");
+            builder.endControlFlow();
         }
 
         public WrapMethodGenerator addMember(
@@ -910,9 +930,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 code.addStatement("final int $L = offset + $L", offsetName, offset(name));
             }
             code.add("$[")
-                .add("$L = $L() == -1 ? null : new $T($S, $L, $L, (int) $L(), o -> ",
-                    iterator(name), methodName(sizeName), iteratorClass,
-                    name, offsetName, size(name), methodName(sizeName));
+                .add("$L = $L() == -1 ? null :\n", iterator(name), methodName(sizeName))
+                .add("new $T($S, $L, $L, (int) $L(), o -> ",
+                    iteratorClass, name, offsetName, size(name), methodName(sizeName));
             addBufferGet(code, targetType, type, unsignedType, "o");
             code.add(")")
                 .add(";\n$]")
