@@ -53,6 +53,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
     {
         return classBuilder.addMethod(getMethod())
                             .addMethod(limitMethod())
+                            .addMethod(tryWrapMethod())
                             .addMethod(wrapMethod())
                             .addMethod(toStringMethod())
                             .addType(builderClassBuilder.build())
@@ -86,6 +87,22 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .build();
     }
 
+    private MethodSpec tryWrapMethod()
+    {
+        return methodBuilder("tryWrap")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "offset")
+                .addParameter(int.class, "maxLimit")
+                .returns(thisName)
+                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit))")
+                .addStatement("return null")
+                .endControlFlow()
+                .addStatement("return this")
+                .build();
+    }
+
     private MethodSpec wrapMethod()
     {
         return methodBuilder("wrap")
@@ -96,7 +113,6 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("return this")
                 .build();
     }
