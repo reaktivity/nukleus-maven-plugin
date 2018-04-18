@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -85,7 +84,7 @@ public class FlatWithListFWTest
     public void shouldNotTryWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -95,7 +94,7 @@ public class FlatWithListFWTest
     public void shouldNotWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
@@ -113,25 +112,20 @@ public class FlatWithListFWTest
     }
 
     @Test
-    public void shouldTryWrapWhenLengthSufficient()
-    {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
-    }
-
-    @Test
-    public void shouldWrapWhenLengthSufficient()
-    {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
-    }
-
-    @Test
     public void shouldTryWrapAndReadAllValues() throws Exception
     {
         final int offset = 1;
         setAllTestValues(buffer, offset);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesRead(flyweightRO);
+    }
+
+    @Test
+    public void shouldWrapAndReadAllValues() throws Exception
+    {
+        int size = setAllTestValues(buffer, 10);
+        flyweightRO.wrap(buffer, 10,  buffer.capacity());
+        assertEquals(10 + size, flyweightRO.limit());
         assertAllTestValuesRead(flyweightRO);
     }
 
@@ -256,18 +250,6 @@ public class FlatWithListFWTest
         int size = setAllTestValues(expected, 0);
         assertEquals(0 + size, flyweight.limit());
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
-    }
-
-    @Test
-    public void shouldReadAllValues() throws Exception
-    {
-        int size = setAllTestValues(buffer, 10);
-        flyweightRO.wrap(buffer,  10,  buffer.capacity());
-        assertEquals(10 + size, flyweightRO.limit());
-        assertEquals("value1", flyweightRO.string1().asString());
-        final String listValue[] = new String[1];
-        flyweightRO.list1().forEach((s) -> listValue[0] = s.asString());
-        assertEquals("listItem1", listValue[0]);
     }
 
     @Test

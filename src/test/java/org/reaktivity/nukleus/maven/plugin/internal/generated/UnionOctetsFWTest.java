@@ -103,7 +103,7 @@ public class UnionOctetsFWTest
     public void shouldNotTryWrapWhenIncompleteCase1()
     {
         int size = setAllTestValuesCase1(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull(flyweigthRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -113,7 +113,7 @@ public class UnionOctetsFWTest
     public void shouldNotWrapWhenIncompleteCase1()
     {
         int size = setAllTestValuesCase1(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {

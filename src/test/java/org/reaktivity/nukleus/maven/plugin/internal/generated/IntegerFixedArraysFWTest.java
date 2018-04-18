@@ -129,7 +129,7 @@ public class IntegerFixedArraysFWTest
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -139,7 +139,7 @@ public class IntegerFixedArraysFWTest
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {

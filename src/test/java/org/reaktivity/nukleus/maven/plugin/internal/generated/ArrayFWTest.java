@@ -83,7 +83,7 @@ public class ArrayFWTest
     public void shouldNotTryWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, arrayRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -93,7 +93,7 @@ public class ArrayFWTest
     public void shouldNotWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
