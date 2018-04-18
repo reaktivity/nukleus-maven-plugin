@@ -19,7 +19,11 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,10 +45,95 @@ public class FlatWithListFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
+    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xab);
+        }
+    };
     private final FlatWithListFW.Builder flatRW = new FlatWithListFW.Builder();
-    private final FlatWithListFW flatRO = new FlatWithListFW();
+    private final FlatWithListFW flyweightRO = new FlatWithListFW();
     private final StringFW.Builder stringRW = new StringFW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
+
+    static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
+    {
+        int pos = offset;
+        buffer.putLong(pos,  10);
+        buffer.putByte(pos += 8, (byte) 6);
+        buffer.putStringWithoutLengthUtf8(pos += 1,  "value1");
+        buffer.putInt(pos += "value1".length(), 1 + "listItem1".length());
+        buffer.putByte(pos += 4, (byte) "listItem1".length());
+        buffer.putStringWithoutLengthUtf8(pos += 1,  "listItem1");
+        buffer.putInt(pos += "listItem1".length(), 11);
+
+        return pos - offset + 4;
+    }
+
+    void assertAllTestValuesRead(FlatWithListFW flyweight)
+    {
+        assertEquals(10, flyweight.fixed1());
+        assertEquals("value1", flyweight.string1().asString());
+        final String listValue[] = new String[1];
+        flyweight.list1().forEach((s) -> listValue[0] = s.asString());
+        assertEquals("listItem1", listValue[0]);
+        assertEquals(11, flyweight.fixed2());
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        {
+            assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        {
+            try
+            {
+                flyweightRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown for maxLimit " + maxLimit);
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldTryWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldTryWrapAndReadAllValues() throws Exception
+    {
+        final int offset = 1;
+        setAllTestValues(buffer, offset);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesRead(flyweightRO);
+    }
 
     @Test
     public void shouldDefaultValues() throws Exception
@@ -53,12 +142,12 @@ public class FlatWithListFWTest
                 .string1("value1")
                 .build()
                 .limit();
-        flatRO.wrap(buffer,  0,  limit);
-        assertEquals(111, flatRO.fixed1());
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertEquals(111, flyweightRO.fixed1());
         AtomicInteger listSize = new AtomicInteger(0);
-        flatRO.list1().forEach(s -> listSize.incrementAndGet());
+        flyweightRO.list1().forEach(s -> listSize.incrementAndGet());
         assertEquals(0, listSize.get());
-        assertTrue(flatRO.list1().isEmpty());
+        assertTrue(flyweightRO.list1().isEmpty());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -146,29 +235,38 @@ public class FlatWithListFWTest
                 .list1Item(b -> b.set("item3", UTF_8))
                 .build()
                 .limit();
-        flatRO.wrap(buffer,  0,  limit);
-        assertFalse(flatRO.list1().isEmpty());
-        assertEquals(10, flatRO.fixed1());
-        assertEquals("value1", flatRO.string1().asString());
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertFalse(flyweightRO.list1().isEmpty());
+        assertEquals(10, flyweightRO.fixed1());
+        assertEquals("value1", flyweightRO.string1().asString());
         final List<String> listValues = new ArrayList<>();
-        flatRO.list1().forEach((s) -> listValues.add(s.asString()));
+        flyweightRO.list1().forEach((s) -> listValues.add(s.asString()));
         assertEquals(Arrays.asList("item1", "item2", "item3"), listValues);
     }
 
     @Test
     public void shouldSetAllValues() throws Exception
     {
-        int limit = flatRW.wrap(buffer, 0, buffer.capacity())
+        FlatWithListFW flyweight = flatRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(10)
                 .string1("value1")
                 .list1(b -> b.item(i -> i.set("listItem1", UTF_8)))
-                .build()
-                .limit();
-        flatRO.wrap(buffer,  0,  limit);
-        assertEquals(10, flatRO.fixed1());
-        assertEquals("value1", flatRO.string1().asString());
+                .fixed2(11)
+                .build();
+        int size = setAllTestValues(expected, 0);
+        assertEquals(0 + size, flyweight.limit());
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+    }
+
+    @Test
+    public void shouldReadAllValues() throws Exception
+    {
+        int size = setAllTestValues(buffer, 10);
+        flyweightRO.wrap(buffer,  10,  buffer.capacity());
+        assertEquals(10 + size, flyweightRO.limit());
+        assertEquals("value1", flyweightRO.string1().asString());
         final String listValue[] = new String[1];
-        flatRO.list1().forEach((s) -> listValue[0] = s.asString());
+        flyweightRO.list1().forEach((s) -> listValue[0] = s.asString());
         assertEquals("listItem1", listValue[0]);
     }
 
@@ -184,9 +282,9 @@ public class FlatWithListFWTest
                 .list1(b ->
                        { })
                .build();
-        flatRO.wrap(buffer,  0,  builder.limit());
-        assertEquals(10, flatRO.fixed1());
-        assertEquals("value1", flatRO.string1().asString());
+        flyweightRO.wrap(buffer,  0,  builder.limit());
+        assertEquals(10, flyweightRO.fixed1());
+        assertEquals("value1", flyweightRO.string1().asString());
     }
 
     @Test
@@ -200,9 +298,9 @@ public class FlatWithListFWTest
             { })
             .build()
             .limit();
-        flatRO.wrap(buffer,  0,  limit);
-        assertEquals(10, flatRO.fixed1());
-        assertEquals("value1", flatRO.string1().asString());
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertEquals(10, flyweightRO.fixed1());
+        assertEquals("value1", flyweightRO.string1().asString());
     }
 
 }

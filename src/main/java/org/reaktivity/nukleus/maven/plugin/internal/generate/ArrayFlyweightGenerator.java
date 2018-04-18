@@ -149,7 +149,7 @@ public class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
-                .beginControlFlow("if (null == super.wrap(buffer, offset, maxLimit) || offset + FIELD_SIZE_LENGTH > maxLimit)")
+                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || offset + FIELD_SIZE_LENGTH > maxLimit)")
                 .addStatement("return null")
                 .endControlFlow()
                 .beginControlFlow("if (length0() < 0)")

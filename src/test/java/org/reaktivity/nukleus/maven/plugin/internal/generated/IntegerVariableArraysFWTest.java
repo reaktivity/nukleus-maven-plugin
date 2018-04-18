@@ -102,7 +102,7 @@ public class IntegerVariableArraysFWTest
     }
 
     @Test
-    public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
+    public void shouldNotTryWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
@@ -112,7 +112,7 @@ public class IntegerVariableArraysFWTest
     }
 
     @Test
-    public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
+    public void shouldNotWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
