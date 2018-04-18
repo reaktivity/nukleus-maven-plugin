@@ -17,6 +17,8 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +59,127 @@ public class ArrayFWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    static int setAllTestValues(MutableDirectBuffer buffer, int offset)
+    {
+        int pos = offset;
+        buffer.putInt(pos, 3);
+        buffer.putByte(pos += Integer.BYTES, (byte) 2);
+        buffer.putByte(pos += 1, (byte) 1);
+        buffer.putByte(pos += 1, (byte) 0x18);
+        return pos - offset + 1;
+    }
+
+    static void assertAllTestValuesRead(ArrayFW<Varint64FW> flyweight)
+    {
+        List<Long> contents = new ArrayList<Long>();
+        flyweight.forEach(v -> contents.add(v.value()));
+        assertEquals(3, contents.size());
+        assertEquals(1L, contents.get(0).longValue());
+        assertEquals(-1L, contents.get(1).longValue());
+        assertEquals(12L, contents.get(2).longValue());
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        {
+            assertNull("at maxLimit " + maxLimit, arrayRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        {
+            try
+            {
+                arrayRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown for maxLimit " + maxLimit);
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenListSizeIsNegative() throws Exception
+    {
+        buffer.putInt(10,  -1);
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("size < 0");
+        assertNull(arrayRO.tryWrap(buffer, 10, buffer.capacity()));
+    }
+
+    @Test
+    public void shouldNotWrapWhenListSizeIsNegative() throws Exception
+    {
+        buffer.putInt(10,  -1);
+        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expectMessage("size < 0");
+        arrayRO.wrap(buffer, 10, buffer.capacity());
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldNotAccessItemIncompleteDueToIncorrrectLengthAfterTryWrap() throws Exception
+    {
+        final int offset = 10;
+        int pos = offset;
+        buffer.putInt(pos, 2); // Incorrect, should be 3
+        buffer.putByte(pos += Integer.BYTES, (byte) 0x81);
+        buffer.putByte(pos += 1, (byte) 0x81);
+        buffer.putByte(pos += 1, (byte) 0x01);
+
+        ArrayFW<Varint64FW> flyweight  = arrayRO.tryWrap(buffer, offset, pos);
+        flyweight.matchFirst(v -> true);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldNotAccessItemIncompleteDueToIncorrrectLengthAfterWrap() throws Exception
+    {
+        final int offset = 10;
+        int pos = offset;
+        buffer.putInt(pos, 2); // Incorrect, should be 3
+        buffer.putByte(pos += Integer.BYTES, (byte) 0x81);
+        buffer.putByte(pos += 1, (byte) 0x81);
+        buffer.putByte(pos += 1, (byte) 0x01);
+
+        ArrayFW<Varint64FW> flyweight  = arrayRO.wrap(buffer, offset, pos);
+        flyweight.matchFirst(v -> true);
+    }
+
+    @Test
+    public void shouldTryWrapAndReadItems() throws Exception
+    {
+        final int offset = 23;
+        int size = setAllTestValues(buffer, offset);
+
+        arrayRO.tryWrap(buffer, offset, buffer.capacity());
+
+        assertEquals(offset + size, arrayRO.limit());
+        assertAllTestValuesRead(arrayRO);
+    }
+
+    @Test
+    public void shouldWrapAndReadItems() throws Exception
+    {
+        final int offset = 23;
+        int size = setAllTestValues(buffer, offset);
+
+        arrayRO.wrap(buffer, offset, buffer.capacity());
+
+        assertEquals(offset + size, arrayRO.limit());
+        assertAllTestValuesRead(arrayRO);
+    }
+
     @Test
     public void shouldBuildEmptyList() throws Exception
     {
@@ -81,15 +204,6 @@ public class ArrayFWTest
     }
 
     @Test
-    public void shouldFailWrapWhenListSizeIsNegative() throws Exception
-    {
-        buffer.putInt(10,  -1);
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("size < 0");
-        arrayRO.wrap(buffer, 10, buffer.capacity());
-    }
-
-    @Test
     public void shouldSetItems() throws Exception
     {
         final int offset = 0;
@@ -99,34 +213,9 @@ public class ArrayFWTest
                 .item(b -> b.set(12L))
                 .build()
                 .limit();
-        final int expectedSizeInBytes = LENGTH_SIZE + 3;
+        final int expectedSizeInBytes = setAllTestValues(expected, offset);
         assertEquals(offset + expectedSizeInBytes, limit);
-        expected.putInt(offset, 3);
-        expected.putByte(offset + 4, (byte) 2);
-        expected.putByte(offset + 5, (byte) 1);
-        expected.putByte(offset + 6, (byte) 0x18);
-        byte[] bytes = new byte[buffer.capacity()];
-        expected.getBytes(0, bytes);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
-    }
-
-    @Test
-    public void shouldReadItems() throws Exception
-    {
-        final int offset = 23;
-        buffer.putInt(offset, 3);
-        buffer.putByte(offset + 4, (byte) 2);
-        buffer.putByte(offset + 5, (byte) 1);
-        buffer.putByte(offset + 6, (byte) 0x18);
-
-        arrayRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals(offset + LENGTH_SIZE + 3, arrayRO.limit());
-        List<Long> contents = new ArrayList<Long>();
-        arrayRO.forEach(v -> contents.add(v.value()));
-        assertEquals(3, contents.size());
-        assertEquals(1L, contents.get(0).longValue());
-        assertEquals(-1L, contents.get(1).longValue());
-        assertEquals(12L, contents.get(2).longValue());
     }
 
     @Test
@@ -146,19 +235,6 @@ public class ArrayFWTest
         List<Long> contents = new ArrayList<Long>();
         array.forEach(v -> contents.add(v.value()));
         assertEquals(0, contents.size());
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWithInsufficientLength()
-    {
-        arrayRW.wrap(buffer, 10, 13);
-    }
-
-    @Test
-    public void shouldWrapWithSufficientLength()
-    {
-        int limit = arrayRW.wrap(buffer, 10, 10 + LENGTH_SIZE).limit();
-        assertEquals(14, limit);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

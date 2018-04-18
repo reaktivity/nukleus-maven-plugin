@@ -17,7 +17,10 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import java.util.stream.IntStream;
 
@@ -40,7 +43,97 @@ public class ContiguousSizeFieldsFWTest
     }
 
     private final ContiguousSizeFieldsFW.Builder builder = new ContiguousSizeFieldsFW.Builder();
-    private final ContiguousSizeFieldsFW flyweight = new ContiguousSizeFieldsFW();
+    private final ContiguousSizeFieldsFW flyweightRO = new ContiguousSizeFieldsFW();
+
+    static int setAllTestValues(MutableDirectBuffer buffer, int offset)
+    {
+        int pos = offset;
+        buffer.putByte(pos, (byte) 1); // length1
+        buffer.putByte(pos += 1, (byte) 1); // length2
+        buffer.putByte(pos += 1, (byte) 1); // array1
+        buffer.putByte(pos += 1, (byte) 2); // array1
+        buffer.putInt(pos += 1, (byte) 6); // length string1
+        buffer.putStringWithoutLengthUtf8(pos += 1,  "value1");
+        buffer.putByte(pos += 6, (byte) 1); // length3
+        buffer.putByte(pos += 1, (byte) 1); // length4
+        buffer.putByte(pos += 1, (byte) 3); // array3
+        buffer.putByte(pos += 1, (byte) 4); // array4
+        return pos - offset + Byte.BYTES;
+    }
+
+    static void assertAllTestValuesRead(ContiguousSizeFieldsFW flyweight)
+    {
+        assertEquals(1, flyweight.array1().next().intValue());
+        assertEquals(2, flyweight.array2().next().intValue());
+        assertEquals("value1", flyweight.string1().asString());
+        assertEquals(3, flyweight.array3().next().intValue());
+        assertEquals(4, flyweight.array4().next().intValue());
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        {
+            assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size - 1; maxLimit++)
+        {
+            try
+            {
+                flyweightRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown for maxLimit " + maxLimit);
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldTryWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldTryWrapAndReadAllValues() throws Exception
+    {
+        final int offset = 1;
+        setAllTestValues(buffer, offset);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesRead(flyweightRO);
+    }
+
+    @Test
+    public void shouldReadAllValues() throws Exception
+    {
+        int size = setAllTestValues(buffer, 0);
+        int limit = flyweightRO.wrap(buffer,  0,  buffer.capacity()).limit();
+        assertEquals(size, limit);
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+
+        assertAllTestValuesRead(flyweightRO);
+    }
 
     @Test
     public void shouldSetAllValues() throws Exception
@@ -53,28 +146,9 @@ public class ContiguousSizeFieldsFWTest
                 .array4(IntStream.of(4).iterator())
                 .build()
                 .limit();
-
-        int pos = 0;
-        expected.putByte(pos, (byte) 1); // length1
-        expected.putByte(pos += 1, (byte) 1); // length2
-        expected.putByte(pos += 1, (byte) 1); // array1
-        expected.putByte(pos += 1, (byte) 2); // array1
-        expected.putInt(pos += 1, (byte) 6); // length string1
-        expected.putStringWithoutLengthUtf8(pos += 1,  "value1");
-        expected.putByte(pos += 6, (byte) 1); // length3
-        expected.putByte(pos += 1, (byte) 1); // length4
-        expected.putByte(pos += 1, (byte) 3); // array3
-        expected.putByte(pos += 1, (byte) 4); // array4
-
-        assertEquals(pos + 1, limit);
+        int size = setAllTestValues(expected, 0);
+        assertEquals(size, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
-
-        flyweight.wrap(buffer,  0,  limit);
-        assertEquals(1, flyweight.array1().next().intValue());
-        assertEquals(2, flyweight.array2().next().intValue());
-        assertEquals("value1", flyweight.string1().asString());
-        assertEquals(3, flyweight.array3().next().intValue());
-        assertEquals(4, flyweight.array4().next().intValue());
     }
 
     @Test
@@ -96,11 +170,11 @@ public class ContiguousSizeFieldsFWTest
         assertEquals(pos + 1, limit);
         assertArrayEquals(expected.byteArray(), buffer.byteArray());
 
-        flyweight.wrap(buffer, 0, 100);
-        assertNull(flyweight.array1());
-        assertNull(flyweight.array2());
-        assertNull(flyweight.array3());
-        assertNull(flyweight.array4());
+        flyweightRO.wrap(buffer, 0, 100);
+        assertNull(flyweightRO.array1());
+        assertNull(flyweightRO.array2());
+        assertNull(flyweightRO.array3());
+        assertNull(flyweightRO.array4());
     }
 
     @Test(expected =  AssertionError.class)
