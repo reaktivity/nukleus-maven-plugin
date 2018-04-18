@@ -19,6 +19,8 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -61,29 +63,61 @@ public class FlatFWTest
         assertEquals(0x10000001, flatRO.typeId());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWhenLengthInsufficientForFixed1()
+    @Test
+    public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        flatRO.wrap(buffer,  10, 10 + Long.BYTES - 1);
+        int offsetString1 = Long.BYTES + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetString2 = offsetString1 + Byte.BYTES + Integer.BYTES;
+        buffer.putByte(10 + offsetString2, (byte) 1);
+        for (int maxLimit=10; maxLimit < 10 + offsetString2 + Byte.BYTES; maxLimit++)
+        {
+            assertNull(flatRO.tryWrap(buffer,  10, maxLimit));
+        }
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWhenLengthInsufficientForFixed2()
+    @Test
+    public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        flatRO.wrap(buffer,  10, 10 + Long.BYTES + Short.BYTES - 1);
+        int offsetString1 = Long.BYTES + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetString2 = offsetString1 + Byte.BYTES + Integer.BYTES;
+        buffer.putByte(10 + offsetString2, (byte) 1);
+        for (int maxLimit=10; maxLimit < 10 + offsetString2 + Byte.BYTES; maxLimit++)
+        {
+            try
+            {
+                flatRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWhenLengthInsufficientForString1()
+    @Test
+    public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        flatRO.wrap(buffer,  10, 10 + Long.BYTES + Short.BYTES);
+        int offsetString1 = Long.BYTES + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetString2 = offsetString1 + Byte.BYTES + Integer.BYTES;
+        buffer.putByte(10 + offsetString2, (byte) 0);
+        assertSame(flatRO, flatRO.tryWrap(buffer, 10, 10 + offsetString2 + Byte.BYTES));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWhenLengthInsufficientForString1_2()
+    @Test
+    public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        buffer.putByte(10 + Long.BYTES + Short.BYTES, (byte) 1);
-        flatRO.wrap(buffer,  10, 10 + Long.BYTES + Short.BYTES + 1);
+        int offsetString1 = Long.BYTES + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetString2 = offsetString1 + Byte.BYTES + Integer.BYTES;
+        buffer.putByte(10 + offsetString2, (byte) 0);
+        assertSame(flatRO, flatRO.wrap(buffer, 10, 10 + offsetString2 + Byte.BYTES));
     }
 
     @Test

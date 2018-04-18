@@ -112,8 +112,9 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
-                .beginControlFlow("if (null == super.wrap(buffer, offset, maxLimit) || offset + FIELD_SIZE_LENGTH > maxLimit() " +
-                                  "|| limit() > maxLimit)")
+                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || " +
+                                  "offset + FIELD_SIZE_LENGTH > maxLimit() || " +
+                                  "limit() > maxLimit)")
                 .addStatement("return null")
                 .endControlFlow()
                 .addStatement("int length0 = length0()")

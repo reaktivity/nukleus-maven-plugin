@@ -980,12 +980,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 if (sized)
                 {
-                    addFailIfStatement("limit > maxLimit || null == $LRO.wrap(buffer, $L + $L, limit)",
+                    addFailIfStatement("limit > maxLimit || null == $LRO.tryWrap(buffer, $L + $L, limit)",
                                        name, anchorLimit, offset(name));
                 }
                 else
                 {
-                    addFailIfStatement("null == $LRO.wrap(buffer, $L + $L, maxLimit)",
+                    addFailIfStatement("null == $LRO.tryWrap(buffer, $L + $L, maxLimit)",
                             name, anchorLimit, offset(name));
                 }
             }
@@ -1011,12 +1011,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 }
                 if (sized)
                 {
-                    addFailIfStatement("limit > maxLimit || null == $LRO.wrap(buffer, $L, limit)",
+                    addFailIfStatement("limit > maxLimit || null == $LRO.tryWrap(buffer, offset + $L, limit)",
                                        name, offset(name));
                 }
                 else
                 {
-                    addFailIfStatement("null == $LRO.wrap(buffer, $L, maxLimit)",
+                    addFailIfStatement("null == $LRO.tryWrap(buffer, offset + $L, maxLimit)",
                             name, offset(name));
                 }
             }
