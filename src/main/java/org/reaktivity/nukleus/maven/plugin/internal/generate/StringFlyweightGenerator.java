@@ -54,24 +54,17 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldOffsetLengthConstant())
-                            .addField(fieldSizeLengthConstant())
-                            .addField(valueField())
-                            .addMethod(limitMethod())
-                            .addMethod(asStringMethod())
-                            .addMethod(wrapMethod())
-                            .addMethod(valueMethod())
-                            .addMethod(toStringMethod())
-                            .addMethod(length0Method())
-                            .addType(builderClassBuilder.build())
-                            .build();
-    }
-
-    private FieldSpec fieldOffsetLengthConstant()
-    {
-        return FieldSpec.builder(int.class, "FIELD_OFFSET_LENGTH", PRIVATE, STATIC, FINAL)
-                .initializer("0")
-                .build();
+        return classBuilder.addField(fieldSizeLengthConstant())
+                           .addField(valueField())
+                           .addMethod(limitMethod())
+                           .addMethod(asStringMethod())
+                           .addMethod(tryWrapMethod())
+                           .addMethod(wrapMethod())
+                           .addMethod(valueMethod())
+                           .addMethod(toStringMethod())
+                           .addMethod(length0Method())
+                           .addType(builderClassBuilder.build())
+                           .build();
     }
 
     private FieldSpec fieldSizeLengthConstant()
@@ -94,7 +87,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return maxLimit() == offset() ? offset() : offset() + FIELD_SIZE_LENGTH + Math.max(length0(), 0)")
+                .addStatement("return offset() + FIELD_SIZE_LENGTH + Math.max(length0(), 0)")
                 .build();
     }
 
@@ -110,6 +103,27 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .build();
     }
 
+    private MethodSpec tryWrapMethod()
+    {
+        return methodBuilder("tryWrap")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "offset")
+                .addParameter(int.class, "maxLimit")
+                .returns(thisName)
+                .beginControlFlow("if (null == super.wrap(buffer, offset, maxLimit) || offset + FIELD_SIZE_LENGTH > maxLimit() " +
+                                  "|| limit() > maxLimit)")
+                .addStatement("return null")
+                .endControlFlow()
+                .addStatement("int length0 = length0()")
+                .beginControlFlow("if (length0 != -1)")
+                .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0)")
+                .endControlFlow()
+                .addStatement("return this")
+                .build();
+    }
+
     private MethodSpec wrapMethod()
     {
         return methodBuilder("wrap")
@@ -120,6 +134,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
+                .addStatement("checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit)")
                 .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("int length0 = length0()")
                 .beginControlFlow("if (length0 != -1)")
@@ -144,7 +159,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(String.class)
-                .addStatement("return maxLimit() == offset() ? \"null\" : String.format(\"\\\"%s\\\"\", asString())")
+                .addStatement("return String.format(\"\\\"%s\\\"\", asString())")
                 .build();
     }
 
@@ -153,7 +168,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("length0")
                 .addModifiers(PRIVATE)
                 .returns(int.class)
-                .addStatement("int length = buffer().getByte(offset() + FIELD_OFFSET_LENGTH) & 0xFF")
+                .addStatement("int length = buffer().getByte(offset()) & 0xFF")
                 .addStatement("return length == 255 ? -1 : length")
                 .build();
     }
@@ -213,7 +228,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
-                    .addStatement("checkLimit(offset + FIELD_OFFSET_LENGTH + FIELD_SIZE_LENGTH, maxLimit)")
+                    .addStatement("checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit)")
                     .addStatement("super.wrap(buffer, offset, maxLimit)")
                     .addStatement("this.valueSet = false")
                     .addStatement("return this")

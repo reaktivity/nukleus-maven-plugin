@@ -61,6 +61,31 @@ public class FlatFWTest
         assertEquals(0x10000001, flatRO.typeId());
     }
 
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWhenLengthInsufficientForFixed1()
+    {
+        flatRO.wrap(buffer,  10, 10 + Long.BYTES - 1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWhenLengthInsufficientForFixed2()
+    {
+        flatRO.wrap(buffer,  10, 10 + Long.BYTES + Short.BYTES - 1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWhenLengthInsufficientForString1()
+    {
+        flatRO.wrap(buffer,  10, 10 + Long.BYTES + Short.BYTES);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWhenLengthInsufficientForString1_2()
+    {
+        buffer.putByte(10 + Long.BYTES + Short.BYTES, (byte) 1);
+        flatRO.wrap(buffer,  10, 10 + Long.BYTES + Short.BYTES + 1);
+    }
+
     @Test
     public void shouldDefaultValues() throws Exception
     {
