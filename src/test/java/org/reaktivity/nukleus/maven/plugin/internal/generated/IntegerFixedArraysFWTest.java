@@ -17,8 +17,11 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.PrimitiveIterator;
 import java.util.stream.IntStream;
@@ -52,7 +55,7 @@ public class IntegerFixedArraysFWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    public static void setAllTestValues(MutableDirectBuffer buffer, int offset)
+    static int setAllTestValues(MutableDirectBuffer buffer, int offset)
     {
         buffer.putByte(offset + 0, (byte) 0xFF); // uint8Array[1]
         buffer.putShort(offset + 1, (short) 3); // uint16Array[2]
@@ -77,9 +80,10 @@ public class IntegerFixedArraysFWTest
         buffer.putLong(offset + 75, -21L);
         buffer.putLong(offset + 83, -22L);
         buffer.putLong(offset + 91, -23L);
+        return 91 + 8;
     }
 
-    public static void assertAllTestValuesRead(IntegerFixedArraysFW flyweightRO)
+    static void assertAllTestValuesRead(IntegerFixedArraysFW flyweightRO)
     {
         PrimitiveIterator.OfInt uint8Array = flyweightRO.uint8Array();
         assertEquals(0xFF, uint8Array.nextInt());
@@ -122,7 +126,61 @@ public class IntegerFixedArraysFWTest
     }
 
     @Test
-    public void shouldReadAllValues() throws Exception
+    public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            try
+            {
+                flyweightRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldTryWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldTryWrapAndReadAllValues() throws Exception
+    {
+        final int offset = 1;
+        setAllTestValues(buffer, offset);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesRead(flyweightRO);
+    }
+
+    @Test
+    public void shouldWrapAndReadAllValues() throws Exception
     {
         final int offset = 1;
         setAllTestValues(buffer, offset);

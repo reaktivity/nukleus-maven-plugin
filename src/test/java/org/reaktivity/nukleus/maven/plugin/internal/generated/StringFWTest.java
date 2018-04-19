@@ -70,15 +70,61 @@ public class StringFWTest
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWithInsufficientLength()
+    public void shouldFailToWrapInBuilderWithOffsetEqualsMaxLimit()
     {
         stringRW.wrap(buffer, 10, 10);
     }
 
     @Test
-    public void shouldWrapWithSufficientLength()
+    public void shouldWrapInBuilderWithSufficientLength()
     {
         stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailWrapInBuilderWithOffsetEqualsMaxLimit()
+    {
+        stringRW.wrap(buffer, 10, 10);
+    }
+
+    @Test
+    public void shouldReturnNullFromTryWrapWithOffsetEqualsMaxLimit()
+    {
+        assertNull(stringRO.tryWrap(buffer, 10, 10));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWithOffsetEqualsMaxLimit()
+    {
+        stringRO.wrap(buffer, 10, 10);
+    }
+
+    @Test
+    public void shouldReturnNullFromTryWrapWithInsufficientLength()
+    {
+        buffer.putByte(10,  (byte) 1);
+        assertNull(stringRO.tryWrap(buffer, 10, 11));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWithInsufficientLength()
+    {
+        buffer.putByte(10,  (byte) 1);
+        stringRO.wrap(buffer, 10, 11);
+    }
+
+    @Test
+    public void shouldTryWrapStringWithLengthZero()
+    {
+        buffer.putByte(10,  (byte) 0);
+        assertEquals(stringRO, stringRO.tryWrap(buffer, 10, 11));
+    }
+
+    @Test
+    public void shouldWrapStringWithLengthZero()
+    {
+        buffer.putByte(10,  (byte) 0);
+        stringRO.wrap(buffer, 10, 11);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

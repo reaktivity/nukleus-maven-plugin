@@ -19,6 +19,7 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 
 import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
@@ -47,6 +48,40 @@ public class OctetsFWTest
         octetsRO.wrap(buffer,  0,  limit);
         assertEquals(0, octetsRO.sizeof());
 
+    }
+
+    @Test
+    public void shouldTryWrap()
+    {
+        byte value = 1;
+        buffer.putByte(10, value);
+        OctetsFW octets = octetsRO.tryWrap(buffer, 10, 11);
+        byte result[] = new byte[1];
+        octets.get((b, o, l) -> result[0] = b.getByte(o));
+        assertEquals(value, result[0]);
+    }
+
+    @Test
+    public void shouldWrap()
+    {
+        byte value = 1;
+        buffer.putByte(10, value);
+        OctetsFW octets = octetsRO.wrap(buffer, 10, 11);
+        byte result[] = new byte[1];
+        octets.get((b, o, l) -> result[0] = b.getByte(o));
+        assertEquals(value, result[0]);
+    }
+
+    @Test
+    public void shouldNotTryWrapWithMaxValueLTOffset()
+    {
+        assertNull(octetsRO.tryWrap(buffer, 10, 9));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldNotWrapWithMaxValueLTOffset()
+    {
+        octetsRO.wrap(buffer, 10, 9);
     }
 
     @Test

@@ -18,6 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -65,6 +66,12 @@ public class FlyweightTest
         expectedException.expect(IndexOutOfBoundsException.class);
         expectedException.expectMessage("offset");
         flyweigthRO.wrap(buffer,  4,  1);
+    }
+
+    @Test
+    public void shouldReturnNullFromTryWrapWhenOffsetExceedsMaxLimit() throws Exception
+    {
+        assertNull(flyweigthRO.tryWrap(buffer,  4,  1));
     }
 
     @Test

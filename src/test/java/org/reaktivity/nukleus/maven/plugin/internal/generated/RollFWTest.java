@@ -17,6 +17,9 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -36,41 +39,145 @@ public class RollFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final RollFW.Builder rollRW = new RollFW.Builder();
-    private final RollFW rollRO = new RollFW();
+    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
+    {
+        {
+            // Make sure the code is not secretly relying upon memory being initialized to 0
+            setMemory(0, capacity(), (byte) 0xab);
+        }
+    };
+    private final RollFW.Builder flyweightRW = new RollFW.Builder();
+    private final RollFW flyweightRO = new RollFW();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
+    {
+        int pos = offset;
+        buffer.putByte(pos,  (byte) Roll.SPRING.ordinal());
+        return pos - offset + Byte.BYTES;
+    }
+
+    void assertAllTestValuesRead(RollFW flyweight)
+    {
+        assertEquals(Roll.SPRING, flyweight.get());
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            try
+            {
+                flyweightRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown for maxLimit " + maxLimit);
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldTryWrapAndReadAllValues() throws Exception
+    {
+        final int offset = 1;
+        setAllTestValues(buffer, offset);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesRead(flyweightRO);
+    }
+
+    @Test
+    public void shouldWrapAndReadAllValues() throws Exception
+    {
+        int size = setAllTestValues(buffer, 10);
+        int limit = flyweightRO.wrap(buffer,  10,  buffer.capacity()).limit();
+        assertEquals(10 + size, limit);
+        assertAllTestValuesRead(flyweightRO);
+    }
+
+    @Test
+    public void shouldTryWrapAndReadNullValue() throws Exception
+    {
+        final int offset = 12;
+        buffer.putByte(offset,  (byte) -1);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertNull(flyweightRO.get());
+    }
+
+    @Test
+    public void shouldWrapAndReadNullValue() throws Exception
+    {
+        final int offset = 12;
+        buffer.putByte(offset,  (byte) -1);
+        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
+        assertNull(flyweightRO.get());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldNotTryWrapAndReadInvalidValue() throws Exception
+    {
+        final int offset = 12;
+        buffer.putByte(offset,  (byte) -2);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertNull(flyweightRO.get());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldWNotrapAndReadInvalidValue() throws Exception
+    {
+        final int offset = 12;
+        buffer.putByte(offset,  (byte) -2);
+        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
+        assertNull(flyweightRO.get());
+    }
+
     @Test
     public void shouldSetUsingEnum()
     {
-        int limit = rollRW.wrap(buffer, 0, buffer.capacity())
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
                .set(Roll.SPRING)
                .build()
                .limit();
-        rollRO.wrap(buffer,  0, limit);
-        assertEquals(Roll.SPRING, rollRO.get());
-        assertEquals(1, rollRO.sizeof());
+        setAllTestValues(expected,  0);
+        assertEquals(1, limit);
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
     public void shouldSetUsingRollFW()
     {
         RollFW roll = new RollFW().wrap(asBuffer((byte) 0), 0, 1);
-        int limit = rollRW.wrap(buffer, 10, 11)
+        int limit = flyweightRW.wrap(buffer, 10, 11)
                .set(roll)
                .build()
                .limit();
-        rollRO.wrap(buffer, 10,  limit);
-        assertEquals(Roll.EGG, rollRO.get());
-        assertEquals(1, rollRO.sizeof());
+        flyweightRO.wrap(buffer, 10,  limit);
+        assertEquals(Roll.EGG, flyweightRO.get());
+        assertEquals(1, flyweightRO.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetWithInsufficientSpace()
     {
-        rollRW.wrap(buffer, 10, 10)
+        flyweightRW.wrap(buffer, 10, 10)
                .set(Roll.EGG);
     }
 
@@ -78,7 +185,7 @@ public class RollFWTest
     public void shouldFailToSetUsingRollFWWithInsufficientSpace()
     {
         RollFW roll = new RollFW().wrap(asBuffer((byte) 0), 0, 1);
-        rollRW.wrap(buffer, 10, 10)
+        flyweightRW.wrap(buffer, 10, 10)
               .set(roll);
     }
 
@@ -87,7 +194,7 @@ public class RollFWTest
     {
         expectedException.expect(IllegalStateException.class);
         expectedException.expectMessage("Roll");
-        rollRW.wrap(buffer, 10, buffer.capacity())
+        flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build();
     }
 

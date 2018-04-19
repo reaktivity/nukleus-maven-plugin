@@ -94,6 +94,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     private final MemberSizeConstantGenerator memberSizeConstant;
     private final MemberOffsetConstantGenerator memberOffsetConstant;
     private final MemberAccessorGenerator memberAccessor;
+    private final TryWrapMethodGenerator tryWrapMethod;
     private final WrapMethodGenerator wrapMethod;
     private final LimitMethodGenerator limitMethod;
     private final ToStringMethodGenerator toStringMethod;
@@ -113,6 +114,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(structName, builder);
         this.memberField = new MemberFieldGenerator(structName, builder);
         this.memberAccessor = new MemberAccessorGenerator(structName, builder);
+        this.tryWrapMethod = new TryWrapMethodGenerator(structName);
         this.wrapMethod = new WrapMethodGenerator(structName);
         this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
@@ -142,6 +144,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         memberField.addMember(name, type, unsignedType, size, sizeName, byteOrder, defaultValue);
         memberAccessor.addMember(name, type, unsignedType, byteOrder, size, sizeName, defaultValue);
         limitMethod.addMember(name, type, unsignedType, size, sizeName);
+        tryWrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         wrapMethod.addMember(name, type, unsignedType, size, sizeName, defaultValue);
         toStringMethod.addMember(name, type, unsignedType, size, sizeName);
         builderClass.addMember(name, type, unsignedType, size, sizeName, sizeType, usedAsSize, defaultValue, byteOrder);
@@ -159,6 +162,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         memberAccessor.build();
 
         return builder.addMethod(wrapMethod.generate())
+                      .addMethod(tryWrapMethod.generate())
                       .addMethod(limitMethod.generate())
                       .addMethod(toStringMethod.generate())
                       .addType(builderClass.generate())
@@ -811,6 +815,270 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         }
 
     }
+    private final class TryWrapMethodGenerator extends MethodSpecGenerator
+    {
+        private final ClassName thisType;
+        private String anchorLimit;
+        private boolean limitDeclared;
+
+        private TryWrapMethodGenerator(
+            ClassName thisType)
+        {
+            super(methodBuilder("tryWrap")
+                    .addAnnotation(Override.class)
+                    .addModifiers(PUBLIC)
+                    .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                    .addParameter(int.class, "offset")
+                    .addParameter(int.class, "maxLimit")
+                    .returns(thisName));
+            addFailIfStatement("null == super.tryWrap(buffer, offset, maxLimit)");
+            this.thisType = thisType;
+        }
+
+        private void addFailIfStatement(
+            String string,
+            Object... args)
+        {
+            builder.beginControlFlow("if (" + string + ")", args);
+            builder.addStatement("return null");
+            builder.endControlFlow();
+        }
+
+        private void declareLimit()
+        {
+            if (!limitDeclared)
+            {
+                builder.addStatement("int limit");
+                limitDeclared = true;
+            }
+        }
+
+        public TryWrapMethodGenerator addMember(
+            String name,
+            TypeName type,
+            TypeName unsignedType,
+            int size,
+            String sizeName,
+            Object defaultValue)
+        {
+            if (DIRECT_BUFFER_TYPE.equals(type))
+            {
+                // TODO: is this dead code? I can't find a case where type should be equal to DirectBuffer
+                // and we never get here during generation of the test idl during build
+                addFailIfStatement("null == $LRO.wrap(buffer, offset + $L, maxLimit - (offset + $L))",
+                        name, offset(name), offset(name));
+            }
+            else if (!type.isPrimitive())
+            {
+                addNonPrimitiveMember(name, type, unsignedType, size, sizeName, defaultValue);
+            }
+            else if (size != -1)
+            {
+                addFixedIntegerArrayMember(name, type, unsignedType, size);
+            }
+            else if (sizeName != null)
+            {
+                addVariableIntegerArrayMember(name, type, unsignedType, sizeName);
+            }
+            return this;
+        }
+
+        private void addFixedIntegerArrayMember(
+            String name,
+            TypeName type,
+            TypeName unsignedType,
+            int size)
+        {
+            ClassName iteratorClass = iteratorClass(thisType, type, unsignedType);
+            TypeName targetType = (unsignedType != null) ? unsignedType : type;
+            targetType = targetType == TypeName.LONG ? targetType : TypeName.INT;
+            CodeBlock.Builder code = CodeBlock.builder();
+            String offsetName;
+            if (anchorLimit != null)
+            {
+                offsetName = "offset" + initCap(name);
+                code.addStatement("final int $L = $L + $L", offsetName, anchorLimit, offset(name));
+            }
+            else
+            {
+                offsetName = "offset + " + offset(name);
+            }
+            code.add("$[")
+                .add("$L = new $T($S, $L, $L, $L, o -> ",
+                        iterator(name), iteratorClass, name, offsetName, size(name), arraySize(name));
+            addBufferGet(code, targetType, type, unsignedType, "o");
+            code.add(")")
+                .add(";\n$]");
+
+            builder.addCode(code.build());
+        }
+
+        private void addVariableIntegerArrayMember(
+            String name,
+            TypeName type,
+            TypeName unsignedType,
+            String sizeName)
+        {
+            ClassName iteratorClass = iteratorClass(thisType, type, unsignedType);
+            String offsetName = "offset" + initCap(name);
+            String limitName = "limit" + initCap(name);
+            TypeName targetType = (unsignedType != null) ? unsignedType : type;
+            targetType = targetType == TypeName.LONG ? targetType : TypeName.INT;
+            CodeBlock.Builder code = CodeBlock.builder();
+            if (anchorLimit != null)
+            {
+                code.addStatement("final int $L = $L + $L", offsetName, anchorLimit, offset(name));
+            }
+            else
+            {
+                code.addStatement("final int $L = offset + $L", offsetName, offset(name));
+            }
+            code.add("$[")
+                .add("$L = $L() == -1 ? null :\n", iterator(name), methodName(sizeName))
+                .add("new $T($S, $L, $L, (int) $L(), o -> ",
+                    iteratorClass, name, offsetName, size(name), methodName(sizeName));
+            addBufferGet(code, targetType, type, unsignedType, "o");
+            code.add(")")
+                .add(";\n$]")
+                .addStatement("$L = $L() == -1 ? $L : $L + $L * $L()", limitName, methodName(sizeName),
+                        offsetName, offsetName, size(name), methodName(sizeName));
+            builder.addCode(code.build());
+            anchorLimit = limitName;
+        }
+
+        private void addNonPrimitiveMember(
+            String name,
+            TypeName type,
+            TypeName unsignedType,
+            int size,
+            String sizeName,
+            Object defaultValue)
+        {
+            boolean sized = size >= 0 || sizeName != null;
+            if (sized)
+            {
+                declareLimit();
+            }
+            if (anchorLimit != null)
+            {
+                if (size >= 0)
+                {
+                    builder.addStatement("limit = $L + $L + $L", anchorLimit, offset(name), size);
+                }
+                else if (sizeName != null)
+                {
+                    if (defaultValue == NULL_DEFAULT)
+                    {
+                        builder.addStatement("limit = $L + $L + ((int) $L() == -1 ? 0 : (int) $L()) ",
+                                anchorLimit, offset(name), methodName(sizeName), methodName(sizeName));
+                    }
+                    else
+                    {
+                        builder.addStatement("limit = $L + $L + (int) $L()", anchorLimit,
+                                offset(name), methodName(sizeName));
+                    }
+                }
+                if (sized)
+                {
+                    addFailIfStatement("limit > maxLimit || null == $LRO.tryWrap(buffer, $L + $L, limit)",
+                                       name, anchorLimit, offset(name));
+                }
+                else
+                {
+                    addFailIfStatement("null == $LRO.tryWrap(buffer, $L + $L, maxLimit)",
+                            name, anchorLimit, offset(name));
+                }
+            }
+            else
+            {
+                if (size >= 0)
+                {
+                    builder.addStatement("limit = offset + $L + $L",
+                            offset(name), size);
+                }
+                else if (sizeName != null)
+                {
+                    if (defaultValue == NULL_DEFAULT)
+                    {
+                        builder.addStatement("limit = offset + $L + ((int) $L() == -1 ? 0 : (int) $L())",
+                                offset(name), methodName(sizeName), methodName(sizeName));
+                    }
+                    else
+                    {
+                        builder.addStatement("limit = offset + $L + (int) $L()",
+                                offset(name), methodName(sizeName));
+                    }
+                }
+                if (sized)
+                {
+                    addFailIfStatement("limit > maxLimit || null == $LRO.tryWrap(buffer, offset + $L, limit)",
+                                       name, offset(name));
+                }
+                else
+                {
+                    addFailIfStatement("null == $LRO.tryWrap(buffer, offset + $L, maxLimit)",
+                            name, offset(name));
+                }
+            }
+            anchorLimit = name + "RO.limit()";
+        }
+
+        private void addBufferGet(
+            CodeBlock.Builder codeBlock,
+            TypeName targetType,
+            TypeName type,
+            TypeName unsignedType,
+            String offset)
+        {
+            String getterName = GETTER_NAMES.get(type);
+            if (getterName == null)
+            {
+                throw new IllegalStateException("member type not supported: " + type);
+            }
+            if (targetType != type)
+            {
+                codeBlock.add("($T)(", targetType);
+            }
+
+            codeBlock.add("buffer().$L($L", getterName, offset);
+
+            if (targetType != type  && unsignedType != null)
+            {
+                if (type == TypeName.BYTE)
+                {
+                    codeBlock.add(") & 0xFF)");
+                }
+                else if (type == TypeName.SHORT)
+                {
+                    codeBlock.add(") & 0xFFFF)", ByteOrder.class);
+                }
+                else if (type == TypeName.INT)
+                {
+                    codeBlock.add(") & 0xFFFF_FFFFL)", ByteOrder.class);
+                }
+                else
+                {
+                    codeBlock.add(")");
+                }
+            }
+            else
+            {
+                codeBlock.add(")");
+            }
+            if (targetType != type && unsignedType == null)
+            {
+                codeBlock.add(")");
+            }
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            addFailIfStatement("limit() > maxLimit");
+            return builder.addStatement("return this")
+                          .build();
+        }
+    }
 
     private final class WrapMethodGenerator extends MethodSpecGenerator
     {
@@ -826,8 +1094,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
-                    .returns(thisName)
-                    .addStatement("super.wrap(buffer, offset, maxLimit)"));
+                    .returns(thisName));
+            builder.addStatement("super.wrap(buffer, offset, maxLimit)");
             this.thisType = thisType;
         }
 
@@ -841,6 +1109,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         {
             if (DIRECT_BUFFER_TYPE.equals(type))
             {
+                // TODO: is this dead code? I can't find a case where type should be equal to DirectBuffer
+                // and we never get here during generation of the test idl during build
                 builder.addStatement("$LRO.wrap(buffer, offset + $L, maxLimit - (offset + $L))",
                         name, offset(name), offset(name));
             }
@@ -910,9 +1180,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 code.addStatement("final int $L = offset + $L", offsetName, offset(name));
             }
             code.add("$[")
-                .add("$L = $L() == -1 ? null : new $T($S, $L, $L, (int) $L(), o -> ",
-                    iterator(name), methodName(sizeName), iteratorClass,
-                    name, offsetName, size(name), methodName(sizeName));
+                .add("$L = $L() == -1 ? null :\n", iterator(name), methodName(sizeName))
+                .add("new $T($S, $L, $L, (int) $L(), o -> ",
+                    iteratorClass, name, offsetName, size(name), methodName(sizeName));
             addBufferGet(code, targetType, type, unsignedType, "o");
             code.add(")")
                 .add(";\n$]")

@@ -17,8 +17,11 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +55,105 @@ public class IntegerVariableArraysFWTest
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    static int setAllTestValues(MutableDirectBuffer buffer, int offset)
+    {
+        buffer.putByte(offset + 0, (byte) 11); // fixed1
+        buffer.putInt(offset + 1, 3); // lengthUnsigned64
+        buffer.putShort(offset + 5, (short) 22); // fixed2
+        buffer.putInt(offset + 7, 2); // varint32Array
+        buffer.putByte(offset + 11, (byte) 1);
+        buffer.putByte(offset + 12, (byte) 2);
+        buffer.putLong(offset + 13, 10); // unsigned64Array
+        buffer.putLong(offset + 21, 112345); // unsigned64Array
+        buffer.putLong(offset + 29, 11234567); // unsigned64Array
+        buffer.putByte(offset + 37, (byte) 2); // lengthSigned16
+        buffer.putShort(offset + 38,  (short) 2); // signed16Array
+        buffer.putShort(offset + 40,  (short) -500); // signed16Array
+        buffer.putInt(offset + 42, 1); // varint64Array
+        buffer.putByte(offset + 46, (byte) 0x18);
+        buffer.putByte(offset + 47, (byte) 1);
+        buffer.putInt(offset + 48, 123);
+        buffer.putShort(offset + 52, (short) 1);
+        buffer.putInt(offset + 54, 124);
+        return 54 + Integer.BYTES;
+    }
+
+    static void assertAllTestValuesRead(IntegerVariableArraysFW flyweight)
+    {
+        PrimitiveIterator.OfLong unsigned64 = flyweight.unsigned64Array();
+        assertEquals(11, flyweight.fixed1());
+        List<Integer> varint32 = new ArrayList<Integer>();
+        flyweight.varint32Array().forEach(v -> varint32.add(v.value()));
+        assertEquals(Arrays.asList(-1, 1), varint32);
+        assertEquals(10L, unsigned64.nextLong());
+        assertEquals(112345, unsigned64.nextLong());
+        assertEquals(11234567, unsigned64.nextLong());
+        PrimitiveIterator.OfInt signed16 = flyweight.signed16Array();
+        assertEquals(2, signed16.nextInt());
+        assertEquals(-500, signed16.nextInt());
+        List<Long> varint64 = new ArrayList<Long>();
+        flyweight.varint64Array().forEach(v -> varint64.add(v.value()));
+        assertEquals(Arrays.asList(12L), varint64);
+        PrimitiveIterator.OfInt arrayWithInt8Size = flyweight.arrayWithInt8Size();
+        assertEquals(123, arrayWithInt8Size.nextInt());
+        PrimitiveIterator.OfInt arrayWithInt16Size = flyweight.arrayWithInt16Size();
+        assertEquals(124, arrayWithInt16Size.nextInt());
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            try
+            {
+                flyweightRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldTryWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldWrapWhenLengthSufficient()
+    {
+        int size = setAllTestValues(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
+    }
+
+    @Test
+    public void shouldTryWrapAndReadAllValues() throws Exception
+    {
+        final int offset = 1;
+        setAllTestValues(buffer, offset);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesRead(flyweightRO);
+    }
 
     @Test
     public void shouldSetUnsigned64ToMaximumValue()
@@ -254,46 +356,20 @@ public class IntegerVariableArraysFWTest
                 .appendArrayWithInt8Size(123)
                 .appendArrayWithInt16Size(124)
                 .build();
-        expected.putByte(0, (byte) 11); // fixed1
-        expected.putInt(1, 3); // lengthUnsigned64
-        expected.putShort(5, (short) 22); // fixed2
-        expected.putInt(7, 2); // varint32Array
-        expected.putByte(11, (byte) 1);
-        expected.putByte(12, (byte) 2);
-        expected.putLong(13, 10); // unsigned64Array
-        expected.putLong(21, 112345); // unsigned64Array
-        expected.putLong(29, 11234567); // unsigned64Array
-        expected.putByte(37, (byte) 2); // lengthSigned16
-        expected.putShort(38,  (short) 2); // signed16Array
-        expected.putShort(40,  (short) -500); // signed16Array
-        expected.putInt(42, 1); // varint64Array
-        expected.putByte(46, (byte) 0x18);
-        expected.putByte(47, (byte) 1);
-        expected.putInt(48, 123);
-        expected.putShort(52, (short) 1);
-        expected.putInt(54, 124);
+        setAllTestValues(expected, 0);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  buffer.capacity());
-        PrimitiveIterator.OfLong unsigned64 = flyweightRO.unsigned64Array();
-        assertEquals(11, flyweightRO.fixed1());
-        List<Integer> varint32 = new ArrayList<Integer>();
-        flyweightRO.varint32Array().forEach(v -> varint32.add(v.value()));
-        assertEquals(Arrays.asList(-1, 1), varint32);
-        assertEquals(10L, unsigned64.nextLong());
-        assertEquals(112345, unsigned64.nextLong());
-        assertEquals(11234567, unsigned64.nextLong());
-        PrimitiveIterator.OfInt signed16 = flyweightRO.signed16Array();
-        assertEquals(2, signed16.nextInt());
-        assertEquals(-500, signed16.nextInt());
-        List<Long> varint64 = new ArrayList<Long>();
-        flyweightRO.varint64Array().forEach(v -> varint64.add(v.value()));
-        assertEquals(Arrays.asList(12L), varint64);
-        PrimitiveIterator.OfInt arrayWithInt8Size = flyweightRO.arrayWithInt8Size();
-        assertEquals(123, arrayWithInt8Size.nextInt());
-        PrimitiveIterator.OfInt arrayWithInt16Size = flyweightRO.arrayWithInt16Size();
-        assertEquals(124, arrayWithInt16Size.nextInt());
+        assertAllTestValuesRead(flyweightRO);
+    }
+
+    @Test
+    public void shouldReadAllValues() throws Exception
+    {
+        setAllTestValues(buffer, 20);
+        flyweightRO.wrap(buffer, 20,  buffer.capacity());
+        assertAllTestValuesRead(flyweightRO);
     }
 
     @Test
