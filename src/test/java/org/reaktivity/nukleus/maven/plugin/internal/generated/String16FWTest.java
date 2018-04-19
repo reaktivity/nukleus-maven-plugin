@@ -95,15 +95,73 @@ public class String16FWTest
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToWrapWithInsufficientLength()
+    public void shouldFailToWrapInBuilderWithInsufficientLengthOffsetEqualsMaxLimit()
     {
         stringRW.wrap(buffer, 10, 10);
     }
 
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldNotWrapInBuilderWithInufficientLength()
+    {
+        stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE - 1);
+    }
+
     @Test
-    public void shouldWrapWithSufficientLength()
+    public void shouldWrapInBuilderWithSufficientLength()
     {
         stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE);
+    }
+
+    @Test
+    public void shouldReturnNullFromTryWrapWithOffsetEqualsMaxLimit()
+    {
+        assertNull(stringRO.tryWrap(buffer, 10, 10));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWithOffsetEqualsMaxLimit()
+    {
+        stringRO.wrap(buffer, 10, 10);
+    }
+
+    @Test
+    public void shouldReturnNullFromTryWrapWithInsufficientSize()
+    {
+        assertNull(stringRO.tryWrap(buffer, 10, 10 + LENGTH_SIZE - 1));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldNotWrapWithInsufficientLength()
+    {
+        stringRO.wrap(buffer, 10, 10 + LENGTH_SIZE - 1);
+    }
+
+    @Test
+    public void shouldReturnNullFromTryWrapWithInsufficientLength()
+    {
+        buffer.putShort(10,  (short) 1);
+        assertNull(stringRO.tryWrap(buffer, 10, 10 + LENGTH_SIZE));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldFailToWrapWithInsufficientLength()
+    {
+        buffer.putShort(10,  (short) 1);
+        stringRO.wrap(buffer, 10, 10 + LENGTH_SIZE);
+    }
+
+    @Test
+    public void shouldTryWrapStringWithLengthZero()
+    {
+        buffer.putShort(10,  (short) 0);
+        assertEquals(stringRO, stringRO.tryWrap(buffer, 10, 12));
+    }
+
+    @Test
+    public void shouldWrapStringWithLengthZero()
+    {
+        buffer.putShort(10,  (short) 0);
+        stringRO.wrap(buffer, 10, 12);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

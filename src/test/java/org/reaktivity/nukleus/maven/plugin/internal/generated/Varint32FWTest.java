@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -48,11 +49,38 @@ public class Varint32FWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    @Test
+    public void shouldNotTryWrapZeroLengthBuffer() throws Exception
+    {
+        assertNull(varint32RO.tryWrap(buffer,  10,  10));
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotWrapZeroLengthBuffer() throws Exception
     {
-        buffer.putByte(10,  (byte) 0x18);
         varint32RO.wrap(buffer,  10,  10);
+    }
+
+    @Test
+    public void shouldNotTryWrapIncompleteValue() throws Exception
+    {
+        // Set up buffer so it will give index out of bounds if the implementation attempts to compute
+        // the varint value without respecting maxLimit
+        MutableDirectBuffer buffer = new UnsafeBuffer(new byte[2]);
+        buffer.putByte(0, (byte) 0x81);
+        buffer.putByte(1, (byte) 0x81);
+        assertNull(varint32RO.tryWrap(buffer, 0, 1));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void shouldNotWrapIncompleteValue() throws Exception
+    {
+        // Set up buffer so it will overflow if the implementation attempts to compute
+        // the varint value without respecting maxLimit
+        MutableDirectBuffer buffer = new UnsafeBuffer(new byte[2]);
+        buffer.putByte(0, (byte) 0x81);
+        buffer.putByte(1, (byte) 0x81);
+        varint32RO.wrap(buffer, 0, 1);
     }
 
     @Test
@@ -67,6 +95,25 @@ public class Varint32FWTest
         expectedException.expectMessage("offset 50 exceeds 32 bits");
         varint32RO.wrap(buffer,  50,  buffer.capacity());
         assertEquals(Integer.MAX_VALUE, varint32RO.value());
+    }
+
+    @Test
+    public void shouldTryWrap() throws Exception
+    {
+        // Actual value is -66, zigzagged value is 132-1 = 131 = 0x83
+        buffer.putByte(50, (byte) 0x83);
+        buffer.putByte(51, (byte) 0x01);
+        Varint32FW result = varint32RO.tryWrap(buffer, 50, 52);
+        assertEquals(-66, result.value());
+    }
+
+    @Test
+    public void shouldWrap() throws Exception
+    {
+        // Actual value is -66, zigzagged value is 132-1 = 131 = 0x83
+        buffer.putByte(50, (byte) 0x83);
+        buffer.putByte(51, (byte) 0x01);
+        varint32RO.wrap(buffer, 50, 52);
     }
 
     @Test

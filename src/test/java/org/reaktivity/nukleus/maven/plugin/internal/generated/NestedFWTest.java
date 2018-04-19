@@ -17,6 +17,9 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -39,6 +42,83 @@ public class NestedFWTest
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    static void assertAllTestValuesRead(NestedFW flyweight)
+    {
+        assertEquals(40, flyweight.fixed4());
+        assertEquals(10, flyweight.flat().fixed1());
+        assertEquals(20, flyweight.flat().fixed2());
+        assertEquals("value1", flyweight.flat().string1().asString());
+        assertEquals(30, flyweight.flat().fixed3());
+        assertEquals("value2", flyweight.flat().string2().asString());
+        assertEquals(50, flyweight.fixed5());
+        assertEquals(flyweight.flat().string2().limit() + 8, flyweight.limit());
+    }
+
+    static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
+    {
+        int pos = offset;
+        buffer.putLong(pos, 40);
+        buffer.putLong(pos += 8, 10);
+        buffer.putShort(pos += 8, (short) 20);
+        buffer.putByte(pos += 2, (byte) 6);
+        buffer.putStringWithoutLengthUtf8(pos += 1,  "value1");
+        buffer.putInt(pos += 6,  30);
+        buffer.putByte(pos += 4, (byte) 6);
+        buffer.putStringWithoutLengthUtf8(pos += 1,  "value2");
+        buffer.putLong(pos += 6,  50);
+
+        return pos - offset + Long.BYTES;
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            assertNull("at maxLimit " + maxLimit, nestedRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenIncomplete()
+    {
+        int size = setAllTestValues(buffer, 10);
+        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        {
+            try
+            {
+                nestedRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown for maxLimit " + maxLimit);
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldTryWrapAndReadAllValues() throws Exception
+    {
+        final int offset = 1;
+        setAllTestValues(buffer, offset);
+        assertNotNull(nestedRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesRead(nestedRO);
+    }
+
+    @Test
+    public void shouldWrapAndReadAllValues() throws Exception
+    {
+        int size = setAllTestValues(buffer, 10);
+        nestedRO.wrap(buffer, 10, buffer.capacity());
+        assertEquals(10 + size, nestedRO.limit());
+        assertAllTestValuesRead(nestedRO);
+    }
 
     @Test
     public void shouldDefaultValues() throws Exception

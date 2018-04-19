@@ -64,6 +64,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                     .addMethod(limitMethod())
                     .addMethod(sizeofMethod())
                     .addMethod(maxLimitMethod())
+                    .addMethod(tryWrapMethod())
                     .addMethod(wrapMethod())
                     .addMethod(checkLimitMethod())
                     .addMethod(equalsMethod())
@@ -160,6 +161,24 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                   .addModifiers(PUBLIC, FINAL)
                   .returns(int.class)
                   .addStatement("return limit() - offset()")
+                  .build();
+    }
+
+    private MethodSpec tryWrapMethod()
+    {
+        return methodBuilder("tryWrap")
+                  .addModifiers(PUBLIC)
+                  .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                  .addParameter(int.class, "offset")
+                  .addParameter(int.class, "maxLimit")
+                  .returns(thisName)
+                  .beginControlFlow("if (offset > maxLimit)")
+                  .addStatement("return null")
+                  .endControlFlow()
+                  .addStatement("this.buffer = buffer")
+                  .addStatement("this.offset = offset")
+                  .addStatement("this.maxLimit = maxLimit")
+                  .addStatement("return this")
                   .build();
     }
 

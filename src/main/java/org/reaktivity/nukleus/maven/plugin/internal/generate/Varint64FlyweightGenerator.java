@@ -52,6 +52,7 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
         return classBuilder.addField(fieldSize())
                            .addMethod(limitMethod())
                            .addMethod(valueMethod())
+                           .addMethod(tryWrapMethod())
                            .addMethod(wrapMethod())
                            .addMethod(toStringMethod())
                            .addMethod(length0Method())
@@ -98,6 +99,26 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
                 .build();
     }
 
+    private MethodSpec tryWrapMethod()
+    {
+        return methodBuilder("tryWrap")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "offset")
+                .addParameter(int.class, "maxLimit")
+                .returns(thisName)
+                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || maxLimit - offset  < 1)")
+                .addStatement("return null")
+                .endControlFlow()
+                .addStatement("size = length0()")
+                .beginControlFlow("if (limit() > maxLimit)")
+                .addStatement("return null")
+                .endControlFlow()
+                .addStatement("return this")
+                .build();
+    }
+
     private MethodSpec wrapMethod()
     {
         return methodBuilder("wrap")
@@ -108,6 +129,7 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
+                .addStatement("checkLimit(offset + 1, maxLimit)")
                 .addStatement("size = length0()")
                 .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("return this")
@@ -131,13 +153,13 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
                 .returns(int.class)
                 .addStatement("int pos = offset()")
                 .addStatement("byte b = (byte) 0")
-                .addStatement("final int maxPos = Math.max(pos + 10,  maxLimit())")
+                .addStatement("final int maxPos = Math.min(pos + 10,  maxLimit())")
                 .beginControlFlow("while (pos <= maxPos && ((b = buffer().getByte(pos)) & 0x80L) != 0)")
                 .addStatement("pos++")
                 .endControlFlow()
                 .addStatement("int size = 1 + pos - offset()")
-                .addStatement("int mask = size < 10 ? 0x80 : 0x02") // 64 % 7 = 1 bit allowed only
-                .beginControlFlow("if ((b & mask) != 0)") // must only contain one bit (64 - 7*9)
+                .addStatement("int mask = size < 10 ? 0x80 : 0x02") // 64 % 7 = 1 bit allowed only in 10th byte
+                .beginControlFlow("if ((b & mask) != 0 && size >= 10)")
                 .addStatement("throw new $T(String.format($S, offset()))", IllegalArgumentException.class,
                         "(varint64 value at offset %d exceeds 64 bits")
                 .endControlFlow()

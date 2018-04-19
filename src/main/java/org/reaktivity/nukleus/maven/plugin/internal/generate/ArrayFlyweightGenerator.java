@@ -75,6 +75,7 @@ public class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addMethod(constructor())
                 .addMethod(constructorByteOrder())
                 .addMethod(limitMethod())
+                .addMethod(tryWrapMethod())
                 .addMethod(wrapMethod())
                 .addMethod(forEachMethod())
                 .addMethod(anyMatchMethod())
@@ -136,6 +137,29 @@ public class ArrayFlyweightGenerator extends ParameterizedTypeSpecGenerator
                 .addModifiers(PUBLIC)
                 .returns(int.class)
                 .addStatement("return offset() + FIELD_SIZE_LENGTH + length0()")
+                .build();
+    }
+
+    private MethodSpec tryWrapMethod()
+    {
+        return methodBuilder("tryWrap")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "offset")
+                .addParameter(int.class, "maxLimit")
+                .returns(thisName)
+                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || offset + FIELD_SIZE_LENGTH > maxLimit)")
+                .addStatement("return null")
+                .endControlFlow()
+                .beginControlFlow("if (length0() < 0)")
+                .addStatement("throw new $T(String.format($S, offset))", IllegalArgumentException.class,
+                        "Invalid list at offset %d: size < 0")
+                .endControlFlow()
+                .beginControlFlow("if (limit() > maxLimit)")
+                .addStatement("return null")
+                .endControlFlow()
+                .addStatement("return this")
                 .build();
     }
 

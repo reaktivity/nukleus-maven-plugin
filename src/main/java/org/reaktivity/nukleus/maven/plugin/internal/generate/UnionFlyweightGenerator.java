@@ -58,6 +58,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
     private final MemberOffsetConstantGenerator memberOffsetConstant;
     private final KindAccessorGenerator kindAccessor;
     private final MemberAccessorGenerator memberAccessor;
+    private final TryWrapMethodGenerator tryWrapMethod;
     private final WrapMethodGenerator wrapMethod;
     private final LimitMethodGenerator limitMethod;
     private final ToStringMethodGenerator toStringMethod;
@@ -78,6 +79,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         this.memberField = new MemberFieldGenerator(unionName, builder);
         this.kindAccessor = new KindAccessorGenerator(unionName, builder);
         this.memberAccessor = new MemberAccessorGenerator(unionName, flyweightName.nestedClass("Visitor"), builder);
+        this.tryWrapMethod = new TryWrapMethodGenerator();
         this.wrapMethod = new WrapMethodGenerator();
         this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
@@ -98,6 +100,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         memberSizeConstant.addMember(name, type, size);
         memberField.addMember(name, type);
         memberAccessor.addMember(name, type, unsignedType);
+        tryWrapMethod.addMember(name, type, size, sizeName);
         wrapMethod.addMember(name, type, size, sizeName);
         limitMethod.addMember(name, type);
         toStringMethod.addMember(name, type);
@@ -115,7 +118,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         kindAccessor.build();
         memberAccessor.build();
 
-        return builder.addMethod(wrapMethod.generate())
+        return builder.addMethod(tryWrapMethod.generate())
+                      .addMethod(wrapMethod.generate())
                       .addMethod(limitMethod.generate())
                       .addMethod(toStringMethod.generate())
                       .addType(builderClass.generate())
@@ -429,6 +433,81 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                           .build();
         }
 
+    }
+
+    private final class TryWrapMethodGenerator extends MethodSpecGenerator
+    {
+        private TryWrapMethodGenerator()
+        {
+            super(methodBuilder("tryWrap")
+                    .addAnnotation(Override.class)
+                    .addModifiers(PUBLIC)
+                    .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                    .addParameter(int.class, "offset")
+                    .addParameter(int.class, "maxLimit")
+                    .returns(thisName)
+                    .addStatement("super.wrap(buffer, offset, maxLimit)")
+                    .beginControlFlow("switch (kind())"));
+        }
+
+        public TryWrapMethodGenerator addMember(
+            String name,
+            TypeName type,
+            int size,
+            String sizeName)
+        {
+            builder.beginControlFlow("case $L:", kind(name));
+
+            if (DIRECT_BUFFER_TYPE.equals(type))
+            {
+                addFailIfStatement("null == $LRO.tryWrap(buffer, offset + $L, $L)",
+                        name, offset(name), size(name));
+            }
+            else if (!type.isPrimitive())
+            {
+                if (size >= 0)
+                {
+                    addFailIfStatement("null == $LRO.tryWrap(buffer, offset + $L, offset + $L + $L)",
+                            name, offset(name), offset(name), size);
+                }
+                else if (sizeName != null)
+                {
+                    addFailIfStatement("null == $LRO.tryWrap(buffer, offset + $L, offset + $L + $L())",
+                            name, offset(name), offset(name), sizeName);
+                }
+                else
+                {
+                    addFailIfStatement("null == $LRO.tryWrap(buffer, offset + $L, maxLimit)", name, offset(name));
+                }
+            }
+
+            builder.addStatement("break").endControlFlow();
+
+            return this;
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            return builder.beginControlFlow("default:")
+                          .addStatement("break")
+                          .endControlFlow()
+                          .endControlFlow()
+                          .beginControlFlow("if (limit() > maxLimit)")
+                          .addStatement("return null")
+                          .endControlFlow()
+                          .addStatement("return this")
+                          .build();
+        }
+
+        private void addFailIfStatement(
+            String string,
+            Object... args)
+        {
+            builder.beginControlFlow("if (" + string + ")", args);
+            builder.addStatement("return null");
+            builder.endControlFlow();
+        }
     }
 
     private final class WrapMethodGenerator extends MethodSpecGenerator

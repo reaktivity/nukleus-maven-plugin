@@ -59,6 +59,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                             .addField(fieldSizeValueConstant())
                             .addMethod(limitMethod())
                             .addMethod(getMethod())
+                            .addMethod(tryWrapMethod())
                             .addMethod(wrapMethod())
                             .addMethod(toStringMethod())
                             .addType(builderClassBuilder.build())
@@ -86,7 +87,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return maxLimit() == offset() ? offset() : offset() + FIELD_SIZE_VALUE")
+                .addStatement("return offset() + FIELD_SIZE_VALUE")
                 .build();
     }
 
@@ -95,10 +96,26 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("get")
                 .addModifiers(PUBLIC)
                 .returns(enumTypeName)
-                .beginControlFlow("if (maxLimit() == offset())")
+                .beginControlFlow("if (-1 == buffer().getByte(offset() + FIELD_OFFSET_VALUE))")
                 .addStatement("return null")
                 .endControlFlow()
                 .addStatement("return $T.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE))", enumTypeName)
+                .build();
+    }
+
+    private MethodSpec tryWrapMethod()
+    {
+        return methodBuilder("tryWrap")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "offset")
+                .addParameter(int.class, "maxLimit")
+                .returns(thisName)
+                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)")
+                .addStatement("return null")
+                .endControlFlow()
+                .addStatement("return this")
                 .build();
     }
 

@@ -19,6 +19,8 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -44,6 +46,79 @@ public class FlatWithOctetsFWTest
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    @Test
+    public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
+    {
+        int offsetLengthOctets2 = Integer.BYTES + 10;
+        buffer.putShort(10 + offsetLengthOctets2, (short) 0);
+        int offsetString1 = offsetLengthOctets2 + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetLengthOctets3 = offsetString1 + Byte.BYTES;
+        buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
+        int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
+        buffer.putInt(10 + offsetLengthOctets4, 0);
+        for (int maxLimit=31; maxLimit < 10 + offsetLengthOctets4 + Integer.BYTES; maxLimit++)
+        {
+            assertNull(flatWithOctetsRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
+    {
+        int offsetLengthOctets2 = Integer.BYTES + 10;
+        buffer.putShort(10 + offsetLengthOctets2, (short) 0);
+        int offsetString1 = offsetLengthOctets2 + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetLengthOctets3 = offsetString1 + Byte.BYTES;
+        buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
+        int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
+        buffer.putInt(10 + offsetLengthOctets4, 0);
+        for (int maxLimit=10; maxLimit < 10 + offsetLengthOctets4 + Integer.BYTES; maxLimit++)
+        {
+            try
+            {
+                flatWithOctetsRO.wrap(buffer,  10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch(Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
+    {
+        int offsetLengthOctets2 = Integer.BYTES + 10;
+        buffer.putShort(10 + offsetLengthOctets2, (short) 0);
+        int offsetString1 = offsetLengthOctets2 + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetLengthOctets3 = offsetString1 + Byte.BYTES;
+        buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
+        int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
+        buffer.putInt(10 + offsetLengthOctets4, 0);
+        assertSame(flatWithOctetsRO, flatWithOctetsRO.tryWrap(buffer, 10, 10 + offsetLengthOctets4 + Integer.BYTES));
+    }
+
+    @Test
+    public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
+    {
+        int offsetLengthOctets2 = Integer.BYTES + 10;
+        buffer.putShort(10 + offsetLengthOctets2, (short) 0);
+        int offsetString1 = offsetLengthOctets2 + Short.BYTES;
+        buffer.putByte(10 + offsetString1, (byte) 0);
+        int offsetLengthOctets3 = offsetString1 + Byte.BYTES;
+        buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
+        int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
+        buffer.putInt(10 + offsetLengthOctets4, 0);
+        assertSame(flatWithOctetsRO, flatWithOctetsRO.wrap(buffer, 10, 10 + offsetLengthOctets4 + Integer.BYTES));
+    }
 
     @Test
     public void shouldDefaultValues() throws Exception
