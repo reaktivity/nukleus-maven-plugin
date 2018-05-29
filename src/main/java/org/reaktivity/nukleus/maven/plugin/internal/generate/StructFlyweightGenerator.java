@@ -2629,11 +2629,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.beginControlFlow("if (value == null)")
                             .addStatement("throw new IllegalArgumentException($S)",
                                     format("value cannot be null for field \"%s\" that does not default to null", name))
-                            .nextControlFlow("else")
+                            .endControlFlow()
                             .addStatement("$LRW.set(value)", name)
                             .addStatement("newLimit = $LRW.build().limit()", name)
-                            .addStatement("size$$ = newLimit - limit()")
-                            .endControlFlow();
+                            .addStatement("size$$ = newLimit - limit()");
                     }
 
                     if (isVarintType(sizeType))
