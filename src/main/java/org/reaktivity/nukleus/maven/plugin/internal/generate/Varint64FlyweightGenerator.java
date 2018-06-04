@@ -154,7 +154,7 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("int pos = offset()")
                 .addStatement("byte b = (byte) 0")
                 .addStatement("final int maxPos = Math.min(pos + 10,  maxLimit())")
-                .beginControlFlow("while (pos <= maxPos && ((b = buffer().getByte(pos)) & 0x80L) != 0)")
+                .beginControlFlow("while (pos < maxPos && ((b = buffer().getByte(pos)) & 0x80L) != 0)")
                 .addStatement("pos++")
                 .endControlFlow()
                 .addStatement("int size = 1 + pos - offset()")
