@@ -69,7 +69,7 @@ public class Varint32FWTest
         MutableDirectBuffer buffer = new UnsafeBuffer(new byte[2]);
         buffer.putByte(0, (byte) 0x81);
         buffer.putByte(1, (byte) 0x81);
-        assertNull(varint32RO.tryWrap(buffer, 0, 1));
+        assertNull(varint32RO.tryWrap(buffer, 0, buffer.capacity()));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
