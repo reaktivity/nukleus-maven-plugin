@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 The Reaktivity Project
+ * Copyright 2016-2018 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -65,7 +65,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 {
     private static final Set<String> RESERVED_METHOD_NAMES = new HashSet<>(Arrays.asList(new String[]
     {
-        "offset", "buffer", "limit", "sizeof", "maxLimit", "wrap", "checkLimit", "build"
+        "offset", "buffer", "limit", "sizeof", "maxLimit", "wrap", "checkLimit", "build", "rewrap"
     }));
 
     private static final ClassName INT_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfInt.class);
@@ -1454,6 +1454,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             memberMutator.build();
             return builder.addMethod(constructor())
                           .addMethod(wrapMethod.generate())
+                          .addMethod(rewrapMethod())
                           .addMethod(buildMethod())
                           .build();
         }
@@ -1484,6 +1485,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                           .addStatement("lastFieldSet = -1")
                           .addStatement("return super.build()")
                           .build();
+        }
+
+        private MethodSpec rewrapMethod()
+        {
+            return methodBuilder("rewrap")
+                    .addAnnotation(Override.class)
+                    .addModifiers(PUBLIC)
+                    .returns(thisName)
+                    .addStatement("super.rewrap()")
+                    .addStatement("return this")
+                    .build();
         }
 
         private static String appendMethodName(

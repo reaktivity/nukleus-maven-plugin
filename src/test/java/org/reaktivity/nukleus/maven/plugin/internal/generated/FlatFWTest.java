@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 The Reaktivity Project
+ * Copyright 2016-2018 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -118,6 +118,26 @@ public class FlatFWTest
         int offsetString2 = offsetString1 + Byte.BYTES + Integer.BYTES;
         buffer.putByte(10 + offsetString2, (byte) 0);
         assertSame(flatRO, flatRO.wrap(buffer, 10, 10 + offsetString2 + Byte.BYTES));
+    }
+
+    @Test
+    public void shouldRewrapAfterBuild()
+    {
+        flatRW.wrap(buffer, 0, 100)
+                .fixed1(10)
+                .string1("value1")
+                .string2("value2")
+                .build();
+
+        final FlatFW flat = flatRW.rewrap()
+                .fixed1(20)
+                .string1("value3")
+                .string2("value4")
+                .build();
+
+        assertSame(20L, flat.fixed1());
+        assertEquals("value3", flat.string1().asString());
+        assertEquals("value4", flat.string2().asString());
     }
 
     @Test

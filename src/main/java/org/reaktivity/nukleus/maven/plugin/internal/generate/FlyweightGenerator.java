@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2017 The Reaktivity Project
+ * Copyright 2016-2018 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -280,6 +280,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                     .addMethod(limitAccessor())
                     .addMethod(maxLimitAccessor())
                     .addMethod(buildMethod())
+                    .addMethod(rewrapMethod())
                     .addMethod(constructor())
                     .addMethod(flyweightAccessor())
                     .addMethod(bufferAccessor())
@@ -356,6 +357,16 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                       .returns(typeVarT)
                       .addStatement("flyweight.wrap(buffer, offset, limit)")
                       .addStatement("return flyweight")
+                      .build();
+        }
+
+        private MethodSpec rewrapMethod()
+        {
+            return methodBuilder("rewrap")
+                      .addModifiers(PUBLIC)
+                      .returns(thisName)
+                      .addStatement("this.limit = this.offset")
+                      .addStatement("return this")
                       .build();
         }
 
