@@ -260,11 +260,11 @@ public class FlatWithListFWTest
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
                .set("value1", UTF_8)
                .build();
-        builder.string1(value)
+        FlatWithListFW flatWithList = builder.string1(value)
                 .list1(b ->
                        { })
                .build();
-        flyweightRO.wrap(buffer,  0,  builder.limit());
+        flyweightRO.wrap(buffer,  0,  flatWithList.limit());
         assertEquals(10, flyweightRO.fixed1());
         assertEquals("value1", flyweightRO.string1().asString());
     }
