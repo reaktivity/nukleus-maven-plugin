@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.33</version>
+  <version>0.34</version>
   <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
@@ -140,7 +140,7 @@
         <configuration>
           <header>COPYRIGHT</header>
           <properties>
-            <copyrightYears>2016-2018</copyrightYears>
+            <copyrightYears>2016-2019</copyrightYears>
           </properties>
           <includes>
             <include>src/**</include>
@@ -168,8 +168,10 @@
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>3.0.0</version>
         <configuration>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          <excludes>**/generated/handcrafted/*</excludes>
+          <sourceDirectories>
+            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+            <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory>
+          </sourceDirectories>
         </configuration>
         <executions>
           <execution>
@@ -183,7 +185,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>8.3</version>
+            <version>8.18</version>
           </dependency>
         </dependencies>
       </plugin>

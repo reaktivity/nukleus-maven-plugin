@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2018 The Reaktivity Project
+ * Copyright 2016-2019 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -409,7 +409,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         {
             builder.beginControlFlow("case $L:", kind(name));
 
-            if (DIRECT_BUFFER_TYPE.equals(type))
+            if (DIRECT_BUFFER_TYPE.equals(type) || type.isPrimitive())
             {
                 builder.addStatement("return offset() + $L + $L", offset(name), size(name));
             }
