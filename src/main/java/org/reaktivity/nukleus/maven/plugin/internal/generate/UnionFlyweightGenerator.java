@@ -409,7 +409,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         {
             builder.beginControlFlow("case $L:", kind(name));
 
-            if (DIRECT_BUFFER_TYPE.equals(type))
+            if (DIRECT_BUFFER_TYPE.equals(type) || type.isPrimitive())
             {
                 builder.addStatement("return offset() + $L + $L", offset(name), size(name));
             }
