@@ -925,14 +925,15 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 String statement = String.format("buffer().%s(offset() + $L, value)", putterName);
 
                 CodeBlock.Builder code = CodeBlock.builder()
-                        .addStatement(statement, offset(name));
+                    .addStatement("kind($L)", kind(name))
+                    .addStatement(statement, offset(name));
 
                 if (nextType instanceof ParameterizedTypeName)
                 {
                     code.addStatement("$L(offset() + $L + $L)", nextName, offset(name), size(name));
-                    code.addStatement("limit(offset() + $L + $L)", offset(name), size(name));
                 }
 
+                code.addStatement("limit(offset() + $L + $L)", offset(name), size(name));
                 code.addStatement("return this");
 
                 builder.addMethod(methodBuilder(name)
