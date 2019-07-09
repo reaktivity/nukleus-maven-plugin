@@ -341,7 +341,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         Case_memberContext ctx)
     {
         caseBuilder = new AstCaseNode.Builder()
-                .value(Integer.parseInt(ctx.uint_literal().getText()));
+                .value(Integer.decode(ctx.uint_literal().getText()));
 
         super.visitCase_member(ctx);
 
