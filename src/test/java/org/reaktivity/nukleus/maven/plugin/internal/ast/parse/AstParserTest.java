@@ -24,12 +24,14 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusLexer;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
@@ -38,6 +40,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberC
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 
 public class AstParserTest
 {
@@ -211,6 +214,36 @@ public class AstParserTest
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Employee")
                 .supertype("common::Person")
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseUnionWithUint8Case()
+    {
+        NukleusParser parser = newParser("union Count switch (uint8) { case 0: uint8 width1; case 1: uint16 width2; }");
+        Union_typeContext ctx = parser.union_type();
+        AstUnionNode actual = new AstParser().visitUnion_type(ctx);
+
+        AstUnionNode expected = new AstUnionNode.Builder()
+                .name("Count")
+                .caseN(new AstCaseNode.Builder()
+                                      .value(0)
+                                      .member(new AstMemberNode.Builder()
+                                                               .name("width1")
+                                                               .type(AstType.UINT8)
+                                                               .unsignedType(AstType.INT32)
+                                                               .build())
+                                      .build())
+                .caseN(new AstCaseNode.Builder()
+                                       .value(1)
+                                       .member(new AstMemberNode.Builder()
+                                                                .name("width2")
+                                                                .type(AstType.UINT16)
+                                                                .unsignedType(AstType.INT32)
+                                                                .build())
+                                       .build())
                 .build();
 
         assertEquals(expected, actual);
