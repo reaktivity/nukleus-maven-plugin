@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2018 The Reaktivity Project
+ * Copyright 2016-2019 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -409,7 +409,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         {
             builder.beginControlFlow("case $L:", kind(name));
 
-            if (DIRECT_BUFFER_TYPE.equals(type))
+            if (DIRECT_BUFFER_TYPE.equals(type) || type.isPrimitive())
             {
                 builder.addStatement("return offset() + $L + $L", offset(name), size(name));
             }
@@ -925,14 +925,15 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 String statement = String.format("buffer().%s(offset() + $L, value)", putterName);
 
                 CodeBlock.Builder code = CodeBlock.builder()
-                        .addStatement(statement, offset(name));
+                    .addStatement("kind($L)", kind(name))
+                    .addStatement(statement, offset(name));
 
                 if (nextType instanceof ParameterizedTypeName)
                 {
                     code.addStatement("$L(offset() + $L + $L)", nextName, offset(name), size(name));
-                    code.addStatement("limit(offset() + $L + $L)", offset(name), size(name));
                 }
 
+                code.addStatement("limit(offset() + $L + $L)", offset(name), size(name));
                 code.addStatement("return this");
 
                 builder.addMethod(methodBuilder(name)

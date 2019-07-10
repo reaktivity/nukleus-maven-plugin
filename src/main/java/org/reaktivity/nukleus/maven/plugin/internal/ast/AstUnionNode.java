@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2018 The Reaktivity Project
+ * Copyright 2016-2019 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -25,7 +25,6 @@ import java.util.Objects;
 public final class AstUnionNode extends AstNode
 {
     private final String name;
-    private final String supertype;
     private final List<AstCaseNode> cases;
 
     @Override
@@ -40,11 +39,6 @@ public final class AstUnionNode extends AstNode
         return name;
     }
 
-    public String supertype()
-    {
-        return supertype;
-    }
-
     public List<AstCaseNode> cases()
     {
         return cases;
@@ -53,7 +47,7 @@ public final class AstUnionNode extends AstNode
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 11) ^ supertype.hashCode() << 7 ^ cases.hashCode();
+        return (name.hashCode() << 7) ^ cases.hashCode();
     }
 
     @Override
@@ -71,24 +65,20 @@ public final class AstUnionNode extends AstNode
 
         AstUnionNode that = (AstUnionNode)o;
         return Objects.equals(this.name, that.name) &&
-                Objects.equals(this.supertype, that.supertype) &&
                 Objects.equals(this.cases, that.cases);
     }
 
     private AstUnionNode(
         String name,
-        String supertype,
         List<AstCaseNode> cases)
     {
         this.name = requireNonNull(name);
-        this.supertype = supertype;
         this.cases = unmodifiableList(cases);
     }
 
     public static final class Builder extends AstNode.Builder<AstUnionNode>
     {
         private String name;
-        private String supertype;
         private List<AstCaseNode> cases;
 
         public Builder()
@@ -102,12 +92,6 @@ public final class AstUnionNode extends AstNode
             return this;
         }
 
-        public Builder supertype(String supertype)
-        {
-            this.supertype = supertype;
-            return this;
-        }
-
         public Builder caseN(AstCaseNode caseN)
         {
             this.cases.add(caseN);
@@ -117,7 +101,7 @@ public final class AstUnionNode extends AstNode
         @Override
         public AstUnionNode build()
         {
-            return new AstUnionNode(name, supertype, cases);
+            return new AstUnionNode(name, cases);
         }
     }
 }
