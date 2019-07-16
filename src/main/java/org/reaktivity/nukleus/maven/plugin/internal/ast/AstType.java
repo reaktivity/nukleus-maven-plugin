@@ -36,6 +36,7 @@ public final class AstType
     public static final AstType OCTETS = new AstType("octets");
     public static final AstType STRING = new AstType("string");
     public static final AstType STRING16 = new AstType("string16");
+    public static final AstType STRING32 = new AstType("string32");
 
     public static final AstType LIST = new AstType("list");
     public static final AstType ARRAY = new AstType("array");

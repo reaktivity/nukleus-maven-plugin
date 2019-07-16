@@ -379,7 +379,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 TypeName typeArgument = parameterizedType.typeArguments.get(0);
                 fieldBuilder.initializer("new $T(new $T())", type, typeArgument);
             }
-            else if (type instanceof ClassName && isString16Type((ClassName) type) && byteOrder == NETWORK)
+            else if (type instanceof ClassName && (isString16Type((ClassName) type) || isString32Type((ClassName) type))
+                && byteOrder == NETWORK)
             {
                 fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", type, ByteOrder.class);
             }
@@ -1717,7 +1718,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         ClassName classType = (ClassName) type;
                         TypeName builderType = classType.nestedClass("Builder");
 
-                        if (isString16Type(classType) && byteOrder == NETWORK)
+                        if ((isString16Type(classType) || isString32Type(classType)) && byteOrder == NETWORK)
                         {
                             builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
                                     .initializer("new $T($T.BIG_ENDIAN)", builderType, ByteOrder.class)
@@ -3052,7 +3053,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         ClassName classType)
     {
         String name = classType.simpleName();
-        return ("StringFW".equals(name) || isString16Type(classType));
+        return ("StringFW".equals(name) || isString16Type(classType) || isString32Type(classType));
     }
 
     private static boolean isString16Type(
@@ -3060,6 +3061,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     {
         String name = classType.simpleName();
         return "String16FW".equals(name);
+    }
+
+    private static boolean isString32Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String32FW".equals(name);
     }
 
     private static boolean isVarintType(
