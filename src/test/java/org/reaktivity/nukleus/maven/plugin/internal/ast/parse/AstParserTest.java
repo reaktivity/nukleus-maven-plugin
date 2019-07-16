@@ -249,6 +249,37 @@ public class AstParserTest
         assertEquals(expected, actual);
     }
 
+
+    @Test
+    public void shouldParseUnionWithUint8CaseUsingHexLiteral()
+    {
+        NukleusParser parser = newParser("union Count switch (uint8) { case 0x00: uint8 width1; case 0x01: uint16 width2; }");
+        Union_typeContext ctx = parser.union_type();
+        AstUnionNode actual = new AstParser().visitUnion_type(ctx);
+
+        AstUnionNode expected = new AstUnionNode.Builder()
+                .name("Count")
+                .caseN(new AstCaseNode.Builder()
+                                      .value(0)
+                                      .member(new AstMemberNode.Builder()
+                                                               .name("width1")
+                                                               .type(AstType.UINT8)
+                                                               .unsignedType(AstType.INT32)
+                                                               .build())
+                                      .build())
+                .caseN(new AstCaseNode.Builder()
+                                       .value(1)
+                                       .member(new AstMemberNode.Builder()
+                                                                .name("width2")
+                                                                .type(AstType.UINT16)
+                                                                .unsignedType(AstType.INT32)
+                                                                .build())
+                                       .build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
     @Test(expected = ParseCancellationException.class)
     public void shouldNotParseStructWithUnboundedListMemberNotLast()
     {
