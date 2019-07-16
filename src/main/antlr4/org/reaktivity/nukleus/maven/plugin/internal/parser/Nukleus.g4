@@ -68,6 +68,7 @@ base_type_spec
    | octets_type
    | string_type
    | string16_type
+   | string32_type
    ;
 
 constr_type_spec
@@ -265,6 +266,10 @@ string16_type
    | */ KW_STRING16
    ;
 
+string32_type
+   : KW_STRING32
+   ;
+
 int_literal
    : MINUS ? uint_literal
    ;
@@ -380,8 +385,14 @@ KW_STRING
    : 'string'
    ;
 
+
 KW_STRING16
    : 'string16'
+   ;
+
+
+KW_STRING32
+   : 'string32'
    ;
 
 

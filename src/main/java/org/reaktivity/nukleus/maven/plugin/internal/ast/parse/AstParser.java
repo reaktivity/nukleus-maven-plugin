@@ -53,6 +53,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionB
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_nameContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
@@ -466,6 +467,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.type(AstType.STRING16);
         return super.visitString16_type(ctx);
+    }
+
+    @Override
+    public AstNode visitString32_type(
+        String32_typeContext ctx)
+    {
+        memberBuilder.type(AstType.STRING32);
+        return super.visitString32_type(ctx);
     }
 
     @Override
