@@ -17,6 +17,8 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
 import static org.junit.Assert.assertEquals;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.INT32;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.dynamicType;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
@@ -75,6 +77,191 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseAbsoluteTypeReferences()
+    {
+        NukleusParser parser = newParser("scope outer { struct Outer { } scope inner { struct Inner { } struct " +
+            "Type { outer::inner::Inner inner; outer::Outer outer; } } }");
+        ScopeContext ctx = parser.scope();
+        AstScopeNode actual = new AstParser().visitScope(ctx);
+        AstScopeNode expected = new AstScopeNode.Builder()
+                .name("outer")
+                .struct(new AstStructNode.Builder()
+                                         .name("Outer")
+                                         .build())
+                .scope(new AstScopeNode.Builder()
+                                       .depth(1)
+                                       .name("inner")
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("Inner")
+                                                                .build())
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("Type")
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::inner::Inner"))
+                                                                                         .name("inner")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::Outer"))
+                                                                                         .name("outer")
+                                                                                         .build())
+                                                                .build())
+                                       .build())
+                .build();
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseRelativeTypeReferences()
+    {
+        NukleusParser parser = newParser("scope one { struct One { } enum OneEnum { VALUE } union OneUnion switch (uint8) " +
+            "{ case 0: uint8 width; } scope two { struct Two { } enum TwoEnum { VALUE } union TwoUnion switch (uint8) " +
+            "{ case 0: uint8 width; } struct Type { Two twoStruct; TwoEnum twoEnum; TwoUnion twoUnion; One oneStruct; OneEnum " +
+            "oneEnum; OneUnion oneUnion; } } }");
+        ScopeContext ctx = parser.scope();
+        AstScopeNode actual = new AstParser().visitScope(ctx);
+        AstScopeNode expected = new AstScopeNode.Builder()
+                .name("one")
+                .struct(new AstStructNode.Builder()
+                                         .name("One")
+                                         .build())
+                .enumeration(new AstEnumNode.Builder()
+                                            .name("OneEnum")
+                                            .value(new AstValueNode.Builder()
+                                                                   .ordinal(0)
+                                                                   .name("VALUE")
+                                                                   .build())
+                                            .build())
+                .union(new AstUnionNode.Builder()
+                                       .name("OneUnion")
+                                       .caseN(new AstCaseNode.Builder()
+                                                             .value(0)
+                                                             .member(new AstMemberNode.Builder()
+                                                                                      .name("width")
+                                                                                      .type(AstType.UINT8)
+                                                                                      .unsignedType(INT32)
+                                                                                      .build())
+                                                             .build())
+                                       .build())
+                .scope(new AstScopeNode.Builder()
+                                       .depth(1)
+                                       .name("two")
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("Two")
+                                                                .build())
+                                       .enumeration(new AstEnumNode.Builder()
+                                                                   .name("TwoEnum")
+                                                                   .value(new AstValueNode.Builder()
+                                                                                          .ordinal(0)
+                                                                                          .name("VALUE")
+                                                                                          .build())
+                                                                   .build())
+                                       .union(new AstUnionNode.Builder()
+                                                              .name("TwoUnion")
+                                                              .caseN(new AstCaseNode.Builder()
+                                                                                    .value(0)
+                                                                                    .member(new AstMemberNode.Builder()
+                                                                                                             .name("width")
+                                                                                                             .type(AstType.UINT8)
+                                                                                                             .unsignedType(INT32)
+                                                                                                             .build())
+                                                                                    .build())
+                                                                .build())
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("Type")
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("one::two::Two"))
+                                                                                         .name("twoStruct")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("one::two::TwoEnum"))
+                                                                                         .name("twoEnum")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("one::two::TwoUnion"))
+                                                                                         .name("twoUnion")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("one::One"))
+                                                                                         .name("oneStruct")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("one::OneEnum"))
+                                                                                         .name("oneEnum")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("one::OneUnion"))
+                                                                                         .name("oneUnion")
+                                                                                         .build())
+                                                                .build())
+                                       .build())
+                .build();
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseRelativeTypeReferencesWithMultipleScopes()
+    {
+        NukleusParser parser = newParser("scope outer { struct Outer { } scope inner { struct In { } " +
+            "struct Type1 { outer::inner::In absoluteInner; outer::Outer absoluteOuter; In relativeInner; Outer" +
+            " relativeOuter; } } scope inner2 { struct In { } struct Type2 { outer::inner2::In " +
+            "absoluteInner2Inner; In relativeInner2Inner; } } }");
+
+        ScopeContext ctx = parser.scope();
+        AstScopeNode actual = new AstParser().visitScope(ctx);
+        AstScopeNode expected = new AstScopeNode.Builder()
+                .name("outer")
+                .struct(new AstStructNode.Builder()
+                                         .name("Outer")
+                                         .build())
+                .scope(new AstScopeNode.Builder()
+                                       .depth(1)
+                                       .name("inner")
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("In")
+                                                                .build())
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("Type1")
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::inner::In"))
+                                                                                         .name("absoluteInner")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::Outer"))
+                                                                                         .name("absoluteOuter")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::inner::In"))
+                                                                                         .name("relativeInner")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::Outer"))
+                                                                                         .name("relativeOuter")
+                                                                                         .build())
+                                                                .build())
+                                       .build())
+                .scope(new AstScopeNode.Builder()
+                                       .depth(1)
+                                       .name("inner2")
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("In")
+                                                                .build())
+                                       .struct(new AstStructNode.Builder()
+                                                                .name("Type2")
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::inner2::In"))
+                                                                                         .name("absoluteInner2Inner")
+                                                                                         .build())
+                                                                .member(new AstMemberNode.Builder()
+                                                                                         .type(dynamicType("outer::inner2::In"))
+                                                                                         .name("relativeInner2Inner")
+                                                                                         .build())
+                                                                .build())
+                                       .build())
+                .build();
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseOptionByteOrderNetwork()
     {
         NukleusParser parser = newParser("option byteorder network;");
@@ -101,7 +288,7 @@ public class AstParserTest
                 .name("common")
                 .struct(new AstStructNode.Builder()
                     .name("Holder")
-                    .member(new AstMemberNode.Builder().type(AstType.INT32).name("value").byteOrder(NETWORK).build())
+                    .member(new AstMemberNode.Builder().type(INT32).name("value").byteOrder(NETWORK).build())
                     .build())
                 .build();
 
@@ -233,7 +420,7 @@ public class AstParserTest
                                       .member(new AstMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
-                                                               .unsignedType(AstType.INT32)
+                                                               .unsignedType(INT32)
                                                                .build())
                                       .build())
                 .caseN(new AstCaseNode.Builder()
@@ -241,7 +428,7 @@ public class AstParserTest
                                        .member(new AstMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
-                                                                .unsignedType(AstType.INT32)
+                                                                .unsignedType(INT32)
                                                                 .build())
                                        .build())
                 .build();
@@ -264,7 +451,7 @@ public class AstParserTest
                                       .member(new AstMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
-                                                               .unsignedType(AstType.INT32)
+                                                               .unsignedType(INT32)
                                                                .build())
                                       .build())
                 .caseN(new AstCaseNode.Builder()
@@ -272,7 +459,7 @@ public class AstParserTest
                                        .member(new AstMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
-                                                                .unsignedType(AstType.INT32)
+                                                                .unsignedType(INT32)
                                                                 .build())
                                        .build())
                 .build();
@@ -305,7 +492,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(AstType.INT32)
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(INT32)
                         .name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
@@ -456,7 +643,7 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT8)
-                .unsignedType(AstType.INT32)
+                .unsignedType(INT32)
                 .name("field")
                 .build();
 
@@ -472,7 +659,7 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT8)
-                .unsignedType(AstType.INT32)
+                .unsignedType(INT32)
                 .name("field")
                 .defaultValue(12)
                 .build();
@@ -496,7 +683,7 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT16)
-                .unsignedType(AstType.INT32)
+                .unsignedType(INT32)
                 .name("field")
                 .build();
 
@@ -512,7 +699,7 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT16)
-                .unsignedType(AstType.INT32)
+                .unsignedType(INT32)
                 .name("field")
                 .size(10)
                 .build();
@@ -529,7 +716,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(AstType.INT32)
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(INT32)
                         .name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
                         .sizeName("size").name("field").build())
@@ -549,7 +736,7 @@ public class AstParserTest
                 .name("arrayField")
                 .member(new AstMemberNode.Builder().type(AstType.INT8)
                         .name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.INT32).sizeName("size")
+                .member(new AstMemberNode.Builder().type(INT32).sizeName("size")
                         .name("field").defaultToNull().build())
                 .build();
 
@@ -567,7 +754,7 @@ public class AstParserTest
                 .name("arrayField")
                 .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
                         .name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.INT32).sizeName("size")
+                .member(new AstMemberNode.Builder().type(INT32).sizeName("size")
                         .name("field").defaultToNull().build())
                 .build();
 
