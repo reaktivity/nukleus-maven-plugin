@@ -76,7 +76,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_
 public final class AstParser extends NukleusBaseVisitor<AstNode>
 {
     private final Deque<AstScopeNode.Builder> scopeBuilders;
-    private final Map<String, String> scopeNameMap;
+    private final Map<String, String> qualifiedNamesByLocalName;
 
     private AstSpecificationNode.Builder specificationBuilder;
     private AstEnumNode.Builder enumBuilder;
@@ -90,7 +90,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstParser()
     {
         this.scopeBuilders = new LinkedList<>();
-        this.scopeNameMap = new HashMap<>();
+        this.qualifiedNamesByLocalName = new HashMap<>();
         this.byteOrder = NATIVE;
     }
 
@@ -117,13 +117,12 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
         if (scopeBuilders.peekLast() != null)
         {
-            String qualifiedName = new StringBuilder().append(scopeNameMap.get(scopeBuilders.peekLast().name()))
-                .append("::").append(name).toString();
-            scopeNameMap.put(name, qualifiedName);
+            String qualifiedName = String.format("%s::%s", qualifiedNamesByLocalName.get(scopeBuilders.peekLast().name()), name);
+            qualifiedNamesByLocalName.put(name, qualifiedName);
         }
         else
         {
-            scopeNameMap.put(name, name);
+            qualifiedNamesByLocalName.put(name, name);
         }
 
         AstByteOrder byteOrder = this.byteOrder;
@@ -178,7 +177,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         enumBuilder = new AstEnumNode.Builder();
         enumBuilder.name(ctx.ID().getText());
 
-        putAbsoluteName(ctx.ID().getText());
+        putQualifiedName(ctx.ID().getText());
 
         super.visitEnum_type(ctx);
 
@@ -219,7 +218,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         structBuilder = new AstStructNode.Builder();
         structBuilder.name(ctx.ID().getText());
 
-        putAbsoluteName(ctx.ID().getText());
+        putQualifiedName(ctx.ID().getText());
 
         Scoped_nameContext scopedName = ctx.scoped_name();
         if (scopedName != null)
@@ -342,7 +341,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         unionBuilder = new AstUnionNode.Builder();
         unionBuilder.name(ctx.ID().getText());
 
-        putAbsoluteName(ctx.ID().getText());
+        putQualifiedName(ctx.ID().getText());
 
         super.visitUnion_type(ctx);
 
@@ -532,9 +531,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             {
                 memberBuilder.type(AstType.dynamicType(typeName));
             }
-            else if (scopeNameMap.containsKey(typeName))
+            else if (qualifiedNamesByLocalName.containsKey(typeName))
             {
-                memberBuilder.type(AstType.dynamicType(scopeNameMap.get(typeName)));
+                String qualifiedName = qualifiedNamesByLocalName.get(typeName);
+                memberBuilder.type(AstType.dynamicType(qualifiedName));
             }
         }
         return super.visitScoped_name(ctx);
@@ -551,14 +551,13 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         return super.visitType_id(ctx);
     }
 
-    private void putAbsoluteName(
+    private void putQualifiedName(
         String name)
     {
         if (scopeBuilders.peekLast() != null)
         {
-            String absoluteName = new StringBuilder().append(scopeNameMap.get(scopeBuilders.peekLast().name()))
-                .append("::").append(name).toString();
-            scopeNameMap.put(name, absoluteName);
+            String qualifiedName = String.format("%s::%s", qualifiedNamesByLocalName.get(scopeBuilders.peekLast().name()), name);
+            qualifiedNamesByLocalName.put(name, qualifiedName);
         }
     }
 
