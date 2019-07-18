@@ -96,9 +96,6 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("get")
                 .addModifiers(PUBLIC)
                 .returns(enumTypeName)
-                .beginControlFlow("if (-1 == buffer().getByte(offset() + FIELD_OFFSET_VALUE))")
-                .addStatement("return null")
-                .endControlFlow()
                 .addStatement("return $T.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE))", enumTypeName)
                 .build();
     }
@@ -229,7 +226,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("int offset = offset()")
                     .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement("buffer.putByte(offset, (byte) value.ordinal())")
+                    .addStatement("buffer.putByte(offset, (byte) value.value())")
                     .addStatement("limit(newLimit)")
                     .addStatement("valueSet = true")
                     .addStatement("return this")

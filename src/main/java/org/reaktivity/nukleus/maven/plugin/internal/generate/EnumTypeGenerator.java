@@ -16,16 +16,21 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static com.squareup.javapoet.TypeName.INT;
 import static com.squareup.javapoet.TypeSpec.enumBuilder;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+
+import javax.lang.model.element.Modifier;
 
 public final class EnumTypeGenerator extends ClassSpecGenerator
 {
@@ -40,14 +45,24 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
 
         this.builder = enumBuilder(enumTypeName).addModifiers(PUBLIC);
         this.nameConstant = new NameConstantGenerator(enumTypeName, builder);
+        this.builder.addField(INT, "value", Modifier.PRIVATE, Modifier.FINAL);
+        this.builder.addMethod(MethodSpec.constructorBuilder()
+                        .addParameter(INT, "value")
+                        .addStatement("this.$L = $L", "value", "value")
+                        .build())
+                    .addMethod(MethodSpec.methodBuilder("value")
+                        .addModifiers(Modifier.PUBLIC)
+                        .returns(int.class)
+                        .addStatement("return $L", "value")
+                        .build());
         this.valueOfMethod = new ValueOfMethodGenerator(enumTypeName);
     }
 
     public TypeSpecGenerator<ClassName> addValue(
-        String name)
+        String name, int value)
     {
-        nameConstant.addValue(name);
-        valueOfMethod.addValue(name);
+        nameConstant.addValue(name, value);
+        valueOfMethod.addValue(name, value);
 
         return this;
     }
@@ -71,9 +86,9 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         }
 
         public NameConstantGenerator addValue(
-            String name)
+            String name, int value)
         {
-            builder.addEnumConstant(name);
+            builder.addEnumConstant(name, TypeSpec.anonymousClassBuilder("$L", value).build());
             return this;
         }
     }
@@ -81,37 +96,40 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     private final class ValueOfMethodGenerator extends MethodSpecGenerator
     {
         private final List<String> values = new LinkedList<>();
+        private final Map<String, Integer> valueAssociatedWithConstant = new HashMap<>();
 
         private ValueOfMethodGenerator(
             ClassName enumName)
         {
             super(methodBuilder("valueOf")
                     .addModifiers(PUBLIC, STATIC)
-                    .addParameter(int.class, "ordinal")
+                    .addParameter(int.class, "value")
                     .returns(enumName));
         }
 
         public ValueOfMethodGenerator addValue(
-            String name)
+            String name, int value)
         {
             values.add(name);
+            valueAssociatedWithConstant.put(name, value);
             return this;
         }
 
         @Override
         public MethodSpec generate()
         {
-            builder.beginControlFlow("switch ($L)", "ordinal");
+            builder.beginControlFlow("switch ($L)", "value");
 
             for (int index=0; index < values.size(); index++)
             {
-                builder.beginControlFlow("case $L:", index)
-                       .addStatement("return $N", values.get(index))
+                String enumConstant = values.get(index);
+                builder.beginControlFlow("case $L:", valueAssociatedWithConstant.get(enumConstant))
+                       .addStatement("return $N", enumConstant)
                        .endControlFlow();
             }
 
             builder.endControlFlow()
-                   .addStatement("throw new IllegalArgumentException(String.format($S, ordinal))",
+                   .addStatement("throw new IllegalArgumentException(String.format($S, value))",
                            "Unrecognized value: %d");
 
             return builder.build();

@@ -86,6 +86,7 @@ public final class AstEnumNode extends AstNode
     {
         private String name;
         private List<AstValueNode> values;
+        private boolean explicitType;
 
         public Builder()
         {
@@ -104,6 +105,18 @@ public final class AstEnumNode extends AstNode
         {
             this.values.add(value);
             return this;
+        }
+
+        public Builder explicitType(
+            boolean explicitType)
+        {
+            this.explicitType = explicitType;
+            return this;
+        }
+
+        public boolean explicitType()
+        {
+            return explicitType;
         }
 
         public int size()

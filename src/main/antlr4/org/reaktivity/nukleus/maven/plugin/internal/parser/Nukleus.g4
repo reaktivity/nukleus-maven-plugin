@@ -155,7 +155,7 @@ unbounded_octets_type
    ;
 
 enum_type
-   : KW_ENUM ID LEFT_BRACE enum_values RIGHT_BRACE
+   : KW_ENUM ID (LEFT_BRACKET KW_UINT8 RIGHT_BRACKET)? LEFT_BRACE enum_values RIGHT_BRACE
    ;
 
 enum_values
@@ -171,7 +171,7 @@ enum_value_terminal
    ;
 
 enum_value
-   : ID
+   : ID (LEFT_BRACKET uint_literal RIGHT_BRACKET)?
    ;
 
 struct_type

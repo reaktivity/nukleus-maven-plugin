@@ -130,6 +130,13 @@ scope test
             SPRING,
             FORWARD
         }
+
+        enum Number (uint8)
+        {
+            ONE (1),
+            TWO (2),
+            THREE (3)
+        }
         
         struct PotentialNameConflicts
         {

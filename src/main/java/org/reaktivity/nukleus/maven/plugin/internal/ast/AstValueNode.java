@@ -22,14 +22,14 @@ import java.util.Objects;
 public final class AstValueNode extends AstNode
 {
     private final String name;
-    private final int ordinal;
+    private final int value;
 
     private AstValueNode(
         String name,
-        int ordinal)
+        int value)
     {
         this.name = requireNonNull(name);
-        this.ordinal = ordinal;
+        this.value = value;
     }
 
     @Override
@@ -44,15 +44,15 @@ public final class AstValueNode extends AstNode
         return name;
     }
 
-    public int size()
+    public int value()
     {
-        return ordinal;
+        return value;
     }
 
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 3) ^ ordinal;
+        return (name.hashCode() << 3) ^ value;
     }
 
     @Override
@@ -69,20 +69,20 @@ public final class AstValueNode extends AstNode
         }
 
         AstValueNode that = (AstValueNode)o;
-        return this.ordinal == that.ordinal &&
+        return this.value == that.value &&
                 Objects.equals(this.name, that.name);
     }
 
     @Override
     public String toString()
     {
-        return String.format("VALUE [name=%s, ordinal=%d]", name, ordinal);
+        return String.format("VALUE [name=%s, value=%d]", name, value);
     }
 
     public static final class Builder extends AstNode.Builder<AstValueNode>
     {
         private String name;
-        private int ordinal;
+        private int value;
 
         public Builder name(String name)
         {
@@ -90,16 +90,16 @@ public final class AstValueNode extends AstNode
             return this;
         }
 
-        public Builder ordinal(int ordinal)
+        public Builder value(int value)
         {
-            this.ordinal = ordinal;
+            this.value = value;
             return this;
         }
 
         @Override
         public AstValueNode build()
         {
-            return new AstValueNode(name, ordinal);
+            return new AstValueNode(name, value);
         }
     }
 }
