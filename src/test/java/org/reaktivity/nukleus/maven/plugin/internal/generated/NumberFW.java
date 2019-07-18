@@ -34,10 +34,6 @@ public final class NumberFW extends Flyweight
 
     public Number get()
     {
-        if (-1 == buffer().getByte(offset() + FIELD_OFFSET_VALUE))
-        {
-            return null;
-        }
         return Number.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE));
     }
 

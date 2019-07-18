@@ -113,24 +113,6 @@ public class NumberFWTest
         assertAllTestValuesRead(flyweightRO);
     }
 
-    @Test
-    public void shouldTryWrapAndReadNullValue() throws Exception
-    {
-        final int offset = 12;
-        buffer.putByte(offset,  (byte) -1);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertNull(flyweightRO.get());
-    }
-
-    @Test
-    public void shouldWrapAndReadNullValue() throws Exception
-    {
-        final int offset = 12;
-        buffer.putByte(offset,  (byte) -1);
-        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
-        assertNull(flyweightRO.get());
-    }
-
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
