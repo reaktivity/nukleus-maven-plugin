@@ -23,7 +23,7 @@ scope test
         {
             uint64 fixed1;
         }
-    
+
         struct Flat extends test::inner::FlatParent [0x10000001]
         {
             uint16 fixed2 = 222;
@@ -31,14 +31,14 @@ scope test
             int32 fixed3 = 333;
             string string2;
         }
-    
+
         struct Nested
         {
             uint64 fixed4 = 444;
             test::inner::Flat flat;
             int64 fixed5;
         }
-    
+
         struct FlatWithList
         {
             uint64 fixed1 = 111;
@@ -46,7 +46,7 @@ scope test
             list<string> list1;
             int32 fixed2 = 5;
         }
-    
+
         struct FlatWithOctets
         {
             uint32 fixed1 = 11;
@@ -60,21 +60,21 @@ scope test
             octets[lengthOctets4] octets4 = null;
             octets extension;
         }
-        
+
         struct OctetsDefaultedNoAnchor
         {
             int32 length;
             octets[length] payload = null;
             octets extension;
         }
-        
+
         union UnionOctets switch (uint8)
         {
             case 1: octets[4] octets4;
             case 2: octets[16] octets16;
             case 3: string string1;
         }
-    
+
         struct Integers
         {
             uint8  unsigned8  = 0xFF;
@@ -88,7 +88,7 @@ scope test
             int64 signed64 = -64;
             varint64 variable64 = -234;
         }
-    
+
         struct IntegerFixedArrays
         {
             uint8[1]  uint8Array;
@@ -101,7 +101,7 @@ scope test
             int32[3] int32Array;
             int64[4] int64Array;
         }
-    
+
         struct IntegerVariableArrays
         {
             uint8  fixed1 = 0;
@@ -117,7 +117,7 @@ scope test
             int16 lengthInt16;
             int32[lengthInt16] arrayWithInt16Size = null;
         }
-    
+
         struct NestedAllDefaulting
         {
             uint8 fixed1 = 11;
@@ -137,27 +137,27 @@ scope test
             TWO (2),
             THREE (3)
         }
-        
+
         struct PotentialNameConflicts
         {
            string value;
            int32 newLimit;
            string buffer;
-           octets[10] offset; 
+           octets[10] offset;
            string limit;
         }
-        
+
         struct ContiguousSizeFields
         {
-        	    int8 length1;
-        	    int8 length2;
-        	    int8[length1] array1 = null;
-        	    int8[length2] array2 = null;
-        	    string string1;
-        	    int8 length3;
-        	    int8 length4;
-        	    int8[length3] array3 = null;
-        	    int8[length4] array4 = null;
+            int8 length1;
+            int8 length2;
+            int8[length1] array1 = null;
+            int8[length2] array2 = null;
+            string string1;
+            int8 length3;
+            int8 length4;
+            int8[length3] array3 = null;
+            int8[length4] array4 = null;
         }
 
     }

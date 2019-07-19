@@ -53,7 +53,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     }
 
     public TypeSpecGenerator<ClassName> addValue(
-        String name, Integer value)
+        String name,
+        Integer value)
     {
         nameConstant.addValue(name, value);
         valueOfMethod.addValue(name, value);
@@ -110,7 +111,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     private final class ValueOfMethodGenerator extends MethodSpecGenerator
     {
         private final List<String> values = new LinkedList<>();
-        private final Map<String, Integer> valueAssociatedWithConstant = new HashMap<>();
+        private final Map<String, Integer> valueByConstantName = new HashMap<>();
+        final String discriminant = valueType == null ? "ordinal" : "value";
 
         private ValueOfMethodGenerator(
             ClassName enumName)
@@ -121,12 +123,13 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         }
 
         public ValueOfMethodGenerator addValue(
-            String name, Integer value)
+            String name,
+            Integer value)
         {
             values.add(name);
             if (value != null)
             {
-                valueAssociatedWithConstant.put(name, value);
+                valueByConstantName.put(name, value);
             }
             return this;
         }
@@ -134,23 +137,21 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            builder.addParameter(int.class, valueType == null ? "ordinal" : "value");
-            builder.beginControlFlow("switch ($L)", valueType == null ? "ordinal" : "value");
+            builder.addParameter(int.class, discriminant);
+            builder.beginControlFlow("switch ($L)", discriminant);
 
             for (int index=0; index < values.size(); index++)
             {
                 String enumConstant = values.get(index);
-                int kind = valueAssociatedWithConstant.get(enumConstant) == null ? index :
-                    valueAssociatedWithConstant.get(enumConstant);
+                int kind = valueByConstantName.get(enumConstant) == null ? index :
+                    valueByConstantName.get(enumConstant);
                 builder.beginControlFlow("case $L:", kind)
                        .addStatement("return $N", enumConstant)
                        .endControlFlow();
             }
 
-            builder.endControlFlow().addStatement(valueType == null ?
-                "throw new IllegalArgumentException(String.format($S, ordinal))" :
-                "throw new IllegalArgumentException(String.format($S, value))",
-                valueType == null ? "Unrecognized ordinal: %d" : "Unrecognized value: %d");
+            builder.endControlFlow().addStatement(String.format("throw new IllegalArgumentException(String.format($S, %s))",
+                discriminant), String.format("Unrecognized %s: %%d", discriminant));
 
             return builder.build();
         }
