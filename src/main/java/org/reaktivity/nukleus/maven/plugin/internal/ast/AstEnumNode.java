@@ -26,6 +26,7 @@ public final class AstEnumNode extends AstNode
 {
     private final String name;
     private final List<AstValueNode> values;
+    private final AstType valueType;
 
     @Override
     public <R> R accept(
@@ -42,6 +43,11 @@ public final class AstEnumNode extends AstNode
     public List<AstValueNode> values()
     {
         return values;
+    }
+
+    public AstType valueType()
+    {
+        return valueType;
     }
 
     @Override
@@ -76,17 +82,19 @@ public final class AstEnumNode extends AstNode
 
     private AstEnumNode(
         String name,
-        List<AstValueNode> values)
+        List<AstValueNode> values,
+        AstType valueType)
     {
         this.name = requireNonNull(name);
         this.values = unmodifiableList(values);
+        this.valueType = valueType;
     }
 
     public static final class Builder extends AstNode.Builder<AstEnumNode>
     {
         private String name;
         private List<AstValueNode> values;
-        private boolean explicitType;
+        private AstType valueType;
 
         public Builder()
         {
@@ -107,16 +115,16 @@ public final class AstEnumNode extends AstNode
             return this;
         }
 
-        public Builder explicitType(
-            boolean explicitType)
+        public Builder valueType(
+            AstType valueType)
         {
-            this.explicitType = explicitType;
+            this.valueType = valueType;
             return this;
         }
 
-        public boolean explicitType()
+        public AstType valueType()
         {
-            return explicitType;
+            return valueType;
         }
 
         public int size()
@@ -127,7 +135,7 @@ public final class AstEnumNode extends AstNode
         @Override
         public AstEnumNode build()
         {
-            return new AstEnumNode(name, values);
+            return new AstEnumNode(name, values, valueType);
         }
     }
 }

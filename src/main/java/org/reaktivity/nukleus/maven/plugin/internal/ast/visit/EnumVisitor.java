@@ -60,10 +60,7 @@ public final class EnumVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
     public Collection<TypeSpecGenerator<?>> visitValue(
         AstValueNode valueNode)
     {
-        String valueName = valueNode.name();
-        int value = valueNode.value();
-
-        typeGenerator.addValue(valueName, value);
+        typeGenerator.addValue(valueNode.name(), valueNode.value());
 
         return defaultResult();
     }

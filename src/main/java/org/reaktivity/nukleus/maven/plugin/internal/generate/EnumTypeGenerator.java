@@ -29,6 +29,7 @@ import java.util.Map;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
 import javax.lang.model.element.Modifier;
 
@@ -37,29 +38,22 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     private final TypeSpec.Builder builder;
     private final NameConstantGenerator nameConstant;
     private final ValueOfMethodGenerator valueOfMethod;
+    private final AstType valueType;
 
     public EnumTypeGenerator(
-        ClassName enumTypeName)
+        ClassName enumTypeName,
+        AstType valueType)
     {
         super(enumTypeName);
 
         this.builder = enumBuilder(enumTypeName).addModifiers(PUBLIC);
         this.nameConstant = new NameConstantGenerator(enumTypeName, builder);
-        this.builder.addField(INT, "value", Modifier.PRIVATE, Modifier.FINAL);
-        this.builder.addMethod(MethodSpec.constructorBuilder()
-                        .addParameter(INT, "value")
-                        .addStatement("this.$L = $L", "value", "value")
-                        .build())
-                    .addMethod(MethodSpec.methodBuilder("value")
-                        .addModifiers(Modifier.PUBLIC)
-                        .returns(int.class)
-                        .addStatement("return $L", "value")
-                        .build());
         this.valueOfMethod = new ValueOfMethodGenerator(enumTypeName);
+        this.valueType = valueType;
     }
 
     public TypeSpecGenerator<ClassName> addValue(
-        String name, int value)
+        String name, Integer value)
     {
         nameConstant.addValue(name, value);
         valueOfMethod.addValue(name, value);
@@ -71,6 +65,19 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         nameConstant.build();
+        if (valueType != null)
+        {
+            builder.addField(INT, "value", Modifier.PRIVATE, Modifier.FINAL);
+            builder.addMethod(MethodSpec.constructorBuilder()
+                       .addParameter(INT, "value")
+                       .addStatement("this.$L = $L", "value", "value")
+                       .build())
+                   .addMethod(MethodSpec.methodBuilder("value")
+                       .addModifiers(Modifier.PUBLIC)
+                       .returns(int.class)
+                       .addStatement("return $L", "value")
+                       .build());
+        }
 
         return builder.addMethod(valueOfMethod.generate())
                       .build();
@@ -86,9 +93,16 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         }
 
         public NameConstantGenerator addValue(
-            String name, int value)
+            String name, Integer value)
         {
-            builder.addEnumConstant(name, TypeSpec.anonymousClassBuilder("$L", value).build());
+            if (value == null)
+            {
+                builder.addEnumConstant(name);
+            }
+            else
+            {
+                builder.addEnumConstant(name, TypeSpec.anonymousClassBuilder("$L", value).build());
+            }
             return this;
         }
     }
@@ -103,34 +117,40 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         {
             super(methodBuilder("valueOf")
                     .addModifiers(PUBLIC, STATIC)
-                    .addParameter(int.class, "value")
                     .returns(enumName));
         }
 
         public ValueOfMethodGenerator addValue(
-            String name, int value)
+            String name, Integer value)
         {
             values.add(name);
-            valueAssociatedWithConstant.put(name, value);
+            if (value != null)
+            {
+                valueAssociatedWithConstant.put(name, value);
+            }
             return this;
         }
 
         @Override
         public MethodSpec generate()
         {
-            builder.beginControlFlow("switch ($L)", "value");
+            builder.addParameter(int.class, valueType == null ? "ordinal" : "value");
+            builder.beginControlFlow("switch ($L)", valueType == null ? "ordinal" : "value");
 
             for (int index=0; index < values.size(); index++)
             {
                 String enumConstant = values.get(index);
-                builder.beginControlFlow("case $L:", valueAssociatedWithConstant.get(enumConstant))
+                int kind = valueAssociatedWithConstant.get(enumConstant) == null ? index :
+                    valueAssociatedWithConstant.get(enumConstant);
+                builder.beginControlFlow("case $L:", kind)
                        .addStatement("return $N", enumConstant)
                        .endControlFlow();
             }
 
-            builder.endControlFlow()
-                   .addStatement("throw new IllegalArgumentException(String.format($S, value))",
-                           "Unrecognized value: %d");
+            builder.endControlFlow().addStatement(valueType == null ?
+                "throw new IllegalArgumentException(String.format($S, ordinal))" :
+                "throw new IllegalArgumentException(String.format($S, value))",
+                valueType == null ? "Unrecognized ordinal: %d" : "Unrecognized value: %d");
 
             return builder.build();
         }

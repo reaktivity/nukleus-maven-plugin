@@ -22,13 +22,16 @@ import java.util.Objects;
 public final class AstValueNode extends AstNode
 {
     private final String name;
-    private final int value;
+    private final int ordinal;
+    private final Integer value;
 
     private AstValueNode(
         String name,
-        int value)
+        int ordinal,
+        Integer value)
     {
         this.name = requireNonNull(name);
+        this.ordinal = ordinal;
         this.value = value;
     }
 
@@ -44,7 +47,12 @@ public final class AstValueNode extends AstNode
         return name;
     }
 
-    public int value()
+    public int size()
+    {
+        return ordinal;
+    }
+
+    public Integer value()
     {
         return value;
     }
@@ -52,7 +60,7 @@ public final class AstValueNode extends AstNode
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 3) ^ value;
+        return (name.hashCode() << 3) ^ ordinal;
     }
 
     @Override
@@ -69,20 +77,21 @@ public final class AstValueNode extends AstNode
         }
 
         AstValueNode that = (AstValueNode)o;
-        return this.value == that.value &&
+        return this.ordinal == that.ordinal &&
                 Objects.equals(this.name, that.name);
     }
 
     @Override
     public String toString()
     {
-        return String.format("VALUE [name=%s, value=%d]", name, value);
+        return String.format("VALUE [name=%s, ordinal=%d, value=%d]", name, ordinal, value);
     }
 
     public static final class Builder extends AstNode.Builder<AstValueNode>
     {
         private String name;
-        private int value;
+        private int ordinal;
+        private Integer value;
 
         public Builder name(String name)
         {
@@ -90,7 +99,13 @@ public final class AstValueNode extends AstNode
             return this;
         }
 
-        public Builder value(int value)
+        public Builder ordinal(int ordinal)
+        {
+            this.ordinal = ordinal;
+            return this;
+        }
+
+        public Builder value(Integer value)
         {
             this.value = value;
             return this;
@@ -99,7 +114,7 @@ public final class AstValueNode extends AstNode
         @Override
         public AstValueNode build()
         {
-            return new AstValueNode(name, value);
+            return new AstValueNode(name, ordinal, value);
         }
     }
 }

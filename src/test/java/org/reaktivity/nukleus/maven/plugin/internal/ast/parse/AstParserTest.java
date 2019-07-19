@@ -127,7 +127,7 @@ public class AstParserTest
                 .enumeration(new AstEnumNode.Builder()
                                             .name("OneEnum")
                                             .value(new AstValueNode.Builder()
-                                                                   .value(0)
+                                                                   .ordinal(0)
                                                                    .name("VALUE")
                                                                    .build())
                                             .build())
@@ -151,7 +151,7 @@ public class AstParserTest
                                        .enumeration(new AstEnumNode.Builder()
                                                                    .name("TwoEnum")
                                                                    .value(new AstValueNode.Builder()
-                                                                                          .value(0)
+                                                                                          .ordinal(0)
                                                                                           .name("VALUE")
                                                                                           .build())
                                                                    .build())
@@ -304,10 +304,10 @@ public class AstParserTest
 
         AstEnumNode expected = new AstEnumNode.Builder()
                 .name("Coin")
-                .value(new AstValueNode.Builder().value(0).name("PENNY").build())
-                .value(new AstValueNode.Builder().value(1).name("NICKLE").build())
-                .value(new AstValueNode.Builder().value(2).name("DIME").build())
-                .value(new AstValueNode.Builder().value(3).name("QUARTER").build())
+                .value(new AstValueNode.Builder().ordinal(0).name("PENNY").build())
+                .value(new AstValueNode.Builder().ordinal(1).name("NICKLE").build())
+                .value(new AstValueNode.Builder().ordinal(2).name("DIME").build())
+                .value(new AstValueNode.Builder().ordinal(3).name("QUARTER").build())
                 .build();
 
         assertEquals(expected, actual);

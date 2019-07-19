@@ -33,6 +33,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
 public final class EnumFlyweightGenerator extends ClassSpecGenerator
 {
@@ -43,13 +44,15 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
     public EnumFlyweightGenerator(
         ClassName enumName,
         ClassName flyweightName,
-        ClassName enumTypeName)
+        ClassName enumTypeName,
+        AstType valueType)
     {
         super(enumName);
 
         this.enumTypeName = enumTypeName;
         this.classBuilder = classBuilder(thisName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName);
+        this.builderClassBuilder =
+            new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName, valueType);
     }
 
     @Override
@@ -147,11 +150,13 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         private final ClassName enumTypeName;
         private final ClassName classType;
         private final ClassName enumName;
+        private final AstType valueType;
 
         private BuilderClassBuilder(
             ClassName enumName,
             ClassName builderRawType,
-            ClassName enumTypeName)
+            ClassName enumTypeName,
+            AstType valueType)
         {
             TypeName builderType = ParameterizedTypeName.get(builderRawType, enumName);
 
@@ -161,6 +166,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             this.classBuilder = classBuilder(classType.simpleName())
                     .addModifiers(PUBLIC, STATIC, FINAL)
                     .superclass(builderType);
+            this.valueType = valueType;
         }
 
         public TypeSpec build()
@@ -218,6 +224,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec setEnumMethod()
         {
+            String buffer = valueType == null ? "(byte) value.ordinal()" : "(byte) value.value()";
             return methodBuilder("set")
                     .addModifiers(PUBLIC)
                     .returns(enumName.nestedClass("Builder"))
@@ -226,7 +233,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("int offset = offset()")
                     .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement("buffer.putByte(offset, (byte) value.value())")
+                    .addStatement(String.format("%s%s)", "buffer.putByte(offset, ", buffer))
                     .addStatement("limit(newLimit)")
                     .addStatement("valueSet = true")
                     .addStatement("return this")
