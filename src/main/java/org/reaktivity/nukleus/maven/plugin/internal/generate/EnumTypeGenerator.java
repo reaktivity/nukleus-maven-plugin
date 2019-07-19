@@ -110,7 +110,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
 
     private final class ValueOfMethodGenerator extends MethodSpecGenerator
     {
-        private final List<String> values = new LinkedList<>();
+        private final List<String> constantNames = new LinkedList<>();
         private final Map<String, Integer> valueByConstantName = new HashMap<>();
         final String discriminant = valueType == null ? "ordinal" : "value";
 
@@ -126,7 +126,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             String name,
             Integer value)
         {
-            values.add(name);
+            constantNames.add(name);
             if (value != null)
             {
                 valueByConstantName.put(name, value);
@@ -140,9 +140,9 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             builder.addParameter(int.class, discriminant);
             builder.beginControlFlow("switch ($L)", discriminant);
 
-            for (int index=0; index < values.size(); index++)
+            for (int index = 0; index < constantNames.size(); index++)
             {
-                String enumConstant = values.get(index);
+                String enumConstant = constantNames.get(index);
                 int kind = valueByConstantName.get(enumConstant) == null ? index :
                     valueByConstantName.get(enumConstant);
                 builder.beginControlFlow("case $L:", kind)

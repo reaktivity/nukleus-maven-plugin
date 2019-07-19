@@ -205,9 +205,9 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         AstValueNode value = valueBuilder.name(ctx.ID().getText())
-            .ordinal(enumBuilder.size())
-            .value(parsed)
-            .build();
+                                         .ordinal(enumBuilder.size())
+                                         .value(parsed)
+                                         .build();
         enumBuilder.value(value);
         return value;
     }
