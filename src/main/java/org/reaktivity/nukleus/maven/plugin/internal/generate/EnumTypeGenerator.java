@@ -28,8 +28,8 @@ import java.util.Map;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
 import javax.lang.model.element.Modifier;
 
@@ -38,18 +38,18 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     private final TypeSpec.Builder builder;
     private final NameConstantGenerator nameConstant;
     private final ValueOfMethodGenerator valueOfMethod;
-    private final AstType valueType;
+    private final TypeName valueTypeName;
 
     public EnumTypeGenerator(
         ClassName enumTypeName,
-        AstType valueType)
+        TypeName valueTypeName)
     {
         super(enumTypeName);
 
         this.builder = enumBuilder(enumTypeName).addModifiers(PUBLIC);
         this.nameConstant = new NameConstantGenerator(enumTypeName, builder);
         this.valueOfMethod = new ValueOfMethodGenerator(enumTypeName);
-        this.valueType = valueType;
+        this.valueTypeName = valueTypeName;
     }
 
     public TypeSpecGenerator<ClassName> addValue(
@@ -66,7 +66,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         nameConstant.build();
-        if (valueType != null)
+        if (valueTypeName != null)
         {
             builder.addField(INT, "value", Modifier.PRIVATE, Modifier.FINAL);
             builder.addMethod(MethodSpec.constructorBuilder()
@@ -136,7 +136,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            final String discriminant = valueType == null ? "ordinal" : "value";
+            final String discriminant = valueTypeName == null ? "ordinal" : "value";
             builder.addParameter(int.class, discriminant);
             builder.beginControlFlow("switch ($L)", discriminant);
 
