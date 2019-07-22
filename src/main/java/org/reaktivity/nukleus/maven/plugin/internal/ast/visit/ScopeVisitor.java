@@ -126,7 +126,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
         String baseName = enumNode.name();
         AstType enumType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
-        TypeName valueTypeName = enumNode.valueType() == null ? null : TypeName.INT;
+        TypeName valueTypeName = resolver.resolveType(enumNode.valueType());
         ClassName enumFlyweightName = resolver.resolveClass(enumType);
         ClassName enumTypeName = enumFlyweightName.peerClass(baseName);
 

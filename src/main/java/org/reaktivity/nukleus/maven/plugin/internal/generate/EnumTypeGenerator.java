@@ -136,7 +136,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            final String discriminant = valueTypeName == null ? "ordinal" : "value";
+            final String discriminant = valueTypeName != null ? "value" : "ordinal";
             builder.addParameter(int.class, discriminant);
             builder.beginControlFlow("switch ($L)", discriminant);
 

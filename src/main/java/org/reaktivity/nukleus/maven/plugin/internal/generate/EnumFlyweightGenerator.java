@@ -223,7 +223,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec setEnumMethod()
         {
-            final String methodName = valueTypeName == null ? "ordinal" : "value";
+            final String methodName = valueTypeName != null ? "value" : "ordinal";
             return methodBuilder("set")
                     .addModifiers(PUBLIC)
                     .returns(enumName.nestedClass("Builder"))
