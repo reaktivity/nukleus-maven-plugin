@@ -224,7 +224,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec setEnumMethod()
         {
-            String buffer = valueType == null ? "(byte) value.ordinal()" : "(byte) value.value()";
+            final String methodName = valueType == null ? "ordinal" : "value";
             return methodBuilder("set")
                     .addModifiers(PUBLIC)
                     .returns(enumName.nestedClass("Builder"))
@@ -233,7 +233,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("int offset = offset()")
                     .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement(String.format("%s%s)", "buffer.putByte(offset, ", buffer))
+                    .addStatement(String.format("buffer.putByte(offset, (byte) value.%s())", methodName))
                     .addStatement("limit(newLimit)")
                     .addStatement("valueSet = true")
                     .addStatement("return this")

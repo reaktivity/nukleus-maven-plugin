@@ -112,7 +112,6 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     {
         private final List<String> constantNames = new LinkedList<>();
         private final Map<String, Integer> valueByConstantName = new HashMap<>();
-        final String discriminant = valueType == null ? "ordinal" : "value";
 
         private ValueOfMethodGenerator(
             ClassName enumName)
@@ -137,6 +136,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
+            final String discriminant = valueType == null ? "ordinal" : "value";
             builder.addParameter(int.class, discriminant);
             builder.beginControlFlow("switch ($L)", discriminant);
 
