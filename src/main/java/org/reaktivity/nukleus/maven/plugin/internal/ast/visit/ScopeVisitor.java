@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.squareup.javapoet.TypeName;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
@@ -125,12 +126,13 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
         String baseName = enumNode.name();
         AstType enumType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+        TypeName valueTypeName = resolver.resolveType(enumNode.valueType());
         ClassName enumFlyweightName = resolver.resolveClass(enumType);
         ClassName enumTypeName = enumFlyweightName.peerClass(baseName);
 
-        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName);
+        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName, valueTypeName);
         EnumFlyweightGenerator flyweightGenerator =
-                new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(), enumTypeName);
+                new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(), enumTypeName, valueTypeName);
 
         return new EnumVisitor(typeGenerator, flyweightGenerator).visitEnum(enumNode);
     }

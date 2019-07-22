@@ -43,13 +43,15 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
     public EnumFlyweightGenerator(
         ClassName enumName,
         ClassName flyweightName,
-        ClassName enumTypeName)
+        ClassName enumTypeName,
+        TypeName valueTypeName)
     {
         super(enumName);
 
         this.enumTypeName = enumTypeName;
         this.classBuilder = classBuilder(thisName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName);
+        this.builderClassBuilder =
+            new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName, valueTypeName);
     }
 
     @Override
@@ -96,9 +98,6 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("get")
                 .addModifiers(PUBLIC)
                 .returns(enumTypeName)
-                .beginControlFlow("if (-1 == buffer().getByte(offset() + FIELD_OFFSET_VALUE))")
-                .addStatement("return null")
-                .endControlFlow()
                 .addStatement("return $T.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE))", enumTypeName)
                 .build();
     }
@@ -150,11 +149,13 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         private final ClassName enumTypeName;
         private final ClassName classType;
         private final ClassName enumName;
+        private final TypeName valueTypeName;
 
         private BuilderClassBuilder(
             ClassName enumName,
             ClassName builderRawType,
-            ClassName enumTypeName)
+            ClassName enumTypeName,
+            TypeName valueTypeName)
         {
             TypeName builderType = ParameterizedTypeName.get(builderRawType, enumName);
 
@@ -164,6 +165,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             this.classBuilder = classBuilder(classType.simpleName())
                     .addModifiers(PUBLIC, STATIC, FINAL)
                     .superclass(builderType);
+            this.valueTypeName = valueTypeName;
         }
 
         public TypeSpec build()
@@ -221,6 +223,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec setEnumMethod()
         {
+            final String methodName = valueTypeName != null ? "value" : "ordinal";
             return methodBuilder("set")
                     .addModifiers(PUBLIC)
                     .returns(enumName.nestedClass("Builder"))
@@ -229,7 +232,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("int offset = offset()")
                     .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement("buffer.putByte(offset, (byte) value.ordinal())")
+                    .addStatement(String.format("buffer.putByte(offset, (byte) value.%s())", methodName))
                     .addStatement("limit(newLimit)")
                     .addStatement("valueSet = true")
                     .addStatement("return this")

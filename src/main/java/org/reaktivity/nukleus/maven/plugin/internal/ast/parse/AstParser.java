@@ -169,6 +169,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         enumBuilder = new AstEnumNode.Builder();
         enumBuilder.name(ctx.ID().getText());
 
+        if (ctx.LEFT_BRACKET() != null)
+        {
+            enumBuilder.valueType(AstType.UINT8);
+        }
+
         visitLocalName(ctx.ID().getText());
 
         super.visitEnum_type(ctx);
@@ -190,16 +195,20 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstValueNode visitEnum_value(
         Enum_valueContext ctx)
     {
+        super.visitEnum_value(ctx);
         AstValueNode.Builder valueBuilder = new AstValueNode.Builder();
 
-        super.visitEnum_value(ctx);
+        Integer parsed = null;
+        if (AstType.UINT8.equals(enumBuilder.valueType()))
+        {
+            parsed = parseInt(ctx.uint_literal());
+        }
 
         AstValueNode value = valueBuilder.name(ctx.ID().getText())
                                          .ordinal(enumBuilder.size())
+                                         .value(parsed)
                                          .build();
-
         enumBuilder.value(value);
-
         return value;
     }
 

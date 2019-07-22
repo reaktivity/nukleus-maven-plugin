@@ -27,10 +27,10 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.Roll;
-import org.reaktivity.reaktor.internal.test.types.inner.RollFW;
+import org.reaktivity.reaktor.internal.test.types.inner.Number;
+import org.reaktivity.reaktor.internal.test.types.inner.NumberFW;
 
-public class RollFWTest
+public class NumberFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -39,6 +39,7 @@ public class RollFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
+
     private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -46,8 +47,9 @@ public class RollFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final RollFW.Builder flyweightRW = new RollFW.Builder();
-    private final RollFW flyweightRO = new RollFW();
+
+    private final NumberFW.Builder flyweightRW = new NumberFW.Builder();
+    private final NumberFW flyweightRO = new NumberFW();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -55,13 +57,13 @@ public class RollFWTest
     static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
     {
         int pos = offset;
-        buffer.putByte(pos,  (byte) Roll.SPRING.ordinal());
+        buffer.putByte(pos,  (byte) Number.TWO.value());
         return pos - offset + Byte.BYTES;
     }
 
-    void assertAllTestValuesRead(RollFW flyweight)
+    void assertAllTestValuesRead(NumberFW flyweight)
     {
-        assertEquals(Roll.SPRING, flyweight.get());
+        assertEquals(Number.TWO, flyweight.get());
     }
 
     @Test
@@ -135,24 +137,24 @@ public class RollFWTest
     public void shouldSetUsingEnum()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-               .set(Roll.SPRING)
-               .build()
-               .limit();
+            .set(Number.TWO)
+            .build()
+            .limit();
         setAllTestValues(expected,  0);
         assertEquals(1, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
-    public void shouldSetUsingRollFW()
+    public void shouldSetUsingNumberFW()
     {
-        RollFW roll = new RollFW().wrap(asBuffer((byte) 0), 0, 1);
+        NumberFW number = new NumberFW().wrap(asBuffer((byte) 1), 0, 1);
         int limit = flyweightRW.wrap(buffer, 10, 11)
-               .set(roll)
-               .build()
-               .limit();
+            .set(number)
+            .build()
+            .limit();
         flyweightRO.wrap(buffer, 10,  limit);
-        assertEquals(Roll.EGG, flyweightRO.get());
+        assertEquals(Number.ONE, flyweightRO.get());
         assertEquals(1, flyweightRO.sizeof());
     }
 
@@ -160,22 +162,22 @@ public class RollFWTest
     public void shouldFailToSetWithInsufficientSpace()
     {
         flyweightRW.wrap(buffer, 10, 10)
-               .set(Roll.EGG);
+            .set(Number.ONE);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUsingRollFWWithInsufficientSpace()
+    public void shouldFailToSetUsingNumberFWWithInsufficientSpace()
     {
-        RollFW roll = new RollFW().wrap(asBuffer((byte) 0), 0, 1);
+        NumberFW number = new NumberFW().wrap(asBuffer((byte) 1), 0, 1);
         flyweightRW.wrap(buffer, 10, 10)
-              .set(roll);
+            .set(number);
     }
 
     @Test
     public void shouldFailToBuildWithNothingSet()
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("Roll");
+        expectedException.expectMessage("Number");
         flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build();
     }
