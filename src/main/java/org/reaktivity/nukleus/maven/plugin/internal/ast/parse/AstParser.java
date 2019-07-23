@@ -166,45 +166,18 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstEnumNode visitEnum_type(
         Enum_typeContext ctx)
     {
-        enumBuilder = new AstEnumNode.Builder();
-        enumBuilder.name(ctx.ID().getText());
-
-        new EnumVisitor().visitEnum_type(ctx);
-
         visitLocalName(ctx.ID().getText());
-        super.visitEnum_type(ctx);
+
+        AstEnumNode.Builder enumBuilder = new EnumVisitor().visitEnum_type(ctx);
+        AstEnumNode enumeration = enumBuilder.build();
+
         AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
         if (scopeBuilder != null)
         {
-            AstEnumNode enumeration = enumBuilder.build();
             scopeBuilder.enumeration(enumeration);
-            return enumeration;
-        }
-        else
-        {
-            return enumBuilder.build();
-        }
-    }
-
-    @Override
-    public AstValueNode visitEnum_value(
-        Enum_valueContext ctx)
-    {
-        super.visitEnum_value(ctx);
-        AstValueNode.Builder valueBuilder = new AstValueNode.Builder();
-
-        Integer parsed = null;
-        if (AstType.UINT8.equals(enumBuilder.valueType()))
-        {
-            parsed = parseInt(ctx.uint_literal());
         }
 
-        AstValueNode value = valueBuilder.name(ctx.ID().getText())
-                                         .ordinal(enumBuilder.size())
-                                         .value(parsed)
-                                         .build();
-        enumBuilder.value(value);
-        return value;
+        return enumeration;
     }
 
     @Override
@@ -608,17 +581,37 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         return Integer.decode(text);
     }
 
-    private final class EnumVisitor extends NukleusBaseVisitor<AstNode>
+    public final class EnumVisitor extends NukleusBaseVisitor<AstEnumNode.Builder>
     {
+        private final AstEnumNode.Builder enumBuilder;
+
+        public EnumVisitor()
+        {
+            this.enumBuilder = new AstEnumNode.Builder();
+        }
+
         @Override
-        public AstNode visitEnum_type(
+        public AstEnumNode.Builder visitEnum_type(
             Enum_typeContext ctx)
         {
+            enumBuilder.name(ctx.ID().getText());
+
+            if (ctx.LEFT_BRACKET() != null)
+            {
+                enumBuilder.valueType(AstType.UINT8);
+            }
+
             return super.visitEnum_type(ctx);
         }
 
         @Override
-        public AstNode visitUint8_type(
+        protected AstEnumNode.Builder defaultResult()
+        {
+            return enumBuilder;
+        }
+
+        @Override
+        public AstEnumNode.Builder visitUint8_type(
             Uint8_typeContext ctx)
         {
             enumBuilder.valueType(AstType.UINT8);
@@ -626,7 +619,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstNode visitUint16_type(
+        public AstEnumNode.Builder visitUint16_type(
             Uint16_typeContext ctx)
         {
             enumBuilder.valueType(AstType.UINT16);
@@ -634,7 +627,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstNode visitUint32_type(
+        public AstEnumNode.Builder visitUint32_type(
             Uint32_typeContext ctx)
         {
             enumBuilder.valueType(AstType.UINT32);
@@ -642,7 +635,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstNode visitUint64_type(
+        public AstEnumNode.Builder visitUint64_type(
             Uint64_typeContext ctx)
         {
             enumBuilder.valueType(AstType.UINT64);
@@ -650,7 +643,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstNode visitString_type(
+        public AstEnumNode.Builder visitString_type(
             String_typeContext ctx)
         {
             enumBuilder.valueType(AstType.STRING);
@@ -658,7 +651,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstNode visitString16_type(
+        public AstEnumNode.Builder visitString16_type(
             String16_typeContext ctx)
         {
             enumBuilder.valueType(AstType.STRING16);
@@ -666,11 +659,31 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstNode visitString32_type(
+        public AstEnumNode.Builder visitString32_type(
             String32_typeContext ctx)
         {
             enumBuilder.valueType(AstType.STRING32);
             return super.visitString32_type(ctx);
+        }
+
+        @Override
+        public AstEnumNode.Builder visitEnum_value(
+            Enum_valueContext ctx)
+        {
+            AstValueNode.Builder valueBuilder = new AstValueNode.Builder();
+
+            Integer parsed = null;
+            if (AstType.UINT8.equals(enumBuilder.valueType()))
+            {
+                parsed = parseInt(ctx.uint_literal());
+            }
+
+            AstValueNode value = valueBuilder.name(ctx.ID().getText())
+                .ordinal(enumBuilder.size())
+                .value(parsed)
+                .build();
+            enumBuilder.value(value);
+            return super.visitEnum_value(ctx);
         }
     }
 }
