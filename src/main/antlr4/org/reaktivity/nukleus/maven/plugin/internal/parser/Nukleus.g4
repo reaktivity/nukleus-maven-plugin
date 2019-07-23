@@ -155,7 +155,17 @@ unbounded_octets_type
    ;
 
 enum_type
-   : KW_ENUM ID (LEFT_BRACKET KW_UINT8 RIGHT_BRACKET)? LEFT_BRACE enum_values RIGHT_BRACE
+   : KW_ENUM ID (LEFT_BRACKET enum_explicit_type RIGHT_BRACKET)? LEFT_BRACE enum_values RIGHT_BRACE
+   ;
+
+enum_explicit_type
+   : uint8_type
+   | uint16_type
+   | uint32_type
+   | uint64_type
+   | string_type
+   | string16_type
+   | string32_type
    ;
 
 enum_values
@@ -171,7 +181,7 @@ enum_value_terminal
    ;
 
 enum_value
-   : ID (LEFT_BRACKET uint_literal RIGHT_BRACKET)?
+   : ID (LEFT_BRACKET (uint_literal | STRING_LITERAL) RIGHT_BRACKET)?
    ;
 
 struct_type
@@ -289,6 +299,10 @@ UNSIGNED_INTEGER_LITERAL
 
 HEX_LITERAL
    : '0' ('x' | 'X') HEX_DIGIT+ INTEGER_TYPE_SUFFIX?
+   ;
+
+STRING_LITERAL
+   : '"' (~["\r\n])* '"'
    ;
 
 
