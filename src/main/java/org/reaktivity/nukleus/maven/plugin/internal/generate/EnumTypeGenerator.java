@@ -150,8 +150,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
                        .endControlFlow();
             }
 
-            builder.endControlFlow().addStatement(String.format("throw new IllegalArgumentException(String.format($S, %s))",
-                discriminant), String.format("Unrecognized %s: %%d", discriminant));
+            builder.endControlFlow().addStatement("return null");
 
             return builder.build();
         }

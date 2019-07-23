@@ -115,7 +115,7 @@ public class NumberFWTest
         assertAllTestValuesRead(flyweightRO);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
@@ -124,7 +124,7 @@ public class NumberFWTest
         assertNull(flyweightRO.get());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldWNotrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
