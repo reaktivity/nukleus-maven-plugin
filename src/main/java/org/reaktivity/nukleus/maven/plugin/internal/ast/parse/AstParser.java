@@ -169,15 +169,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         enumBuilder = new AstEnumNode.Builder();
         enumBuilder.name(ctx.ID().getText());
 
-        if (ctx.LEFT_BRACKET() != null)
-        {
-            enumBuilder.valueType(AstType.UINT8);
-        }
+        new EnumVisitor().visitEnum_type(ctx);
 
         visitLocalName(ctx.ID().getText());
-
         super.visitEnum_type(ctx);
-
         AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
         if (scopeBuilder != null)
         {
@@ -446,7 +441,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint64_type(
         Uint64_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT64).unsignedType(AstType.INT64);
+        if (memberBuilder != null)
+        {
+            memberBuilder.type(AstType.UINT64).unsignedType(AstType.INT64);
+        }
         return super.visitUint64_type(ctx);
     }
 
@@ -454,7 +452,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint32_type(
         Uint32_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT32).unsignedType(AstType.INT64);
+        if (memberBuilder != null)
+        {
+            memberBuilder.type(AstType.UINT32).unsignedType(AstType.INT64);
+        }
         return super.visitUint32_type(ctx);
     }
 
@@ -462,7 +463,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint16_type(
         Uint16_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT16).unsignedType(AstType.INT32);
+        if (memberBuilder != null)
+        {
+            memberBuilder.type(AstType.UINT16).unsignedType(AstType.INT32);
+        }
         return super.visitUint16_type(ctx);
     }
 
@@ -470,7 +474,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint8_type(
         Uint8_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT8).unsignedType(AstType.INT32);
+        if (memberBuilder != null)
+        {
+            memberBuilder.type(AstType.UINT8).unsignedType(AstType.INT32);
+        }
         return super.visitUint8_type(ctx);
     }
 
@@ -478,7 +485,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitString_type(
         String_typeContext ctx)
     {
-        memberBuilder.type(AstType.STRING);
+        if (memberBuilder != null)
+        {
+            memberBuilder.type(AstType.STRING);
+        }
         return super.visitString_type(ctx);
     }
 
@@ -486,7 +496,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitString16_type(
             String16_typeContext ctx)
     {
-        memberBuilder.type(AstType.STRING16);
+        if (memberBuilder != null)
+        {
+            memberBuilder.type(AstType.STRING16);
+        }
         return super.visitString16_type(ctx);
     }
 
@@ -494,7 +507,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitString32_type(
         String32_typeContext ctx)
     {
-        memberBuilder.type(AstType.STRING32);
+        if (memberBuilder != null)
+        {
+            memberBuilder.type(AstType.STRING32);
+        }
         return super.visitString32_type(ctx);
     }
 
@@ -515,7 +531,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitUnbounded_octets_type(Unbounded_octets_typeContext ctx)
+    public AstNode visitUnbounded_octets_type(
+        Unbounded_octets_typeContext ctx)
     {
         memberBuilder.type(AstType.OCTETS);
         return super.visitUnbounded_octets_type(ctx);
@@ -585,8 +602,75 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
     }
 
-    private static int parseInt(String text)
+    private static int parseInt(
+        String text)
     {
         return Integer.decode(text);
+    }
+
+    private final class EnumVisitor extends NukleusBaseVisitor<AstNode>
+    {
+        @Override
+        public AstNode visitEnum_type(
+            Enum_typeContext ctx)
+        {
+            return super.visitEnum_type(ctx);
+        }
+
+        @Override
+        public AstNode visitUint8_type(
+            Uint8_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT8);
+            return super.visitUint8_type(ctx);
+        }
+
+        @Override
+        public AstNode visitUint16_type(
+            Uint16_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT16);
+            return super.visitUint16_type(ctx);
+        }
+
+        @Override
+        public AstNode visitUint32_type(
+            Uint32_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT32);
+            return super.visitUint32_type(ctx);
+        }
+
+        @Override
+        public AstNode visitUint64_type(
+            Uint64_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT64);
+            return super.visitUint64_type(ctx);
+        }
+
+        @Override
+        public AstNode visitString_type(
+            String_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.STRING);
+            return super.visitString_type(ctx);
+        }
+
+        @Override
+        public AstNode visitString16_type(
+            String16_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.STRING16);
+            return super.visitString16_type(ctx);
+        }
+
+        @Override
+        public AstNode visitString32_type(
+            String32_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.STRING32);
+            return super.visitString32_type(ctx);
+        }
     }
 }
