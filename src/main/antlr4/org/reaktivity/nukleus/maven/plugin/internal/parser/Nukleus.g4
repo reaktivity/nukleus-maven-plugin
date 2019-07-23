@@ -301,10 +301,6 @@ HEX_LITERAL
    : '0' ('x' | 'X') HEX_DIGIT+ INTEGER_TYPE_SUFFIX?
    ;
 
-string_literal
-   : STRING_LITERAL
-   ;
-
 STRING_LITERAL
    : QUOTE (~["\r\n])* QUOTE
    ;
