@@ -301,8 +301,12 @@ HEX_LITERAL
    : '0' ('x' | 'X') HEX_DIGIT+ INTEGER_TYPE_SUFFIX?
    ;
 
+string_literal
+   : STRING_LITERAL
+   ;
+
 STRING_LITERAL
-   : '"' (~["\r\n])* '"'
+   : QUOTE (~["\r\n])* QUOTE
    ;
 
 
@@ -372,6 +376,11 @@ LEFT_BRACKET
 
 RIGHT_BRACKET
    : ')'
+   ;
+
+
+QUOTE
+   : '"'
    ;
 
 
