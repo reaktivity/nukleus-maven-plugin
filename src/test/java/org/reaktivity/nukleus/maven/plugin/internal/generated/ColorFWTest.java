@@ -51,7 +51,10 @@ public class ColorFWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    static int setAllTestValues(MutableDirectBuffer buffer, final int offset, String value)
+    static int setAllTestValues(
+        MutableDirectBuffer buffer,
+        final int offset,
+        String value)
     {
         int pos = offset;
         byte[] charBytes = value.getBytes(UTF_8);
@@ -60,7 +63,8 @@ public class ColorFWTest
         return charBytes.length + LENGTH_SIZE;
     }
 
-    void assertAllTestValuesRead(ColorFW flyweight)
+    void assertAllTestValuesRead(
+        ColorFW flyweight)
     {
         assertEquals(Color.BLUE, flyweight.get());
     }

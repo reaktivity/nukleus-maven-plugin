@@ -40,7 +40,10 @@ public final class ColorFW extends Flyweight
     }
 
     @Override
-    public ColorFW tryWrap(DirectBuffer buffer, int offset, int maxLimit)
+    public ColorFW tryWrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
         if (null == super.tryWrap(buffer, offset, maxLimit) || offset + FIELD_SIZE_VALUE > maxLimit() || limit() > maxLimit)
         {
@@ -50,7 +53,10 @@ public final class ColorFW extends Flyweight
     }
 
     @Override
-    public ColorFW wrap(DirectBuffer buffer, int offset, int maxLimit)
+    public ColorFW wrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
         checkLimit(limit(), maxLimit);
@@ -78,13 +84,17 @@ public final class ColorFW extends Flyweight
             super(new ColorFW());
         }
 
-        public Builder wrap(MutableDirectBuffer buffer, int offset, int maxLimit)
+        public Builder wrap(
+            MutableDirectBuffer buffer,
+            int offset,
+            int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
             return this;
         }
 
-        public Builder set(ColorFW value)
+        public Builder set(
+            ColorFW value)
         {
             int newLimit = offset() + value.sizeof();
             checkLimit(newLimit, maxLimit());
@@ -94,7 +104,9 @@ public final class ColorFW extends Flyweight
             return this;
         }
 
-        public Builder set(Color value, Charset charset)
+        public Builder set(
+            Color value,
+            Charset charset)
         {
             MutableDirectBuffer buffer = buffer();
             byte[] charBytes = value.value().getBytes(charset);
@@ -108,7 +120,8 @@ public final class ColorFW extends Flyweight
             return this;
         }
 
-        private static void checkLength(int length)
+        private static void checkLength(
+            int length)
         {
             final int maxLength = 254;
             if (length > maxLength)
