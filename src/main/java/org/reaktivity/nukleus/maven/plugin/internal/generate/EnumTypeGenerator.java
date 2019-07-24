@@ -15,6 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
+import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeName.INT;
 import static com.squareup.javapoet.TypeSpec.enumBuilder;
@@ -38,6 +39,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     private final TypeSpec.Builder builder;
     private final NameConstantGenerator nameConstant;
     private final ValueOfMethodGenerator valueOfMethod;
+    private final ValueMethodGenerator valueMethod;
+    private final ConstructorGenerator constructor;
     private final TypeName valueTypeName;
 
     public EnumTypeGenerator(
@@ -49,12 +52,14 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         this.builder = enumBuilder(enumTypeName).addModifiers(PUBLIC);
         this.nameConstant = new NameConstantGenerator(enumTypeName, builder);
         this.valueOfMethod = new ValueOfMethodGenerator(enumTypeName);
+        this.valueMethod = new ValueMethodGenerator();
+        this.constructor = new ConstructorGenerator();
         this.valueTypeName = valueTypeName;
     }
 
     public TypeSpecGenerator<ClassName> addValue(
         String name,
-        Integer value)
+        Object value)
     {
         nameConstant.addValue(name, value);
         valueOfMethod.addValue(name, value);
@@ -68,20 +73,22 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         nameConstant.build();
         if (valueTypeName != null)
         {
-            builder.addField(INT, "value", Modifier.PRIVATE, Modifier.FINAL);
-            builder.addMethod(MethodSpec.constructorBuilder()
-                       .addParameter(INT, "value")
-                       .addStatement("this.$L = $L", "value", "value")
-                       .build())
-                   .addMethod(MethodSpec.methodBuilder("value")
-                       .addModifiers(Modifier.PUBLIC)
-                       .returns(int.class)
-                       .addStatement("return $L", "value")
-                       .build());
+            builder.addField(typeName(), "value", Modifier.PRIVATE, Modifier.FINAL)
+                   .addMethod(constructor.generate())
+                   .addMethod(valueMethod.generate());
+            if (!valueTypeName.isPrimitive())
+            {
+                return builder.build();
+            }
         }
 
         return builder.addMethod(valueOfMethod.generate())
                       .build();
+    }
+
+    private TypeName typeName()
+    {
+        return valueTypeName.isPrimitive() ? INT : TypeName.get(String.class);
     }
 
     private static final class NameConstantGenerator extends ClassSpecMixinGenerator
@@ -94,7 +101,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         }
 
         public NameConstantGenerator addValue(
-            String name, Integer value)
+            String name, Object value)
         {
             if (value == null)
             {
@@ -108,10 +115,42 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         }
     }
 
+    private final class ConstructorGenerator extends MethodSpecGenerator
+    {
+        private ConstructorGenerator()
+        {
+            super(constructorBuilder().addStatement("this.$L = $L", "value", "value"));
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            return builder.addParameter(typeName(), "value")
+                          .build();
+        }
+    }
+
+    private final class ValueMethodGenerator extends MethodSpecGenerator
+    {
+        private ValueMethodGenerator()
+        {
+            super(methodBuilder("value")
+                .addModifiers(PUBLIC)
+                .addStatement("return $L", "value"));
+        }
+
+        @Override
+        public MethodSpec generate()
+        {
+            return builder.returns(valueTypeName.isPrimitive() ? int.class : String.class)
+                          .build();
+        }
+    }
+
     private final class ValueOfMethodGenerator extends MethodSpecGenerator
     {
         private final List<String> constantNames = new LinkedList<>();
-        private final Map<String, Integer> valueByConstantName = new HashMap<>();
+        private final Map<String, Object> valueByConstantName = new HashMap<>();
 
         private ValueOfMethodGenerator(
             ClassName enumName)
@@ -123,7 +162,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
 
         public ValueOfMethodGenerator addValue(
             String name,
-            Integer value)
+            Object value)
         {
             constantNames.add(name);
             if (value != null)
@@ -144,7 +183,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             {
                 String enumConstant = constantNames.get(index);
                 int kind = valueByConstantName.get(enumConstant) == null ? index :
-                    valueByConstantName.get(enumConstant);
+                    (int) valueByConstantName.get(enumConstant);
                 builder.beginControlFlow("case $L:", kind)
                        .addStatement("return $N", enumConstant)
                        .endControlFlow();
