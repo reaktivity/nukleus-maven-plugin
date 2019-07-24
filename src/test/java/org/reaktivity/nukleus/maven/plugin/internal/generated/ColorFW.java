@@ -19,6 +19,7 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 
 import java.nio.charset.Charset;
 
@@ -28,15 +29,23 @@ public final class ColorFW extends Flyweight
 
     private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_BYTE;
 
+    private final StringFW stringRO = new StringFW();
+
+    public StringFW string()
+    {
+        return stringRO;
+    }
+
     @Override
     public int limit()
     {
-        return offset() + FIELD_SIZE_VALUE + Math.max(length0(), 0);
+        return stringRO.limit();
     }
 
     public Color get()
     {
-        return Color.valueOf(buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_VALUE, length0()).toUpperCase());
+        System.out.println("stringRO.asString():" + stringRO.asString());
+        return stringRO.asString() != null ? Color.valueOf(stringRO.asString().toUpperCase()) : null;
     }
 
     @Override
@@ -45,7 +54,15 @@ public final class ColorFW extends Flyweight
         int offset,
         int maxLimit)
     {
-        if (null == super.tryWrap(buffer, offset, maxLimit) || offset + FIELD_SIZE_VALUE > maxLimit() || limit() > maxLimit)
+        if (null == super.tryWrap(buffer, offset, maxLimit))
+        {
+            return null;
+        }
+        if (null == stringRO.tryWrap(buffer, offset, maxLimit))
+        {
+            return null;
+        }
+        if (limit() > maxLimit)
         {
             return null;
         }
@@ -59,6 +76,7 @@ public final class ColorFW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        stringRO.wrap(buffer, offset, maxLimit);
         checkLimit(limit(), maxLimit);
         return this;
     }
@@ -69,14 +87,10 @@ public final class ColorFW extends Flyweight
         return maxLimit() == offset() ? "null" : get().toString();
     }
 
-    private int length0()
-    {
-        int length = buffer().getByte(offset()) & 0xFF;
-        return length == 255 ? -1 : length;
-    }
-
     public static final class Builder extends Flyweight.Builder<ColorFW>
     {
+        private final StringFW.Builder stringRW = new StringFW.Builder();
+
         private boolean valueSet;
 
         public Builder()
@@ -89,6 +103,7 @@ public final class ColorFW extends Flyweight
             int offset,
             int maxLimit)
         {
+            stringRW.wrap(buffer, offset, maxLimit);
             super.wrap(buffer, offset, maxLimit);
             return this;
         }
@@ -96,10 +111,8 @@ public final class ColorFW extends Flyweight
         public Builder set(
             ColorFW value)
         {
-            int newLimit = offset() + value.sizeof();
-            checkLimit(newLimit, maxLimit());
-            buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof());
-            limit(newLimit);
+            stringRW.set(value.buffer(), value.offset(), value.sizeof() - 1);
+            limit(stringRW.build().limit());
             valueSet = true;
             return this;
         }
@@ -108,27 +121,10 @@ public final class ColorFW extends Flyweight
             Color value,
             Charset charset)
         {
-            MutableDirectBuffer buffer = buffer();
-            byte[] charBytes = value.value().getBytes(charset);
-            checkLength(charBytes.length);
-            int newLimit = offset() + FIELD_SIZE_VALUE + charBytes.length;
-            checkLimit(newLimit, maxLimit());
-            buffer.putByte(offset(), (byte) charBytes.length);
-            buffer.putBytes(offset() + 1, charBytes);
-            limit(newLimit);
+            stringRW.set(value.value(), charset);
+            limit(stringRW.build().limit());
             valueSet = true;
             return this;
-        }
-
-        private static void checkLength(
-            int length)
-        {
-            final int maxLength = 254;
-            if (length > maxLength)
-            {
-                final String msg = String.format("length=%d is beyond maximum length=%d", length, maxLength);
-                throw new IllegalArgumentException(msg);
-            }
         }
 
         @Override
