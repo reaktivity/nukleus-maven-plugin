@@ -26,6 +26,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.inner.Color;
+import org.reaktivity.reaktor.internal.test.types.inner.ColorFW;
 
 public class ColorFWTest
 {
