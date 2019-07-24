@@ -44,7 +44,6 @@ public final class ColorFW extends Flyweight
 
     public Color get()
     {
-        System.out.println("stringRO.asString():" + stringRO.asString());
         return stringRO.asString() != null ? Color.valueOf(stringRO.asString().toUpperCase()) : null;
     }
 
@@ -111,7 +110,7 @@ public final class ColorFW extends Flyweight
         public Builder set(
             ColorFW value)
         {
-            stringRW.set(value.buffer(), value.offset(), value.sizeof() - 1);
+            stringRW.set(value.string());
             limit(stringRW.build().limit());
             valueSet = true;
             return this;

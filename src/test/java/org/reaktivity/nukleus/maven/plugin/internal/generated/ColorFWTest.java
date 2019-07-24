@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNotNull;
 import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -152,7 +151,6 @@ public class ColorFWTest
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
-    @Ignore
     @Test
     public void shouldSetUsingColorFW()
     {
