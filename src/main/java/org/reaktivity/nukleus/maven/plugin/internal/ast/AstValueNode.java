@@ -23,12 +23,12 @@ public final class AstValueNode extends AstNode
 {
     private final String name;
     private final int ordinal;
-    private final Integer value;
+    private final Object value;
 
     private AstValueNode(
         String name,
         int ordinal,
-        Integer value)
+        Object value)
     {
         this.name = requireNonNull(name);
         this.ordinal = ordinal;
@@ -52,7 +52,7 @@ public final class AstValueNode extends AstNode
         return ordinal;
     }
 
-    public Integer value()
+    public Object value()
     {
         return value;
     }
@@ -84,14 +84,14 @@ public final class AstValueNode extends AstNode
     @Override
     public String toString()
     {
-        return String.format("VALUE [name=%s, ordinal=%d, value=%d]", name, ordinal, value);
+        return String.format("VALUE [name=%s, ordinal=%d, value=%s]", name, ordinal, value);
     }
 
     public static final class Builder extends AstNode.Builder<AstValueNode>
     {
         private String name;
         private int ordinal;
-        private Integer value;
+        private Object value;
 
         public Builder name(String name)
         {
@@ -105,7 +105,7 @@ public final class AstValueNode extends AstNode
             return this;
         }
 
-        public Builder value(Integer value)
+        public Builder value(Object value)
         {
             this.value = value;
             return this;

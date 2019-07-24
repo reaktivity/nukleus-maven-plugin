@@ -34,11 +34,14 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import java.nio.charset.Charset;
+
 public final class EnumFlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
     private final ClassName enumTypeName;
+    private final TypeName valueTypeName;
 
     public EnumFlyweightGenerator(
         ClassName enumName,
@@ -52,22 +55,39 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         this.classBuilder = classBuilder(thisName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder =
             new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName, valueTypeName);
+        this.valueTypeName = valueTypeName;
     }
 
     @Override
     public TypeSpec generate()
     {
+        if (isValueTypeString())
+        {
+            classBuilder.addField(stringROConstant())
+                        .addMethod(stringMethod());
+        }
         return classBuilder.addField(fieldOffsetValueConstant())
-                            .addField(fieldSizeValueConstant())
-                            .addMethod(limitMethod())
-                            .addMethod(getMethod())
-                            .addMethod(tryWrapMethod())
-                            .addMethod(wrapMethod())
-                            .addMethod(toStringMethod())
-                            .addType(builderClassBuilder.build())
-                            .build();
+                           .addField(fieldSizeValueConstant())
+                           .addMethod(limitMethod())
+                           .addMethod(getMethod())
+                           .addMethod(tryWrapMethod())
+                           .addMethod(wrapMethod())
+                           .addMethod(toStringMethod())
+                           .addType(builderClassBuilder.build())
+                           .build();
     }
 
+    private boolean isValueTypeString()
+    {
+        return valueTypeName != null && !valueTypeName.isPrimitive();
+    }
+
+    private FieldSpec stringROConstant()
+    {
+        return FieldSpec.builder(valueTypeName, "stringRO", PRIVATE, FINAL)
+                        .initializer("new $T()", valueTypeName)
+                        .build();
+    }
 
     private FieldSpec fieldOffsetValueConstant()
     {
@@ -83,54 +103,88 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                 .build();
     }
 
+    private MethodSpec stringMethod()
+    {
+        return methodBuilder("string")
+                .addModifiers(PUBLIC)
+                .returns(valueTypeName)
+                .addStatement("return stringRO")
+                .build();
+    }
+
     private MethodSpec limitMethod()
     {
+        String returnStatement =
+            String.format("return %s", isValueTypeString() ? "stringRO.limit()" : "offset() + FIELD_SIZE_VALUE");
         return methodBuilder("limit")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return offset() + FIELD_SIZE_VALUE")
+                .addStatement(returnStatement)
                 .build();
     }
 
     private MethodSpec getMethod()
     {
+        String returnStatement = String.format("return %s", isValueTypeString() ?
+            "stringRO.asString() != null ? $T.valueOf(stringRO.asString().toUpperCase()) : null" :
+            "$T.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE))");
         return methodBuilder("get")
                 .addModifiers(PUBLIC)
                 .returns(enumTypeName)
-                .addStatement("return $T.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE))", enumTypeName)
+                .addStatement(returnStatement, enumTypeName)
                 .build();
     }
 
     private MethodSpec tryWrapMethod()
     {
-        return methodBuilder("tryWrap")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
-                .addParameter(int.class, "offset")
-                .addParameter(int.class, "maxLimit")
-                .returns(thisName)
-                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)")
-                .addStatement("return null")
-                .endControlFlow()
-                .addStatement("return this")
-                .build();
+        MethodSpec.Builder builder = methodBuilder("tryWrap");
+        builder.addAnnotation(Override.class)
+               .addModifiers(PUBLIC)
+               .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+               .addParameter(int.class, "offset")
+               .addParameter(int.class, "maxLimit")
+               .returns(thisName);
+        if (isValueTypeString())
+        {
+            builder.beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit))")
+                   .addStatement("return null")
+                   .endControlFlow()
+                   .beginControlFlow("if (null == stringRO.tryWrap(buffer, offset, maxLimit))")
+                   .addStatement("return null")
+                   .endControlFlow()
+                   .beginControlFlow("if (limit() > maxLimit)")
+                   .addStatement("return null")
+                   .endControlFlow();
+        }
+        else
+        {
+            builder.beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)")
+                   .addStatement("return null")
+                   .endControlFlow();
+        }
+
+        return builder.addStatement("return this")
+                      .build();
     }
 
     private MethodSpec wrapMethod()
     {
-        return methodBuilder("wrap")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
-                .addParameter(int.class, "offset")
-                .addParameter(int.class, "maxLimit")
-                .returns(thisName)
-                .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("checkLimit(limit(), maxLimit)")
-                .addStatement("return this")
-                .build();
+        MethodSpec.Builder builder = methodBuilder("wrap");
+        builder.addAnnotation(Override.class)
+               .addModifiers(PUBLIC)
+               .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+               .addParameter(int.class, "offset")
+               .addParameter(int.class, "maxLimit")
+               .returns(thisName)
+               .addStatement("super.wrap(buffer, offset, maxLimit)");
+        if (isValueTypeString())
+        {
+            builder.addStatement("stringRO.wrap(buffer, offset, maxLimit)");
+        }
+        return builder.addStatement("checkLimit(limit(), maxLimit)")
+                      .addStatement("return this")
+                      .build();
     }
 
     private MethodSpec toStringMethod()
@@ -170,13 +224,30 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         public TypeSpec build()
         {
-            return classBuilder.addField(fieldValueSet())
-                    .addMethod(constructor())
-                    .addMethod(wrapMethod())
-                    .addMethod(setMethod())
-                    .addMethod(setEnumMethod())
-                    .addMethod(buildMethod())
-                    .build();
+            classBuilder.addField(fieldValueSet())
+                .addMethod(constructor())
+                .addMethod(wrapMethod())
+                .addMethod(setMethod())
+                .addMethod(setEnumMethod());
+            if (isValueTypeString())
+            {
+                classBuilder.addField(fieldStringRW());
+            }
+            return classBuilder.addMethod(buildMethod()).build();
+        }
+
+        private boolean isValueTypeString()
+        {
+            return valueTypeName != null && !valueTypeName.isPrimitive();
+        }
+
+        private FieldSpec fieldStringRW()
+        {
+            ClassName classType = (ClassName) valueTypeName;
+            TypeName builderType = classType.nestedClass("Builder");
+            return FieldSpec.builder(builderType, "stringRW", PRIVATE, FINAL)
+                            .initializer("new $T.Builder()", valueTypeName)
+                            .build();
         }
 
         private FieldSpec fieldValueSet()
@@ -195,12 +266,17 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec wrapMethod()
         {
-            return methodBuilder("wrap")
-                    .addModifiers(PUBLIC)
-                    .returns(enumName.nestedClass("Builder"))
-                    .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
-                    .addParameter(int.class, "offset")
-                    .addParameter(int.class, "maxLimit")
+            MethodSpec.Builder builder = methodBuilder("wrap");
+            builder.addModifiers(PUBLIC)
+                   .returns(enumName.nestedClass("Builder"))
+                   .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
+                   .addParameter(int.class, "offset")
+                   .addParameter(int.class, "maxLimit");
+            if (isValueTypeString())
+            {
+                builder.addStatement("stringRW.wrap(buffer, offset, maxLimit)");
+            }
+            return builder
                     .addStatement("super.wrap(buffer, offset, maxLimit)")
                     .addStatement("return this")
                     .build();
@@ -208,35 +284,52 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec setMethod()
         {
-            return methodBuilder("set")
-                    .addModifiers(PUBLIC)
-                    .returns(enumName.nestedClass("Builder"))
-                    .addParameter(enumName, "value")
-                    .addStatement("int newLimit = offset() + value.sizeof()")
-                    .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
-                    .addStatement("limit(newLimit)")
-                    .addStatement("valueSet = true")
-                    .addStatement("return this")
-                    .build();
+            MethodSpec.Builder builder = methodBuilder("set");
+            builder.addModifiers(PUBLIC)
+                   .returns(enumName.nestedClass("Builder"))
+                   .addParameter(enumName, "value");
+            if (isValueTypeString())
+            {
+                builder.addStatement("stringRW.set(value.string())")
+                       .addStatement("limit(stringRW.build().limit())");
+            }
+            else
+            {
+                builder.addStatement("int newLimit = offset() + value.sizeof()")
+                       .addStatement("checkLimit(newLimit, maxLimit())")
+                       .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
+                       .addStatement("limit(newLimit)");
+            }
+            return builder.addStatement("valueSet = true")
+                          .addStatement("return this")
+                          .build();
         }
 
         private MethodSpec setEnumMethod()
         {
+            MethodSpec.Builder builder = methodBuilder("set");
             final String methodName = valueTypeName != null ? "value" : "ordinal";
-            return methodBuilder("set")
-                    .addModifiers(PUBLIC)
-                    .returns(enumName.nestedClass("Builder"))
-                    .addParameter(enumTypeName, "value")
-                    .addStatement("MutableDirectBuffer buffer = buffer()")
-                    .addStatement("int offset = offset()")
-                    .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
-                    .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement(String.format("buffer.putByte(offset, (byte) value.%s())", methodName))
-                    .addStatement("limit(newLimit)")
-                    .addStatement("valueSet = true")
-                    .addStatement("return this")
-                    .build();
+            builder.addModifiers(PUBLIC)
+                   .returns(enumName.nestedClass("Builder"))
+                   .addParameter(enumTypeName, "value");
+            if (isValueTypeString())
+            {
+                builder.addParameter(Charset.class, "charset")
+                       .addStatement("stringRW.set(value.value(), charset)")
+                       .addStatement("limit(stringRW.build().limit())");
+            }
+            else
+            {
+                builder.addStatement("MutableDirectBuffer buffer = buffer()")
+                       .addStatement("int offset = offset()")
+                       .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
+                       .addStatement("checkLimit(newLimit, maxLimit())")
+                       .addStatement(String.format("buffer.putByte(offset, (byte) value.%s())", methodName))
+                       .addStatement("limit(newLimit)");
+            }
+            return builder.addStatement("valueSet = true")
+                          .addStatement("return this")
+                          .build();
         }
 
         private MethodSpec buildMethod()

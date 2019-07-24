@@ -79,7 +79,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private final Map<String, String> qualifiedNamesByLocalName;
 
     private AstSpecificationNode.Builder specificationBuilder;
-    private AstEnumNode.Builder enumBuilder;
     private AstStructNode.Builder structBuilder;
     private AstMemberNode.Builder memberBuilder;
     private AstUnionNode.Builder unionBuilder;
@@ -596,11 +595,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             enumBuilder.name(ctx.ID().getText());
 
-            if (ctx.LEFT_BRACKET() != null)
-            {
-                enumBuilder.valueType(AstType.UINT8);
-            }
-
             return super.visitEnum_type(ctx);
         }
 
@@ -672,10 +666,15 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             AstValueNode.Builder valueBuilder = new AstValueNode.Builder();
 
-            Integer parsed = null;
+            Object parsed = null;
+            // TODO: Use map? to support all types
             if (AstType.UINT8.equals(enumBuilder.valueType()))
             {
                 parsed = parseInt(ctx.uint_literal());
+            }
+            if (AstType.STRING.equals(enumBuilder.valueType()))
+            {
+                parsed = ctx.STRING_LITERAL().getSymbol().getText();
             }
 
             AstValueNode value = valueBuilder.name(ctx.ID().getText())

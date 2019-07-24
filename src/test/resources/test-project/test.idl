@@ -138,6 +138,13 @@ scope test
             THREE (3)
         }
 
+        enum Color (string)
+        {
+            BLUE ("blue"),
+            RED ("red"),
+            YELLOW ("yellow")
+        }
+
         struct PotentialNameConflicts
         {
            string value;
