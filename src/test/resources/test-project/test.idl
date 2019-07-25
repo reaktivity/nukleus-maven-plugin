@@ -145,6 +145,14 @@ scope test
             YELLOW ("yellow")
         }
 
+/*
+        enum BigNumber (uint64)
+        {
+            TEN (0x10L),
+            ELEVEN (0x11L),
+            TWELVE (0x12L)
+        }
+*/
         struct PotentialNameConflicts
         {
            string value;
