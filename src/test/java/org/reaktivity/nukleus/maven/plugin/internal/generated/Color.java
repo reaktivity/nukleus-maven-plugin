@@ -15,6 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+// TODO: Will be removed
 public enum Color
 {
     RED("red"),

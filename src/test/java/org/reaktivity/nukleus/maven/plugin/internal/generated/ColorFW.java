@@ -23,6 +23,7 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 
 import java.nio.charset.Charset;
 
+// TODO: Will be removed
 public final class ColorFW extends Flyweight
 {
     private static final int FIELD_OFFSET_VALUE = 0;

@@ -19,7 +19,7 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-
+// TODO: Will be removed
 public final class NumberFW extends Flyweight
 {
     private static final int FIELD_OFFSET_VALUE = 0;
