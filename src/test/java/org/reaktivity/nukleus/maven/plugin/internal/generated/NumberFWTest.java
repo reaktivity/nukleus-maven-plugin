@@ -125,7 +125,7 @@ public class NumberFWTest
     }
 
     @Test
-    public void shouldWNotrapAndReadInvalidValue() throws Exception
+    public void shouldNotWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
         buffer.putByte(offset,  (byte) -2);
@@ -188,5 +188,4 @@ public class NumberFWTest
         valueBuffer.putByte(0, value);
         return valueBuffer;
     }
-
 }
