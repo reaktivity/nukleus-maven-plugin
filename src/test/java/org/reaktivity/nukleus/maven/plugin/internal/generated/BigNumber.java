@@ -21,9 +21,9 @@ public enum BigNumber
 {
     TEN(0x10L),
 
-    ELEVEN(0x20L),
+    ELEVEN(0x11L),
 
-    TWELVE(0x30L);
+    TWELVE(0x12L);
 
     private final long value;
 
@@ -52,11 +52,6 @@ public enum BigNumber
     public static BigNumber valueOf(
         long value)
     {
-        BigNumber enumValue = BIGNUMBER_SUPPLIER.get(value);
-        if (enumValue == null)
-        {
-            throw new IllegalArgumentException(String.format("Unrecognized value: %d", value));
-        }
-        return enumValue;
+        return BIGNUMBER_SUPPLIER.get(value);
     }
 }
