@@ -181,7 +181,7 @@ enum_value_terminal
    ;
 
 enum_value
-   : ID (LEFT_BRACKET (uint_literal | STRING_LITERAL) RIGHT_BRACKET)?
+   : ID (LEFT_BRACKET (uint_literal | string_literal) RIGHT_BRACKET)?
    ;
 
 struct_type
@@ -283,15 +283,16 @@ string32_type
 int_literal
    : MINUS ? uint_literal
    ;
-   
-MINUS
-   : '-'
-   ;
 
 uint_literal
    : UNSIGNED_INTEGER_LITERAL
    | HEX_LITERAL
    ;
+
+string_literal
+   : STRING_LITERAL
+   ;
+
 
 UNSIGNED_INTEGER_LITERAL
    : ('0' | '1' .. '9' '0' .. '9'*) INTEGER_TYPE_SUFFIX?
@@ -300,6 +301,7 @@ UNSIGNED_INTEGER_LITERAL
 HEX_LITERAL
    : '0' ('x' | 'X') HEX_DIGIT+ INTEGER_TYPE_SUFFIX?
    ;
+
 
 STRING_LITERAL
    : QUOTE (~["\r\n])* QUOTE
@@ -326,6 +328,11 @@ fragment ID_DIGIT
    ;
 
 
+MINUS
+   : '-'
+   ;
+
+
 SEMICOLON
    : ';'
    ;
@@ -339,6 +346,7 @@ COLON
 COMMA
    : ','
    ;
+
 
 EQUALS
    : '='

@@ -15,14 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
-
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
+import org.antlr.v4.runtime.RuleContext;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode.Builder;
@@ -36,6 +29,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Default_nullContext;
@@ -52,11 +46,11 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_me
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_nameContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String16_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String32_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Type_idContext;
@@ -73,10 +67,21 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint3
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_array_memberContext;
 
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.function.Function;
+
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
+
+
 public final class AstParser extends NukleusBaseVisitor<AstNode>
 {
     private final Deque<AstScopeNode.Builder> scopeBuilders;
     private final Map<String, String> qualifiedNamesByLocalName;
+    private final Map<AstType, Function<RuleContext, Object>> parserByType;
 
     private AstSpecificationNode.Builder specificationBuilder;
     private AstStructNode.Builder structBuilder;
@@ -91,6 +96,20 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         this.scopeBuilders = new LinkedList<>();
         this.qualifiedNamesByLocalName = new HashMap<>();
         this.byteOrder = NATIVE;
+        this.parserByType = initValueTypeByName();
+    }
+
+    private static Map<AstType, Function<RuleContext, Object>> initValueTypeByName()
+    {
+        Map<AstType, Function<RuleContext, Object>> valueTypeByName = new HashMap<>();
+        valueTypeByName.put(AstType.UINT8, AstParser::parseInt);
+        valueTypeByName.put(AstType.UINT16, AstParser::parseInt);
+        valueTypeByName.put(AstType.UINT32, AstParser::parseLong);
+        valueTypeByName.put(AstType.UINT64, AstParser::parseLong);
+        valueTypeByName.put(AstType.STRING, AstParser::parseString);
+        valueTypeByName.put(AstType.STRING16, AstParser::parseString);
+        valueTypeByName.put(AstType.STRING32, AstParser::parseString);
+        return valueTypeByName;
     }
 
     @Override
@@ -106,7 +125,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
     @Override
     public AstScopeNode visitScope(
-        ScopeContext ctx)
+        NukleusParser.ScopeContext ctx)
     {
         String name = ctx.ID().getText();
 
@@ -562,7 +581,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     private static int parseInt(
-        Uint_literalContext ctx)
+        RuleContext ctx)
     {
         if (ctx == null)
         {
@@ -580,9 +599,34 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         return Integer.decode(text);
     }
 
+    private static long parseLong(
+        RuleContext ctx)
+    {
+        if (ctx == null)
+        {
+            return 0;
+        }
+        else
+        {
+            return parseLong(ctx.getText());
+        }
+    }
+
+    private static long parseLong(String text)
+    {
+        return Long.decode(text);
+    }
+
+    private static String parseString(
+        RuleContext ctx)
+    {
+        return ctx != null ? ctx.getText() : null;
+    }
+
     public final class EnumVisitor extends NukleusBaseVisitor<AstEnumNode.Builder>
     {
         private final AstEnumNode.Builder enumBuilder;
+        private AstValueNode.Builder valueBuilder;
 
         public EnumVisitor()
         {
@@ -664,25 +708,39 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstEnumNode.Builder visitEnum_value(
             Enum_valueContext ctx)
         {
-            AstValueNode.Builder valueBuilder = new AstValueNode.Builder();
+            this.valueBuilder = new AstValueNode.Builder()
+                .name(ctx.ID().getText())
+                .ordinal(enumBuilder.size());
 
-            Object parsed = null;
-            // TODO: Use map? to support all types
-            if (AstType.UINT8.equals(enumBuilder.valueType()))
-            {
-                parsed = parseInt(ctx.uint_literal());
-            }
-            if (AstType.STRING.equals(enumBuilder.valueType()))
-            {
-                parsed = ctx.STRING_LITERAL().getSymbol().getText();
-            }
+            AstEnumNode.Builder result = super.visitEnum_value(ctx);
 
-            AstValueNode value = valueBuilder.name(ctx.ID().getText())
-                .ordinal(enumBuilder.size())
-                .value(parsed)
-                .build();
+            AstValueNode value = valueBuilder.build();
             enumBuilder.value(value);
-            return super.visitEnum_value(ctx);
+            return result;
+        }
+
+        @Override
+        public AstEnumNode.Builder visitUint_literal(
+            Uint_literalContext ctx)
+        {
+            return visitLiteral(ctx);
+        }
+
+        @Override
+        public AstEnumNode.Builder visitString_literal(
+            String_literalContext ctx)
+        {
+            return visitLiteral(ctx);
+        }
+
+        private AstEnumNode.Builder visitLiteral(
+            RuleContext ctx)
+        {
+            AstType valueType = enumBuilder.valueType();
+            Function<RuleContext, Object> parser = parserByType.get(valueType);
+            Object parsed = parser.apply(ctx);
+            valueBuilder.value(parsed);
+            return defaultResult();
         }
     }
 }
