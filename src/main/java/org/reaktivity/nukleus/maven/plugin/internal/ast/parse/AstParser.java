@@ -96,16 +96,16 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         this.scopeBuilders = new LinkedList<>();
         this.qualifiedNamesByLocalName = new HashMap<>();
         this.byteOrder = NATIVE;
-        this.parserByType = initValueTypeByName();
+        this.parserByType = initParserByType();
     }
 
-    private static Map<AstType, Function<RuleContext, Object>> initValueTypeByName()
+    private static Map<AstType, Function<RuleContext, Object>> initParserByType()
     {
         Map<AstType, Function<RuleContext, Object>> valueTypeByName = new HashMap<>();
-        valueTypeByName.put(AstType.UINT8, AstParser::parseInt);
-        valueTypeByName.put(AstType.UINT16, AstParser::parseInt);
-        valueTypeByName.put(AstType.UINT32, AstParser::parseLong);
-        valueTypeByName.put(AstType.UINT64, AstParser::parseLong);
+        valueTypeByName.put(AstType.INT8, AstParser::parseByte);
+        valueTypeByName.put(AstType.INT16, AstParser::parseShort);
+        valueTypeByName.put(AstType.INT32, AstParser::parseInt);
+        valueTypeByName.put(AstType.INT64, AstParser::parseLong);
         valueTypeByName.put(AstType.STRING, AstParser::parseString);
         valueTypeByName.put(AstType.STRING16, AstParser::parseString);
         valueTypeByName.put(AstType.STRING32, AstParser::parseString);
@@ -567,6 +567,30 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         qualifiedNamesByLocalName.put(name, qualifiedName);
     }
 
+    private static byte parseByte(
+        RuleContext ctx)
+    {
+        return ctx != null ? parseByte(ctx.getText()) : 0;
+    }
+
+    private static byte parseByte(
+        String text)
+    {
+        return Byte.decode(text);
+    }
+
+    private static short parseShort(
+        RuleContext ctx)
+    {
+        return ctx != null ? parseShort(ctx.getText()) : 0;
+    }
+
+    private static short parseShort(
+        String text)
+    {
+        return Short.decode(text);
+    }
+
     private static int parseInt(
         Int_literalContext ctx)
     {
@@ -612,9 +636,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
     }
 
-    private static long parseLong(String text)
+    private static long parseLong(
+        String text)
     {
-        return Long.decode(text);
+        return Long.decode(text.substring(0, text.length() - 1));
     }
 
     private static String parseString(
@@ -649,35 +674,35 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstEnumNode.Builder visitUint8_type(
-            Uint8_typeContext ctx)
+        public AstEnumNode.Builder visitInt8_type(
+            Int8_typeContext ctx)
         {
-            enumBuilder.valueType(AstType.UINT8);
-            return super.visitUint8_type(ctx);
+            enumBuilder.valueType(AstType.INT8);
+            return super.visitInt8_type(ctx);
         }
 
         @Override
-        public AstEnumNode.Builder visitUint16_type(
-            Uint16_typeContext ctx)
+        public AstEnumNode.Builder visitInt16_type(
+            Int16_typeContext ctx)
         {
-            enumBuilder.valueType(AstType.UINT16);
-            return super.visitUint16_type(ctx);
+            enumBuilder.valueType(AstType.INT16);
+            return super.visitInt16_type(ctx);
         }
 
         @Override
-        public AstEnumNode.Builder visitUint32_type(
-            Uint32_typeContext ctx)
+        public AstEnumNode.Builder visitInt32_type(
+            Int32_typeContext ctx)
         {
-            enumBuilder.valueType(AstType.UINT32);
-            return super.visitUint32_type(ctx);
+            enumBuilder.valueType(AstType.INT32);
+            return super.visitInt32_type(ctx);
         }
 
         @Override
-        public AstEnumNode.Builder visitUint64_type(
-            Uint64_typeContext ctx)
+        public AstEnumNode.Builder visitInt64_type(
+            Int64_typeContext ctx)
         {
-            enumBuilder.valueType(AstType.UINT64);
-            return super.visitUint64_type(ctx);
+            enumBuilder.valueType(AstType.INT64);
+            return super.visitInt64_type(ctx);
         }
 
         @Override

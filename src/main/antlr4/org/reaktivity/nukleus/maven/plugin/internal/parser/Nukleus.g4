@@ -159,10 +159,10 @@ enum_type
    ;
 
 enum_explicit_type
-   : uint8_type
-   | uint16_type
-   | uint32_type
-   | uint64_type
+   : int8_type
+   | int16_type
+   | int32_type
+   | int64_type
    | string_type
    | string16_type
    | string32_type
@@ -181,7 +181,7 @@ enum_value_terminal
    ;
 
 enum_value
-   : ID (LEFT_BRACKET (uint_literal | string_literal) RIGHT_BRACKET)?
+   : ID (LEFT_BRACKET (int_literal | string_literal) RIGHT_BRACKET)?
    ;
 
 struct_type
@@ -309,7 +309,7 @@ STRING_LITERAL
 
 
 fragment HEX_DIGIT
-   : ('0' .. '9' | 'a' .. 'f' | 'A' .. 'F')
+   : ('0' .. '9' | 'a' .. 'f' | 'A' .. 'F' | '_')
    ;
 
 

@@ -15,6 +15,8 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import org.reaktivity.reaktor.internal.test.types.StringFW;
+
 // TODO: Will be removed
 public enum Color
 {
@@ -34,5 +36,20 @@ public enum Color
     public String value()
     {
         return value;
+    }
+
+    public static Color valueOf(StringFW value)
+    {
+        String kind = value.asString();
+        switch (kind)
+        {
+        case "red":
+            return RED;
+        case "blue":
+            return BLUE;
+        case "yellow":
+            return YELLOW;
+        }
+        return null;
     }
 }

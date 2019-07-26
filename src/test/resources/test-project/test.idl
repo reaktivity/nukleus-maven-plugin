@@ -131,11 +131,32 @@ scope test
             FORWARD
         }
 
-        enum Number (uint8)
+        enum Number (int8)
         {
             ONE (1),
             TWO (2),
             THREE (3)
+        }
+
+        enum EnumWithInt16 (int16)
+        {
+            ONE (1),
+            TWO (2),
+            THREE (3)
+        }
+
+        enum EnumWithInt32 (int32)
+        {
+            ONE (1),
+            TWO (2),
+            THREE (3)
+        }
+
+        enum BigNumber (int64)
+        {
+            TEN (0x10L),
+            ELEVEN (0x11L),
+            TWELVE (0x12L)
         }
 
         enum Color (string)
@@ -145,14 +166,18 @@ scope test
             YELLOW ("yellow")
         }
 
-/*
-        enum BigNumber (uint64)
+        enum EnumWithString16 (string16)
         {
-            TEN (0x10L),
-            ELEVEN (0x11L),
-            TWELVE (0x12L)
+            FIRST("first"),
+            SECOND("second")
         }
-*/
+
+        enum EnumWithString32 (string32)
+        {
+            FIRST("first"),
+            SECOND("second")
+        }
+
         struct PotentialNameConflicts
         {
            string value;

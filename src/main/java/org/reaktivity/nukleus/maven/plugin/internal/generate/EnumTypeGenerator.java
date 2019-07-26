@@ -17,10 +17,10 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeName.INT;
 import static com.squareup.javapoet.TypeSpec.enumBuilder;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.LONG_2_OBJECT_HASH_MAP_TYPE;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
@@ -39,22 +41,29 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     private final TypeSpec.Builder builder;
     private final NameConstantGenerator nameConstant;
     private final ValueOfMethodGenerator valueOfMethod;
-    private final ValueMethodGenerator valueMethod;
-    private final ConstructorGenerator constructor;
     private final TypeName valueTypeName;
+    private ValueMethodGenerator valueMethod;
+    private ConstructorGenerator constructor;
+    private LongHashMapGenerator longHashMap;
 
     public EnumTypeGenerator(
         ClassName enumTypeName,
         TypeName valueTypeName)
     {
         super(enumTypeName);
-
         this.builder = enumBuilder(enumTypeName).addModifiers(PUBLIC);
         this.nameConstant = new NameConstantGenerator(enumTypeName, builder);
         this.valueOfMethod = new ValueOfMethodGenerator(enumTypeName);
-        this.valueMethod = new ValueMethodGenerator();
-        this.constructor = new ConstructorGenerator();
         this.valueTypeName = valueTypeName;
+        if (isParameterizedType())
+        {
+            this.valueMethod = new ValueMethodGenerator();
+            this.constructor = new ConstructorGenerator();
+        }
+        if (isValueTypeLong())
+        {
+            this.longHashMap = new LongHashMapGenerator(enumTypeName, builder);
+        }
     }
 
     public TypeSpecGenerator<ClassName> addValue(
@@ -64,6 +73,10 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         nameConstant.addValue(name, value);
         valueOfMethod.addValue(name, value);
 
+        if (isValueTypeLong())
+        {
+            longHashMap.addValue(name, value);
+        }
         return this;
     }
 
@@ -71,24 +84,26 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         nameConstant.build();
-        if (valueTypeName != null)
+        if (isParameterizedType())
         {
-            builder.addField(typeName(), "value", Modifier.PRIVATE, Modifier.FINAL)
-                   .addMethod(constructor.generate())
-                   .addMethod(valueMethod.generate());
-            if (!valueTypeName.isPrimitive())
+            if (valueTypeName.equals(TypeName.LONG))
             {
-                return builder.build();
+                longHashMap.generate();
             }
+            if (valueTypeName.isPrimitive())
+            {
+                builder.addField(valueTypeName, "value", Modifier.PRIVATE, Modifier.FINAL);
+            }
+            else
+            {
+                builder.addField(String.class, "value", Modifier.PRIVATE, Modifier.FINAL);
+            }
+            builder.addMethod(constructor.generate())
+                   .addMethod(valueMethod.generate());
         }
 
         return builder.addMethod(valueOfMethod.generate())
                       .build();
-    }
-
-    private TypeName typeName()
-    {
-        return valueTypeName.isPrimitive() ? INT : TypeName.get(String.class);
     }
 
     private static final class NameConstantGenerator extends ClassSpecMixinGenerator
@@ -115,18 +130,56 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         }
     }
 
+    private static final class LongHashMapGenerator extends ClassSpecMixinGenerator
+    {
+        private CodeBlock.Builder longHashMapBuilder;
+        private LongHashMapGenerator(
+            ClassName thisType,
+            TypeSpec.Builder builder)
+        {
+            super(thisType, builder);
+            builder.addField(ParameterizedTypeName.get(LONG_2_OBJECT_HASH_MAP_TYPE, thisType), "VALUE_BY_LONG",
+                Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
+            longHashMapBuilder = CodeBlock.builder().addStatement("$T<$T> valueByLong = new $T<>()", LONG_2_OBJECT_HASH_MAP_TYPE,
+                thisType, LONG_2_OBJECT_HASH_MAP_TYPE);
+        }
+
+        public LongHashMapGenerator addValue(
+            String name, Object value)
+        {
+            longHashMapBuilder.addStatement("valueByLong.put($L, $L)", value, name);
+            return this;
+        }
+
+        public TypeSpec generate()
+        {
+            return builder.addStaticBlock(longHashMapBuilder.addStatement("VALUE_BY_LONG = valueByLong")
+                .build()).build();
+        }
+    }
+
     private final class ConstructorGenerator extends MethodSpecGenerator
     {
         private ConstructorGenerator()
         {
-            super(constructorBuilder().addStatement("this.$L = $L", "value", "value"));
+            super(valueTypeName.equals(TypeName.BYTE) | valueTypeName.equals(TypeName.SHORT) ?
+                constructorBuilder().addStatement("this.$L = ($L) $L", "value", valueTypeName, "value") :
+                constructorBuilder().addStatement("this.$L = $L", "value", "value"));
         }
 
         @Override
         public MethodSpec generate()
         {
-            return builder.addParameter(typeName(), "value")
-                          .build();
+            if (valueTypeName.isPrimitive())
+            {
+                builder.addParameter(valueTypeName.equals(TypeName.BYTE) | valueTypeName.equals(TypeName.SHORT) ? TypeName.INT
+                    : valueTypeName, "value");
+            }
+            else
+            {
+                builder.addParameter(String.class, "value");
+            }
+            return builder.build();
         }
     }
 
@@ -142,8 +195,15 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            return builder.returns(valueTypeName.isPrimitive() ? int.class : String.class)
-                          .build();
+            if (valueTypeName.isPrimitive())
+            {
+                builder.returns(valueTypeName);
+            }
+            else
+            {
+                builder.returns(String.class);
+            }
+            return builder.build();
         }
     }
 
@@ -151,6 +211,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     {
         private final List<String> constantNames = new LinkedList<>();
         private final Map<String, Object> valueByConstantName = new HashMap<>();
+        private final ClassName enumName;
 
         private ValueOfMethodGenerator(
             ClassName enumName)
@@ -158,6 +219,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             super(methodBuilder("valueOf")
                     .addModifiers(PUBLIC, STATIC)
                     .returns(enumName));
+            this.enumName = enumName;
         }
 
         public ValueOfMethodGenerator addValue(
@@ -175,24 +237,51 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            final String discriminant = valueTypeName != null ? "value" : "ordinal";
-            builder.addParameter(int.class, discriminant);
-            builder.beginControlFlow("switch ($L)", discriminant);
+            final String discriminant = isParameterizedType() ? "value" : "ordinal";
 
-            for (int index = 0; index < constantNames.size(); index++)
+            builder.addParameter(isParameterizedType() ? valueTypeName : TypeName.INT, discriminant);
+
+            if (isValueTypeLong())
             {
-                String enumConstant = constantNames.get(index);
-                int kind = valueByConstantName.get(enumConstant) == null ? index :
-                    (int) valueByConstantName.get(enumConstant);
-                builder.beginControlFlow("case $L:", kind)
-                       .addStatement("return $N", enumConstant)
-                       .endControlFlow();
+                builder.addStatement("return VALUE_BY_LONG.get(value)");
             }
+            else
+            {
+                if (isValueTypeString())
+                {
+                    builder.addStatement("String kind = $L.asString()", discriminant);
+                }
+                builder.beginControlFlow("switch ($L)", isValueTypeString() ? "kind" : discriminant);
 
-            builder.endControlFlow().addStatement("return null");
+                for (int index = 0; index < constantNames.size(); index++)
+                {
+                    String enumConstant = constantNames.get(index);
 
+                        Object kind =
+                            valueByConstantName.get(enumConstant) == null ? index : valueByConstantName.get(enumConstant);
+                        builder.beginControlFlow("case $L:", kind)
+                               .addStatement("return $N", enumConstant)
+                               .endControlFlow();
+                }
+
+                builder.endControlFlow().addStatement("return null");
+            }
             return builder.build();
         }
+    }
 
+    private boolean isParameterizedType()
+    {
+        return valueTypeName != null;
+    }
+
+    private boolean isValueTypeLong()
+    {
+        return valueTypeName != null && valueTypeName.equals(TypeName.LONG);
+    }
+
+    private boolean isValueTypeString()
+    {
+        return valueTypeName != null && !valueTypeName.isPrimitive();
     }
 }

@@ -19,11 +19,22 @@ import org.agrona.collections.Long2ObjectHashMap;
 
 public enum BigNumber
 {
-    TEN(0x10L),
+    TEN(16), // == 0x10L
 
-    ELEVEN(0x11L),
+    ELEVEN(17), // == 0x11L
 
-    TWELVE(0x12L);
+    TWELVE(18); // == 0x12L
+
+    private static final Long2ObjectHashMap<BigNumber> VALUE_BY_LONG;
+
+    static
+    {
+        Long2ObjectHashMap<BigNumber> valueByLong = new Long2ObjectHashMap<>();
+        valueByLong.put(16, TEN);
+        valueByLong.put(17, ELEVEN);
+        valueByLong.put(18, TWELVE);
+        VALUE_BY_LONG = valueByLong;
+    }
 
     private final long value;
 
@@ -31,17 +42,6 @@ public enum BigNumber
         long value)
     {
         this.value = value;
-    }
-
-    private static final Long2ObjectHashMap<BigNumber> BIGNUMBER_SUPPLIER;
-
-    static
-    {
-        Long2ObjectHashMap<BigNumber> bigNumberSupplier = new Long2ObjectHashMap<>();
-        bigNumberSupplier.put(0x10L, TEN);
-        bigNumberSupplier.put(0x11L, ELEVEN);
-        bigNumberSupplier.put(0x12L, TWELVE);
-        BIGNUMBER_SUPPLIER = bigNumberSupplier;
     }
 
     public long value()
@@ -52,6 +52,6 @@ public enum BigNumber
     public static BigNumber valueOf(
         long value)
     {
-        return BIGNUMBER_SUPPLIER.get(value);
+        return VALUE_BY_LONG.get(value);
     }
 }

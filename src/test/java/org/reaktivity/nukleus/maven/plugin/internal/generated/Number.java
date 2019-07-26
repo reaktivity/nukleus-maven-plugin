@@ -24,21 +24,21 @@ public enum Number
 
     THREE(3);
 
-    private final int value;
+    private final byte value;
 
     Number(
         int value)
     {
-        this.value = value;
+        this.value = (byte) value;
     }
 
-    public int value()
+    public byte value()
     {
         return value;
     }
 
     public static Number valueOf(
-        int value)
+        byte value)
     {
         switch (value)
         {
@@ -49,6 +49,6 @@ public enum Number
         case 3:
             return THREE;
         }
-        throw new IllegalArgumentException(String.format("Unrecognized value: %d", value));
+        return null;
     }
 }
