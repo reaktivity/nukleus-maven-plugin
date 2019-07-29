@@ -168,14 +168,16 @@ scope test
 
         enum EnumWithString16 (string16)
         {
-            FIRST("first"),
-            SECOND("second")
+            BLUE ("blue"),
+            RED ("red"),
+            YELLOW ("yellow")
         }
 
         enum EnumWithString32 (string32)
         {
-            FIRST("first"),
-            SECOND("second")
+            BLUE ("blue"),
+            RED ("red"),
+            YELLOW ("yellow")
         }
 
         struct PotentialNameConflicts

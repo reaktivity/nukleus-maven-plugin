@@ -16,25 +16,23 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.agrona.BitUtil.SIZE_OF_SHORT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import org.agrona.BitUtil;
+import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithString;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt16;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt16FW;
 
-public class EnumWithStringFWTest
+public class EnumWithInt16FWTest
 {
-    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
-
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -42,6 +40,7 @@ public class EnumWithStringFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
+
     private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -49,34 +48,29 @@ public class EnumWithStringFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final EnumWithStringFW.Builder flyweightRW = new EnumWithStringFW.Builder();
-    private final EnumWithStringFW flyweightRO = new EnumWithStringFW();
+
+    private final EnumWithInt16FW.Builder flyweightRW = new EnumWithInt16FW.Builder();
+    private final EnumWithInt16FW flyweightRO = new EnumWithInt16FW();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    static int setAllTestValues(
-        MutableDirectBuffer buffer,
-        final int offset,
-        String value)
+    static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
     {
         int pos = offset;
-        byte[] charBytes = value.getBytes(UTF_8);
-        buffer.putByte(pos, (byte) charBytes.length);
-        buffer.putBytes(pos + 1, charBytes);
-        return charBytes.length + LENGTH_SIZE;
+        buffer.putShort(pos,  EnumWithInt16.TWO.value());
+        return SIZE_OF_SHORT;
     }
 
-    void assertAllTestValuesRead(
-        EnumWithStringFW flyweight)
+    void assertAllTestValuesRead(EnumWithInt16FW flyweight)
     {
-        assertEquals(EnumWithString.BLUE, flyweight.get());
+        assertEquals(EnumWithInt16.TWO, flyweight.get());
     }
 
     @Test
     public void shouldNotTryWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10, "blue");
+        int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
@@ -86,7 +80,7 @@ public class EnumWithStringFWTest
     @Test
     public void shouldNotWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10, "blue");
+        int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             try
@@ -108,7 +102,7 @@ public class EnumWithStringFWTest
     public void shouldTryWrapAndReadAllValues() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset, "blue");
+        setAllTestValues(buffer, offset);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
         assertAllTestValuesRead(flyweightRO);
     }
@@ -116,30 +110,27 @@ public class EnumWithStringFWTest
     @Test
     public void shouldWrapAndReadAllValues() throws Exception
     {
-        int size = setAllTestValues(buffer, 10, "blue");
+        int size = setAllTestValues(buffer, 10);
         int limit = flyweightRO.wrap(buffer,  10,  buffer.capacity()).limit();
         assertEquals(10 + size, limit);
         assertAllTestValuesRead(flyweightRO);
     }
 
     @Test
-    public void shouldNotTryInvalidValue() throws Exception
+    public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
-        final int offset = 0;
-        byte[] charBytes = "blue".getBytes(UTF_8);
-        buffer.putByte(offset,  (byte) 254);
-        buffer.putBytes(offset + 1, charBytes);
-        assertNull(flyweightRO.tryWrap(buffer, offset, offset + charBytes.length + LENGTH_SIZE));
+        final int offset = 12;
+        buffer.putShort(offset,  (short) -2);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertNull(flyweightRO.get());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldWNotrapAndReadInvalidValue() throws Exception
+    @Test
+    public void shouldNotWrapAndReadInvalidValue() throws Exception
     {
-        final int offset = 0;
-        byte[] charBytes = "blue".getBytes(UTF_8);
-        buffer.putByte(offset,  (byte) 2);
-        buffer.putBytes(offset + 1, charBytes);
-        flyweightRO.wrap(buffer, offset, offset + charBytes.length + LENGTH_SIZE);
+        final int offset = 12;
+        buffer.putShort(offset,  (short) -2);
+        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
         assertNull(flyweightRO.get());
     }
 
@@ -147,52 +138,55 @@ public class EnumWithStringFWTest
     public void shouldSetUsingEnum()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .set(EnumWithString.BLUE, UTF_8)
+            .set(EnumWithInt16.TWO)
             .build()
             .limit();
-        setAllTestValues(expected, 0, EnumWithString.BLUE.value());
-        assertEquals(LENGTH_SIZE + EnumWithString.BLUE.value().getBytes(UTF_8).length, limit);
+        setAllTestValues(expected,  0);
+        assertEquals(SIZE_OF_SHORT, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
-    public void shouldSetUsingEnumWithStringFW()
+    public void shouldSetUsingEnumWithInt16FW()
     {
-        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .set(asEnumWithStringFW(EnumWithString.BLUE))
+        EnumWithInt16FW enumWithInt16 = new EnumWithInt16FW().wrap(asBuffer((short) 1), 0, SIZE_OF_SHORT);
+        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_SHORT)
+            .set(enumWithInt16)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(EnumWithString.BLUE, flyweightRO.get());
-        assertEquals(4 + LENGTH_SIZE, flyweightRO.limit());
-        assertEquals(4 + LENGTH_SIZE, flyweightRO.sizeof());
+        flyweightRO.wrap(buffer, 10,  limit);
+        assertEquals(EnumWithInt16.ONE, flyweightRO.get());
+        assertEquals(SIZE_OF_SHORT, flyweightRO.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetWithInsufficientSpace()
     {
         flyweightRW.wrap(buffer, 10, 10)
-            .set(EnumWithString.BLUE, UTF_8);
+            .set(EnumWithInt16.ONE);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUsingEnumWithStringFWWithInsufficientSpace()
+    public void shouldFailToSetUsingEnumWithInt16FWWithInsufficientSpace()
     {
+        EnumWithInt16FW enumWithInt8 = new EnumWithInt16FW().wrap(asBuffer((short) 1), 0, SIZE_OF_SHORT);
         flyweightRW.wrap(buffer, 10, 10)
-            .set(asEnumWithStringFW(EnumWithString.BLUE));
+            .set(enumWithInt8);
     }
 
     @Test
     public void shouldFailToBuildWithNothingSet()
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("EnumWithString");
-        flyweightRW.wrap(buffer, 10, buffer.capacity()).build();
+        expectedException.expectMessage("EnumWithInt16");
+        flyweightRW.wrap(buffer, 10, buffer.capacity())
+            .build();
     }
 
-    private static EnumWithStringFW asEnumWithStringFW(EnumWithString value)
+    private static DirectBuffer asBuffer(short value)
     {
-        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(LENGTH_SIZE + value.value().length()));
-        return new EnumWithStringFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_SHORT));
+        valueBuffer.putShort(0, value);
+        return valueBuffer;
     }
 }
