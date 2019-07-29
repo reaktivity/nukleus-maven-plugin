@@ -35,6 +35,8 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class EnumFlyweightGenerator extends ClassSpecGenerator
 {
@@ -42,6 +44,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
     private final BuilderClassBuilder builderClassBuilder;
     private final ClassName enumTypeName;
     private final TypeName valueTypeName;
+    private static Map<TypeName, String> stringValueTypeByTypeName = new HashMap<>();
 
     public EnumFlyweightGenerator(
         ClassName enumName,
@@ -56,6 +59,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         this.builderClassBuilder =
             new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName, valueTypeName);
         this.valueTypeName = valueTypeName;
+        stringValueTypeByTypeName = initstringValueTypeByTypeName();
     }
 
     @Override
@@ -66,15 +70,28 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             classBuilder.addField(stringROConstant())
                         .addMethod(stringMethod());
         }
-        return classBuilder.addField(fieldOffsetValueConstant())
-                           .addField(fieldSizeValueConstant())
-                           .addMethod(limitMethod())
+        else
+        {
+            classBuilder.addField(fieldOffsetValueConstant())
+                        .addField(fieldSizeValueConstant());
+        }
+        return classBuilder.addMethod(limitMethod())
                            .addMethod(getMethod())
                            .addMethod(tryWrapMethod())
                            .addMethod(wrapMethod())
                            .addMethod(toStringMethod())
                            .addType(builderClassBuilder.build())
                            .build();
+    }
+
+    private static Map<TypeName, String> initstringValueTypeByTypeName()
+    {
+        Map<TypeName, String> stringValueTypeByTypeName = new HashMap<>();
+        stringValueTypeByTypeName.put(TypeName.BYTE, "Byte");
+        stringValueTypeByTypeName.put(TypeName.SHORT, "Short");
+        stringValueTypeByTypeName.put(TypeName.INT, "Int");
+        stringValueTypeByTypeName.put(TypeName.LONG, "Long");
+        return stringValueTypeByTypeName;
     }
 
     private boolean isValueTypeString()
@@ -98,8 +115,9 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
     private FieldSpec fieldSizeValueConstant()
     {
+        String constantType = valueTypeName == null ? "BYTE" : stringValueTypeByTypeName.get(valueTypeName).toUpperCase();
         return FieldSpec.builder(int.class, "FIELD_SIZE_VALUE", PRIVATE, STATIC, FINAL)
-                .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
+                .initializer(String.format("$T.SIZE_OF_%s", constantType), BIT_UTIL_TYPE)
                 .build();
     }
 
@@ -126,9 +144,10 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
     private MethodSpec getMethod()
     {
+        String bufferType = valueTypeName == null ? "Byte" : stringValueTypeByTypeName.get(valueTypeName);
         String returnStatement = String.format("return %s", isValueTypeString() ?
             "stringRO.asString() != null ? $T.valueOf(stringRO.asString().toUpperCase()) : null" :
-            "$T.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE))");
+            String.format("$T.valueOf(buffer().get%s(offset() + FIELD_OFFSET_VALUE))", bufferType));
         return methodBuilder("get")
                 .addModifiers(PUBLIC)
                 .returns(enumTypeName)
@@ -308,7 +327,6 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         private MethodSpec setEnumMethod()
         {
             MethodSpec.Builder builder = methodBuilder("set");
-            final String methodName = valueTypeName != null ? "value" : "ordinal";
             builder.addModifiers(PUBLIC)
                    .returns(enumName.nestedClass("Builder"))
                    .addParameter(enumTypeName, "value");
@@ -320,11 +338,14 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
+                final String methodName = isParameterizedType() ? "value" : "ordinal";
+                final String bufferType = isParameterizedType() ? stringValueTypeByTypeName.get(valueTypeName) : "Byte";
+                final String castToByte = isParameterizedType() ? "" : "(byte) ";
                 builder.addStatement("MutableDirectBuffer buffer = buffer()")
                        .addStatement("int offset = offset()")
-                       .addStatement("int newLimit = offset + BitUtil.SIZE_OF_BYTE")
+                       .addStatement("int newLimit = offset + FIELD_SIZE_VALUE")
                        .addStatement("checkLimit(newLimit, maxLimit())")
-                       .addStatement(String.format("buffer.putByte(offset, (byte) value.%s())", methodName))
+                       .addStatement(String.format("buffer.put%s(offset, %svalue.%s())", bufferType, castToByte, methodName))
                        .addStatement("limit(newLimit)");
             }
             return builder.addStatement("valueSet = true")
@@ -344,6 +365,11 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("return super.build()")
                     .returns(enumName)
                     .build();
+        }
+
+        private boolean isParameterizedType()
+        {
+            return valueTypeName != null;
         }
     }
 }
