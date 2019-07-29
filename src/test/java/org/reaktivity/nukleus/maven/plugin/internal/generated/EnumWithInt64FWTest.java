@@ -21,7 +21,10 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.nukleus.maven.plugin.internal.generated.BigNumberFW.Builder;
+
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW.Builder;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.agrona.BitUtil.SIZE_OF_LONG;
@@ -30,7 +33,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-public class BigNumberFWTest
+public class EnumWithInt64FWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -40,8 +43,8 @@ public class BigNumberFWTest
         }
     };
 
-    private final BigNumberFW.Builder flyweightRW = new Builder();
-    private final BigNumberFW flyweightRO = new BigNumberFW();
+    private final EnumWithInt64FW.Builder flyweightRW = new Builder();
+    private final EnumWithInt64FW flyweightRO = new EnumWithInt64FW();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -49,13 +52,13 @@ public class BigNumberFWTest
     static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
     {
         int pos = offset;
-        buffer.putLong(pos, BigNumber.TWELVE.value());
+        buffer.putLong(pos, EnumWithInt64.TWELVE.value());
         return SIZE_OF_LONG;
     }
 
-    void assertAllTestValuesRead(BigNumberFW flyweight)
+    void assertAllTestValuesRead(EnumWithInt64FW flyweight)
     {
-        assertEquals(BigNumber.TWELVE, flyweight.get());
+        assertEquals(EnumWithInt64.TWELVE, flyweight.get());
     }
 
     @Test
@@ -76,7 +79,7 @@ public class BigNumberFWTest
             }
         };
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-                               .set(BigNumber.TWELVE)
+                               .set(EnumWithInt64.TWELVE)
                                .build()
                                .limit();
         setAllTestValues(expected,  0);
@@ -195,7 +198,7 @@ public class BigNumberFWTest
     }
 
     @Test
-    public void shouldSetUsingBigNumberFW()
+    public void shouldSetUsingEnumWithInt64FW()
     {
         int offset = 10;
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(offset + SIZE_OF_LONG))
@@ -205,27 +208,27 @@ public class BigNumberFWTest
                 setMemory(0, capacity(), (byte) 0xab);
             }
         };
-        BigNumberFW bigNumber = new BigNumberFW().wrap(asBuffer(0x10L), 0, SIZE_OF_LONG);
+        EnumWithInt64FW bigNumber = new EnumWithInt64FW().wrap(asBuffer(0x10L), 0, SIZE_OF_LONG);
 
         int limit = flyweightRW.wrap(buffer, offset, offset + SIZE_OF_LONG)
                                .set(bigNumber)
                                .build()
                                .limit();
         flyweightRO.wrap(buffer, offset, limit);
-        assertEquals(BigNumber.TEN, flyweightRO.get());
+        assertEquals(EnumWithInt64.TEN, flyweightRO.get());
         assertEquals(SIZE_OF_LONG, flyweightRO.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetWithInsufficientSpace()
     {
-        flyweightRW.wrap(buffer, 10, 16).set(BigNumber.TEN);
+        flyweightRW.wrap(buffer, 10, 16).set(EnumWithInt64.TEN);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUsingBigNumberFWWithInsufficientSpace()
+    public void shouldFailToSetUsingEnumWithInt64FWWithInsufficientSpace()
     {
-        BigNumberFW bigNumber = new BigNumberFW().wrap(asBuffer(0x10L), 0, SIZE_OF_LONG);
+        EnumWithInt64FW bigNumber = new EnumWithInt64FW().wrap(asBuffer(0x10L), 0, SIZE_OF_LONG);
         flyweightRW.wrap(buffer, 10, 16)
                    .set(bigNumber);
     }
@@ -234,7 +237,7 @@ public class BigNumberFWTest
     public void shouldFailToBuildWithNothingSet()
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("BigNumber");
+        expectedException.expectMessage("EnumWithInt64");
         flyweightRW.wrap(buffer, 10, buffer.capacity())
                    .build();
     }

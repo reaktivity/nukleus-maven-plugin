@@ -16,23 +16,22 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
-import org.agrona.BitUtil;
+import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.Color;
-import org.reaktivity.reaktor.internal.test.types.inner.ColorFW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public class ColorFWTest
+public class EnumWithInt8FWTest
 {
-    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
-
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -40,6 +39,7 @@ public class ColorFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
+
     private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -47,34 +47,29 @@ public class ColorFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final ColorFW.Builder flyweightRW = new ColorFW.Builder();
-    private final ColorFW flyweightRO = new ColorFW();
+
+    private final EnumWithInt8FW.Builder flyweightRW = new EnumWithInt8FW.Builder();
+    private final EnumWithInt8FW flyweightRO = new EnumWithInt8FW();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    static int setAllTestValues(
-        MutableDirectBuffer buffer,
-        final int offset,
-        String value)
+    static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
     {
         int pos = offset;
-        byte[] charBytes = value.getBytes(UTF_8);
-        buffer.putByte(pos, (byte) charBytes.length);
-        buffer.putBytes(pos + 1, charBytes);
-        return charBytes.length + LENGTH_SIZE;
+        buffer.putByte(pos,  (byte) EnumWithInt8.TWO.value());
+        return pos - offset + Byte.BYTES;
     }
 
-    void assertAllTestValuesRead(
-        ColorFW flyweight)
+    void assertAllTestValuesRead(EnumWithInt8FW flyweight)
     {
-        assertEquals(Color.BLUE, flyweight.get());
+        assertEquals(EnumWithInt8.TWO, flyweight.get());
     }
 
     @Test
     public void shouldNotTryWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10, "blue");
+        int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
@@ -84,7 +79,7 @@ public class ColorFWTest
     @Test
     public void shouldNotWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10, "blue");
+        int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             try
@@ -106,7 +101,7 @@ public class ColorFWTest
     public void shouldTryWrapAndReadAllValues() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset, "blue");
+        setAllTestValues(buffer, offset);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
         assertAllTestValuesRead(flyweightRO);
     }
@@ -114,30 +109,27 @@ public class ColorFWTest
     @Test
     public void shouldWrapAndReadAllValues() throws Exception
     {
-        int size = setAllTestValues(buffer, 10, "blue");
+        int size = setAllTestValues(buffer, 10);
         int limit = flyweightRO.wrap(buffer,  10,  buffer.capacity()).limit();
         assertEquals(10 + size, limit);
         assertAllTestValuesRead(flyweightRO);
     }
 
     @Test
-    public void shouldNotTryInvalidValue() throws Exception
+    public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
-        final int offset = 0;
-        byte[] charBytes = "blue".getBytes(UTF_8);
-        buffer.putByte(offset,  (byte) 254);
-        buffer.putBytes(offset + 1, charBytes);
-        assertNull(flyweightRO.tryWrap(buffer, offset, offset + charBytes.length + LENGTH_SIZE));
+        final int offset = 12;
+        buffer.putByte(offset,  (byte) -2);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertNull(flyweightRO.get());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldWNotrapAndReadInvalidValue() throws Exception
+    @Test
+    public void shouldNotWrapAndReadInvalidValue() throws Exception
     {
-        final int offset = 0;
-        byte[] charBytes = "blue".getBytes(UTF_8);
-        buffer.putByte(offset,  (byte) 2);
-        buffer.putBytes(offset + 1, charBytes);
-        flyweightRO.wrap(buffer, offset, offset + charBytes.length + LENGTH_SIZE);
+        final int offset = 12;
+        buffer.putByte(offset,  (byte) -2);
+        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
         assertNull(flyweightRO.get());
     }
 
@@ -145,52 +137,55 @@ public class ColorFWTest
     public void shouldSetUsingEnum()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .set(Color.BLUE, UTF_8)
+            .set(EnumWithInt8.TWO)
             .build()
             .limit();
-        setAllTestValues(expected, 0, Color.BLUE.value());
-        assertEquals(LENGTH_SIZE + Color.BLUE.value().getBytes(UTF_8).length, limit);
+        setAllTestValues(expected,  0);
+        assertEquals(1, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
-    public void shouldSetUsingColorFW()
+    public void shouldSetUsingEnumWithInt8FW()
     {
-        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .set(asColorFW(Color.BLUE))
+        EnumWithInt8FW enumWithInt8 = new EnumWithInt8FW().wrap(asBuffer((byte) 1), 0, 1);
+        int limit = flyweightRW.wrap(buffer, 10, 11)
+            .set(enumWithInt8)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(Color.BLUE, flyweightRO.get());
-        assertEquals(4 + LENGTH_SIZE, flyweightRO.limit());
-        assertEquals(4 + LENGTH_SIZE, flyweightRO.sizeof());
+        flyweightRO.wrap(buffer, 10,  limit);
+        assertEquals(EnumWithInt8.ONE, flyweightRO.get());
+        assertEquals(1, flyweightRO.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetWithInsufficientSpace()
     {
         flyweightRW.wrap(buffer, 10, 10)
-            .set(Color.BLUE, UTF_8);
+            .set(EnumWithInt8.ONE);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUsingColorFWWithInsufficientSpace()
+    public void shouldFailToSetUsingEnumWithInt8FWWithInsufficientSpace()
     {
+        EnumWithInt8FW enumWithInt8 = new EnumWithInt8FW().wrap(asBuffer((byte) 1), 0, 1);
         flyweightRW.wrap(buffer, 10, 10)
-            .set(asColorFW(Color.BLUE));
+            .set(enumWithInt8);
     }
 
     @Test
     public void shouldFailToBuildWithNothingSet()
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("Color");
-        flyweightRW.wrap(buffer, 10, buffer.capacity()).build();
+        expectedException.expectMessage("EnumWithInt8");
+        flyweightRW.wrap(buffer, 10, buffer.capacity())
+            .build();
     }
 
-    private static ColorFW asColorFW(Color value)
+    private static DirectBuffer asBuffer(byte value)
     {
-        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(LENGTH_SIZE + value.value().length()));
-        return new ColorFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(1));
+        valueBuffer.putByte(0, value);
+        return valueBuffer;
     }
 }

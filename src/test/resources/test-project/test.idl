@@ -131,7 +131,7 @@ scope test
             FORWARD
         }
 
-        enum Number (int8)
+        enum EnumWithInt8 (int8)
         {
             ONE (1),
             TWO (2),
@@ -152,14 +152,14 @@ scope test
             THREE (3)
         }
 
-        enum BigNumber (int64)
+        enum EnumWithInt64 (int64)
         {
             TEN (0x10L),
             ELEVEN (0x11L),
             TWELVE (0x12L)
         }
 
-        enum Color (string)
+        enum EnumWithString (string)
         {
             BLUE ("blue"),
             RED ("red"),
