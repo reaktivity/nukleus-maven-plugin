@@ -29,7 +29,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Default_nullContext;
@@ -46,6 +45,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_me
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_nameContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String16_typeContext;
@@ -125,7 +125,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
     @Override
     public AstScopeNode visitScope(
-        NukleusParser.ScopeContext ctx)
+        ScopeContext ctx)
     {
         String name = ctx.ID().getText();
 
@@ -432,10 +432,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint64_type(
         Uint64_typeContext ctx)
     {
-        if (memberBuilder != null)
-        {
-            memberBuilder.type(AstType.UINT64).unsignedType(AstType.INT64);
-        }
+        memberBuilder.type(AstType.UINT64).unsignedType(AstType.INT64);
         return super.visitUint64_type(ctx);
     }
 
@@ -443,10 +440,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint32_type(
         Uint32_typeContext ctx)
     {
-        if (memberBuilder != null)
-        {
-            memberBuilder.type(AstType.UINT32).unsignedType(AstType.INT64);
-        }
+        memberBuilder.type(AstType.UINT32).unsignedType(AstType.INT64);
         return super.visitUint32_type(ctx);
     }
 
@@ -454,10 +448,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint16_type(
         Uint16_typeContext ctx)
     {
-        if (memberBuilder != null)
-        {
-            memberBuilder.type(AstType.UINT16).unsignedType(AstType.INT32);
-        }
+        memberBuilder.type(AstType.UINT16).unsignedType(AstType.INT32);
         return super.visitUint16_type(ctx);
     }
 
@@ -465,10 +456,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint8_type(
         Uint8_typeContext ctx)
     {
-        if (memberBuilder != null)
-        {
-            memberBuilder.type(AstType.UINT8).unsignedType(AstType.INT32);
-        }
+        memberBuilder.type(AstType.UINT8).unsignedType(AstType.INT32);
         return super.visitUint8_type(ctx);
     }
 
@@ -476,10 +464,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitString_type(
         String_typeContext ctx)
     {
-        if (memberBuilder != null)
-        {
-            memberBuilder.type(AstType.STRING);
-        }
+        memberBuilder.type(AstType.STRING);
         return super.visitString_type(ctx);
     }
 
@@ -487,10 +472,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitString16_type(
             String16_typeContext ctx)
     {
-        if (memberBuilder != null)
-        {
-            memberBuilder.type(AstType.STRING16);
-        }
+        memberBuilder.type(AstType.STRING16);
         return super.visitString16_type(ctx);
     }
 
@@ -498,10 +480,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitString32_type(
         String32_typeContext ctx)
     {
-        if (memberBuilder != null)
-        {
-            memberBuilder.type(AstType.STRING32);
-        }
+        memberBuilder.type(AstType.STRING32);
         return super.visitString32_type(ctx);
     }
 
@@ -570,7 +549,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private static byte parseByte(
         RuleContext ctx)
     {
-        return ctx != null ? parseByte(ctx.getText()) : 0;
+        return parseByte(ctx.getText());
     }
 
     private static byte parseByte(
@@ -582,7 +561,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private static short parseShort(
         RuleContext ctx)
     {
-        return ctx != null ? parseShort(ctx.getText()) : 0;
+        return parseShort(ctx.getText());
     }
 
     private static short parseShort(
@@ -594,27 +573,13 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private static int parseInt(
         Int_literalContext ctx)
     {
-        if (ctx == null)
-        {
-            return 0;
-        }
-        else
-        {
-            return parseInt(ctx.getText());
-        }
+        return ctx != null ? parseInt(ctx.getText()) : 0;
     }
 
     private static int parseInt(
         RuleContext ctx)
     {
-        if (ctx == null)
-        {
-            return 0;
-        }
-        else
-        {
-            return parseInt(ctx.getText());
-        }
+        return ctx != null ? parseInt(ctx.getText()) : 0;
     }
 
     private static int parseInt(
@@ -626,14 +591,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private static long parseLong(
         RuleContext ctx)
     {
-        if (ctx == null)
-        {
-            return 0;
-        }
-        else
-        {
-            return parseLong(ctx.getText());
-        }
+        return parseLong(ctx.getText());
     }
 
     private static long parseLong(
@@ -645,7 +603,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private static String parseString(
         RuleContext ctx)
     {
-        return ctx != null ? ctx.getText() : null;
+        return ctx.getText();
     }
 
     public final class EnumVisitor extends NukleusBaseVisitor<AstEnumNode.Builder>
@@ -741,6 +699,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
             AstValueNode value = valueBuilder.build();
             enumBuilder.value(value);
+            this.valueBuilder = null;
             return result;
         }
 
