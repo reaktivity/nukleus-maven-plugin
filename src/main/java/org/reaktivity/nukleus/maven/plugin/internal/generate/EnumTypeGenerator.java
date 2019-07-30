@@ -132,7 +132,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
 
     private static final class LongHashMapGenerator extends ClassSpecMixinGenerator
     {
-        private CodeBlock.Builder longHashMapBuilder;
+        private final CodeBlock.Builder longHashMapBuilder;
         private LongHashMapGenerator(
             ClassName thisType,
             TypeSpec.Builder builder)
@@ -145,7 +145,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         }
 
         public LongHashMapGenerator addValue(
-            String name, Object value)
+            String name,
+            Object value)
         {
             longHashMapBuilder.addStatement("valueByLong.put($L, $L)", value, name);
             return this;
