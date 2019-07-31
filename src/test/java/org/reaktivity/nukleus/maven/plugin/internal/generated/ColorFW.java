@@ -19,29 +19,50 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
+
+import java.nio.charset.Charset;
+
 // TODO: Will be removed
-public final class NumberFW extends Flyweight
+public final class ColorFW extends Flyweight
 {
     private static final int FIELD_OFFSET_VALUE = 0;
 
     private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_BYTE;
 
+    private final StringFW stringRO = new StringFW();
+
+    public StringFW string()
+    {
+        return stringRO;
+    }
+
     @Override
     public int limit()
     {
-        return offset() + FIELD_SIZE_VALUE;
+        return stringRO.limit();
     }
 
-    public Number get()
+    public Color get()
     {
-        return Number.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE));
+        return stringRO.asString() != null ? Color.valueOf(stringRO.asString().toUpperCase()) : null;
     }
 
     @Override
-    public NumberFW tryWrap(
-        DirectBuffer buffer, int offset, int maxLimit)
+    public ColorFW tryWrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
-        if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)
+        if (null == super.tryWrap(buffer, offset, maxLimit))
+        {
+            return null;
+        }
+        if (null == stringRO.tryWrap(buffer, offset, maxLimit))
+        {
+            return null;
+        }
+        if (limit() > maxLimit)
         {
             return null;
         }
@@ -49,10 +70,13 @@ public final class NumberFW extends Flyweight
     }
 
     @Override
-    public NumberFW wrap(
-        DirectBuffer buffer, int offset, int maxLimit)
+    public ColorFW wrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        stringRO.wrap(buffer, offset, maxLimit);
         checkLimit(limit(), maxLimit);
         return this;
     }
@@ -63,52 +87,52 @@ public final class NumberFW extends Flyweight
         return maxLimit() == offset() ? "null" : get().toString();
     }
 
-    public static final class Builder extends Flyweight.Builder<NumberFW>
+    public static final class Builder extends Flyweight.Builder<ColorFW>
     {
+        private final StringFW.Builder stringRW = new StringFW.Builder();
+
         private boolean valueSet;
 
         public Builder()
         {
-            super(new NumberFW());
+            super(new ColorFW());
         }
 
         public Builder wrap(
-            MutableDirectBuffer buffer, int offset, int maxLimit)
+            MutableDirectBuffer buffer,
+            int offset,
+            int maxLimit)
         {
+            stringRW.wrap(buffer, offset, maxLimit);
             super.wrap(buffer, offset, maxLimit);
             return this;
         }
 
         public Builder set(
-            NumberFW value)
+            ColorFW value)
         {
-            int newLimit = offset() + value.sizeof();
-            checkLimit(newLimit, maxLimit());
-            buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof());
-            limit(newLimit);
+            stringRW.set(value.string());
+            limit(stringRW.build().limit());
             valueSet = true;
             return this;
         }
 
         public Builder set(
-            Number value)
+            Color value,
+            Charset charset)
         {
-            MutableDirectBuffer buffer = buffer();
-            int offset = offset();
-            int newLimit = offset + BitUtil.SIZE_OF_BYTE;
-            checkLimit(newLimit, maxLimit());
-            buffer.putByte(offset, (byte) value.value());
-            limit(newLimit);
+            stringRW.set(value.value(), charset);
+            limit(stringRW.build().limit());
             valueSet = true;
             return this;
         }
 
         @Override
-        public NumberFW build()
+        public ColorFW build()
         {
             if (!valueSet)
             {
-                throw new IllegalStateException("Number not set");
+                throw new IllegalStateException("Color not set");
             }
             return super.build();
         }

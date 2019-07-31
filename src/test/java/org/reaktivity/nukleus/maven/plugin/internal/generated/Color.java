@@ -15,39 +15,40 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import org.reaktivity.reaktor.internal.test.types.StringFW;
+
 // TODO: Will be removed
-public enum Number
+public enum Color
 {
-    ONE(1),
+    RED("red"),
 
-    TWO(2),
+    BLUE("blue"),
 
-    THREE(3);
+    YELLOW("yellow");
 
-    private final byte value;
+    private final String value;
 
-    Number(
-        int value)
+    Color(String value)
     {
-        this.value = (byte) value;
+        this.value = value;
     }
 
-    public byte value()
+    public String value()
     {
         return value;
     }
 
-    public static Number valueOf(
-        byte value)
+    public static Color valueOf(StringFW value)
     {
-        switch (value)
+        String kind = value.asString();
+        switch (kind)
         {
-        case 1:
-            return ONE;
-        case 2:
-            return TWO;
-        case 3:
-            return THREE;
+        case "red":
+            return RED;
+        case "blue":
+            return BLUE;
+        case "yellow":
+            return YELLOW;
         }
         return null;
     }

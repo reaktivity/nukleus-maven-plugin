@@ -19,12 +19,12 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-// TODO: Will be removed
-public final class NumberFW extends Flyweight
+
+public class BigNumberFW extends Flyweight
 {
     private static final int FIELD_OFFSET_VALUE = 0;
 
-    private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_BYTE;
+    private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_LONG;
 
     @Override
     public int limit()
@@ -32,13 +32,13 @@ public final class NumberFW extends Flyweight
         return offset() + FIELD_SIZE_VALUE;
     }
 
-    public Number get()
+    public BigNumber get()
     {
-        return Number.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE));
+        return BigNumber.valueOf(buffer().getLong(offset()));
     }
 
     @Override
-    public NumberFW tryWrap(
+    public BigNumberFW tryWrap(
         DirectBuffer buffer, int offset, int maxLimit)
     {
         if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)
@@ -49,7 +49,7 @@ public final class NumberFW extends Flyweight
     }
 
     @Override
-    public NumberFW wrap(
+    public BigNumberFW wrap(
         DirectBuffer buffer, int offset, int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
@@ -63,13 +63,13 @@ public final class NumberFW extends Flyweight
         return maxLimit() == offset() ? "null" : get().toString();
     }
 
-    public static final class Builder extends Flyweight.Builder<NumberFW>
+    public static final class Builder extends Flyweight.Builder<BigNumberFW>
     {
         private boolean valueSet;
 
         public Builder()
         {
-            super(new NumberFW());
+            super(new BigNumberFW());
         }
 
         public Builder wrap(
@@ -80,7 +80,7 @@ public final class NumberFW extends Flyweight
         }
 
         public Builder set(
-            NumberFW value)
+            BigNumberFW value)
         {
             int newLimit = offset() + value.sizeof();
             checkLimit(newLimit, maxLimit());
@@ -91,24 +91,24 @@ public final class NumberFW extends Flyweight
         }
 
         public Builder set(
-            Number value)
+            BigNumber value)
         {
             MutableDirectBuffer buffer = buffer();
             int offset = offset();
-            int newLimit = offset + BitUtil.SIZE_OF_BYTE;
+            int newLimit = offset + FIELD_SIZE_VALUE;
             checkLimit(newLimit, maxLimit());
-            buffer.putByte(offset, (byte) value.value());
+            buffer.putLong(offset, value.value());
             limit(newLimit);
             valueSet = true;
             return this;
         }
 
         @Override
-        public NumberFW build()
+        public BigNumberFW build()
         {
             if (!valueSet)
             {
-                throw new IllegalStateException("Number not set");
+                throw new IllegalStateException("BigNumber not set");
             }
             return super.build();
         }

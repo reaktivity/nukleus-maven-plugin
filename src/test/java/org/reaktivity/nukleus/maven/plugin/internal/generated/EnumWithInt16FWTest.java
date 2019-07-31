@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static org.agrona.BitUtil.SIZE_OF_SHORT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -27,10 +28,10 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.Roll;
-import org.reaktivity.reaktor.internal.test.types.inner.RollFW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt16;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt16FW;
 
-public class RollFWTest
+public class EnumWithInt16FWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -39,6 +40,7 @@ public class RollFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
+
     private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -46,8 +48,9 @@ public class RollFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final RollFW.Builder flyweightRW = new RollFW.Builder();
-    private final RollFW flyweightRO = new RollFW();
+
+    private final EnumWithInt16FW.Builder flyweightRW = new EnumWithInt16FW.Builder();
+    private final EnumWithInt16FW flyweightRO = new EnumWithInt16FW();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -55,13 +58,13 @@ public class RollFWTest
     static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
     {
         int pos = offset;
-        buffer.putByte(pos,  (byte) Roll.SPRING.ordinal());
-        return pos - offset + Byte.BYTES;
+        buffer.putShort(pos,  EnumWithInt16.TWO.value());
+        return SIZE_OF_SHORT;
     }
 
-    void assertAllTestValuesRead(RollFW flyweight)
+    void assertAllTestValuesRead(EnumWithInt16FW flyweight)
     {
-        assertEquals(Roll.SPRING, flyweight.get());
+        assertEquals(EnumWithInt16.TWO, flyweight.get());
     }
 
     @Test
@@ -117,16 +120,16 @@ public class RollFWTest
     public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putByte(offset,  (byte) -2);
+        buffer.putShort(offset,  (short) -2);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
         assertNull(flyweightRO.get());
     }
 
     @Test
-    public void shouldWNotrapAndReadInvalidValue() throws Exception
+    public void shouldNotWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putByte(offset,  (byte) -2);
+        buffer.putShort(offset,  (short) -2);
         flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
         assertNull(flyweightRO.get());
     }
@@ -135,56 +138,55 @@ public class RollFWTest
     public void shouldSetUsingEnum()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-               .set(Roll.SPRING)
-               .build()
-               .limit();
+            .set(EnumWithInt16.TWO)
+            .build()
+            .limit();
         setAllTestValues(expected,  0);
-        assertEquals(1, limit);
+        assertEquals(SIZE_OF_SHORT, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
-    public void shouldSetUsingRollFW()
+    public void shouldSetUsingEnumWithInt16FW()
     {
-        RollFW roll = new RollFW().wrap(asBuffer((byte) 0), 0, 1);
-        int limit = flyweightRW.wrap(buffer, 10, 11)
-               .set(roll)
-               .build()
-               .limit();
+        EnumWithInt16FW enumWithInt16 = new EnumWithInt16FW().wrap(asBuffer((short) 1), 0, SIZE_OF_SHORT);
+        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_SHORT)
+            .set(enumWithInt16)
+            .build()
+            .limit();
         flyweightRO.wrap(buffer, 10,  limit);
-        assertEquals(Roll.EGG, flyweightRO.get());
-        assertEquals(1, flyweightRO.sizeof());
+        assertEquals(EnumWithInt16.ONE, flyweightRO.get());
+        assertEquals(SIZE_OF_SHORT, flyweightRO.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetWithInsufficientSpace()
     {
         flyweightRW.wrap(buffer, 10, 10)
-               .set(Roll.EGG);
+            .set(EnumWithInt16.ONE);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUsingRollFWWithInsufficientSpace()
+    public void shouldFailToSetUsingEnumWithInt16FWWithInsufficientSpace()
     {
-        RollFW roll = new RollFW().wrap(asBuffer((byte) 0), 0, 1);
+        EnumWithInt16FW enumWithInt8 = new EnumWithInt16FW().wrap(asBuffer((short) 1), 0, SIZE_OF_SHORT);
         flyweightRW.wrap(buffer, 10, 10)
-              .set(roll);
+            .set(enumWithInt8);
     }
 
     @Test
     public void shouldFailToBuildWithNothingSet()
     {
         expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("Roll");
+        expectedException.expectMessage("EnumWithInt16");
         flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build();
     }
 
-    private static DirectBuffer asBuffer(byte value)
+    private static DirectBuffer asBuffer(short value)
     {
-        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(1));
-        valueBuffer.putByte(0, value);
+        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_SHORT));
+        valueBuffer.putShort(0, value);
         return valueBuffer;
     }
-
 }
