@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
 import static org.junit.Assert.assertEquals;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.INT32;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.dynamicType;
@@ -35,6 +36,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusLexer;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
@@ -43,6 +45,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionC
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 
 public class AstParserTest
 {
@@ -463,6 +466,91 @@ public class AstParserTest
                                                                 .build())
                                        .build())
                 .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseVariantWithExplicitType()
+    {
+        NukleusParser parser = newParser("variant VariantUnsignedIntWithExplicitType switch (uint8) of uint32 " +
+            "{ case 0x04: uint32; case 0x01: uint8; case 0x00: 0; }");
+        Variant_typeContext ctx = parser.variant_type();
+        AstVariantNode actual = new AstParser().visitVariant_type(ctx);
+
+        AstVariantNode expected = new AstVariantNode.Builder()
+            .name("VariantUnsignedIntWithExplicitType")
+            .hasWideType(true)
+            .caseN(new AstCaseNode.Builder()
+                .value(0x04)
+                .member(new AstMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .name("uint32")
+                    .type(AstType.UINT32)
+                    .unsignedType(AstType.INT64)
+                    .build())
+                .build())
+            .wideType(AstType.INT64)
+            .caseN(new AstCaseNode.Builder()
+                .value(0x01)
+                .member(new AstMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .name("uint8")
+                    .type(AstType.UINT8)
+                    .unsignedType(AstType.INT16)
+                    .build())
+                .build())
+            .caseN(new AstCaseNode.Builder()
+                .value(0x00)
+                .member(new AstMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .name("0")
+                    .type(AstType.dynamicType("0"))
+                    .build())
+                .build())
+            .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseVariantWithoutExplicitType()
+    {
+        NukleusParser parser = newParser("variant VariantUnsignedIntWithoutExplicitType switch (uint8) " +
+            "{ case 0x70: uint32; case 0x52: uint8; case 0x43: 0; }");
+        Variant_typeContext ctx = parser.variant_type();
+        AstVariantNode actual = new AstParser().visitVariant_type(ctx);
+
+        AstVariantNode expected = new AstVariantNode.Builder()
+            .name("VariantUnsignedIntWithoutExplicitType")
+            .hasWideType(false)
+            .caseN(new AstCaseNode.Builder()
+                .value(0x70)
+                .member(new AstMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .name("uint32")
+                    .type(AstType.UINT32)
+                    .unsignedType(AstType.INT64)
+                    .build())
+                .build())
+            .caseN(new AstCaseNode.Builder()
+                .value(0x52)
+                .member(new AstMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .name("uint8")
+                    .type(AstType.UINT8)
+                    .unsignedType(AstType.INT16)
+                    .build())
+                .build())
+            .caseN(new AstCaseNode.Builder()
+                .value(0x43)
+                .member(new AstMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .name("0")
+                    .type(AstType.dynamicType("0"))
+                    .build())
+                .build())
+            .build();
 
         assertEquals(expected, actual);
     }

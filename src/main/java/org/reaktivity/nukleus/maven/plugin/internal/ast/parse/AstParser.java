@@ -18,7 +18,6 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 import org.antlr.v4.runtime.RuleContext;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -28,6 +27,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
@@ -41,6 +42,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_ty
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.KindContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
@@ -63,6 +65,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_me
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_array_memberContext;
@@ -87,8 +91,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private AstStructNode.Builder structBuilder;
     private AstMemberNode.Builder memberBuilder;
     private AstUnionNode.Builder unionBuilder;
-
-    private Builder caseBuilder;
+    private AstCaseNode.Builder caseBuilder;
     private AstByteOrder byteOrder;
 
     public AstParser()
@@ -196,6 +199,22 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         return enumeration;
+    }
+
+    @Override
+    public AstVariantNode visitVariant_type(
+        Variant_typeContext ctx)
+    {
+        visitLocalName(ctx.ID().getText());
+        AstVariantNode.Builder variantBuilder = new VariantVisitor().visitVariant_type(ctx);
+        AstVariantNode variant = variantBuilder.build();
+
+        AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
+        if (scopeBuilder != null)
+        {
+            scopeBuilder.variant(variant);
+        }
+        return variant;
     }
 
     @Override
@@ -604,6 +623,221 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         RuleContext ctx)
     {
         return ctx.getText();
+    }
+
+    public final class VariantVisitor extends NukleusBaseVisitor<AstVariantNode.Builder>
+    {
+        private final AstVariantNode.Builder variantBuilder;
+
+        public VariantVisitor()
+        {
+            this.variantBuilder = new AstVariantNode.Builder();
+        }
+
+        @Override
+        public AstVariantNode.Builder visitVariant_type(
+            Variant_typeContext ctx)
+        {
+            variantBuilder.name(ctx.ID().getText());
+            if (ctx.KW_OF() != null)
+            {
+                variantBuilder.hasWideType(true);
+            }
+            return super.visitVariant_type(ctx);
+        }
+
+        @Override
+        protected AstVariantNode.Builder defaultResult()
+        {
+            return variantBuilder;
+        }
+
+        @Override
+        public AstVariantNode.Builder visitKind(
+            KindContext ctx)
+        {
+            return super.visitKind(ctx);
+        }
+
+        @Override
+        public AstVariantNode.Builder visitCase_member(
+            Case_memberContext ctx)
+        {
+            caseBuilder = new AstCaseNode.Builder()
+                .value(Integer.decode(ctx.uint_literal().getText()));
+
+            super.visitCase_member(ctx);
+
+            AstCaseNode caseN = caseBuilder.build();
+            caseBuilder = null;
+
+            variantBuilder.caseN(caseN);
+
+            return super.visitCase_member(ctx);
+        }
+
+        @Override
+        public AstVariantNode.Builder visitVariant_member(
+            Variant_memberContext ctx)
+        {
+            memberBuilder = new AstMemberNode.Builder().byteOrder(byteOrder);
+
+            super.visitVariant_member(ctx);
+
+            AstMemberNode member = memberBuilder.build();
+            memberBuilder = null;
+
+            if (caseBuilder != null)
+            {
+                caseBuilder.member(member);
+            }
+            return super.visitVariant_member(ctx);
+        }
+
+        @Override
+        public Builder visitUint_literal(
+            Uint_literalContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                String kindName = ctx.getText();
+                memberBuilder.name(kindName)
+                             .type(AstType.dynamicType(kindName));
+            }
+            return super.visitUint_literal(ctx);
+        }
+
+        @Override
+        public Builder visitInt64_type(
+            Int64_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.INT64);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.INT64);
+            }
+            return super.visitInt64_type(ctx);
+        }
+
+        @Override
+        public Builder visitInt32_type(
+            Int32_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.INT32);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.INT32);
+            }
+            return super.visitInt32_type(ctx);
+        }
+
+        @Override
+        public Builder visitInt16_type(
+            Int16_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.INT16);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.INT16);
+            }
+            return super.visitInt16_type(ctx);
+        }
+
+        @Override
+        public Builder visitInt8_type(
+            Int8_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.INT8);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.INT8);
+            }
+            return super.visitInt8_type(ctx);
+        }
+
+        @Override
+        public Builder visitUint64_type(
+            Uint64_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.UINT64)
+                             .unsignedType(AstType.INT64);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.UINT64);
+            }
+            return super.visitUint64_type(ctx);
+        }
+
+        @Override
+        public Builder visitUint32_type(
+            Uint32_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.UINT32)
+                             .unsignedType(AstType.INT64);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.INT64);
+            }
+            return super.visitUint32_type(ctx);
+        }
+
+        @Override
+        public Builder visitUint16_type(
+            Uint16_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.UINT16)
+                             .unsignedType(AstType.INT32);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.INT32);
+            }
+            return super.visitUint16_type(ctx);
+        }
+
+        @Override
+        public Builder visitUint8_type(
+            Uint8_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.UINT8)
+                    .unsignedType(AstType.INT16);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.INT16);
+            }
+            return super.visitUint8_type(ctx);
+        }
     }
 
     public final class EnumVisitor extends NukleusBaseVisitor<AstEnumNode.Builder>

@@ -33,6 +33,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 
 public final class TypeResolver
 {
@@ -205,6 +206,13 @@ public final class TypeResolver
             AstUnionNode unionNode)
         {
             return visitNamedType(unionNode, unionNode.name(), super::visitUnion);
+        }
+
+        @Override
+        public Map<AstType, TypeName> visitVariant(
+            AstVariantNode variantNode)
+        {
+            return visitNamedType(variantNode, variantNode.name(), super::visitVariant);
         }
 
         private <N extends AstNode> Map<AstType, TypeName> visitNamedType(

@@ -31,19 +31,19 @@ public final class VariantUnsignedIntFW extends Flyweight
 
     private static final int FIELD_OFFSET_UINT32 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
 
-    private static final int FIELD_SIZE_UINT32 = 8;
+    private static final int FIELD_SIZE_UINT32 = BitUtil.SIZE_OF_LONG;
 
     public static final int KIND_UINT8 = 0x01;
 
     private static final int FIELD_OFFSET_UINT8 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
 
-    private static final int FIELD_SIZE_UINT8 = 2;
+    private static final int FIELD_SIZE_UINT8 = BitUtil.SIZE_OF_SHORT;
 
     public static final int KIND_ZERO = 0x00;
 
     private static final byte FIELD_VALUE_ZERO = 0;
 
-    private static final int UINT8_MAX = 255;
+    private static final long UINT8_MAX = 255L;
 
     private static final long UINT32_MAX = 4294967295L;
 
@@ -52,9 +52,9 @@ public final class VariantUnsignedIntFW extends Flyweight
         switch (kind())
         {
         case KIND_UINT32:
-            return getAsUInt32();
+            return getAsUint32();
         case KIND_UINT8:
-            return getAsUInt8();
+            return getAsUint8();
         case KIND_ZERO:
             return getAsZero();
         default:
@@ -62,12 +62,12 @@ public final class VariantUnsignedIntFW extends Flyweight
         }
     }
 
-    public short getAsUInt8()
+    public short getAsUint8()
     {
         return buffer().getShort(offset() + FIELD_OFFSET_UINT8);
     }
 
-    public long getAsUInt32()
+    public long getAsUint32()
     {
         return buffer().getLong(offset() + FIELD_OFFSET_UINT32);
     }
@@ -83,7 +83,7 @@ public final class VariantUnsignedIntFW extends Flyweight
     }
 
     @Override
-    public Flyweight tryWrap(
+    public VariantUnsignedIntFW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -113,9 +113,9 @@ public final class VariantUnsignedIntFW extends Flyweight
         switch (kind())
         {
         case KIND_UINT32:
-            return String.format("VARIANTUNSIGNEDINT [uint32=%s]", getAsUInt32());
+            return String.format("VARIANTUNSIGNEDINT [uint32=%s]", getAsUint32());
         case KIND_UINT8:
-            return String.format("VARIANTUNSIGNEDINT [uint8=%s]", getAsUInt8());
+            return String.format("VARIANTUNSIGNEDINT [uint8=%s]", getAsUint8());
         case KIND_ZERO:
             return String.format("VARIANTUNSIGNEDINT [zero=%s]", getAsZero());
         default:
@@ -159,19 +159,22 @@ public final class VariantUnsignedIntFW extends Flyweight
             if (value == FIELD_VALUE_ZERO)
             {
                 setAsZero();
+                return this;
             }
-            else if (value < UINT8_MAX)
+            if (value <= UINT8_MAX)
             {
-                setAsUInt8((short) value);
+                setAsUint8((short) value);
+                return this;
             }
-            else if (value < UINT32_MAX)
+            if (value <= UINT32_MAX)
             {
-                setAsUInt32(value);
+                setAsUint32(value);
+                return this;
             }
             return this;
         }
 
-        public Builder setAsUInt32(
+        public Builder setAsUint32(
             long value)
         {
             int newLimit = offset() + FIELD_OFFSET_UINT32 + FIELD_SIZE_UINT32;
@@ -182,7 +185,7 @@ public final class VariantUnsignedIntFW extends Flyweight
             return this;
         }
 
-        public Builder setAsUInt8(
+        public Builder setAsUint8(
             short value)
         {
             int newLimit = offset() + FIELD_OFFSET_UINT8 + FIELD_SIZE_UINT8;

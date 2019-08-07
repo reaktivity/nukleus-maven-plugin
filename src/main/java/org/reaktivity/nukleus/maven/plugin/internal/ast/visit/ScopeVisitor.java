@@ -28,6 +28,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
@@ -36,6 +37,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGenerator;
 
 import com.squareup.javapoet.ClassName;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGenerator;
 
 public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
@@ -135,6 +137,23 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
                 new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(), enumTypeName, valueTypeName);
 
         return new EnumVisitor(typeGenerator, flyweightGenerator).visitEnum(enumNode);
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitVariant(
+        AstVariantNode variantNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        String baseName = variantNode.name();
+        AstType variantType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+        ClassName variantName = resolver.resolveClass(variantType);
+        VariantFlyweightGenerator generator =
+            new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName);
+        return new VariantVisitor(generator, resolver).visitVariant(variantNode);
     }
 
     @Override

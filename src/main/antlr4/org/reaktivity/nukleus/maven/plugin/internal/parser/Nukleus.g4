@@ -75,6 +75,7 @@ constr_type_spec
    : enum_type
    | struct_type
    | union_type
+   | variant_type
    ;
 
 declarators
@@ -166,6 +167,11 @@ enum_explicit_type
    | string_type
    | string16_type
    | string32_type
+//   | variant_name
+   ;
+
+variant_name
+   : ID
    ;
 
 enum_values
@@ -204,6 +210,7 @@ member
    | integer_array_member SEMICOLON
    | varint_array_member SEMICOLON
    | list_member SEMICOLON
+   | variant_member SEMICOLON
    ;
    
 uint_member_with_default
@@ -238,6 +245,11 @@ list_member
    : list_type declarators
    ;
 
+variant_member
+   : integer_type
+   | uint_literal
+   ;
+
 default_null
    : '= null'
    ;
@@ -260,6 +272,19 @@ case_list
 
 case_member
    : KW_CASE uint_literal COLON member
+   ;
+
+variant_type
+   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF integer_type)? LEFT_BRACE case_list RIGHT_BRACE
+   ;
+
+kind
+   : KW_UINT8
+   | enum_name
+   ;
+
+enum_name
+   : ID
    ;
 
 list_type 
@@ -428,6 +453,11 @@ KW_SWITCH
    ;
 
 
+KW_OF
+   : 'of'
+   ;
+
+
 KW_CASE
    : 'case'
    ;
@@ -523,25 +553,35 @@ KW_UNION
    ;
 
 
+KW_VARIANT
+   : 'variant'
+   ;
+
+
 KW_SCOPE
    : 'scope'
    ;
+
 
 KW_OPTION
    : 'option'
    ;
 
+
 KW_BYTEORDER
    : 'byteorder'
    ;
+
 
 KW_NATIVE
    : 'native'
    ;
 
+
 KW_NETWORK
    : 'network'
    ;
+
 
 ID
    : LETTER (LETTER | ID_DIGIT)*

@@ -48,7 +48,7 @@ public class UnionOctetsFWTest
         }
     };
     private final UnionOctetsFW.Builder flyweightRW = new UnionOctetsFW.Builder();
-    private final UnionOctetsFW flyweigthRO = new UnionOctetsFW();
+    private final UnionOctetsFW flyweightRO = new UnionOctetsFW();
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -105,7 +105,7 @@ public class UnionOctetsFWTest
         int size = setAllTestValuesCase1(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
-            assertNull(flyweigthRO.tryWrap(buffer,  10, maxLimit));
+            assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
     }
 
@@ -117,7 +117,7 @@ public class UnionOctetsFWTest
         {
             try
             {
-                flyweigthRO.wrap(buffer,  10, maxLimit);
+                flyweightRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
             catch(Exception e)
@@ -134,14 +134,14 @@ public class UnionOctetsFWTest
     public void shouldTryWrapWhenLengthSufficientCase1()
     {
         int size = setAllTestValuesCase1(buffer, 10);
-        assertSame(flyweigthRO, flyweigthRO.tryWrap(buffer, 10, 10 + size));
+        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientCase1()
     {
         int size = setAllTestValuesCase1(buffer, 10);
-        assertSame(flyweigthRO, flyweigthRO.wrap(buffer, 10, 10 + size));
+        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
     }
 
     @Test
@@ -149,8 +149,8 @@ public class UnionOctetsFWTest
     {
         final int offset = 1;
         setAllTestValuesCase1(buffer, offset);
-        assertNotNull(flyweigthRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertAllTestValuesReadCase1(flyweigthRO);
+        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
+        assertAllTestValuesReadCase1(flyweightRO);
     }
 
     @Test
@@ -158,8 +158,8 @@ public class UnionOctetsFWTest
     {
         final int offset = 1;
         setAllTestValuesCase1(buffer, offset);
-        flyweigthRO.wrap(buffer, offset, buffer.capacity());
-        assertAllTestValuesReadCase1(flyweigthRO);
+        flyweightRO.wrap(buffer, offset, buffer.capacity());
+        assertAllTestValuesReadCase1(flyweightRO);
     }
 
     @Test
@@ -181,8 +181,8 @@ public class UnionOctetsFWTest
                .octets16(b -> b.put("1234567890123456".getBytes(UTF_8)))
                .build()
                .limit();
-        flyweigthRO.wrap(buffer,  0,  limit);
-        assertAllTestValuesReadCase2(flyweigthRO);
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertAllTestValuesReadCase2(flyweightRO);
     }
 
     @Test
@@ -192,8 +192,8 @@ public class UnionOctetsFWTest
             .string1("valueOfString1")
             .build()
             .limit();
-        flyweigthRO.wrap(buffer,  0,  limit);
-        assertAllTestValuesReadCase3(flyweigthRO);
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertAllTestValuesReadCase3(flyweightRO);
     }
 
     @Test
@@ -201,8 +201,8 @@ public class UnionOctetsFWTest
     {
         int limit = flyweightRW.wrap(buffer, 10, buffer.capacity())
             .string1(null).build().limit();
-        flyweigthRO.wrap(buffer,  0,  limit);
-        assertEquals(null, flyweigthRO.string1().asString());
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertEquals(null, flyweightRO.string1().asString());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -239,9 +239,9 @@ public class UnionOctetsFWTest
         int limit = flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build()
             .limit();
-        flyweigthRO.wrap(buffer,  0,  limit);
-        assertEquals(0, flyweigthRO.octets16().sizeof());
-        assertEquals(0, flyweigthRO.octets4().sizeof());
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertEquals(0, flyweightRO.octets16().sizeof());
+        assertEquals(0, flyweightRO.octets4().sizeof());
     }
 
 }

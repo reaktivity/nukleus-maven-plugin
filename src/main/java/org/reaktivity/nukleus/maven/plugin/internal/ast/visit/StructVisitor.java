@@ -28,6 +28,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -76,6 +77,13 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
     @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
         AstUnionNode unionNode)
+    {
+        return defaultResult();
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitVariant(
+        AstVariantNode variantNode)
     {
         return defaultResult();
     }
