@@ -75,6 +75,37 @@ scope test
             case 3: string string1;
         }
 
+        variant VariantUint8KindWithUint64Type switch (uint8) of uint64
+        {
+            case 0x80: uint64;
+            case 0x53: uint8;
+            case 0x44: 0;
+            case 0x70: uint32;
+            case 0x60: uint16;
+        }
+
+        variant VariantUnsignedIntWithUint32Type switch (uint8) of uint32
+        {
+           case 0x04: uint32;
+           case 0x01: uint8;
+           case 0x00: 0;
+        }
+
+        variant VariantUnsignedIntWithoutExplicitType switch (uint8)
+        {
+           case 0x70: uint32;
+           case 0x52: uint8;
+           case 0x43: 0;
+        }
+
+        variant VariantUint8KindWithInt64Type switch (uint8) of int64
+        {
+            case 0x71: int32;
+            case 0x81: int64;
+            case 0x51: int8;
+            case 0x61: int16;
+        }
+
         struct Integers
         {
             uint8  unsigned8  = 0xFF;
