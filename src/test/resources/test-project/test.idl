@@ -84,11 +84,11 @@ scope test
             case 0x60: uint16;
         }
 
-        variant VariantUnsignedIntWithUint32Type switch (uint8) of uint32
+        variant VariantUint8KindWithString32Type switch (uint8) of string32
         {
-           case 0x04: uint32;
-           case 0x01: uint8;
-           case 0x00: 0;
+           case 0xa1: string;
+           case 0x16: string16;
+           case 0xb1: string32;
         }
 
         variant VariantUnsignedIntWithoutExplicitType switch (uint8)

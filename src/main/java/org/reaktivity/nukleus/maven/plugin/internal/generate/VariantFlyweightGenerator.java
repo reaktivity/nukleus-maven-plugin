@@ -31,12 +31,13 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MU
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.FieldSpec.Builder;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeSpec.Builder;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +45,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 {
     private final String baseName;
     private final TypeSpec.Builder builder;
+    private final MemberFieldGenerator memberField;
     private final KindConstantGenerator memberKindConstant;
     private final MemberSizeConstantGenerator memberSizeConstant;
     private final MemberOffsetConstantGenerator memberOffsetConstant;
@@ -76,6 +78,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
         this.baseName = baseName;
         this.builder = classBuilder(variantName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
+        this.memberField = new MemberFieldGenerator(variantName, builder);
         this.memberKindConstant = new KindConstantGenerator(variantName, builder);
         this.memberSizeConstant = new MemberSizeConstantGenerator(variantName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(variantName, builder);
@@ -104,9 +107,12 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         TypeName type)
     {
         memberKindConstant.addMember(kindValue, name);
-        memberSizeConstant.addMember(name, type);
         memberOffsetConstant.addMember(name, type);
         memberFieldValueConstant.addMember(name, type);
+        memberField.addMember(name, type);
+        memberSizeConstant.addMember(name, type);
+        wrapMethod.addMember(name, type);
+        tryWrapMethod.addMember(name, type);
         toStringMethod.addMember(name, type);
         memberAccessor.addMember(name, type);
         limitMethod.addMember(name, type);
@@ -124,6 +130,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     {
         memberKindConstant.build();
         memberSizeConstant.build();
+        memberField.build();
         kindAccessor.build();
         memberAccessor.build();
         if (allMemberAccessor != null)
@@ -137,6 +144,31 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                       .addMethod(limitMethod.generate())
                       .addType(builderClass.generate())
                       .build();
+    }
+
+    private static final class MemberFieldGenerator extends ClassSpecMixinGenerator
+    {
+        private MemberFieldGenerator(
+            ClassName thisType,
+            TypeSpec.Builder builder)
+        {
+            super(thisType, builder);
+        }
+
+        public MemberFieldGenerator addMember(
+            String name,
+            TypeName type)
+        {
+            if (type != null && !type.isPrimitive())
+            {
+                String fieldRO = String.format("%sRO", name);
+                Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL);
+                fieldBuilder.initializer("new $T()", type);
+
+                builder.addField(fieldBuilder.build());
+            }
+            return this;
+        }
     }
 
     private static final class KindConstantGenerator extends ClassSpecMixinGenerator
@@ -267,16 +299,40 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .beginControlFlow("if (limit() > maxLimit)")
-                .addStatement("return null")
-                .endControlFlow()
-                .addStatement("return this"));
+                .beginControlFlow("switch (kind())"));
+        }
+
+        public TryWrapMethodGenerator addMember(
+            String name,
+            TypeName type)
+        {
+            builder.beginControlFlow("case $L:", kind(name));
+            if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName())
+                || type instanceof ClassName && "String16FW".equals(((ClassName) type).simpleName())
+                || type instanceof ClassName && "String32FW".equals(((ClassName) type).simpleName()))
+            {
+                builder.beginControlFlow("if (null == $LRO.tryWrap(buffer, offset + $L, maxLimit))", name,
+                    offset(name))
+                       .addStatement("return null")
+                       .endControlFlow();
+            }
+            builder.addStatement("break")
+                   .endControlFlow();
+            return this;
         }
 
         @Override
         public MethodSpec generate()
         {
-            return builder.build();
+            return builder.beginControlFlow("default:")
+                          .addStatement("break")
+                          .endControlFlow()
+                          .endControlFlow()
+                          .beginControlFlow("if (limit() > maxLimit)")
+                          .addStatement("return null")
+                          .endControlFlow()
+                          .addStatement("return this")
+                          .build();
         }
     }
 
@@ -292,14 +348,35 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("checkLimit(limit(), maxLimit)")
-                .addStatement("return this"));
+                .beginControlFlow("switch (kind())"));
+        }
+
+        public WrapMethodGenerator addMember(
+            String name,
+            TypeName type)
+        {
+            builder.beginControlFlow("case $L:", kind(name));
+            if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName())
+                || type instanceof ClassName && "String16FW".equals(((ClassName) type).simpleName())
+                || type instanceof ClassName && "String32FW".equals(((ClassName) type).simpleName()))
+            {
+                builder.addStatement("$LRO.wrap(buffer, offset + $L, maxLimit)", name, offset(name));
+            }
+            builder.addStatement("break")
+                   .endControlFlow();
+            return this;
         }
 
         @Override
         public MethodSpec generate()
         {
-            return builder.build();
+            return builder.beginControlFlow("default:")
+                          .addStatement("break")
+                          .endControlFlow()
+                          .endControlFlow()
+                          .addStatement("checkLimit(limit(), maxLimit)")
+                          .addStatement("return this")
+                          .build();
         }
     }
 
@@ -342,11 +419,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         public MethodSpec generate()
         {
             builder.beginControlFlow("default:")
-                .addStatement("return String.format(\"$L [unknown]\")", baseName.toUpperCase())
-                .endControlFlow();
+                   .addStatement("return String.format(\"$L [unknown]\")", baseName.toUpperCase())
+                   .endControlFlow();
 
             return builder.endControlFlow()
-                .build();
+                          .build();
         }
     }
 
@@ -413,7 +490,16 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                codeBlock.addStatement("return $L", value(name));
+                if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName())
+                    || type instanceof ClassName && "String16FW".equals(((ClassName) type).simpleName())
+                    || type instanceof ClassName && "String32FW".equals(((ClassName) type).simpleName()))
+                {
+                    codeBlock.addStatement("return $LRO", name);
+                }
+                else
+                {
+                    codeBlock.addStatement("return $L", value(name));
+                }
             }
 
             builder.addMethod(methodBuilder(getAs(name))
@@ -433,7 +519,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         {
             super(methodBuilder("get")
                 .addModifiers(PUBLIC)
-                .returns(name)
+                .returns(name.isPrimitive() ? name : ClassName.bestGuess("String"))
                 .beginControlFlow("switch (kind())"));
         }
 
@@ -442,8 +528,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             TypeName type)
         {
             builder.beginControlFlow("case $L:", kind(name))
-                   .addStatement("return $L()", getAs(name))
+                   .addStatement(type == null || type.isPrimitive() ? "return $L()" : "return $L().asString()", getAs(name))
                    .endControlFlow();
+
             return this;
         }
 
@@ -473,13 +560,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             maxValues.put("int16", 32767L);
             maxValues.put("int32", 2147483647L);
             maxValues.put("int64", 9223372036854775807L);
-            // TODO: Add more types with max values
+            maxValues.put("string", (long) Byte.MAX_VALUE);
+            maxValues.put("string16", (long) Short.MAX_VALUE);
+            maxValues.put("string32", (long) Integer.MAX_VALUE);
             MAX_VALUES = unmodifiableMap(maxValues);
         }
 
         private MemberFieldMaxValueConstantGenerator(
             ClassName thisType,
-            Builder builder)
+            TypeSpec.Builder builder)
         {
             super(thisType, builder);
         }
@@ -525,7 +614,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                builder.addStatement("return $L().limit()", name);
+                builder.addStatement("return $L().limit()", getAs(name));
             }
 
             builder.endControlFlow();
@@ -549,6 +638,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder builder;
         private final ClassName structType;
         private final MemberMutatorGenerator memberMutator;
+        private final MemberFieldGenerator memberField;
         private final WrapMethodGenerator wrapMethod;
         private AllMemberMutatorGenerator allMemberMutator;
 
@@ -577,6 +667,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.structType = structType;
             this.wrapMethod = new WrapMethodGenerator();
             this.memberMutator = new MemberMutatorGenerator(thisType, builder);
+            this.memberField = new MemberFieldGenerator(thisType, builder);
         }
 
         private void addMember(
@@ -584,6 +675,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             TypeName type)
         {
             memberMutator.addMember(name, type);
+            memberField.addMember(name, type);
             if (allMemberMutator != null)
             {
                 allMemberMutator.addMember(name, type);
@@ -594,6 +686,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         public TypeSpec generate()
         {
             memberMutator.build();
+            memberField.build();
             if (allMemberMutator != null)
             {
                 builder.addMethod(allMemberMutator.generate());
@@ -619,9 +712,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             {
                 super(methodBuilder("set")
                     .addModifiers(PUBLIC)
-                    .addParameter(type, "value")
+                    .addParameter(type.isPrimitive() ? type : ClassName.bestGuess("String"), "value")
                     .returns(thisName));
-                members = new CodeBlock.Builder[4];
+                if (!type.isPrimitive())
+                {
+                    builder.addStatement("int length = value.length()");
+                }
+                members = new CodeBlock.Builder[5];
             }
 
             public AllMemberMutatorGenerator addMember(
@@ -637,25 +734,36 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    CodeBlock.Builder member = CodeBlock.builder().beginControlFlow("if (value <= $L)", max(name))
-                                                                  .addStatement("$N(($L) value)", setAs(name), type.toString())
-                                                                  .addStatement("return this")
-                                                                  .endControlFlow();
-                    int memberSize = Integer.parseInt(name.replaceAll("\\D+", ""));
+                    CodeBlock.Builder member = type.isPrimitive() ?
+                        CodeBlock.builder()
+                                 .beginControlFlow("if (value <= $L)", max(name))
+                                 .addStatement("$N(($L) value)", setAs(name), type.toString())
+                                 .addStatement("return this")
+                                 .endControlFlow() :
+                        CodeBlock.builder()
+                                 .beginControlFlow("if (length <= $L)", max(name))
+                        .addStatement("$N(value)", setAs(name))
+                        .addStatement("return this")
+                        .endControlFlow();
+                    String typeSize = name.replaceAll("\\D+", "");
+                    int memberSize = !typeSize.isEmpty() ? Integer.parseInt(typeSize) : -1;
 
                     switch (memberSize)
                     {
-                    case 8:
+                    case -1:
                         members[0] = member;
                         break;
-                    case 16:
+                    case 8:
                         members[1] = member;
                         break;
-                    case 32:
+                    case 16:
                         members[2] = member;
                         break;
-                    case 64:
+                    case 32:
                         members[3] = member;
+                        break;
+                    case 64:
+                        members[4] = member;
                         break;
                     }
                 }
@@ -694,13 +802,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 PUTTER_NAMES = unmodifiableMap(putterNames);
             }
 
-            private String nextName;
-            private TypeName nextType;
-
-            private String deferredName;
-            private TypeName deferredType;
-            private String deferredSizeName;
-
             private MemberMutatorGenerator(
                 ClassName thisType,
                 TypeSpec.Builder builder)
@@ -719,76 +820,87 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type)
             {
-                deferredName = name;
-                deferredType = type;
-                addDeferredMemberIfNecessary();
+                if (type != null)
+                {
+                    CodeBlock.Builder code = type.isPrimitive() ? addPrimitiveMember(name, type) : addNonPrimitiveMember(name,
+                        type);
+
+                    builder.addMethod(methodBuilder(setAs(name))
+                           .addModifiers(PUBLIC)
+                           .addParameter(type.isPrimitive() ? type : ClassName.bestGuess("String"), "value")
+                           .returns(thisType)
+                           .addCode(code.build())
+                           .addStatement("return this")
+                           .build());
+                }
+                else
+                {
+                    CodeBlock.Builder code = addConstantValueMember(name);
+                    builder.addMethod(methodBuilder(setAs(name))
+                           .addModifiers(PUBLIC)
+                           .returns(thisType)
+                           .addCode(code.build())
+                           .addStatement("return this")
+                           .build());
+                }
                 return this;
+            }
+
+            public CodeBlock.Builder addPrimitiveMember(
+                String name,
+                TypeName type)
+            {
+                CodeBlock.Builder code = CodeBlock.builder();
+                code.addStatement("int newLimit = offset() + $L + $L", offset(name), size(name));
+                code.addStatement("checkLimit(newLimit, maxLimit())");
+                code.addStatement("kind($L)", kind(name));
+                String putterName = PUTTER_NAMES.get(type);
+                if (putterName == null)
+                {
+                    throw new IllegalStateException("member type not supported: " + type);
+                }
+
+                String putStatement = String.format("buffer().%s(offset() + $L, value)", putterName);
+                code.addStatement(putStatement, offset(name));
+                code.addStatement("limit(newLimit)");
+                return code;
+            }
+
+            public CodeBlock.Builder addNonPrimitiveMember(
+                String name,
+                TypeName type)
+            {
+                CodeBlock.Builder code = CodeBlock.builder();
+                code.beginControlFlow("if (value == null)");
+                code.addStatement("limit(offset() + $L)", offset(name));
+                code.endControlFlow();
+                code.beginControlFlow("else");
+                code.addStatement("int newLimit = maxLimit()");
+                code.addStatement("checkLimit(newLimit, maxLimit())");
+                code.addStatement("kind($L)", kind(name));
+                code.addStatement("$T.Builder $L = $LRW.wrap(buffer(), offset() + $L, newLimit);",
+                    type, name, name, offset(name));
+                code.addStatement("$L.set(value, $T.UTF_8)", name, StandardCharsets.class);
+                code.addStatement("limit($L.build().limit())", name);
+                code.endControlFlow();
+                return code;
+            }
+
+            public CodeBlock.Builder addConstantValueMember(
+                String name)
+            {
+                CodeBlock.Builder code = CodeBlock.builder();
+                code.addStatement("int newLimit = offset() + $L", size("kind"));
+                code.addStatement("checkLimit(newLimit, maxLimit())");
+                code.addStatement("kind($L)", kind(name));
+                code.addStatement("limit(newLimit)");
+                return code;
             }
 
             @Override
             public TypeSpec.Builder build()
             {
                 return super.build();
-            }
-
-            private MemberMutatorGenerator addDeferredMemberIfNecessary()
-            {
-                String name = deferredName;
-                TypeName type = deferredType;
-                String sizeName = deferredSizeName;
-
-                deferredName = null;
-                deferredType = null;
-                deferredSizeName = null;
-
-                addPrimitiveMember(name, type);
-
-                return this;
-            }
-
-            private void addPrimitiveMember(
-                String name,
-                TypeName type)
-            {
-                CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("kind($L)", kind(name));
-                if (type != null)
-                {
-                    String putterName = PUTTER_NAMES.get(type);
-                    if (putterName == null)
-                    {
-                        throw new IllegalStateException("member type not supported: " + type);
-                    }
-
-                    String statement = String.format("buffer().%s(offset() + $L, value)", putterName);
-                    code.addStatement(statement, offset(name));
-                }
-
-                code.addStatement("limit(newLimit)");
-                code.addStatement("return this");
-
-                if (type != null)
-                {
-                    builder.addMethod(methodBuilder(setAs(name))
-                           .addModifiers(PUBLIC)
-                           .addParameter(type, "value")
-                           .addStatement("int newLimit = offset() + $L + $L", offset(name), size(name))
-                           .addStatement("checkLimit(newLimit, maxLimit())")
-                           .returns(thisType)
-                           .addCode(code.build())
-                           .build());
-                }
-                else
-                {
-                    builder.addMethod(methodBuilder(setAs(name))
-                           .addModifiers(PUBLIC)
-                           .addStatement("int newLimit = offset() + $L", size("kind"))
-                           .addStatement("checkLimit(newLimit, maxLimit())")
-                           .returns(thisType)
-                           .addCode(code.build())
-                           .build());
-                }
-
             }
         }
 
@@ -812,6 +924,32 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 return builder.build();
             }
 
+        }
+
+        private static final class MemberFieldGenerator extends ClassSpecMixinGenerator
+        {
+            private MemberFieldGenerator(
+                ClassName thisType,
+                TypeSpec.Builder builder)
+            {
+                super(thisType, builder);
+            }
+
+            public MemberFieldGenerator addMember(
+                String name,
+                TypeName type)
+            {
+                if (type != null && !type.isPrimitive())
+                {
+                    String fieldRW = String.format("%sRW", name);
+                    ClassName classType = (ClassName) type;
+                    TypeName builderType = classType.nestedClass("Builder");
+                    builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                              .initializer("new $T()", builderType)
+                                              .build());
+                }
+                return this;
+            }
         }
     }
 

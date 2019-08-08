@@ -708,6 +708,54 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
+        public Builder visitString_type(
+            String_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.STRING);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.STRING);
+            }
+            return super.visitString_type(ctx);
+        }
+
+        @Override
+        public Builder visitString16_type(
+            String16_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.STRING16);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.STRING16);
+            }
+            return super.visitString16_type(ctx);
+        }
+
+        @Override
+        public Builder visitString32_type(
+            String32_typeContext ctx)
+        {
+            if (memberBuilder != null)
+            {
+                memberBuilder.name(ctx.getText())
+                             .type(AstType.STRING32);
+            }
+            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            {
+                variantBuilder.wideType(AstType.STRING32);
+            }
+            return super.visitString32_type(ctx);
+        }
+
+        @Override
         public Builder visitInt64_type(
             Int64_typeContext ctx)
         {

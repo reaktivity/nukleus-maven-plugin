@@ -247,6 +247,9 @@ list_member
 
 variant_member
    : integer_type
+   | string_type
+   | string16_type
+   | string32_type
    | uint_literal
    ;
 
@@ -275,12 +278,19 @@ case_member
    ;
 
 variant_type
-   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF integer_type)? LEFT_BRACE case_list RIGHT_BRACE
+   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF variant_explicit_type)? LEFT_BRACE case_list RIGHT_BRACE
    ;
 
 kind
    : KW_UINT8
    | enum_name
+   ;
+
+variant_explicit_type
+   : integer_type
+   | string_type
+   | string16_type
+   | string32_type
    ;
 
 enum_name
