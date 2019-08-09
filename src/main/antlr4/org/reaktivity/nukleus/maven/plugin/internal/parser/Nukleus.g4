@@ -274,7 +274,7 @@ case_list
    ;
 
 case_member
-   : KW_CASE uint_literal COLON member
+   : KW_CASE (uint_literal | declarator) COLON member
    ;
 
 variant_type
@@ -283,7 +283,7 @@ variant_type
 
 kind
    : KW_UINT8
-   | enum_name
+   | scoped_name
    ;
 
 variant_explicit_type
@@ -291,10 +291,6 @@ variant_explicit_type
    | string_type
    | string16_type
    | string32_type
-   ;
-
-enum_name
-   : ID
    ;
 
 list_type 
