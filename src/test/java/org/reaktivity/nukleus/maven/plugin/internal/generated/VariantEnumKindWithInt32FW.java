@@ -1,3 +1,18 @@
+/**
+ * Copyright 2016-2019 The Reaktivity Project
+ *
+ * The Reaktivity Project licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.BitUtil;
@@ -9,8 +24,6 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
 public class VariantEnumKindWithInt32FW extends Flyweight
 {
-    private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
-
     private static final int FIELD_SIZE_INT8 = BitUtil.SIZE_OF_BYTE;
 
     private static final int FIELD_SIZE_INT16 = BitUtil.SIZE_OF_SHORT;
@@ -28,6 +41,8 @@ public class VariantEnumKindWithInt32FW extends Flyweight
     public static final EnumWithInt8 KIND_INT16 = EnumWithInt8.TWO;
 
     public static final EnumWithInt8 KIND_INT32 = EnumWithInt8.THREE;
+
+    private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
     public EnumWithInt8 kind()
     {
@@ -71,6 +86,7 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        enumWithInt8RO.tryWrap(buffer, offset, maxLimit);
         switch (kind())
         {
         case ONE:
@@ -96,6 +112,7 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        enumWithInt8RO.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
         case ONE:
@@ -157,7 +174,7 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         {
             enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
             enumWithInt8RW.set(value);
-            limit(enumWithInt8RW.limit());
+            limit(enumWithInt8RW.build().limit());
             return this;
         }
 
