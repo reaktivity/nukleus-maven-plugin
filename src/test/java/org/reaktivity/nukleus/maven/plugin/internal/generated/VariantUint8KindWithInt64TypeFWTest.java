@@ -127,7 +127,7 @@ public class VariantUint8KindWithInt64TypeFWTest
     }
 
     @Test
-    public void shouldSetInt64()
+    public void shouldSetAsInt64()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .setAsInt64(12345678L)
@@ -140,7 +140,7 @@ public class VariantUint8KindWithInt64TypeFWTest
     }
 
     @Test
-    public void shouldSetInt32()
+    public void shouldSetAsInt32()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .setAsInt32(1000000000)
@@ -153,7 +153,7 @@ public class VariantUint8KindWithInt64TypeFWTest
     }
 
     @Test
-    public void shouldSetInt16()
+    public void shouldSetAsInt16()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .setAsInt16((short) 30000)
@@ -166,7 +166,7 @@ public class VariantUint8KindWithInt64TypeFWTest
     }
 
     @Test
-    public void shouldSetUint8()
+    public void shouldSetAsInt8()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .setAsInt8((byte) 100)
