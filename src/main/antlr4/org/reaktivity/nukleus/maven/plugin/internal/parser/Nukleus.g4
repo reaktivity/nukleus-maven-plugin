@@ -170,10 +170,6 @@ enum_explicit_type
 //   | variant_name
    ;
 
-variant_name
-   : ID
-   ;
-
 enum_values
    : enum_value_non_terminal * enum_value_terminal
    ;

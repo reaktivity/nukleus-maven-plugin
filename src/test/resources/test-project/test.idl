@@ -106,13 +106,6 @@ scope test
             case 0x61: int16;
         }
 
-//        variant VariantEnumKindWithInt32 switch (EnumWithInt32) of int32
-//        {
-//            case ONE: int8;
-//            case TWO: int16;
-//            case THREE: int32;
-//        }
-
         struct Integers
         {
             uint8  unsigned8  = 0xFF;
@@ -239,6 +232,13 @@ scope test
             int8[length3] array3 = null;
             int8[length4] array4 = null;
         }
+
+//        variant VariantEnumKindWithInt32 switch (EnumWithInt8) of int32
+//        {
+//            case ONE: int8;
+//            case TWO: int16;
+//            case THREE: int32;
+//        }
 
     }
 }
