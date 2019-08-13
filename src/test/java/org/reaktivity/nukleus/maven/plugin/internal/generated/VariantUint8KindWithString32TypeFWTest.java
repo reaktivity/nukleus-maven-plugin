@@ -18,7 +18,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantUint8KindWithString32TypeFW;
+//import org.reaktivity.reaktor.internal.test.types.inner.VariantUint8KindWithString32TypeFW;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
