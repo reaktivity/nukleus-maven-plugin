@@ -171,6 +171,11 @@ public final class AstScopeNode extends AstNode
             return this;
         }
 
+        public String name()
+        {
+            return name;
+        }
+
         @Override
         public AstScopeNode build()
         {

@@ -155,7 +155,17 @@ unbounded_octets_type
    ;
 
 enum_type
-   : KW_ENUM ID LEFT_BRACE enum_values RIGHT_BRACE
+   : KW_ENUM ID (LEFT_BRACKET enum_explicit_type RIGHT_BRACKET)? LEFT_BRACE enum_values RIGHT_BRACE
+   ;
+
+enum_explicit_type
+   : int8_type
+   | int16_type
+   | int32_type
+   | int64_type
+   | string_type
+   | string16_type
+   | string32_type
    ;
 
 enum_values
@@ -171,7 +181,7 @@ enum_value_terminal
    ;
 
 enum_value
-   : ID
+   : ID (LEFT_BRACKET (int_literal | string_literal) RIGHT_BRACKET)?
    ;
 
 struct_type
@@ -273,15 +283,16 @@ string32_type
 int_literal
    : MINUS ? uint_literal
    ;
-   
-MINUS
-   : '-'
-   ;
 
 uint_literal
    : UNSIGNED_INTEGER_LITERAL
    | HEX_LITERAL
    ;
+
+string_literal
+   : STRING_LITERAL
+   ;
+
 
 UNSIGNED_INTEGER_LITERAL
    : ('0' | '1' .. '9' '0' .. '9'*) INTEGER_TYPE_SUFFIX?
@@ -292,8 +303,13 @@ HEX_LITERAL
    ;
 
 
+STRING_LITERAL
+   : QUOTE (~["\r\n])* QUOTE
+   ;
+
+
 fragment HEX_DIGIT
-   : ('0' .. '9' | 'a' .. 'f' | 'A' .. 'F')
+   : ('0' .. '9' | 'a' .. 'f' | 'A' .. 'F' | '_')
    ;
 
 
@@ -312,6 +328,11 @@ fragment ID_DIGIT
    ;
 
 
+MINUS
+   : '-'
+   ;
+
+
 SEMICOLON
    : ';'
    ;
@@ -325,6 +346,7 @@ COLON
 COMMA
    : ','
    ;
+
 
 EQUALS
    : '='
@@ -358,6 +380,11 @@ LEFT_BRACKET
 
 RIGHT_BRACKET
    : ')'
+   ;
+
+
+QUOTE
+   : '"'
    ;
 
 
