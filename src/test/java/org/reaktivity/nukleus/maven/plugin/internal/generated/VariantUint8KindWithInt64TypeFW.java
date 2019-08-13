@@ -20,64 +20,55 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-// TODO: To be deleted
-public final class VariantUint8KindWithUint64TypeFW extends Flyweight
+public class VariantUint8KindWithInt64TypeFW extends Flyweight
 {
     private static final int FIELD_SIZE_KIND = BitUtil.SIZE_OF_BYTE;
 
     private static final int FIELD_OFFSET_KIND = 0;
 
-    public static final int KIND_UINT64 = 128;
+    public static final int KIND_INT32 = 113;
 
-    private static final int FIELD_OFFSET_UINT64 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
+    private static final int FIELD_OFFSET_INT32 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
 
-    private static final int FIELD_SIZE_UINT64 = BitUtil.SIZE_OF_LONG;
+    private static final int FIELD_SIZE_INT32 = BitUtil.SIZE_OF_INT;
 
-    public static final int KIND_UINT8 = 83;
+    public static final int KIND_INT64 = 129;
 
-    private static final int FIELD_OFFSET_UINT8 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
+    private static final int FIELD_OFFSET_INT64 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
 
-    private static final int FIELD_SIZE_UINT8 = BitUtil.SIZE_OF_SHORT;
+    private static final int FIELD_SIZE_INT64 = BitUtil.SIZE_OF_LONG;
 
-    public static final int KIND_ZERO = 68;
+    public static final int KIND_INT8 = 81;
 
-    private static final int FIELD_VALUE_ZERO = 0;
+    private static final int FIELD_OFFSET_INT8 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
 
-    public static final int KIND_UINT32 = 112;
+    private static final int FIELD_SIZE_INT8 = BitUtil.SIZE_OF_BYTE;
 
-    private static final int FIELD_OFFSET_UINT32 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
+    public static final int KIND_INT16 = 97;
 
-    private static final int FIELD_SIZE_UINT32 = BitUtil.SIZE_OF_LONG;
+    private static final int FIELD_OFFSET_INT16 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
 
-    public static final int KIND_UINT16 = 96;
+    private static final int FIELD_SIZE_INT16 = BitUtil.SIZE_OF_SHORT;
 
-    private static final int FIELD_OFFSET_UINT16 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
 
-    private static final int FIELD_SIZE_UINT16 = BitUtil.SIZE_OF_INT;
-
-    public long getAsUint64()
+    public int getAsInt32()
     {
-        return buffer().getLong(offset() + FIELD_OFFSET_UINT64);
+        return buffer().getInt(offset() + FIELD_OFFSET_INT32);
     }
 
-    public short getAsUint8()
+    public long getAsInt64()
     {
-        return buffer().getShort(offset() + FIELD_OFFSET_UINT8);
+        return buffer().getLong(offset() + FIELD_OFFSET_INT64);
     }
 
-    public byte getAsZero()
+    public byte getAsInt8()
     {
-        return FIELD_VALUE_ZERO;
+        return buffer().getByte(offset() + FIELD_OFFSET_INT8);
     }
 
-    public long getAsUint32()
+    public short getAsInt16()
     {
-        return buffer().getLong(offset() + FIELD_OFFSET_UINT32);
-    }
-
-    public int getAsUint16()
-    {
-        return buffer().getInt(offset() + FIELD_OFFSET_UINT16);
+        return buffer().getShort(offset() + FIELD_OFFSET_INT16);
     }
 
     public int kind()
@@ -89,23 +80,21 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
     {
         switch (kind())
         {
-        case KIND_UINT64:
-            return getAsUint64();
-        case KIND_UINT8:
-            return getAsUint8();
-        case KIND_ZERO:
-            return getAsZero();
-        case KIND_UINT32:
-            return getAsUint32();
-        case KIND_UINT16:
-            return getAsUint16();
+        case KIND_INT32:
+            return getAsInt32();
+        case KIND_INT64:
+            return getAsInt64();
+        case KIND_INT8:
+            return getAsInt8();
+        case KIND_INT16:
+            return getAsInt16();
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
     }
 
     @Override
-    public VariantUint8KindWithUint64TypeFW tryWrap(
+    public VariantUint8KindWithInt64TypeFW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -113,15 +102,13 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
         super.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
-        case KIND_UINT64:
+        case KIND_INT32:
             break;
-        case KIND_UINT8:
+        case KIND_INT64:
             break;
-        case KIND_ZERO:
+        case KIND_INT8:
             break;
-        case KIND_UINT32:
-            break;
-        case KIND_UINT16:
+        case KIND_INT16:
             break;
         default:
             break;
@@ -134,7 +121,7 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
     }
 
     @Override
-    public VariantUint8KindWithUint64TypeFW wrap(
+    public VariantUint8KindWithInt64TypeFW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -142,15 +129,13 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
         super.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
-        case KIND_UINT64:
+        case KIND_INT32:
             break;
-        case KIND_UINT8:
+        case KIND_INT64:
             break;
-        case KIND_ZERO:
+        case KIND_INT8:
             break;
-        case KIND_UINT32:
-            break;
-        case KIND_UINT16:
+        case KIND_INT16:
             break;
         default:
             break;
@@ -164,18 +149,16 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
     {
         switch (kind())
         {
-        case KIND_UINT64:
-            return String.format("VARIANTUINT8KINDWITHUINT64TYPE [uint64=%d]", getAsUint64());
-        case KIND_UINT8:
-            return String.format("VARIANTUINT8KINDWITHUINT64TYPE [uint8=%d]", getAsUint8());
-        case KIND_ZERO:
-            return String.format("VARIANTUINT8KINDWITHUINT64TYPE [zero=%d]", getAsZero());
-        case KIND_UINT32:
-            return String.format("VARIANTUINT8KINDWITHUINT64TYPE [uint32=%d]", getAsUint32());
-        case KIND_UINT16:
-            return String.format("VARIANTUINT8KINDWITHUINT64TYPE [uint16=%d]", getAsUint16());
+        case KIND_INT32:
+            return String.format("VARIANTUINT8KINDWITHINT64TYPE [int32=%d]", getAsInt32());
+        case KIND_INT64:
+            return String.format("VARIANTUINT8KINDWITHINT64TYPE [int64=%d]", getAsInt64());
+        case KIND_INT8:
+            return String.format("VARIANTUINT8KINDWITHINT64TYPE [int8=%d]", getAsInt8());
+        case KIND_INT16:
+            return String.format("VARIANTUINT8KINDWITHINT64TYPE [int16=%d]", getAsInt16());
         default:
-            return String.format("VARIANTUINT8KINDWITHUINT64TYPE [unknown]");
+            return String.format("VARIANTUINT8KINDWITHINT64TYPE [unknown]");
         }
     }
 
@@ -184,26 +167,24 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
     {
         switch (kind())
         {
-        case KIND_UINT64:
-            return offset() + FIELD_OFFSET_UINT64 + FIELD_SIZE_UINT64;
-        case KIND_UINT8:
-            return offset() + FIELD_OFFSET_UINT8 + FIELD_SIZE_UINT8;
-        case KIND_ZERO:
-            return offset();
-        case KIND_UINT32:
-            return offset() + FIELD_OFFSET_UINT32 + FIELD_SIZE_UINT32;
-        case KIND_UINT16:
-            return offset() + FIELD_OFFSET_UINT16 + FIELD_SIZE_UINT16;
+        case KIND_INT32:
+            return offset() + FIELD_OFFSET_INT32 + FIELD_SIZE_INT32;
+        case KIND_INT64:
+            return offset() + FIELD_OFFSET_INT64 + FIELD_SIZE_INT64;
+        case KIND_INT8:
+            return offset() + FIELD_OFFSET_INT8 + FIELD_SIZE_INT8;
+        case KIND_INT16:
+            return offset() + FIELD_OFFSET_INT16 + FIELD_SIZE_INT16;
         default:
             return offset();
         }
     }
 
-    public static final class Builder extends Flyweight.Builder<VariantUint8KindWithUint64TypeFW>
+    public static final class Builder extends Flyweight.Builder<VariantUint8KindWithInt64TypeFW>
     {
         public Builder()
         {
-            super(new VariantUint8KindWithUint64TypeFW());
+            super(new VariantUint8KindWithInt64TypeFW());
         }
 
         private Builder kind(
@@ -213,55 +194,46 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             return this;
         }
 
-        public Builder setAsUint64(
-            long value)
-        {
-            int newLimit = offset() + FIELD_OFFSET_UINT64 + FIELD_SIZE_UINT64;
-            checkLimit(newLimit, maxLimit());
-            kind(KIND_UINT64);
-            buffer().putLong(offset() + FIELD_OFFSET_UINT64, value);
-            limit(newLimit);
-            return this;
-        }
-
-        public Builder setAsUint8(
-            short value)
-        {
-            int newLimit = offset() + FIELD_OFFSET_UINT8 + FIELD_SIZE_UINT8;
-            checkLimit(newLimit, maxLimit());
-            kind(KIND_UINT8);
-            buffer().putShort(offset() + FIELD_OFFSET_UINT8, value);
-            limit(newLimit);
-            return this;
-        }
-
-        public Builder setAsZero()
-        {
-            int newLimit = offset() + FIELD_SIZE_KIND;
-            checkLimit(newLimit, maxLimit());
-            kind(KIND_ZERO);
-            limit(newLimit);
-            return this;
-        }
-
-        public Builder setAsUint32(
-            long value)
-        {
-            int newLimit = offset() + FIELD_OFFSET_UINT32 + FIELD_SIZE_UINT32;
-            checkLimit(newLimit, maxLimit());
-            kind(KIND_UINT32);
-            buffer().putLong(offset() + FIELD_OFFSET_UINT32, value);
-            limit(newLimit);
-            return this;
-        }
-
-        public Builder setAsUint16(
+        public Builder setAsInt32(
             int value)
         {
-            int newLimit = offset() + FIELD_OFFSET_UINT16 + FIELD_SIZE_UINT16;
+            int newLimit = offset() + FIELD_OFFSET_INT32 + FIELD_SIZE_INT32;
             checkLimit(newLimit, maxLimit());
-            kind(KIND_UINT16);
-            buffer().putInt(offset() + FIELD_OFFSET_UINT16, value);
+            kind(KIND_INT32);
+            buffer().putInt(offset() + FIELD_OFFSET_INT32, value);
+            limit(newLimit);
+            return this;
+        }
+
+        public Builder setAsInt64(
+            long value)
+        {
+            int newLimit = offset() + FIELD_OFFSET_INT64 + FIELD_SIZE_INT64;
+            checkLimit(newLimit, maxLimit());
+            kind(KIND_INT64);
+            buffer().putLong(offset() + FIELD_OFFSET_INT64, value);
+            limit(newLimit);
+            return this;
+        }
+
+        public Builder setAsInt8(
+            byte value)
+        {
+            int newLimit = offset() + FIELD_OFFSET_INT8 + FIELD_SIZE_INT8;
+            checkLimit(newLimit, maxLimit());
+            kind(KIND_INT8);
+            buffer().putByte(offset() + FIELD_OFFSET_INT8, value);
+            limit(newLimit);
+            return this;
+        }
+
+        public Builder setAsInt16(
+            short value)
+        {
+            int newLimit = offset() + FIELD_OFFSET_INT16 + FIELD_SIZE_INT16;
+            checkLimit(newLimit, maxLimit());
+            kind(KIND_INT16);
+            buffer().putShort(offset() + FIELD_OFFSET_INT16, value);
             limit(newLimit);
             return this;
         }
@@ -280,9 +252,9 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             case 4:
             case 5:
             case 6:
-            case 7:
-                setAsUint8((short) value);
+                setAsInt8((byte) value);
                 break;
+            case 7:
             case 8:
             case 9:
             case 10:
@@ -290,9 +262,9 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             case 12:
             case 13:
             case 14:
-            case 15:
-                setAsUint16((int) value);
+                setAsInt16((short) value);
                 break;
+            case 15:
             case 16:
             case 17:
             case 18:
@@ -308,9 +280,9 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             case 28:
             case 29:
             case 30:
-            case 31:
-                setAsUint32((long) value);
+                setAsInt32((int) value);
                 break;
+            case 31:
             case 32:
             case 33:
             case 34:
@@ -342,10 +314,7 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             case 60:
             case 61:
             case 62:
-                setAsUint64((long) value);
-                break;
-            case 64:
-                setAsZero();
+                setAsInt64((long) value);
                 break;
             default:
                 throw new IllegalArgumentException("Illegal value: " + value);
