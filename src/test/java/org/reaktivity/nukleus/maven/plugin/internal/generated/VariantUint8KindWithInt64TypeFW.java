@@ -241,9 +241,9 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
         public Builder set(
             long value)
         {
-            int highestOneBitPosition = Long.numberOfTrailingZeros(Long.highestOneBit(value));
+            int highestBitIndex = Long.numberOfTrailingZeros(Long.highestOneBit(value));
 
-            switch (highestOneBitPosition)
+            switch (highestBitIndex)
             {
             case 0:
             case 1:
