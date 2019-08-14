@@ -58,6 +58,10 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         return buffer().getInt(enumWithInt8RO.limit());
     }
 
+    private static final int BIT_MASK_INT8 = 0xffffff00;
+
+    private static final int BIT_MASK_INT16 = 0xffff0000;
+
     public int get()
     {
         switch (kind())
@@ -208,49 +212,68 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         public Builder set(
             int value)
         {
-            int highestBitIndex = Long.numberOfTrailingZeros(Long.highestOneBit(value));
-
-            switch (highestBitIndex)
+            int highestBit = Integer.highestOneBit(value);
+            if (highestBit == Integer.MIN_VALUE)
             {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-                setAsInt8((byte) value);
-                break;
-            case 7:
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14:
-                setAsInt16((short) value);
-                break;
-            case 15:
-            case 16:
-            case 17:
-            case 18:
-            case 19:
-            case 20:
-            case 21:
-            case 22:
-            case 23:
-            case 24:
-            case 25:
-            case 26:
-            case 27:
-            case 28:
-            case 29:
-            case 30:
-                setAsInt32((int) value);
-                break;
-            default:
-                throw new IllegalArgumentException("Illegal value: " + value);
+                if ((value & BIT_MASK_INT8) == value)
+                {
+                    setAsInt8((byte) value);
+                }
+                else if ((value & BIT_MASK_INT16) == value)
+                {
+                    setAsInt16((short) value);
+                }
+                else
+                {
+                    setAsInt32((int) value);
+                }
+            }
+            else
+            {
+                int highestBitIndex = Integer.numberOfTrailingZeros(highestBit);
+
+                switch (highestBitIndex)
+                {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                    setAsInt8((byte) value);
+                    break;
+                case 7:
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                case 14:
+                    setAsInt16((short) value);
+                    break;
+                case 15:
+                case 16:
+                case 17:
+                case 18:
+                case 19:
+                case 20:
+                case 21:
+                case 22:
+                case 23:
+                case 24:
+                case 25:
+                case 26:
+                case 27:
+                case 28:
+                case 29:
+                case 30:
+                    setAsInt32((int) value);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Illegal value: " + value);
+                }
             }
             return this;
         }

@@ -50,6 +50,12 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
 
     private static final int FIELD_SIZE_INT16 = BitUtil.SIZE_OF_SHORT;
 
+    private static final long BIT_MASK_INT8 = 0xffffffffffffff00L;
+
+    private static final long BIT_MASK_INT16 = 0xffffffffffff0000L;
+
+    private static final long BIT_MASK_INT32 = 0xffffffff00000000L;
+
 
     public int getAsInt32()
     {
@@ -241,84 +247,108 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
         public Builder set(
             long value)
         {
-            int highestBitIndex = Long.numberOfTrailingZeros(Long.highestOneBit(value));
-
-            switch (highestBitIndex)
+            long highestBit = Long.highestOneBit(value);
+            if (highestBit == Long.MIN_VALUE)
             {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-                setAsInt8((byte) value);
-                break;
-            case 7:
-            case 8:
-            case 9:
-            case 10:
-            case 11:
-            case 12:
-            case 13:
-            case 14:
-                setAsInt16((short) value);
-                break;
-            case 15:
-            case 16:
-            case 17:
-            case 18:
-            case 19:
-            case 20:
-            case 21:
-            case 22:
-            case 23:
-            case 24:
-            case 25:
-            case 26:
-            case 27:
-            case 28:
-            case 29:
-            case 30:
-                setAsInt32((int) value);
-                break;
-            case 31:
-            case 32:
-            case 33:
-            case 34:
-            case 35:
-            case 36:
-            case 37:
-            case 38:
-            case 39:
-            case 40:
-            case 41:
-            case 42:
-            case 43:
-            case 44:
-            case 45:
-            case 46:
-            case 47:
-            case 48:
-            case 49:
-            case 50:
-            case 51:
-            case 52:
-            case 53:
-            case 54:
-            case 55:
-            case 56:
-            case 57:
-            case 58:
-            case 59:
-            case 60:
-            case 61:
-            case 62:
-                setAsInt64((long) value);
-                break;
-            default:
-                throw new IllegalArgumentException("Illegal value: " + value);
+                if ((value & BIT_MASK_INT8) == value)
+                {
+                    setAsInt8((byte) value);
+                }
+                else if ((value & BIT_MASK_INT16) == value)
+                {
+                    setAsInt16((short) value);
+                }
+                else if ((value & BIT_MASK_INT32) == value)
+                {
+                    setAsInt32((int) value);
+                }
+                else
+                {
+                    setAsInt64((long) value);
+                }
             }
+            else
+            {
+                int highestBitIndex = Long.numberOfTrailingZeros(highestBit);
+
+                switch (highestBitIndex)
+                {
+                case 0:
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                    setAsInt8((byte) value);
+                    break;
+                case 7:
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                case 14:
+                    setAsInt16((short) value);
+                    break;
+                case 15:
+                case 16:
+                case 17:
+                case 18:
+                case 19:
+                case 20:
+                case 21:
+                case 22:
+                case 23:
+                case 24:
+                case 25:
+                case 26:
+                case 27:
+                case 28:
+                case 29:
+                case 30:
+                    setAsInt32((int) value);
+                    break;
+                case 31:
+                case 32:
+                case 33:
+                case 34:
+                case 35:
+                case 36:
+                case 37:
+                case 38:
+                case 39:
+                case 40:
+                case 41:
+                case 42:
+                case 43:
+                case 44:
+                case 45:
+                case 46:
+                case 47:
+                case 48:
+                case 49:
+                case 50:
+                case 51:
+                case 52:
+                case 53:
+                case 54:
+                case 55:
+                case 56:
+                case 57:
+                case 58:
+                case 59:
+                case 60:
+                case 61:
+                case 62:
+                    setAsInt64((long) value);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Illegal value: " + value);
+                }
+            }
+
             return this;
         }
 
