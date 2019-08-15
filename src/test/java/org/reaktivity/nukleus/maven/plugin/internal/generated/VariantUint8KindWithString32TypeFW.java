@@ -262,8 +262,8 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
         {
             byte[] charBytes = value.getBytes(UTF_8);
             int byteLength = charBytes.length;
-            int highestBitIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(byteLength));
-            switch (highestBitIndex)
+            int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(byteLength)) >> 3;
+            switch (highestByteIndex)
             {
             case 0:
                 setAsString(value);

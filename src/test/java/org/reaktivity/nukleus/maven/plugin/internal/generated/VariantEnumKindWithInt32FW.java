@@ -212,8 +212,8 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         public Builder set(
             int value)
         {
-            int highestBitIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(value)) + 1;
-            switch (highestBitIndex >> 3)
+            int highestByteIndex = (Integer.numberOfTrailingZeros(Integer.highestOneBit(value)) + 1) >> 3;
+            switch (highestByteIndex)
             {
             case 0:
                 setAsInt8((byte) value);
