@@ -18,7 +18,8 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantUint8KindWithString32TypeFW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
@@ -27,7 +28,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-public class VariantUint8KindWithString32TypeFWTest
+public class VariantEnumKindWithString32FWTest
 {
     private static final int LENGTH_SIZE_STRING = 1;
     private static final int LENGTH_SIZE_STRING16 = 2;
@@ -50,24 +51,25 @@ public class VariantUint8KindWithString32TypeFWTest
         }
     };
 
-    private final VariantUint8KindWithString32TypeFW.Builder flyweightRW = new VariantUint8KindWithString32TypeFW.Builder();
-    private final VariantUint8KindWithString32TypeFW flyweightRO = new VariantUint8KindWithString32TypeFW();
+    private final VariantEnumKindWithString32FW.Builder flyweightRW = new VariantEnumKindWithString32FW.Builder();
+    private final VariantEnumKindWithString32FW flyweightRO = new VariantEnumKindWithString32FW();
 
-    static int setAllTestValuesCaseUint8(
+
+    static int setAllTestValues(
         MutableDirectBuffer buffer,
         final int offset)
     {
         int pos = offset;
-        buffer.putByte(pos, (byte) 0xa1);
+        buffer.putByte(pos,  (byte) EnumWithInt8.ONE.value());
         buffer.putByte(pos += 1, (byte) "valueOfString1".length());
         buffer.putStringWithoutLengthUtf8(pos += 1, "valueOfString1");
         return pos - offset + "valueOfString1".length();
     }
 
     @Test
-    public void shouldNotTryWrapWhenIncompleteCaseUint8()
+    public void shouldNotTryWrapWhenIncompleteCase()
     {
-        int size = setAllTestValuesCaseUint8(buffer, 10);
+        int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
@@ -75,9 +77,9 @@ public class VariantUint8KindWithString32TypeFWTest
     }
 
     @Test
-    public void shouldNotWrapWhenIncompleteCaseUint8()
+    public void shouldNotWrapWhenIncompleteCase()
     {
-        int size = setAllTestValuesCaseUint8(buffer, 10);
+        int size = setAllTestValues(buffer, 10);
         for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
         {
             try
@@ -96,39 +98,39 @@ public class VariantUint8KindWithString32TypeFWTest
     }
 
     @Test
-    public void shouldTryWrapWhenLengthSufficientCaseUint8()
+    public void shouldTryWrapWhenLengthSufficient()
     {
-        int size = setAllTestValuesCaseUint8(buffer, 10);
+        int size = setAllTestValues(buffer, 10);
         assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
     }
 
     @Test
-    public void shouldWrapWhenLengthSufficientCaseUint8()
+    public void shouldWrapWhenLengthSufficientCase()
     {
-        int size = setAllTestValuesCaseUint8(buffer, 10);
+        int size = setAllTestValues(buffer, 10);
         assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
     }
 
     @Test
-    public void shouldTryWrapAndReadAllValuesCaseUint8() throws Exception
+    public void shouldTryWrapAndReadAllValues() throws Exception
     {
         final int offset = 1;
-        setAllTestValuesCaseUint8(buffer, offset);
+        setAllTestValues(buffer, offset);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
         assertEquals("valueOfString1", flyweightRO.getAsString().asString());
         assertEquals("valueOfString1", flyweightRO.get());
-        assertEquals(0xa1, flyweightRO.kind());
+        assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
     }
 
     @Test
-    public void shouldWrapAndReadAllValuesCaseUint8() throws Exception
+    public void shouldWrapAndReadAllValues() throws Exception
     {
         final int offset = 1;
-        setAllTestValuesCaseUint8(buffer, offset);
+        setAllTestValues(buffer, offset);
         flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals("valueOfString1", flyweightRO.getAsString().asString());
         assertEquals("valueOfString1", flyweightRO.get());
-        assertEquals(0xa1, flyweightRO.kind());
+        assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
     }
 
     @Test
@@ -142,7 +144,7 @@ public class VariantUint8KindWithString32TypeFWTest
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING32 + 6, flyweightRO.limit());
         assertEquals("value1", flyweightRO.get());
         assertEquals("value1", flyweightRO.getAsString32().asString());
-        assertEquals(0xb1, flyweightRO.kind());
+        assertEquals(EnumWithInt8.THREE, flyweightRO.kind());
     }
 
     @Test
@@ -156,7 +158,7 @@ public class VariantUint8KindWithString32TypeFWTest
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING16 + 6, flyweightRO.limit());
         assertEquals("value1", flyweightRO.get());
         assertEquals("value1", flyweightRO.getAsString16().asString());
-        assertEquals(0x16, flyweightRO.kind());
+        assertEquals(EnumWithInt8.TWO, flyweightRO.kind());
     }
 
     @Test
@@ -170,7 +172,7 @@ public class VariantUint8KindWithString32TypeFWTest
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweightRO.limit());
         assertEquals("value1", flyweightRO.get());
         assertEquals("value1", flyweightRO.getAsString().asString());
-        assertEquals(0xa1, flyweightRO.kind());
+        assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
     }
 
     @Test
@@ -186,12 +188,5 @@ public class VariantUint8KindWithString32TypeFWTest
         assertEquals("value1", flyweightRO.getAsString().asString());
         assertNull(flyweightRO.getAsString16().asString());
         assertNull(flyweightRO.getAsString32().asString());
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUint32WithInsufficientSpace()
-    {
-        flyweightRW.wrap(buffer, 10, 11)
-            .set("value1");
     }
 }

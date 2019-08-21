@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -83,7 +83,7 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitCase(
-        AstCaseNode caseNode)
+        AstUnionCaseNode caseNode)
     {
         int value = caseNode.value();
         AstMemberNode memberNode = caseNode.member();

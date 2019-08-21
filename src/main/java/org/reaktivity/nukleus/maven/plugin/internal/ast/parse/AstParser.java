@@ -17,7 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
 import org.antlr.v4.runtime.RuleContext;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -27,8 +27,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
@@ -65,7 +65,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint_me
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_explicit_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint64_typeContext;
@@ -91,7 +92,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private AstStructNode.Builder structBuilder;
     private AstMemberNode.Builder memberBuilder;
     private AstUnionNode.Builder unionBuilder;
-    private AstCaseNode.Builder caseBuilder;
+    private AstUnionCaseNode.Builder caseBuilder;
+    private AstVariantCaseNode.Builder variantCaseBuilder;
     private AstByteOrder byteOrder;
 
     public AstParser()
@@ -364,15 +366,15 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstCaseNode visitCase_member(
+    public AstUnionCaseNode visitCase_member(
         Case_memberContext ctx)
     {
-        caseBuilder = new AstCaseNode.Builder()
+        caseBuilder = new AstUnionCaseNode.Builder()
                 .value(Integer.decode(ctx.uint_literal().getText()));
 
         super.visitCase_member(ctx);
 
-        AstCaseNode caseN = caseBuilder.build();
+        AstUnionCaseNode caseN = caseBuilder.build();
         caseBuilder = null;
 
         if (unionBuilder != null)
@@ -639,252 +641,268 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             Variant_typeContext ctx)
         {
             variantBuilder.name(ctx.ID().getText());
-            if (ctx.KW_OF() != null)
-            {
-                variantBuilder.hasWideType(true);
-            }
             return super.visitVariant_type(ctx);
-        }
-
-        @Override
-        protected AstVariantNode.Builder defaultResult()
-        {
-            return variantBuilder;
         }
 
         @Override
         public AstVariantNode.Builder visitKind(
             KindContext ctx)
         {
+            if (ctx.KW_UINT8() != null)
+            {
+                variantBuilder.kindType(AstType.UINT8);
+            }
             return super.visitKind(ctx);
         }
 
         @Override
-        public AstVariantNode.Builder visitCase_member(
-            Case_memberContext ctx)
+        public AstVariantNode.Builder visitScoped_name(
+            Scoped_nameContext ctx)
         {
-            caseBuilder = new AstCaseNode.Builder()
-                .value(Integer.decode(ctx.uint_literal().getText()));
+            String kindTypeName = ctx.ID(0).getText();
+            String qualifiedTypeName = qualifiedNamesByLocalName.getOrDefault(kindTypeName, kindTypeName);
+            variantBuilder.kindType(AstType.dynamicType(qualifiedTypeName));
+            return super.visitScoped_name(ctx);
+        }
 
-            super.visitCase_member(ctx);
+        @Override
+        public AstVariantNode.Builder visitVariant_explicit_type(
+            Variant_explicit_typeContext ctx)
+        {
+            variantBuilder.hasExplicitType(true);
+            return super.visitVariant_explicit_type(ctx);
+        }
 
-            AstCaseNode caseN = caseBuilder.build();
-            caseBuilder = null;
+        @Override
+        public AstVariantNode.Builder visitVariant_case_member(
+            Variant_case_memberContext ctx)
+        {
+            super.visitVariant_case_member(ctx);
+
+            AstVariantCaseNode caseN = variantCaseBuilder.build();
+            variantCaseBuilder = null;
 
             variantBuilder.caseN(caseN);
 
-            return super.visitCase_member(ctx);
+            return variantBuilder;
         }
 
         @Override
-        public AstVariantNode.Builder visitVariant_member(
-            Variant_memberContext ctx)
-        {
-            memberBuilder = new AstMemberNode.Builder().byteOrder(byteOrder);
-
-            super.visitVariant_member(ctx);
-
-            AstMemberNode member = memberBuilder.build();
-            memberBuilder = null;
-
-            if (caseBuilder != null)
-            {
-                caseBuilder.member(member);
-            }
-            return super.visitVariant_member(ctx);
-        }
-
-        @Override
-        public Builder visitUint_literal(
+        public AstVariantNode.Builder visitUint_literal(
             Uint_literalContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder == null)
+            {
+                variantCaseBuilder = new AstVariantCaseNode.Builder().kind(Integer.decode(ctx.getText()));
+            }
+            else
             {
                 String kindName = ctx.getText();
-                memberBuilder.name(kindName)
-                             .type(AstType.dynamicType(kindName));
+                variantCaseBuilder.typeName(kindName)
+                                  .type(AstType.dynamicType(kindName));
             }
             return super.visitUint_literal(ctx);
         }
 
         @Override
-        public Builder visitString_type(
+        public AstVariantNode.Builder visitDeclarator(
+            DeclaratorContext ctx)
+        {
+            if (variantCaseBuilder == null)
+            {
+                variantCaseBuilder = new AstVariantCaseNode.Builder().kind(ctx.ID().getText());
+            }
+            return super.visitDeclarator(ctx);
+        }
+
+        @Override
+        public AstVariantNode.Builder visitString_type(
             String_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.STRING);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.STRING);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.STRING);
+                variantBuilder.explicitType(AstType.STRING);
             }
             return super.visitString_type(ctx);
         }
 
         @Override
-        public Builder visitString16_type(
+        public AstVariantNode.Builder visitString16_type(
             String16_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.STRING16);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.STRING16);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.STRING16);
+                variantBuilder.explicitType(AstType.STRING16);
             }
             return super.visitString16_type(ctx);
         }
 
         @Override
-        public Builder visitString32_type(
+        public AstVariantNode.Builder visitString32_type(
             String32_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.STRING32);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.STRING32);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.STRING32);
+                variantBuilder.explicitType(AstType.STRING32);
             }
             return super.visitString32_type(ctx);
         }
 
         @Override
-        public Builder visitInt64_type(
+        public AstVariantNode.Builder visitInt64_type(
             Int64_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.INT64);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.INT64);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.INT64);
+                variantBuilder.explicitType(AstType.INT64);
             }
             return super.visitInt64_type(ctx);
         }
 
         @Override
-        public Builder visitInt32_type(
+        public AstVariantNode.Builder visitInt32_type(
             Int32_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.INT32);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.INT32);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.INT32);
+                variantBuilder.explicitType(AstType.INT32);
             }
             return super.visitInt32_type(ctx);
         }
 
         @Override
-        public Builder visitInt16_type(
+        public AstVariantNode.Builder visitInt16_type(
             Int16_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.INT16);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.INT16);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.INT16);
+                variantBuilder.explicitType(AstType.INT16);
             }
             return super.visitInt16_type(ctx);
         }
 
         @Override
-        public Builder visitInt8_type(
+        public AstVariantNode.Builder visitInt8_type(
             Int8_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.INT8);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.INT8);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.INT8);
+                variantBuilder.explicitType(AstType.INT8);
             }
             return super.visitInt8_type(ctx);
         }
 
         @Override
-        public Builder visitUint64_type(
+        public AstVariantNode.Builder visitUint64_type(
             Uint64_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.UINT64)
-                             .unsignedType(AstType.INT64);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.UINT64)
+                                  .unsignedType(AstType.INT64);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.UINT64);
+                variantBuilder.explicitType(AstType.UINT64)
+                              .unsignedExplicitType(AstType.INT64);
             }
             return super.visitUint64_type(ctx);
         }
 
         @Override
-        public Builder visitUint32_type(
+        public AstVariantNode.Builder visitUint32_type(
             Uint32_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.UINT32)
-                             .unsignedType(AstType.INT64);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.UINT32)
+                                  .unsignedType(AstType.INT64);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.INT64);
+                variantBuilder.explicitType(AstType.UINT32)
+                              .unsignedExplicitType(AstType.INT64);
             }
             return super.visitUint32_type(ctx);
         }
 
         @Override
-        public Builder visitUint16_type(
+        public AstVariantNode.Builder visitUint16_type(
             Uint16_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.UINT16)
-                             .unsignedType(AstType.INT32);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.UINT16)
+                                  .unsignedType(AstType.INT32);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.INT32);
+                variantBuilder.explicitType(AstType.UINT16)
+                              .unsignedExplicitType(AstType.INT32);
             }
             return super.visitUint16_type(ctx);
         }
 
         @Override
-        public Builder visitUint8_type(
+        public AstVariantNode.Builder visitUint8_type(
             Uint8_typeContext ctx)
         {
-            if (memberBuilder != null)
+            if (variantCaseBuilder != null)
             {
-                memberBuilder.name(ctx.getText())
-                             .type(AstType.UINT8)
-                    .unsignedType(AstType.INT16);
+                variantCaseBuilder.typeName(ctx.getText())
+                                  .type(AstType.UINT8)
+                                  .unsignedType(AstType.INT16);
             }
-            if (variantBuilder.hasWideType() && variantBuilder.wideType() == null)
+            else if (variantBuilder.hasExplicitType())
             {
-                variantBuilder.wideType(AstType.INT16);
+                variantBuilder.explicitType(AstType.UINT8)
+                              .unsignedExplicitType(AstType.INT16);
             }
             return super.visitUint8_type(ctx);
+        }
+
+        @Override
+        protected AstVariantNode.Builder defaultResult()
+        {
+            return variantBuilder;
         }
     }
 

@@ -267,6 +267,10 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
                 setAsInt64((long) value);
                 break;
             case 8:
+//                if (value == 0)
+//                {
+//                    setAsZero();
+//                }
                 if ((value & BIT_MASK_INT8) == value)
                 {
                     setAsInt8((byte) value);

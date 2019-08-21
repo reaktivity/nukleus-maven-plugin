@@ -43,6 +43,10 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
 
     private static final int FIELD_VALUE_ZERO = 0;
 
+    public static final int KIND_ONE = 1;
+
+    private static final int FIELD_VALUE_ONE = 1;
+
     public static final int KIND_UINT32 = 112;
 
     private static final int FIELD_OFFSET_UINT32 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
@@ -70,6 +74,11 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
         return FIELD_VALUE_ZERO;
     }
 
+    public byte getAsOne()
+    {
+        return FIELD_VALUE_ONE;
+    }
+
     public long getAsUint32()
     {
         return buffer().getLong(offset() + FIELD_OFFSET_UINT32);
@@ -95,6 +104,8 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             return getAsUint8();
         case KIND_ZERO:
             return getAsZero();
+        case KIND_ONE:
+            return getAsOne();
         case KIND_UINT32:
             return getAsUint32();
         case KIND_UINT16:
@@ -118,6 +129,8 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
         case KIND_UINT8:
             break;
         case KIND_ZERO:
+            break;
+        case KIND_ONE:
             break;
         case KIND_UINT32:
             break;
@@ -148,6 +161,8 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             break;
         case KIND_ZERO:
             break;
+        case KIND_ONE:
+            break;
         case KIND_UINT32:
             break;
         case KIND_UINT16:
@@ -170,6 +185,8 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             return String.format("VARIANTUINT8KINDWITHUINT64TYPE [uint8=%d]", getAsUint8());
         case KIND_ZERO:
             return String.format("VARIANTUINT8KINDWITHUINT64TYPE [zero=%d]", getAsZero());
+        case KIND_ONE:
+            return String.format("VARIANTUINT8KINDWITHUINT64TYPE [one=%d]", getAsOne());
         case KIND_UINT32:
             return String.format("VARIANTUINT8KINDWITHUINT64TYPE [uint32=%d]", getAsUint32());
         case KIND_UINT16:
@@ -189,6 +206,8 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
         case KIND_UINT8:
             return offset() + FIELD_OFFSET_UINT8 + FIELD_SIZE_UINT8;
         case KIND_ZERO:
+            return offset();
+        case KIND_ONE:
             return offset();
         case KIND_UINT32:
             return offset() + FIELD_OFFSET_UINT32 + FIELD_SIZE_UINT32;
@@ -244,6 +263,15 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             return this;
         }
 
+        public Builder setAsOne()
+        {
+            int newLimit = offset() + FIELD_SIZE_KIND;
+            checkLimit(newLimit, maxLimit());
+            kind(KIND_ONE);
+            limit(newLimit);
+            return this;
+        }
+
         public Builder setAsUint32(
             long value)
         {
@@ -273,20 +301,31 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
             switch (highestByteIndex)
             {
             case 0:
-                setAsUint8((byte) value);
+                switch ((int) value)
+                {
+                case 1:
+                    setAsOne();
+                    break;
+                default:
+                    setAsUint8((short) value);
+                    break;
+                }
                 break;
             case 1:
-                setAsUint16((short) value);
+                setAsUint16((int) value);
                 break;
             case 2:
             case 3:
-                setAsUint32((int) value);
+                setAsUint32(value);
                 break;
             case 4:
             case 5:
             case 6:
             case 7:
-                setAsUint64((long) value);
+                setAsUint64(value);
+                break;
+            case 8:
+                setAsZero();
                 break;
             default:
                 throw new IllegalArgumentException("Illegal value: " + value);

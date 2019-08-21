@@ -206,7 +206,6 @@ member
    | integer_array_member SEMICOLON
    | varint_array_member SEMICOLON
    | list_member SEMICOLON
-   | variant_member SEMICOLON
    ;
    
 uint_member_with_default
@@ -241,14 +240,6 @@ list_member
    : list_type declarators
    ;
 
-variant_member
-   : integer_type
-   | string_type
-   | string16_type
-   | string32_type
-   | uint_literal
-   ;
-
 default_null
    : '= null'
    ;
@@ -270,11 +261,12 @@ case_list
    ;
 
 case_member
-   : KW_CASE (uint_literal | declarator) COLON member
+   : KW_CASE uint_literal COLON member
    ;
 
 variant_type
-   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF variant_explicit_type)? LEFT_BRACE case_list RIGHT_BRACE
+   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF variant_explicit_type)? LEFT_BRACE variant_case_list
+   RIGHT_BRACE
    ;
 
 kind
@@ -287,6 +279,25 @@ variant_explicit_type
    | string_type
    | string16_type
    | string32_type
+   // TODO: | list_type
+   // TODO: | map_type
+   // TODO: | array_type
+   ;
+
+variant_case_list
+   : variant_case_member *
+   ;
+
+variant_case_member
+   : KW_CASE (uint_literal | declarator) COLON variant_member SEMICOLON
+   ;
+
+variant_member
+   : integer_type
+   | string_type
+   | string16_type
+   | string32_type
+   | uint_literal
    ;
 
 list_type 

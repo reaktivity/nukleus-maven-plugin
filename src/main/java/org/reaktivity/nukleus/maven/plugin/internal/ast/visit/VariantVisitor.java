@@ -16,12 +16,12 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
 import com.squareup.javapoet.TypeName;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -72,23 +72,19 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
     public Collection<TypeSpecGenerator<?>> visitVariant(
         AstVariantNode variantNode)
     {
-        TypeName wideType = resolver.resolveType(variantNode.wideType());
-        if (wideType != null)
-        {
-            generator.setExplicitType(wideType);
-        }
         return super.visitVariant(variantNode);
     }
 
     @Override
-    public Collection<TypeSpecGenerator<?>> visitCase(
-        AstCaseNode caseNode)
+    public Collection<TypeSpecGenerator<?>> visitVariantCase(
+        AstVariantCaseNode variantCaseNode)
     {
-        int value = caseNode.value();
-        AstType memberType = caseNode.member().unsignedType() != null ? caseNode.member().unsignedType() :
-            caseNode.member().type();
+        Object value = variantCaseNode.kind();
+        AstType memberType = variantCaseNode.type();
+        AstType memberUnsignedType = variantCaseNode.unsignedType();
         TypeName typeName = resolver.resolveType(memberType);
-        generator.addMember(value, caseNode.member().name(), typeName);
+        TypeName unsignedTypeName = resolver.resolveType(memberUnsignedType);
+        generator.addMember(value, variantCaseNode.typeName(), typeName, unsignedTypeName);
         return defaultResult();
     }
 

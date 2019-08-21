@@ -80,6 +80,7 @@ scope test
             case 0x80: uint64;
             case 0x53: uint8;
             case 0x44: 0;
+            case 0x01: 1;
             case 0x70: uint32;
             case 0x60: uint16;
         }
@@ -233,12 +234,18 @@ scope test
             int8[length4] array4 = null;
         }
 
-//        variant VariantEnumKindWithInt32 switch (EnumWithInt8) of int32
-//        {
-//            case ONE: int8;
-//            case TWO: int16;
-//            case THREE: int32;
-//        }
+        variant VariantEnumKindWithInt32 switch (EnumWithInt8) of int32
+        {
+            case ONE: int8;
+            case TWO: int16;
+            case THREE: int32;
+        }
 
+        variant VariantEnumKindWithString32 switch (EnumWithInt8) of string32
+        {
+            case ONE: string;
+            case TWO: string16;
+            case THREE: string32;
+        }
     }
 }

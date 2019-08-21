@@ -151,8 +151,13 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = variantNode.name();
         AstType variantType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName variantName = resolver.resolveClass(variantType);
-        VariantFlyweightGenerator generator =
-            new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName);
+
+        TypeName kindTypeName = variantNode.kindType().equals(AstType.UINT8) ? resolver.resolveType(AstType.UINT8) :
+            resolver.resolveClass(variantNode.kindType());
+        TypeName explicitTypeName = resolver.resolveType(variantNode.explicitType());
+        TypeName unsignedExplicitTypeName = resolver.resolveType(variantNode.unsignedExplicitType());
+        VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName,
+            kindTypeName, explicitTypeName, unsignedExplicitTypeName);
         return new VariantVisitor(generator, resolver).visitVariant(variantNode);
     }
 

@@ -15,35 +15,25 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.agrona.BitUtil;
+import java.nio.charset.StandardCharsets;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.String16FW;
 import org.reaktivity.reaktor.internal.test.types.String32FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-import java.nio.charset.StandardCharsets;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-public final class VariantUint8KindWithString32TypeFW extends Flyweight
+public final class VariantEnumKindWithString32FW extends Flyweight
 {
-    private static final int FIELD_SIZE_KIND = BitUtil.SIZE_OF_BYTE;
+    public static final EnumWithInt8 KIND_STRING = EnumWithInt8.ONE;
 
-    private static final int FIELD_OFFSET_KIND = 0;
+    public static final EnumWithInt8 KIND_STRING16 = EnumWithInt8.TWO;
 
-    public static final int KIND_STRING = 0xa1;
+    public static final EnumWithInt8 KIND_STRING32 = EnumWithInt8.THREE;
 
-    private static final int FIELD_OFFSET_STRING = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
-
-    public static final int KIND_STRING16 = 0x16;
-
-    private static final int FIELD_OFFSET_STRING16 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
-
-    public static final int KIND_STRING32 = 0xb1;
-
-    private static final int FIELD_OFFSET_STRING32 = FIELD_OFFSET_KIND + FIELD_SIZE_KIND;
+    private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
     private final StringFW stringRO = new StringFW();
 
@@ -66,20 +56,20 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
         return string32RO;
     }
 
-    public int kind()
+    public EnumWithInt8 kind()
     {
-        return buffer().getByte(offset() + FIELD_OFFSET_KIND) & 0xFF;
+        return enumWithInt8RO.get();
     }
 
     public String get()
     {
         switch (kind())
         {
-        case KIND_STRING:
+        case ONE:
             return getAsString().asString();
-        case KIND_STRING16:
+        case TWO:
             return getAsString16().asString();
-        case KIND_STRING32:
+        case THREE:
             return getAsString32().asString();
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
@@ -87,28 +77,29 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
     }
 
     @Override
-    public VariantUint8KindWithString32TypeFW tryWrap(
+    public VariantEnumKindWithString32FW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
     {
-        super.tryWrap(buffer, offset, maxLimit);
+        super.wrap(buffer, offset, maxLimit);
+        enumWithInt8RO.tryWrap(buffer, offset, maxLimit);
         switch (kind())
         {
-        case KIND_STRING:
-            if (null == stringRO.tryWrap(buffer, offset + FIELD_OFFSET_STRING, maxLimit))
+        case ONE:
+            if (null == stringRO.tryWrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit))
             {
                 return null;
             }
             break;
-        case KIND_STRING16:
-            if (null == string16RO.tryWrap(buffer, offset + FIELD_OFFSET_STRING16, maxLimit))
+        case TWO:
+            if (null == string16RO.tryWrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit))
             {
                 return null;
             }
             break;
-        case KIND_STRING32:
-            if (null == string32RO.tryWrap(buffer, offset + FIELD_OFFSET_STRING32, maxLimit))
+        case THREE:
+            if (null == string32RO.tryWrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit))
             {
                 return null;
             }
@@ -124,22 +115,23 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
     }
 
     @Override
-    public VariantUint8KindWithString32TypeFW wrap(
+    public VariantEnumKindWithString32FW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        enumWithInt8RO.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
-        case KIND_STRING:
-            stringRO.wrap(buffer, offset + FIELD_OFFSET_STRING, maxLimit);
+        case ONE:
+            stringRO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
             break;
-        case KIND_STRING16:
-            string16RO.wrap(buffer, offset + FIELD_OFFSET_STRING16, maxLimit);
+        case TWO:
+            string16RO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
             break;
-        case KIND_STRING32:
-            string32RO.wrap(buffer, offset + FIELD_OFFSET_STRING32, maxLimit);
+        case THREE:
+            string32RO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
             break;
         default:
             break;
@@ -149,39 +141,41 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
     }
 
     @Override
-    public int limit()
-    {
-        switch (kind())
-        {
-        case KIND_STRING:
-            return getAsString().limit();
-        case KIND_STRING16:
-            return getAsString16().limit();
-        case KIND_STRING32:
-            return getAsString32().limit();
-        default:
-            return offset();
-        }
-    }
-
-    @Override
     public String toString()
     {
         switch (kind())
         {
-        case KIND_STRING:
-            return String.format("VARIANTUINT8WITHSTRING32TYPEFW [string=%s]", stringRO.asString());
-        case KIND_STRING16:
-            return String.format("VARIANTUINT8WITHSTRING32TYPEFW [getAsString16=%s]", string16RO.asString());
-        case KIND_STRING32:
-            return String.format("VARIANTUINT8WITHSTRING32TYPEFW [string32=%s]", string32RO.asString());
+        case ONE:
+            return String.format("VARIANTENUMKINDWITHSTRING32 [string=%s]", stringRO.asString());
+        case TWO:
+            return String.format("VARIANTENUMKINDWITHSTRING32 [string16=%s]", string16RO.asString());
+        case THREE:
+            return String.format("VARIANTENUMKINDWITHSTRING32 [string32=%s]", string32RO.asString());
         default:
-            return String.format("VARIANTUINT8WITHSTRING32TYPEFW [unknown]");
+            return String.format("VARIANTENUMKINDWITHSTRING32 [unknown]");
         }
     }
 
-    public static final class Builder extends Flyweight.Builder<VariantUint8KindWithString32TypeFW>
+    @Override
+    public int limit()
     {
+        switch (kind())
+        {
+        case ONE:
+            return getAsString().limit();
+        case TWO:
+            return getAsString16().limit();
+        case THREE:
+            return getAsString32().limit();
+        default:
+            return enumWithInt8RO.limit();
+        }
+    }
+
+    public static final class Builder extends Flyweight.Builder<VariantEnumKindWithString32FW>
+    {
+        private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
+
         private final StringFW.Builder stringRW = new StringFW.Builder();
 
         private final String16FW.Builder string16RW = new String16FW.Builder();
@@ -190,13 +184,15 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
 
         public Builder()
         {
-            super(new VariantUint8KindWithString32TypeFW());
+            super(new VariantEnumKindWithString32FW());
         }
 
         private Builder kind(
-            int value)
+            EnumWithInt8 value)
         {
-            buffer().putByte(offset() + FIELD_OFFSET_KIND, (byte)(value & 0xFF));
+            enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
+            enumWithInt8RW.set(value);
+            limit(enumWithInt8RW.build().limit());
             return this;
         }
 
@@ -204,7 +200,7 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
             String value)
         {
             kind(KIND_STRING);
-            StringFW.Builder string = stringRW.wrap(buffer(), offset() + FIELD_OFFSET_STRING, maxLimit());
+            StringFW.Builder string = stringRW.wrap(buffer(), limit(), maxLimit());
             string.set(value, StandardCharsets.UTF_8);
             limit(string.build().limit());
             return this;
@@ -214,7 +210,7 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
             String value)
         {
             kind(KIND_STRING16);
-            String16FW.Builder string16 = string16RW.wrap(buffer(), offset() + FIELD_OFFSET_STRING16, maxLimit());
+            String16FW.Builder string16 = string16RW.wrap(buffer(), limit(), maxLimit());
             string16.set(value, StandardCharsets.UTF_8);
             limit(string16.build().limit());
             return this;
@@ -224,7 +220,7 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
             String value)
         {
             kind(KIND_STRING32);
-            String32FW.Builder string32 = string32RW.wrap(buffer(), offset() + FIELD_OFFSET_STRING32, maxLimit());
+            String32FW.Builder string32 = string32RW.wrap(buffer(), limit(), maxLimit());
             string32.set(value, StandardCharsets.UTF_8);
             limit(string32.build().limit());
             return this;
@@ -233,7 +229,7 @@ public final class VariantUint8KindWithString32TypeFW extends Flyweight
         public Builder set(
             String value)
         {
-            byte[] charBytes = value.getBytes(UTF_8);
+            byte[] charBytes = value.getBytes(StandardCharsets.UTF_8);
             int byteLength = charBytes.length;
             int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(byteLength)) >> 3;
             switch (highestByteIndex)

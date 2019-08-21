@@ -17,7 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import java.util.Objects;
 
-public final class AstCaseNode extends AstNode
+public final class AstUnionCaseNode extends AstNode
 {
     private final int value;
     private final AstMemberNode member;
@@ -53,17 +53,17 @@ public final class AstCaseNode extends AstNode
             return true;
         }
 
-        if (!(o instanceof AstCaseNode))
+        if (!(o instanceof AstUnionCaseNode))
         {
             return false;
         }
 
-        AstCaseNode that = (AstCaseNode)o;
+        AstUnionCaseNode that = (AstUnionCaseNode)o;
         return this.value == that.value &&
                 Objects.equals(this.member, that.member);
     }
 
-    private AstCaseNode(
+    private AstUnionCaseNode(
         int value,
         AstMemberNode member)
     {
@@ -77,7 +77,7 @@ public final class AstCaseNode extends AstNode
         return String.format("CASE [value=%d, member=%s]", value, member);
     }
 
-    public static final class Builder extends AstNode.Builder<AstCaseNode>
+    public static final class Builder extends AstNode.Builder<AstUnionCaseNode>
     {
         private int value;
         private AstMemberNode member;
@@ -95,9 +95,9 @@ public final class AstCaseNode extends AstNode
         }
 
         @Override
-        public AstCaseNode build()
+        public AstUnionCaseNode build()
         {
-            return new AstCaseNode(value, member);
+            return new AstUnionCaseNode(value, member);
         }
     }
 }

@@ -112,12 +112,18 @@ public abstract class AstNode
         {
             return variantNode.cases()
                               .stream()
-                              .map(this::visitCase)
+                              .map(this::visitVariantCase)
                               .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
+        public R visitVariantCase(
+            AstVariantCaseNode variantCaseNode)
+        {
+            return defaultResult();
+        }
+
         public R visitCase(
-            AstCaseNode caseNode)
+            AstUnionCaseNode caseNode)
         {
             return defaultResult();
         }
