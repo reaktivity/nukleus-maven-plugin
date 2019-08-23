@@ -67,6 +67,24 @@ public class String32FWTest
     public String32FW stringRO;
 
     @Test
+    public void shouldInitWithString() throws Exception
+    {
+        String32FW string = new String32FW("test");
+
+        assertEquals("test", string.asString());
+        assertEquals(LENGTH_SIZE + "test".length(), string.sizeof());
+    }
+
+    @Test
+    public void shouldInitWithStringAndCharset() throws Exception
+    {
+        String32FW string = new String32FW("test", UTF_8);
+
+        assertEquals("test", string.asString());
+        assertEquals(LENGTH_SIZE + "test".length(), string.sizeof());
+    }
+
+    @Test
     public void shouldDefaultAfterRewrap() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())

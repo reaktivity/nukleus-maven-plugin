@@ -67,6 +67,24 @@ public class String16FWTest
     public String16FW stringRO;
 
     @Test
+    public void shouldInitWithString() throws Exception
+    {
+        String16FW string = new String16FW("test");
+
+        assertEquals("test", string.asString());
+        assertEquals(LENGTH_SIZE + "test".length(), string.sizeof());
+    }
+
+    @Test
+    public void shouldInitWithStringAndCharset() throws Exception
+    {
+        String16FW string = new String16FW("test", UTF_8);
+
+        assertEquals("test", string.asString());
+        assertEquals(LENGTH_SIZE + "test".length(), string.sizeof());
+    }
+
+    @Test
     public void shouldDefaultAfterRewrap() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
