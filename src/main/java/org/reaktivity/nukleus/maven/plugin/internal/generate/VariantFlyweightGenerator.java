@@ -61,16 +61,62 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private final MemberAccessorGenerator memberAccessor;
     private final LimitMethodGenerator limitMethod;
     private final BuilderClassGenerator builderClass;
-    private static final Map<String, String> NUMBER_BY_WORD;
-    private GetMethodGenerator getMethod;
-    private BitMaskConstantGenerator bitMaskConstant;
+    private final GetMethodGenerator getMethod;
+    private final BitMaskConstantGenerator bitMaskConstant;
+    private static final Map<String, String> NUMBER_WORDS;
+    private static final Map<TypeName, String> TYPE_NAMES;
+    private static final Map<String, Long> BIT_MASK_LONG;
+    private static final Map<String, Integer> BIT_MASK_INT;
+    private static final Map<TypeName, String> CLASS_NAMES;
 
     static
     {
         Map<String, String> numberByWord = new HashMap<>();
         numberByWord.put("0", "zero");
         numberByWord.put("1", "one");
-        NUMBER_BY_WORD = unmodifiableMap(numberByWord);
+        NUMBER_WORDS = unmodifiableMap(numberByWord);
+    }
+
+    static
+    {
+        Map<TypeName, String> sizeofByName = new HashMap<>();
+        sizeofByName.put(TypeName.BYTE, "Byte");
+        sizeofByName.put(TypeName.CHAR, "Char");
+        sizeofByName.put(TypeName.SHORT, "Short");
+        sizeofByName.put(TypeName.INT, "Int");
+        sizeofByName.put(TypeName.FLOAT, "Float");
+        sizeofByName.put(TypeName.LONG, "Long");
+        sizeofByName.put(TypeName.DOUBLE, "Double");
+        TYPE_NAMES = unmodifiableMap(sizeofByName);
+    }
+
+    static
+    {
+        Map<String, Long> longBitMaskValues = new HashMap<>();
+        longBitMaskValues.put("int8", 0xffffffffffffff00L);
+        longBitMaskValues.put("int16", 0xffffffffffff0000L);
+        longBitMaskValues.put("int32", 0xffffffff00000000L);
+        BIT_MASK_LONG = unmodifiableMap(longBitMaskValues);
+    }
+
+    static
+    {
+        Map<String, Integer> intBitMaskValues = new HashMap<>();
+        intBitMaskValues.put("int8", 0xffffff00);
+        intBitMaskValues.put("int16", 0xffff0000);
+        BIT_MASK_INT = unmodifiableMap(intBitMaskValues);
+    }
+
+    static
+    {
+        Map<TypeName, String> classNames = new HashMap<>();
+        classNames.put(TypeName.BYTE, "Byte");
+        classNames.put(TypeName.SHORT, "Short");
+        classNames.put(TypeName.INT, "Integer");
+        classNames.put(TypeName.FLOAT, "Float");
+        classNames.put(TypeName.LONG, "Long");
+        classNames.put(TypeName.DOUBLE, "Double");
+        CLASS_NAMES = unmodifiableMap(classNames);
     }
 
     public VariantFlyweightGenerator(
@@ -78,8 +124,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         ClassName flyweightName,
         String baseName,
         TypeName kindTypeName,
-        TypeName explicitTypeName,
-        TypeName unsignedExplicitTypeName)
+        TypeName ofTypeName,
+        TypeName unsignedOfTypeName)
     {
         super(variantName);
 
@@ -96,13 +142,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         this.kindAccessor = new KindAccessorGenerator(variantName, kindTypeName, builder);
         this.memberAccessor = new MemberAccessorGenerator(variantName, kindTypeName, builder);
         this.limitMethod = new LimitMethodGenerator(kindTypeName);
-        this.builderClass = new BuilderClassGenerator(variantName, flyweightName, kindTypeName);
-        if (explicitTypeName != null)
-        {
-            this.getMethod = new GetMethodGenerator(kindTypeName, explicitTypeName, unsignedExplicitTypeName);
-            this.bitMaskConstant = new BitMaskConstantGenerator(variantName, explicitTypeName, builder);
-            builderClass.setExplicitType(explicitTypeName, unsignedExplicitTypeName);
-        }
+        this.getMethod = new GetMethodGenerator(kindTypeName, ofTypeName, unsignedOfTypeName);
+        this.bitMaskConstant = new BitMaskConstantGenerator(variantName, ofTypeName, builder);
+        this.builderClass = new BuilderClassGenerator(variantName, flyweightName, kindTypeName, ofTypeName, unsignedOfTypeName);
     }
 
     public VariantFlyweightGenerator addMember(
@@ -121,12 +163,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         toStringMethod.addMember(kindValue, memberName, memberTypeName);
         memberAccessor.addMember(memberName, memberTypeName, unsignedMemberTypeName);
         limitMethod.addMember(kindValue, memberName, memberTypeName);
+        getMethod.addMember(memberName, kindValue, memberTypeName);
+        bitMaskConstant.addMember(memberName, memberTypeName, unsignedMemberTypeName);
         builderClass.addMember(memberName, memberTypeName, unsignedMemberTypeName);
-        if (getMethod != null)
-        {
-            getMethod.addMember(memberName, kindValue, memberTypeName);
-            bitMaskConstant.addMember(memberName, memberTypeName, unsignedMemberTypeName);
-        }
         return this;
     }
 
@@ -138,16 +177,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         memberField.build();
         kindAccessor.build();
         memberAccessor.build();
-        if (getMethod != null)
-        {
-            builder.addMethod(getMethod.generate());
-            bitMaskConstant.build();
-        }
-        return builder.addMethod(tryWrapMethod.generate())
-                      .addMethod(wrapMethod.generate())
-                      .addMethod(toStringMethod.generate())
-                      .addMethod(limitMethod.generate())
-                      .addType(builderClass.generate())
+        bitMaskConstant.build();
+        getMethod.mixin(builder);
+        tryWrapMethod.mixin(builder);
+        wrapMethod.mixin(builder);
+        toStringMethod.mixin(builder);
+        limitMethod.mixin(builder);
+        return builder.addType(builderClass.generate())
                       .build();
     }
 
@@ -177,7 +213,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 String fieldRO = String.format("%sRO", name);
                 Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL);
                 fieldBuilder.initializer("new $T()", type);
-
                 builder.addField(fieldBuilder.build());
             }
             return this;
@@ -221,8 +256,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
     private static final class MemberSizeConstantGenerator extends ClassSpecMixinGenerator
     {
-        private static final Map<TypeName, String> SIZEOF_BY_NAME = initSizeofByName();
-
         private MemberSizeConstantGenerator(
             ClassName thisType,
             TypeName kindName,
@@ -247,24 +280,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 builder.addField(
                     FieldSpec.builder(int.class, size(name), PRIVATE, STATIC, FINAL)
                              .initializer("$T.SIZE_OF_$L", BIT_UTIL_TYPE,
-                                 SIZEOF_BY_NAME.get(unsignedMemberTypeName == null ? memberTypeName : unsignedMemberTypeName))
+                                 TYPE_NAMES.get(unsignedMemberTypeName == null ? memberTypeName : unsignedMemberTypeName)
+                                     .toUpperCase())
                              .build());
             }
             return this;
-        }
-
-        private static Map<TypeName, String> initSizeofByName()
-        {
-            Map<TypeName, String> sizeofByName = new HashMap<>();
-            sizeofByName.put(TypeName.BOOLEAN, "BOOLEAN");
-            sizeofByName.put(TypeName.BYTE, "BYTE");
-            sizeofByName.put(TypeName.CHAR, "CHAR");
-            sizeofByName.put(TypeName.SHORT, "SHORT");
-            sizeofByName.put(TypeName.INT, "INT");
-            sizeofByName.put(TypeName.FLOAT, "FLOAT");
-            sizeofByName.put(TypeName.LONG, "LONG");
-            sizeofByName.put(TypeName.DOUBLE, "DOUBLE");
-            return sizeofByName;
         }
     }
 
@@ -462,7 +482,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             else if (memberTypeName == null || memberTypeName.isPrimitive())
             {
                 builder.addStatement("return String.format(\"$L [$L=%d]\", $L())", baseName.toUpperCase(),
-                    NUMBER_BY_WORD.get(memberName) == null ? memberName : NUMBER_BY_WORD.get(memberName), getAs(memberName));
+                    NUMBER_WORDS.get(memberName) == null ? memberName : NUMBER_WORDS.get(memberName), getAs(memberName));
             }
             else
             {
@@ -528,21 +548,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
     private static final class MemberAccessorGenerator extends ClassSpecMixinGenerator
     {
-        private static final Map<TypeName, String> GETTER_NAMES;
         private final TypeName kindTypeName;
-
-        static
-        {
-            Map<TypeName, String> getterNames = new HashMap<>();
-            getterNames.put(TypeName.BYTE, "getByte");
-            getterNames.put(TypeName.CHAR, "getChar");
-            getterNames.put(TypeName.SHORT, "getShort");
-            getterNames.put(TypeName.FLOAT, "getFloat");
-            getterNames.put(TypeName.INT, "getInt");
-            getterNames.put(TypeName.DOUBLE, "getDouble");
-            getterNames.put(TypeName.LONG, "getLong");
-            GETTER_NAMES = unmodifiableMap(getterNames);
-        }
 
         private MemberAccessorGenerator(
             ClassName thisType,
@@ -561,7 +567,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             CodeBlock.Builder codeBlock = CodeBlock.builder();
             if (memberTypeName != null && memberTypeName.isPrimitive())
             {
-                String getterName = GETTER_NAMES.get(unsignedMemberTypeName == null ? memberTypeName : unsignedMemberTypeName);
+                String getterName = String.format("get%s", TYPE_NAMES.get(unsignedMemberTypeName == null ? memberTypeName :
+                    unsignedMemberTypeName));
                 if (getterName == null)
                 {
                     throw new IllegalStateException("member type not supported: " + memberTypeName);
@@ -608,17 +615,20 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private final class GetMethodGenerator extends MethodSpecGenerator
     {
         private final TypeName kindTypeName;
+        private final TypeName ofTypeName;
+        private final TypeName unsignedOfTypeName;
+
         private GetMethodGenerator(
             TypeName kindTypeName,
-            TypeName explicitTypeName,
-            TypeName unsignedExplicitTypeName)
+            TypeName ofTypeName,
+            TypeName unsignedOfTypeName)
         {
             super(methodBuilder("get")
                 .addModifiers(PUBLIC));
             this.kindTypeName = kindTypeName;
-            builder.returns(Objects.requireNonNullElseGet(unsignedExplicitTypeName,
-                () -> explicitTypeName.isPrimitive() ? explicitTypeName : ClassName.bestGuess("String")))
-                   .beginControlFlow("switch (kind())");
+            this.ofTypeName = ofTypeName;
+            this.unsignedOfTypeName = unsignedOfTypeName;
+            builder.beginControlFlow("switch (kind())");
         }
 
         public GetMethodGenerator addMember(
@@ -641,40 +651,33 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                           .addStatement("throw new IllegalStateException(\"Unrecognized kind: \" + kind())")
                           .endControlFlow()
                           .endControlFlow()
+                          .returns(Objects.requireNonNullElseGet(unsignedOfTypeName,
+                              () -> ofTypeName.isPrimitive() ? ofTypeName : ClassName.bestGuess("String")))
                           .build();
+        }
+
+        @Override
+        public void mixin(
+            TypeSpec.Builder builder)
+        {
+            if (ofTypeName != null)
+            {
+                super.mixin(builder);
+            }
         }
     }
 
     private static final class BitMaskConstantGenerator extends ClassSpecMixinGenerator
     {
-        private static final Map<String, Long> BIT_MASK_LONG;
-        private static final Map<String, Integer> BIT_MASK_INT;
-        private final TypeName explicitTypeName;
-
-        static
-        {
-            Map<String, Long> longBitMaskValues = new HashMap<>();
-            longBitMaskValues.put("int8", 0xffffffffffffff00L);
-            longBitMaskValues.put("int16", 0xffffffffffff0000L);
-            longBitMaskValues.put("int32", 0xffffffff00000000L);
-            BIT_MASK_LONG = unmodifiableMap(longBitMaskValues);
-        }
-
-        static
-        {
-            Map<String, Integer> intBitMaskValues = new HashMap<>();
-            intBitMaskValues.put("int8", 0xffffff00);
-            intBitMaskValues.put("int16", 0xffff0000);
-            BIT_MASK_INT = unmodifiableMap(intBitMaskValues);
-        }
+        private final TypeName ofTypeName;
 
         private BitMaskConstantGenerator(
             ClassName thisType,
-            TypeName explicitTypeName,
+            TypeName ofTypeName,
             TypeSpec.Builder builder)
         {
             super(thisType, builder);
-            this.explicitTypeName = explicitTypeName;
+            this.ofTypeName = ofTypeName;
         }
 
         public BitMaskConstantGenerator addMember(
@@ -682,11 +685,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             TypeName memberTypeName,
             TypeName unsignedMemberTypeName)
         {
-            if (unsignedMemberTypeName == null && memberTypeName != null)
+            if (ofTypeName != null && unsignedMemberTypeName == null && memberTypeName != null)
             {
-                FieldSpec.Builder bitMaskField = FieldSpec.builder(explicitTypeName, bitMask(kindTypeName), PRIVATE,
+                FieldSpec.Builder bitMaskField = FieldSpec.builder(ofTypeName, bitMask(kindTypeName), PRIVATE,
                     STATIC, FINAL);
-                if (explicitTypeName.equals(TypeName.INT))
+                if (ofTypeName.equals(TypeName.INT))
                 {
                     if (BIT_MASK_INT.get(kindTypeName) != null)
                     {
@@ -702,7 +705,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         builder.addField(bitMaskField.build());
                     }
                 }
-
             }
             return this;
         }
@@ -776,28 +778,26 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final MemberMutatorGenerator memberMutator;
         private final MemberFieldGenerator memberField;
         private final WrapMethodGenerator wrapMethod;
-        private SetMethodGenerator setMethod;
+        private final SetMethodGenerator setMethod;
 
         private BuilderClassGenerator(
             ClassName structType,
             ClassName flyweightType,
-            TypeName kindTypeName)
+            TypeName kindTypeName,
+            TypeName ofTypeName,
+            TypeName unsignedOfTypeName)
         {
-            this(structType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), structType, kindTypeName);
-        }
-
-        private void setExplicitType(
-            TypeName explicitType,
-            TypeName unsignedExplicitType)
-        {
-            setMethod = new SetMethodGenerator(explicitType, unsignedExplicitType);
+            this(structType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), structType, kindTypeName, ofTypeName,
+                unsignedOfTypeName);
         }
 
         private BuilderClassGenerator(
             ClassName thisType,
             ClassName builderRawType,
             ClassName structType,
-            TypeName kindTypeName)
+            TypeName kindTypeName,
+            TypeName ofTypeName,
+            TypeName unsignedOfTypeName)
         {
             super(thisType);
             this.builder = classBuilder(thisType.simpleName())
@@ -807,6 +807,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.wrapMethod = new WrapMethodGenerator();
             this.memberMutator = new MemberMutatorGenerator(thisType, kindTypeName, builder);
             this.memberField = new MemberFieldGenerator(thisType, kindTypeName, builder);
+            this.setMethod = new SetMethodGenerator(ofTypeName, unsignedOfTypeName);
         }
 
         private void addMember(
@@ -816,10 +817,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         {
             memberMutator.addMember(memberName, memberTypeName, unsignedMemberTypeName);
             memberField.addMember(memberName, memberTypeName);
-            if (setMethod != null)
-            {
-                setMethod.addMember(memberName, memberTypeName, unsignedMemberTypeName);
-            }
+            setMethod.addMember(memberName, memberTypeName, unsignedMemberTypeName);
         }
 
         @Override
@@ -827,12 +825,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         {
             memberMutator.build();
             memberField.build();
-            if (setMethod != null)
-            {
-                builder.addMethod(setMethod.generate());
-            }
+            setMethod.mixin(builder);
+            wrapMethod.mixin(builder);
             return builder.addMethod(constructor())
-                          .addMethod(wrapMethod.generate())
                           .build();
         }
 
@@ -847,22 +842,19 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final class SetMethodGenerator extends MethodSpecGenerator
         {
             private final Set<TypeWidth> kindTypeSet = new TreeSet<>();
-            private final Map<TypeName, String> classNameByTypeName = initClassNameByTypeName();
-            private final TypeName explicitType;
-            private final TypeName unsignedExplicitType;
+            private final TypeName ofType;
+            private final TypeName unsignedOfType;
 
             private SetMethodGenerator(
-                TypeName explicitType,
-                TypeName unsignedExplicitType)
+                TypeName ofType,
+                TypeName unsignedOfType)
             {
                 super(methodBuilder("set")
                     .addModifiers(PUBLIC)
-                    .addParameter(Objects.requireNonNullElseGet(unsignedExplicitType, () -> explicitType.isPrimitive() ?
-                        explicitType : ClassName.bestGuess("String")), "value")
                     .returns(thisName));
 
-                this.explicitType = explicitType;
-                this.unsignedExplicitType = unsignedExplicitType;
+                this.ofType = ofType;
+                this.unsignedOfType = unsignedOfType;
             }
 
             public SetMethodGenerator addMember(
@@ -884,6 +876,16 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     kindTypeSet.add(new TypeWidth(kindType, unsignedKindType, kindTypeName, memberWidth, Integer.MAX_VALUE));
                 }
                 return this;
+            }
+
+            @Override
+            public void mixin(
+                TypeSpec.Builder builder)
+            {
+                if (ofType != null)
+                {
+                    super.mixin(builder);
+                }
             }
 
             @Override
@@ -925,7 +927,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                             else
                             {
                                 builder.beginControlFlow("case 0:")
-                                       .addStatement(String.format("$L(%svalue)", explicitType.isPrimitive() ?
+                                       .addStatement(String.format("$L(%svalue)", ofType.isPrimitive() ?
                                            type.unsignedKindType() == null ? "(byte) " : "(int) " : ""),
                                            setAs(type.kindTypeName()))
                                        .addStatement("break")
@@ -935,7 +937,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         break;
                     case 16:
                         builder.beginControlFlow("case 1:")
-                               .addStatement(String.format("$L(%svalue)", explicitType.isPrimitive() ?
+                               .addStatement(String.format("$L(%svalue)", ofType.isPrimitive() ?
                                    type.unsignedKindType() == null ? "(short) " : "(int) " : ""), setAs(type.kindTypeName()))
                                .addStatement("break")
                                .endControlFlow();
@@ -944,7 +946,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         builder.beginControlFlow("case 2:")
                                .endControlFlow()
                                .beginControlFlow("case 3:")
-                               .addStatement(String.format("$L(%svalue)", explicitType.isPrimitive() ?
+                               .addStatement(String.format("$L(%svalue)", ofType.isPrimitive() ?
                                    type.unsignedKindType() == null ? "(int) " : "" : ""), setAs(type.kindTypeName()))
                                .addStatement("break")
                                .endControlFlow();
@@ -964,9 +966,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     }
                 }
 
-                if (explicitType.isPrimitive())
+                if (ofType.isPrimitive())
                 {
-                    if (unsignedExplicitType == null)
+                    if (unsignedOfType == null)
                     {
                         addSignedNegativeIntBlock();
                     }
@@ -980,13 +982,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                        .addStatement("throw new IllegalArgumentException(\"Illegal value: \" + value)")
                        .endControlFlow()
                        .endControlFlow();
-                return builder.addStatement("return this")
+                return builder.addParameter(Objects.requireNonNullElseGet(unsignedOfType, () -> ofType.isPrimitive() ?
+                    ofType : ClassName.bestGuess("String")), "value")
+                              .addStatement("return this")
                               .build();
             }
 
             private void addVariableDefinitions()
             {
-                if (!explicitType.isPrimitive())
+                if (!ofType.isPrimitive())
                 {
                     builder.addStatement("byte[] charBytes = value.getBytes($T.UTF_8)", StandardCharsets.class)
                            .addStatement("int byteLength = charBytes.length")
@@ -995,15 +999,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    if (unsignedExplicitType == null)
+                    if (unsignedOfType == null)
                     {
                         builder.addStatement("int highestByteIndex = ($L.numberOfTrailingZeros($L.highestOneBit(value)) " +
-                            "+ 1)  >> 3", classNameByTypeName.get(explicitType), classNameByTypeName.get(explicitType));
+                            "+ 1)  >> 3", CLASS_NAMES.get(ofType), CLASS_NAMES.get(ofType));
                     }
                     else
                     {
                         builder.addStatement("int highestByteIndex = $L.numberOfTrailingZeros($L.highestOneBit(value)) >> 3",
-                            classNameByTypeName.get(unsignedExplicitType), classNameByTypeName.get(unsignedExplicitType));
+                            CLASS_NAMES.get(unsignedOfType), CLASS_NAMES.get(unsignedOfType));
                     }
                 }
             }
@@ -1013,7 +1017,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 TypeWidth typeZero = kindTypeSet.iterator().next();
                 if (typeZero.width() == 0)
                 {
-                    builder.beginControlFlow(String.format("case %s:", explicitType.equals(TypeName.LONG) ? "8" : "4"))
+                    builder.beginControlFlow(String.format("case %s:", ofType.equals(TypeName.LONG) ? "8" : "4"))
                            .addStatement("$L()", setAs(typeZero.kindTypeName()))
                            .addStatement("break")
                            .endControlFlow();
@@ -1022,7 +1026,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
             private void addSignedNegativeIntBlock()
             {
-                builder.beginControlFlow(String.format("case %s:", explicitType.equals(TypeName.LONG) ? "8" : "4"));
+                builder.beginControlFlow(String.format("case %s:", ofType.equals(TypeName.LONG) ? "8" : "4"));
                 Iterator<TypeWidth> iterator = kindTypeSet.iterator();
                 int i = 0;
                 while (iterator.hasNext())
@@ -1059,19 +1063,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 builder.addStatement("break");
                 builder.endControlFlow();
-            }
-
-            private Map<TypeName, String> initClassNameByTypeName()
-            {
-                Map<TypeName, String> sizeofByName = new HashMap<>();
-                sizeofByName.put(TypeName.BOOLEAN, "BOOLEAN");
-                sizeofByName.put(TypeName.BYTE, "Byte");
-                sizeofByName.put(TypeName.SHORT, "Short");
-                sizeofByName.put(TypeName.INT, "Integer");
-                sizeofByName.put(TypeName.FLOAT, "FLOAT");
-                sizeofByName.put(TypeName.LONG, "Long");
-                sizeofByName.put(TypeName.DOUBLE, "DOUBLE");
-                return sizeofByName;
             }
 
             private class TypeWidth implements Comparable<TypeWidth>
@@ -1133,21 +1124,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
         private static final class MemberMutatorGenerator extends ClassSpecMixinGenerator
         {
-            private static final Map<TypeName, String> PUTTER_NAMES;
             private final TypeName kindTypeName;
-
-            static
-            {
-                Map<TypeName, String> putterNames = new HashMap<>();
-                putterNames.put(TypeName.BYTE, "putByte");
-                putterNames.put(TypeName.CHAR, "putChar");
-                putterNames.put(TypeName.SHORT, "putShort");
-                putterNames.put(TypeName.FLOAT, "putFloat");
-                putterNames.put(TypeName.INT, "putInt");
-                putterNames.put(TypeName.DOUBLE, "putDouble");
-                putterNames.put(TypeName.LONG, "putLong");
-                PUTTER_NAMES = unmodifiableMap(putterNames);
-            }
 
             private MemberMutatorGenerator(
                 ClassName thisType,
@@ -1226,7 +1203,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 code.addStatement("checkLimit(newLimit, maxLimit())");
                 TypeName type = unsignedMemberTypeName == null ? memberTypeName : unsignedMemberTypeName;
-                String putterName = PUTTER_NAMES.get(type);
+                String putterName = String.format("put%s", TYPE_NAMES.get(type));
                 if (putterName == null)
                 {
                     throw new IllegalStateException("member type not supported: " + type);
@@ -1375,14 +1352,14 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private static String value(
         String fieldName)
     {
-        String filteredName = NUMBER_BY_WORD.get(fieldName) == null ? fieldName : NUMBER_BY_WORD.get(fieldName);
+        String filteredName = NUMBER_WORDS.get(fieldName) == null ? fieldName : NUMBER_WORDS.get(fieldName);
         return String.format("FIELD_VALUE_%s", constant(filteredName));
     }
 
     private static String kind(
         String fieldName)
     {
-        String filteredName = NUMBER_BY_WORD.get(fieldName) == null ? fieldName : NUMBER_BY_WORD.get(fieldName);
+        String filteredName = NUMBER_WORDS.get(fieldName) == null ? fieldName : NUMBER_WORDS.get(fieldName);
         return String.format("KIND_%s", constant(filteredName));
     }
 
@@ -1395,21 +1372,21 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private static String size(
         String fieldName)
     {
-        String filteredName = NUMBER_BY_WORD.get(fieldName) == null ? fieldName : NUMBER_BY_WORD.get(fieldName);
+        String filteredName = NUMBER_WORDS.get(fieldName) == null ? fieldName : NUMBER_WORDS.get(fieldName);
         return String.format("FIELD_SIZE_%s", constant(filteredName));
     }
 
     private static String getAs(
         String fieldName)
     {
-        String filteredName = NUMBER_BY_WORD.get(fieldName) == null ? fieldName : NUMBER_BY_WORD.get(fieldName);
+        String filteredName = NUMBER_WORDS.get(fieldName) == null ? fieldName : NUMBER_WORDS.get(fieldName);
         return String.format("getAs%s%s", Character.toUpperCase(filteredName.charAt(0)), filteredName.substring(1));
     }
 
     private static String setAs(
         String fieldName)
     {
-        String filteredName = NUMBER_BY_WORD.get(fieldName) == null ? fieldName : NUMBER_BY_WORD.get(fieldName);
+        String filteredName = NUMBER_WORDS.get(fieldName) == null ? fieldName : NUMBER_WORDS.get(fieldName);
         return String.format("setAs%s%s", Character.toUpperCase(filteredName.charAt(0)), filteredName.substring(1));
     }
 

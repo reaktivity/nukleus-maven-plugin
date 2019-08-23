@@ -167,7 +167,6 @@ enum_explicit_type
    | string_type
    | string16_type
    | string32_type
-//   | variant_name
    ;
 
 enum_values
@@ -265,7 +264,7 @@ case_member
    ;
 
 variant_type
-   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF variant_explicit_type)? LEFT_BRACE variant_case_list
+   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF variant_of_type)? LEFT_BRACE variant_case_list
    RIGHT_BRACE
    ;
 
@@ -274,14 +273,11 @@ kind
    | scoped_name
    ;
 
-variant_explicit_type
+variant_of_type
    : integer_type
    | string_type
    | string16_type
    | string32_type
-   // TODO: | list_type
-   // TODO: | map_type
-   // TODO: | array_type
    ;
 
 variant_case_list
@@ -297,7 +293,7 @@ variant_member
    | string_type
    | string16_type
    | string32_type
-   | uint_literal
+   | variant_int_literal
    ;
 
 list_type 
@@ -331,6 +327,10 @@ string_literal
    : STRING_LITERAL
    ;
 
+variant_int_literal
+   : UNSIGNED_INTEGER_LITERAL
+   ;
+
 
 UNSIGNED_INTEGER_LITERAL
    : ('0' | '1' .. '9' '0' .. '9'*) INTEGER_TYPE_SUFFIX?
@@ -339,7 +339,6 @@ UNSIGNED_INTEGER_LITERAL
 HEX_LITERAL
    : '0' ('x' | 'X') HEX_DIGIT+ INTEGER_TYPE_SUFFIX?
    ;
-
 
 STRING_LITERAL
    : QUOTE (~["\r\n])* QUOTE

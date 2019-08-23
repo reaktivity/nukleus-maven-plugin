@@ -25,8 +25,7 @@ import static java.util.Objects.requireNonNull;
 public final class AstVariantNode extends AstNode
 {
     private final String name;
-    private final AstType explicitType;
-    private final AstType unsignedExplicitType;
+    private final AstType ofType;
     private final AstType kindType;
     private final List<AstVariantCaseNode> cases;
 
@@ -42,14 +41,9 @@ public final class AstVariantNode extends AstNode
         return name;
     }
 
-    public AstType explicitType()
+    public AstType of()
     {
-        return explicitType;
-    }
-
-    public AstType unsignedExplicitType()
-    {
-        return unsignedExplicitType;
+        return ofType;
     }
 
     public AstType kindType()
@@ -65,7 +59,7 @@ public final class AstVariantNode extends AstNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, explicitType, unsignedExplicitType, kindType, cases);
+        return Objects.hash(name, ofType, kindType, cases);
     }
 
     @Override
@@ -85,21 +79,18 @@ public final class AstVariantNode extends AstNode
         AstVariantNode that = (AstVariantNode)o;
         return Objects.equals(this.name, that.name) &&
             Objects.equals(this.cases, that.cases) &&
-            Objects.equals(this.explicitType, that.explicitType) &&
-            Objects.equals(this.unsignedExplicitType, that.unsignedExplicitType) &&
+            Objects.equals(this.ofType, that.ofType) &&
             Objects.equals(this.kindType, that.kindType);
     }
 
     private AstVariantNode(
         String name,
-        AstType explicitType,
-        AstType unsignedExplicitType,
+        AstType ofType,
         AstType kindType,
         List<AstVariantCaseNode> cases)
     {
         this.name = requireNonNull(name);
-        this.explicitType = explicitType;
-        this.unsignedExplicitType = unsignedExplicitType;
+        this.ofType = ofType;
         this.kindType = kindType;
         this.cases = unmodifiableList(cases);
     }
@@ -107,9 +98,7 @@ public final class AstVariantNode extends AstNode
     public static final class Builder extends AstNode.Builder<AstVariantNode>
     {
         private String name;
-        private AstType explicitType;
-        private AstType unsignedExplicitType;
-        private boolean hasExplicitType;
+        private AstType ofType;
         private List<AstVariantCaseNode> cases;
         private AstType kindType;
 
@@ -125,17 +114,10 @@ public final class AstVariantNode extends AstNode
             return this;
         }
 
-        public Builder explicitType(
-            AstType explicitType)
+        public Builder of(
+            AstType ofType)
         {
-            this.explicitType = explicitType;
-            return this;
-        }
-
-        public Builder unsignedExplicitType(
-            AstType unsignedExplicitType)
-        {
-            this.unsignedExplicitType = unsignedExplicitType;
+            this.ofType = ofType;
             return this;
         }
 
@@ -144,23 +126,6 @@ public final class AstVariantNode extends AstNode
         {
             this.kindType = kindType;
             return this;
-        }
-
-        public AstType kindType()
-        {
-            return kindType;
-        }
-
-        public Builder hasExplicitType(
-            boolean hasExplicitType)
-        {
-            this.hasExplicitType = hasExplicitType;
-            return this;
-        }
-
-        public boolean hasExplicitType()
-        {
-            return hasExplicitType;
         }
 
         public Builder caseN(
@@ -173,7 +138,7 @@ public final class AstVariantNode extends AstNode
         @Override
         public AstVariantNode build()
         {
-            return new AstVariantNode(name, explicitType, unsignedExplicitType, kindType, cases);
+            return new AstVariantNode(name, ofType, kindType, cases);
         }
     }
 }

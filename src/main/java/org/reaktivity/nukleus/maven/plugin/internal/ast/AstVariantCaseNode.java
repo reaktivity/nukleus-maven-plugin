@@ -22,7 +22,6 @@ public final class AstVariantCaseNode extends AstNode
     private final Object kind;
     private final String typeName;
     private final AstType type;
-    private final AstType unsignedType;
 
     @Override
     public <R> R accept(
@@ -46,15 +45,10 @@ public final class AstVariantCaseNode extends AstNode
         return type;
     }
 
-    public AstType unsignedType()
-    {
-        return unsignedType;
-    }
-
     @Override
     public int hashCode()
     {
-        return Objects.hash(kind, typeName, type, unsignedType);
+        return Objects.hash(kind, typeName, type);
     }
 
     @Override
@@ -74,26 +68,23 @@ public final class AstVariantCaseNode extends AstNode
         AstVariantCaseNode that = (AstVariantCaseNode)o;
         return Objects.equals(this.kind, that.kind) &&
             Objects.equals(this.typeName, that.typeName) &&
-            Objects.equals(this.type, that.type) &&
-            Objects.equals(this.unsignedType, that.unsignedType);
+            Objects.equals(this.type, that.type);
     }
 
     private AstVariantCaseNode(
         Object kind,
         String typeName,
-        AstType type,
-        AstType unsignedType)
+        AstType type)
     {
         this.kind = kind;
         this.typeName = typeName;
         this.type = type;
-        this.unsignedType = unsignedType;
     }
 
     @Override
     public String toString()
     {
-        return String.format("CASE [kind=%s, typeName=%s, type=%s, unsignedType=%s]", kind, typeName, type, unsignedType);
+        return String.format("CASE [kind=%s, typeName=%s, type=%s]", kind, typeName, type);
     }
 
     public static final class Builder extends AstNode.Builder<AstVariantCaseNode>
@@ -101,7 +92,6 @@ public final class AstVariantCaseNode extends AstNode
         private Object kind;
         private String typeName;
         private AstType type;
-        private AstType unsignedType;
 
         public Builder kind(
             Object kind)
@@ -124,17 +114,10 @@ public final class AstVariantCaseNode extends AstNode
             return this;
         }
 
-        public Builder unsignedType(
-            AstType unsignedType)
-        {
-            this.unsignedType = unsignedType;
-            return this;
-        }
-
         @Override
         public AstVariantCaseNode build()
         {
-            return new AstVariantCaseNode(kind, typeName, type, unsignedType);
+            return new AstVariantCaseNode(kind, typeName, type);
         }
     }
 }

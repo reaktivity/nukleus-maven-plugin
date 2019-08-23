@@ -28,15 +28,29 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGenerator;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static java.util.Collections.singleton;
+import static java.util.Collections.unmodifiableMap;
 
 public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
     private final VariantFlyweightGenerator generator;
     private final TypeResolver resolver;
     private final Set<TypeSpecGenerator<?>> defaultResult;
+    private static final Map<AstType, AstType> UINT_MAPPINGS;
+
+    static
+    {
+        Map<AstType, AstType> uintMappings = new HashMap<>();
+        uintMappings.put(AstType.UINT8, AstType.INT16);
+        uintMappings.put(AstType.UINT16, AstType.INT32);
+        uintMappings.put(AstType.UINT32, AstType.INT64);
+        uintMappings.put(AstType.UINT64, AstType.INT64);
+        UINT_MAPPINGS = unmodifiableMap(uintMappings);
+    }
 
     public VariantVisitor(
         VariantFlyweightGenerator generator,
@@ -81,9 +95,8 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
     {
         Object value = variantCaseNode.kind();
         AstType memberType = variantCaseNode.type();
-        AstType memberUnsignedType = variantCaseNode.unsignedType();
         TypeName typeName = resolver.resolveType(memberType);
-        TypeName unsignedTypeName = resolver.resolveType(memberUnsignedType);
+        TypeName unsignedTypeName = resolver.resolveType(UINT_MAPPINGS.get(memberType));
         generator.addMember(value, variantCaseNode.typeName(), typeName, unsignedTypeName);
         return defaultResult();
     }

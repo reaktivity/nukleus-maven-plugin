@@ -93,11 +93,11 @@ public final class AstScopeNode extends AstNode
     }
 
     @Override
-    public int hashCode() // TODO: make sure if it's right
+    public int hashCode()
     {
-        return (variants.hashCode() << 13) ^ (name.hashCode() << 11) ^
-                (scopes.hashCode() << 7) ^ (enums.hashCode() << 5) ^
-                (structs.hashCode() << 3) ^ unions.hashCode();
+        return (name.hashCode() << 13) ^ (scopes.hashCode() << 11) ^
+                (enums.hashCode() << 7) ^ (structs.hashCode() << 5) ^
+                (unions.hashCode() << 3) ^ variants.hashCode();
     }
 
     @Override
