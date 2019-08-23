@@ -453,7 +453,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint64_type(
         Uint64_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT64).unsignedType(AstType.INT64);
+        memberBuilder.type(AstType.UINT64);
         return super.visitUint64_type(ctx);
     }
 
@@ -461,7 +461,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint32_type(
         Uint32_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT32).unsignedType(AstType.INT64);
+        memberBuilder.type(AstType.UINT32);
         return super.visitUint32_type(ctx);
     }
 
@@ -469,7 +469,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint16_type(
         Uint16_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT16).unsignedType(AstType.INT32);
+        memberBuilder.type(AstType.UINT16);
         return super.visitUint16_type(ctx);
     }
 
@@ -477,7 +477,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitUint8_type(
         Uint8_typeContext ctx)
     {
-        memberBuilder.type(AstType.UINT8).unsignedType(AstType.INT32);
+        memberBuilder.type(AstType.UINT8);
         return super.visitUint8_type(ctx);
     }
 

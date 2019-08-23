@@ -37,10 +37,10 @@ import static java.util.Collections.unmodifiableMap;
 
 public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
+    private static final Map<AstType, AstType> UINT_MAPPINGS;
     private final VariantFlyweightGenerator generator;
     private final TypeResolver resolver;
     private final Set<TypeSpecGenerator<?>> defaultResult;
-    private static final Map<AstType, AstType> UINT_MAPPINGS;
 
     static
     {

@@ -141,7 +141,6 @@ public class AstParserTest
                                                              .member(new AstMemberNode.Builder()
                                                                                       .name("width")
                                                                                       .type(AstType.UINT8)
-                                                                                      .unsignedType(INT32)
                                                                                       .build())
                                                              .build())
                                        .build())
@@ -165,7 +164,6 @@ public class AstParserTest
                                                                                     .member(new AstMemberNode.Builder()
                                                                                                              .name("width")
                                                                                                              .type(AstType.UINT8)
-                                                                                                             .unsignedType(INT32)
                                                                                                              .build())
                                                                                     .build())
                                                                 .build())
@@ -423,7 +421,6 @@ public class AstParserTest
                                       .member(new AstMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
-                                                               .unsignedType(INT32)
                                                                .build())
                                       .build())
                 .caseN(new AstUnionCaseNode.Builder()
@@ -431,7 +428,6 @@ public class AstParserTest
                                        .member(new AstMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
-                                                                .unsignedType(INT32)
                                                                 .build())
                                        .build())
                 .build();
@@ -454,7 +450,6 @@ public class AstParserTest
                                       .member(new AstMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
-                                                               .unsignedType(INT32)
                                                                .build())
                                       .build())
                 .caseN(new AstUnionCaseNode.Builder()
@@ -462,7 +457,6 @@ public class AstParserTest
                                        .member(new AstMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
-                                                                .unsignedType(INT32)
                                                                 .build())
                                        .build())
                 .build();
@@ -558,8 +552,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(INT32)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
@@ -575,8 +568,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT32).unsignedType(AstType.INT64)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT32).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
@@ -592,8 +584,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
@@ -627,8 +618,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
                         .name("field").defaultToNull().build())
                 .build();
@@ -709,7 +699,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT8)
-                .unsignedType(INT32)
                 .name("field")
                 .build();
 
@@ -725,7 +714,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT8)
-                .unsignedType(INT32)
                 .name("field")
                 .defaultValue(12)
                 .build();
@@ -749,7 +737,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT16)
-                .unsignedType(INT32)
                 .name("field")
                 .build();
 
@@ -765,7 +752,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT16)
-                .unsignedType(INT32)
                 .name("field")
                 .size(10)
                 .build();
@@ -782,10 +768,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(INT32)
-                        .name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .sizeName("size").name("field").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).sizeName("size").name("field").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -818,10 +802,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .name("size").build())
-                .member(new AstMemberNode.Builder().type(INT32).sizeName("size")
-                        .name("field").defaultToNull().build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
+                .member(new AstMemberNode.Builder().type(INT32).sizeName("size").name("field").defaultToNull().build())
                 .build();
 
         assertEquals(expected, actual);
