@@ -47,6 +47,11 @@ import java.util.TreeSet;
 
 public final class VariantFlyweightGenerator extends ClassSpecGenerator
 {
+    private static final Map<String, String> NUMBER_WORDS;
+    private static final Map<TypeName, String> TYPE_NAMES;
+    private static final Map<String, Long> BIT_MASK_LONG;
+    private static final Map<String, Integer> BIT_MASK_INT;
+    private static final Map<TypeName, String> CLASS_NAMES;
     private final String baseName;
     private final TypeSpec.Builder builder;
     private final MemberFieldGenerator memberField;
@@ -63,11 +68,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private final BuilderClassGenerator builderClass;
     private final GetMethodGenerator getMethod;
     private final BitMaskConstantGenerator bitMaskConstant;
-    private static final Map<String, String> NUMBER_WORDS;
-    private static final Map<TypeName, String> TYPE_NAMES;
-    private static final Map<String, Long> BIT_MASK_LONG;
-    private static final Map<String, Integer> BIT_MASK_INT;
-    private static final Map<TypeName, String> CLASS_NAMES;
 
     static
     {
@@ -75,40 +75,28 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         numberByWord.put("0", "zero");
         numberByWord.put("1", "one");
         NUMBER_WORDS = unmodifiableMap(numberByWord);
-    }
 
-    static
-    {
-        Map<TypeName, String> sizeofByName = new HashMap<>();
-        sizeofByName.put(TypeName.BYTE, "Byte");
-        sizeofByName.put(TypeName.CHAR, "Char");
-        sizeofByName.put(TypeName.SHORT, "Short");
-        sizeofByName.put(TypeName.INT, "Int");
-        sizeofByName.put(TypeName.FLOAT, "Float");
-        sizeofByName.put(TypeName.LONG, "Long");
-        sizeofByName.put(TypeName.DOUBLE, "Double");
-        TYPE_NAMES = unmodifiableMap(sizeofByName);
-    }
+        Map<TypeName, String> typeNames = new HashMap<>();
+        typeNames.put(TypeName.BYTE, "Byte");
+        typeNames.put(TypeName.CHAR, "Char");
+        typeNames.put(TypeName.SHORT, "Short");
+        typeNames.put(TypeName.INT, "Int");
+        typeNames.put(TypeName.FLOAT, "Float");
+        typeNames.put(TypeName.LONG, "Long");
+        typeNames.put(TypeName.DOUBLE, "Double");
+        TYPE_NAMES = unmodifiableMap(typeNames);
 
-    static
-    {
         Map<String, Long> longBitMaskValues = new HashMap<>();
         longBitMaskValues.put("int8", 0xffffffffffffff00L);
         longBitMaskValues.put("int16", 0xffffffffffff0000L);
         longBitMaskValues.put("int32", 0xffffffff00000000L);
         BIT_MASK_LONG = unmodifiableMap(longBitMaskValues);
-    }
 
-    static
-    {
         Map<String, Integer> intBitMaskValues = new HashMap<>();
         intBitMaskValues.put("int8", 0xffffff00);
         intBitMaskValues.put("int16", 0xffff0000);
         BIT_MASK_INT = unmodifiableMap(intBitMaskValues);
-    }
 
-    static
-    {
         Map<TypeName, String> classNames = new HashMap<>();
         classNames.put(TypeName.BYTE, "Byte");
         classNames.put(TypeName.SHORT, "Short");

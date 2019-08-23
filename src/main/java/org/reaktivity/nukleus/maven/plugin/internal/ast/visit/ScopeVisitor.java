@@ -44,12 +44,12 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGen
 
 public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
+    private static final Map<AstType, AstType> UINT_MAPPINGS;
     private final String scopeName;
     private final String packageName;
     private final TypeResolver resolver;
     private final List<String> targetScopes;
     private final Collection<TypeSpecGenerator<?>> defaultResult;
-    private static final Map<AstType, AstType> UINT_MAPPINGS;
 
     static
     {
