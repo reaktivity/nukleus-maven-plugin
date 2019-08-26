@@ -169,7 +169,7 @@ public class VariantUint8KindWithUint64TypeFWTest
     public void shouldSetUint8()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsUint8((short) 250)
+            .setAsUint8(250)
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);

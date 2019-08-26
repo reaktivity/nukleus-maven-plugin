@@ -142,7 +142,7 @@ public class VariantUnsignedIntWithoutExplicitTypeFWTest
     public void shouldSetUInt8()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsUint8((short) 200)
+            .setAsUint8(200)
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);

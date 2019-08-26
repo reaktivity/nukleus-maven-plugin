@@ -43,12 +43,12 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         return enumWithInt8RO.get();
     }
 
-    public byte getAsInt8()
+    public int getAsInt8()
     {
         return buffer().getByte(enumWithInt8RO.limit());
     }
 
-    public short getAsInt16()
+    public int getAsInt16()
     {
         return buffer().getShort(enumWithInt8RO.limit());
     }
@@ -177,23 +177,23 @@ public class VariantEnumKindWithInt32FW extends Flyweight
         }
 
         public Builder setAsInt8(
-            byte value)
+            int value)
         {
             kind(KIND_INT8);
             int newLimit = limit() + FIELD_SIZE_INT8;
             checkLimit(newLimit, maxLimit());
-            buffer().putByte(limit(), value);
+            buffer().putByte(limit(), (byte) value);
             limit(newLimit);
             return this;
         }
 
         public Builder setAsInt16(
-            short value)
+            int value)
         {
             kind(KIND_INT16);
             int newLimit = limit() + FIELD_SIZE_INT16;
             checkLimit(newLimit, maxLimit());
-            buffer().putShort(limit(), value);
+            buffer().putShort(limit(), (short) value);
             limit(newLimit);
             return this;
         }
@@ -216,10 +216,10 @@ public class VariantEnumKindWithInt32FW extends Flyweight
             switch (highestByteIndex)
             {
             case 0:
-                setAsInt8((byte) value);
+                setAsInt8((int) value);
                 break;
             case 1:
-                setAsInt16((short) value);
+                setAsInt16((int) value);
                 break;
             case 2:
             case 3:
@@ -228,11 +228,11 @@ public class VariantEnumKindWithInt32FW extends Flyweight
             case 4:
                 if ((value & BIT_MASK_INT8) == value)
                 {
-                    setAsInt8((byte) value);
+                    setAsInt8((int) value);
                 }
                 else if ((value & BIT_MASK_INT16) == value)
                 {
-                    setAsInt16((short) value);
+                    setAsInt16((int) value);
                 }
                 else
                 {

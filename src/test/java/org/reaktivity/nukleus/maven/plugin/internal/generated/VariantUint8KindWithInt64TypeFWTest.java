@@ -156,7 +156,7 @@ public class VariantUint8KindWithInt64TypeFWTest
     public void shouldSetAsInt16()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsInt16((short) 30000)
+            .setAsInt16(30000)
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
@@ -169,7 +169,7 @@ public class VariantUint8KindWithInt64TypeFWTest
     public void shouldSetAsInt8()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsInt8((byte) 100)
+            .setAsInt8(100)
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);

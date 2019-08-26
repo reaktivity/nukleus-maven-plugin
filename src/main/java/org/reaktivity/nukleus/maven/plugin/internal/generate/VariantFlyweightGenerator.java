@@ -268,7 +268,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 builder.addField(
                     FieldSpec.builder(int.class, size(name), PRIVATE, STATIC, FINAL)
                              .initializer("$T.SIZE_OF_$L", BIT_UTIL_TYPE,
-                                 TYPE_NAMES.get(unsignedMemberTypeName == null ? memberTypeName : unsignedMemberTypeName)
+                                 TYPE_NAMES.get(unsignedMemberTypeName == null ? memberTypeName :
+                                     memberTypeName.equals(TypeName.BYTE) ? TypeName.SHORT : unsignedMemberTypeName)
                                      .toUpperCase())
                              .build());
             }
@@ -556,7 +557,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             if (memberTypeName != null && memberTypeName.isPrimitive())
             {
                 String getterName = String.format("get%s", TYPE_NAMES.get(unsignedMemberTypeName == null ? memberTypeName :
-                    unsignedMemberTypeName));
+                    memberTypeName.equals(TypeName.BYTE) ? TypeName.SHORT : unsignedMemberTypeName));
                 if (getterName == null)
                 {
                     throw new IllegalStateException("member type not supported: " + memberTypeName);
@@ -585,10 +586,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
             }
 
-            TypeName returnType = TypeName.BYTE;
+            TypeName returnType = TypeName.INT;
             if (memberTypeName != null)
             {
-                returnType = Objects.requireNonNullElse(unsignedMemberTypeName, memberTypeName);
+                if (!memberTypeName.equals(TypeName.BYTE) && !memberTypeName.equals(TypeName.SHORT))
+                {
+                    returnType = Objects.requireNonNullElse(unsignedMemberTypeName, memberTypeName);
+                }
             }
 
             builder.addMethod(methodBuilder(getAs(name))
@@ -915,8 +919,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                             else
                             {
                                 builder.beginControlFlow("case 0:")
-                                       .addStatement(String.format("$L(%svalue)", ofType.isPrimitive() ?
-                                           type.unsignedKindType() == null ? "(byte) " : "(int) " : ""),
+                                       .addStatement(String.format("$L(%svalue)", ofType.isPrimitive() ? "(int) " : ""),
                                            setAs(type.kindTypeName()))
                                        .addStatement("break")
                                        .endControlFlow();
@@ -925,8 +928,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         break;
                     case 16:
                         builder.beginControlFlow("case 1:")
-                               .addStatement(String.format("$L(%svalue)", ofType.isPrimitive() ?
-                                   type.unsignedKindType() == null ? "(short) " : "(int) " : ""), setAs(type.kindTypeName()))
+                               .addStatement(String.format("$L(%svalue)", ofType.isPrimitive() ? "(int) " : ""),
+                                   setAs(type.kindTypeName()))
                                .addStatement("break")
                                .endControlFlow();
                         break;
@@ -1020,31 +1023,31 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 while (iterator.hasNext())
                 {
                     TypeWidth currentType = iterator.next();
+                    TypeName castType = !currentType.kindType().equals(TypeName.LONG) ? TypeName.INT : TypeName.LONG;
                     if (i == 0)
                     {
                         if (currentType.width() == 0)
                         {
                             builder.beginControlFlow("if (value == 0)")
-                                .addStatement("$L()", setAs(currentType.kindTypeName));
+                                   .addStatement("$L()", setAs(currentType.kindTypeName));
                         }
                         else
                         {
-                            builder.beginControlFlow("if ((value & $L) == value)",
-                                bitMask(currentType.kindTypeName()))
-                                .addStatement("$L(($L) value)", setAs(currentType.kindTypeName()), currentType.kindType());
+                            builder.beginControlFlow("if ((value & $L) == value)", bitMask(currentType.kindTypeName()))
+                                   .addStatement("$L(($L) value)", setAs(currentType.kindTypeName()), castType);
                         }
 
                     }
                     else if (!iterator.hasNext())
                     {
                         builder.beginControlFlow("else")
-                            .addStatement("$L(($L) value)", setAs(currentType.kindTypeName()), currentType.kindType());
+                               .addStatement("$L(($L) value)", setAs(currentType.kindTypeName()), castType);
                     }
                     else
                     {
                         builder.beginControlFlow("else if ((value & $L) == value)",
                             bitMask(currentType.kindTypeName()))
-                            .addStatement("$L(($L) value)", setAs(currentType.kindTypeName()), currentType.kindType());
+                               .addStatement("$L(($L) value)", setAs(currentType.kindTypeName()), castType);
                     }
                     builder.endControlFlow();
                     i++;
@@ -1150,12 +1153,22 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     CodeBlock.Builder code = memberTypeName.isPrimitive() ?
                         addPrimitiveMember(memberName, memberTypeName, unsignedMemberTypeName) :
                         addNonPrimitiveMember(memberName, memberTypeName);
+                    TypeName parameterType = TypeName.INT;
+                    if (memberTypeName.isPrimitive())
+                    {
+                        if (!memberTypeName.equals(TypeName.BYTE) && !memberTypeName.equals(TypeName.SHORT))
+                        {
+                            parameterType = Objects.requireNonNullElse(unsignedMemberTypeName, memberTypeName);
+                        }
+                    }
+                    else
+                    {
+                        parameterType = ClassName.bestGuess("String");
+                    }
 
                     builder.addMethod(methodBuilder(setAs(memberName))
                            .addModifiers(PUBLIC)
-                           .addParameter(memberTypeName.isPrimitive() ?
-                               unsignedMemberTypeName == null ? memberTypeName : unsignedMemberTypeName :
-                                   ClassName.bestGuess("String"), "value")
+                           .addParameter(parameterType, "value")
                            .returns(thisType)
                            .addCode(code.build())
                            .addStatement("return this")
@@ -1190,14 +1203,38 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     code.addStatement("int newLimit = limit() + $L", size(memberName));
                 }
                 code.addStatement("checkLimit(newLimit, maxLimit())");
-                TypeName type = unsignedMemberTypeName == null ? memberTypeName : unsignedMemberTypeName;
+                TypeName type = unsignedMemberTypeName == null ? memberTypeName :
+                    memberTypeName.equals(TypeName.BYTE) ? TypeName.SHORT : unsignedMemberTypeName;
                 String putterName = String.format("put%s", TYPE_NAMES.get(type));
                 if (putterName == null)
                 {
                     throw new IllegalStateException("member type not supported: " + type);
                 }
-                String putStatement = String.format(kindTypeName.isPrimitive() ? "buffer().%s(offset() + $L, value)" :
-                    "buffer().%s(limit(), value)", putterName);
+
+                String primitiveTypeMemberPutStatement = "buffer().%s(offset() + $L, value)";
+                String nonPrimitiveTypeMemberPutStatement = "buffer().%s(limit(), value)";
+                if (unsignedMemberTypeName == null)
+                {
+                    if(memberTypeName.equals(TypeName.BYTE))
+                    {
+                        primitiveTypeMemberPutStatement = "buffer().%s(offset() + $L, (byte) value)";
+                        nonPrimitiveTypeMemberPutStatement = "buffer().%s(limit(), (byte) value)";
+                    }
+                    else if (memberTypeName.equals(TypeName.SHORT))
+                    {
+                        primitiveTypeMemberPutStatement = "buffer().%s(offset() + $L, (short) value)";
+                        nonPrimitiveTypeMemberPutStatement = "buffer().%s(limit(), (short) value)";
+                    }
+                }
+                else if (memberTypeName.equals(TypeName.BYTE))
+                {
+                    primitiveTypeMemberPutStatement = "buffer().%s(offset() + $L, (short) value)";
+                    nonPrimitiveTypeMemberPutStatement = "buffer().%s(limit(), (short) value)";
+                }
+
+
+                String putStatement = String.format(kindTypeName.isPrimitive() ? primitiveTypeMemberPutStatement :
+                    nonPrimitiveTypeMemberPutStatement, putterName);
                 if (kindTypeName.isPrimitive())
                 {
                     code.addStatement(putStatement, offset(memberName));

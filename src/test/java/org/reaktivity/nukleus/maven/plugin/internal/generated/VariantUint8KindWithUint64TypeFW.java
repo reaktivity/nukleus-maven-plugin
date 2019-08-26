@@ -64,17 +64,17 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
         return buffer().getLong(offset() + FIELD_OFFSET_UINT64);
     }
 
-    public short getAsUint8()
+    public int getAsUint8()
     {
         return buffer().getShort(offset() + FIELD_OFFSET_UINT8);
     }
 
-    public byte getAsZero()
+    public int getAsZero()
     {
         return FIELD_VALUE_ZERO;
     }
 
-    public byte getAsOne()
+    public int getAsOne()
     {
         return FIELD_VALUE_ONE;
     }
@@ -244,12 +244,12 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
         }
 
         public Builder setAsUint8(
-            short value)
+            int value)
         {
             int newLimit = offset() + FIELD_OFFSET_UINT8 + FIELD_SIZE_UINT8;
             checkLimit(newLimit, maxLimit());
             kind(KIND_UINT8);
-            buffer().putShort(offset() + FIELD_OFFSET_UINT8, value);
+            buffer().putShort(offset() + FIELD_OFFSET_UINT8, (short) value);
             limit(newLimit);
             return this;
         }
@@ -307,7 +307,7 @@ public final class VariantUint8KindWithUint64TypeFW extends Flyweight
                     setAsOne();
                     break;
                 default:
-                    setAsUint8((short) value);
+                    setAsUint8((int) value);
                     break;
                 }
                 break;

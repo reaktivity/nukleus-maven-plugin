@@ -54,7 +54,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     static
     {
         Map<AstType, AstType> uintMappings = new HashMap<>();
-        uintMappings.put(AstType.UINT8, AstType.INT16);
+        uintMappings.put(AstType.UINT8, AstType.INT32);
         uintMappings.put(AstType.UINT16, AstType.INT32);
         uintMappings.put(AstType.UINT32, AstType.INT64);
         uintMappings.put(AstType.UINT64, AstType.INT64);

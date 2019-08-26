@@ -67,12 +67,12 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
         return buffer().getLong(offset() + FIELD_OFFSET_INT64);
     }
 
-    public byte getAsInt8()
+    public int getAsInt8()
     {
         return buffer().getByte(offset() + FIELD_OFFSET_INT8);
     }
 
-    public short getAsInt16()
+    public int getAsInt16()
     {
         return buffer().getShort(offset() + FIELD_OFFSET_INT16);
     }
@@ -223,23 +223,23 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
         }
 
         public Builder setAsInt8(
-            byte value)
+            int value)
         {
             int newLimit = offset() + FIELD_OFFSET_INT8 + FIELD_SIZE_INT8;
             checkLimit(newLimit, maxLimit());
             kind(KIND_INT8);
-            buffer().putByte(offset() + FIELD_OFFSET_INT8, value);
+            buffer().putByte(offset() + FIELD_OFFSET_INT8, (byte) value);
             limit(newLimit);
             return this;
         }
 
         public Builder setAsInt16(
-            short value)
+            int value)
         {
             int newLimit = offset() + FIELD_OFFSET_INT16 + FIELD_SIZE_INT16;
             checkLimit(newLimit, maxLimit());
             kind(KIND_INT16);
-            buffer().putShort(offset() + FIELD_OFFSET_INT16, value);
+            buffer().putShort(offset() + FIELD_OFFSET_INT16, (short) value);
             limit(newLimit);
             return this;
         }
@@ -251,10 +251,10 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
             switch (highestByteIndex)
             {
             case 0:
-                setAsInt8((byte) value);
+                setAsInt8((int) value);
                 break;
             case 1:
-                setAsInt16((short) value);
+                setAsInt16((int) value);
                 break;
             case 2:
             case 3:
@@ -267,17 +267,13 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
                 setAsInt64((long) value);
                 break;
             case 8:
-//                if (value == 0)
-//                {
-//                    setAsZero();
-//                }
                 if ((value & BIT_MASK_INT8) == value)
                 {
-                    setAsInt8((byte) value);
+                    setAsInt8((int) value);
                 }
                 else if ((value & BIT_MASK_INT16) == value)
                 {
-                    setAsInt16((short) value);
+                    setAsInt16((int) value);
                 }
                 else if ((value & BIT_MASK_INT32) == value)
                 {

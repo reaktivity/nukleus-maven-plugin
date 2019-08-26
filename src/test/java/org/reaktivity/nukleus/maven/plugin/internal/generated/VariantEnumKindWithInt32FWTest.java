@@ -54,7 +54,7 @@ public class VariantEnumKindWithInt32FWTest
         final int offset)
     {
         int pos = offset;
-        buffer.putByte(pos, (byte) 1); // EnumWithInt8.ONE
+        buffer.putByte(pos, (byte) 1);
         buffer.putByte(pos += 1, (byte) 120);
         return pos - offset + SIZE_OF_BYTE;
     }
@@ -143,7 +143,7 @@ public class VariantEnumKindWithInt32FWTest
     public void shouldSetAsInt16()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsInt16((short) 30000)
+            .setAsInt16(30000)
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
@@ -156,7 +156,7 @@ public class VariantEnumKindWithInt32FWTest
     public void shouldSetAsInt8()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsInt8((byte) 100)
+            .setAsInt8(100)
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
