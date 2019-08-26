@@ -59,6 +59,8 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                            .addField(fieldByteOrder())
                            .addField(valueField())
                            .addMethod(constructor())
+                           .addMethod(constructorString())
+                           .addMethod(constructorStringAndCharset())
                            .addMethod(constructorByteOrder())
                            .addMethod(limitMethod())
                            .addMethod(valueMethod())
@@ -97,6 +99,31 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
                 .build();
+    }
+
+    private MethodSpec constructorString()
+    {
+        return MethodSpec.constructorBuilder()
+                         .addModifiers(PUBLIC)
+                         .addParameter(String.class, "value")
+                         .addStatement("this(value, $T.UTF_8)", StandardCharsets.class)
+                         .build();
+    }
+
+    private MethodSpec constructorStringAndCharset()
+    {
+        return MethodSpec.constructorBuilder()
+                         .addModifiers(PUBLIC)
+                         .addParameter(String.class, "value")
+                         .addParameter(Charset.class, "charset")
+                         .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+                         .addStatement("final byte[] encoded = value.getBytes(charset)")
+                         .addStatement("final $T buffer = new $T(new byte[FIELD_SIZE_LENGTH + encoded.length])",
+                                 MUTABLE_DIRECT_BUFFER_TYPE, UNSAFE_BUFFER_TYPE)
+                         .addStatement("buffer.putShort(0, (short)(encoded.length & 0xFFFF))")
+                         .addStatement("buffer.putBytes(FIELD_SIZE_LENGTH, encoded)")
+                         .addStatement("wrap(buffer, 0, buffer.capacity())")
+                         .build();
     }
 
     private MethodSpec constructorByteOrder()

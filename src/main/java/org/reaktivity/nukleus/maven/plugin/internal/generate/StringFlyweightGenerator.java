@@ -56,6 +56,9 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     {
         return classBuilder.addField(fieldSizeLengthConstant())
                            .addField(valueField())
+                           .addMethod(constructor())
+                           .addMethod(constructorString())
+                           .addMethod(constructorStringAndCharset())
                            .addMethod(limitMethod())
                            .addMethod(asStringMethod())
                            .addMethod(tryWrapMethod())
@@ -79,6 +82,37 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         return FieldSpec.builder(DIRECT_BUFFER_TYPE, "valueRO", PRIVATE, FINAL)
                 .initializer("new $T(0L, 0)", UNSAFE_BUFFER_TYPE)
                 .build();
+    }
+
+    private MethodSpec constructor()
+    {
+        return MethodSpec.constructorBuilder()
+                         .addModifiers(PUBLIC)
+                         .build();
+    }
+
+    private MethodSpec constructorString()
+    {
+        return MethodSpec.constructorBuilder()
+                         .addModifiers(PUBLIC)
+                         .addParameter(String.class, "value")
+                         .addStatement("this(value, $T.UTF_8)", StandardCharsets.class)
+                         .build();
+    }
+
+    private MethodSpec constructorStringAndCharset()
+    {
+        return MethodSpec.constructorBuilder()
+                         .addModifiers(PUBLIC)
+                         .addParameter(String.class, "value")
+                         .addParameter(Charset.class, "charset")
+                         .addStatement("final byte[] encoded = value.getBytes(charset)")
+                         .addStatement("final $T buffer = new $T(new byte[FIELD_SIZE_LENGTH + encoded.length])",
+                                 MUTABLE_DIRECT_BUFFER_TYPE, UNSAFE_BUFFER_TYPE)
+                         .addStatement("buffer.putByte(0, (byte)(encoded.length & 0xFF))")
+                         .addStatement("buffer.putBytes(FIELD_SIZE_LENGTH, encoded)")
+                         .addStatement("wrap(buffer, 0, buffer.capacity())")
+                         .build();
     }
 
     private MethodSpec limitMethod()
