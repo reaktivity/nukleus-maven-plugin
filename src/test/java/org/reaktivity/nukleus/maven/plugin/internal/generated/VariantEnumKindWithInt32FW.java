@@ -216,27 +216,27 @@ public class VariantEnumKindWithInt32FW extends Flyweight
             switch (highestByteIndex)
             {
             case 0:
-                setAsInt8((int) value);
+                setAsInt8(value);
                 break;
             case 1:
-                setAsInt16((int) value);
+                setAsInt16(value);
                 break;
             case 2:
             case 3:
-                setAsInt32((int) value);
+                setAsInt32(value);
                 break;
             case 4:
                 if ((value & BIT_MASK_INT8) == value)
                 {
-                    setAsInt8((int) value);
+                    setAsInt8(value);
                 }
                 else if ((value & BIT_MASK_INT16) == value)
                 {
-                    setAsInt16((int) value);
+                    setAsInt16(value);
                 }
                 else
                 {
-                    setAsInt32((int) value);
+                    setAsInt32(value);
                 }
                 break;
             default:

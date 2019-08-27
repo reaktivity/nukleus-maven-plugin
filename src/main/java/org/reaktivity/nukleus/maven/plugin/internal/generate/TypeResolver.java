@@ -40,12 +40,14 @@ public final class TypeResolver
     private final String packageName;
     private final Map<String, AstStructNode> structsByName;
     private final Map<AstType, TypeName> namesByType;
+    private final Map<AstType, TypeName> namesByUnsignedType;
 
     public TypeResolver(
         String packageName)
     {
         this.structsByName = new HashMap<>();
         this.namesByType = initNamesByType(packageName);
+        this.namesByUnsignedType =  initNamesByUnsignedType();
         this.packageName = packageName;
     }
 
@@ -69,6 +71,12 @@ public final class TypeResolver
         AstType type)
     {
         return namesByType.get(type);
+    }
+
+    public TypeName resolveUnsignedType(
+        AstType type)
+    {
+        return namesByUnsignedType.get(type);
     }
 
     public ClassName resolveClass(
@@ -106,6 +114,16 @@ public final class TypeResolver
         namesByType.put(AstType.INT64, TypeName.LONG);
         namesByType.put(AstType.UINT64, TypeName.LONG);
         return namesByType;
+    }
+
+    private static Map<AstType, TypeName> initNamesByUnsignedType()
+    {
+        Map<AstType, TypeName> namesByUnsignedType = new HashMap<>();
+        namesByUnsignedType.put(AstType.UINT8, TypeName.INT);
+        namesByUnsignedType.put(AstType.UINT16, TypeName.INT);
+        namesByUnsignedType.put(AstType.UINT32, TypeName.LONG);
+        namesByUnsignedType.put(AstType.UINT64, TypeName.LONG);
+        return namesByUnsignedType;
     }
 
     private static final class QualifiedNameVisitor extends AstNode.Visitor<Map<String, AstStructNode>>

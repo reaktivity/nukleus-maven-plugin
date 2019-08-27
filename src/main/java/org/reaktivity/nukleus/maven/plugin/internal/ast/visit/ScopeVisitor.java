@@ -15,14 +15,11 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
-import static java.util.Collections.unmodifiableMap;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import com.squareup.javapoet.TypeName;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
@@ -44,22 +41,11 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGen
 
 public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
-    private static final Map<AstType, AstType> UINT_MAPPINGS;
     private final String scopeName;
     private final String packageName;
     private final TypeResolver resolver;
     private final List<String> targetScopes;
     private final Collection<TypeSpecGenerator<?>> defaultResult;
-
-    static
-    {
-        Map<AstType, AstType> uintMappings = new HashMap<>();
-        uintMappings.put(AstType.UINT8, AstType.INT32);
-        uintMappings.put(AstType.UINT16, AstType.INT32);
-        uintMappings.put(AstType.UINT32, AstType.INT64);
-        uintMappings.put(AstType.UINT64, AstType.INT64);
-        UINT_MAPPINGS = unmodifiableMap(uintMappings);
-    }
 
     public ScopeVisitor(
         String scopeName,
@@ -169,7 +155,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         TypeName kindTypeName = variantNode.kindType().equals(AstType.UINT8) ? resolver.resolveType(AstType.UINT8) :
             resolver.resolveClass(variantNode.kindType());
         TypeName ofTypeName = resolver.resolveType(variantNode.of());
-        TypeName unsignedOfTypeName = resolver.resolveType(UINT_MAPPINGS.get(variantNode.of()));
+        TypeName unsignedOfTypeName = resolver.resolveUnsignedType(variantNode.of());
         VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName,
             kindTypeName, ofTypeName, unsignedOfTypeName);
         return new VariantVisitor(generator, resolver).visitVariant(variantNode);

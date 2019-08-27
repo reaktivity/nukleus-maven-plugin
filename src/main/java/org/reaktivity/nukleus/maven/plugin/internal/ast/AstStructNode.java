@@ -17,34 +17,21 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableMap;
 import static java.util.Objects.requireNonNull;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode.NULL_DEFAULT;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public final class AstStructNode extends AstNode
 {
-    private static final Map<AstType, AstType> UINT_MAPPINGS;
     private final String name;
     private final int typeId;
     private final String supertype;
     private final List<AstMemberNode> members;
 
-    static
-    {
-        Map<AstType, AstType> uintMappings = new HashMap<>();
-        uintMappings.put(AstType.UINT8, AstType.INT32);
-        uintMappings.put(AstType.UINT16, AstType.INT32);
-        uintMappings.put(AstType.UINT32, AstType.INT64);
-        uintMappings.put(AstType.UINT64, AstType.INT64);
-        UINT_MAPPINGS = unmodifiableMap(uintMappings);
-    }
 
     @Override
     public <R> R accept(
@@ -153,7 +140,7 @@ public final class AstStructNode extends AstNode
                 if (sizeField.isPresent())
                 {
                     AstMemberNode size = sizeField.get();
-                    member.sizeType(UINT_MAPPINGS.get(size.type()) == null ? size.type() : UINT_MAPPINGS.get(size.type()));
+                    member.sizeType(size.type());
 
                     if (size.defaultValue() != null)
                     {
@@ -176,14 +163,14 @@ public final class AstStructNode extends AstNode
                                 member.sizeName(), member.name()));
                         }
                     }
-                    else if (defaultsToNull && !size.type().isSignedInteger())
+                    else if (defaultsToNull && !size.type().isSignedInt())
                     {
                         Object sizeType = size.type();
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
                                 member.sizeName(), member.name()));
                     }
-                    else if (!defaultsToNull && UINT_MAPPINGS.get(size.type()) == null)
+                    else if (!defaultsToNull && !size.type().isUnsignedInt())
                     {
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" must be an unsigned integer type",
