@@ -79,11 +79,11 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
     public Collection<TypeSpecGenerator<?>> visitVariantCase(
         AstVariantCaseNode variantCaseNode)
     {
-        Object value = variantCaseNode.kind();
+        Object value = variantCaseNode.value();
         AstType memberType = variantCaseNode.type();
         TypeName typeName = resolver.resolveType(memberType);
         TypeName unsignedTypeName = resolver.resolveUnsignedType(memberType);
-        generator.addMember(value, variantCaseNode.typeName(), typeName, unsignedTypeName);
+        generator.addMember(value, memberType.name(), typeName, unsignedTypeName);
         return defaultResult();
     }
 

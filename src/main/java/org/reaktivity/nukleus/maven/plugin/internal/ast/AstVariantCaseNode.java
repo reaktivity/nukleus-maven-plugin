@@ -19,8 +19,7 @@ import java.util.Objects;
 
 public final class AstVariantCaseNode extends AstNode
 {
-    private final Object kind;
-    private final String typeName;
+    private final Object value;
     private final AstType type;
 
     @Override
@@ -30,14 +29,9 @@ public final class AstVariantCaseNode extends AstNode
         return visitor.visitVariantCase(this);
     }
 
-    public Object kind()
+    public Object value()
     {
-        return kind;
-    }
-
-    public String typeName()
-    {
-        return typeName;
+        return value;
     }
 
     public AstType type()
@@ -48,7 +42,7 @@ public final class AstVariantCaseNode extends AstNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(kind, typeName, type);
+        return Objects.hash(value, type);
     }
 
     @Override
@@ -66,44 +60,33 @@ public final class AstVariantCaseNode extends AstNode
         }
 
         AstVariantCaseNode that = (AstVariantCaseNode)o;
-        return Objects.equals(this.kind, that.kind) &&
-            Objects.equals(this.typeName, that.typeName) &&
+        return Objects.equals(this.value, that.value) &&
             Objects.equals(this.type, that.type);
     }
 
     private AstVariantCaseNode(
-        Object kind,
-        String typeName,
+        Object value,
         AstType type)
     {
-        this.kind = kind;
-        this.typeName = typeName;
+        this.value = value;
         this.type = type;
     }
 
     @Override
     public String toString()
     {
-        return String.format("CASE [kind=%s, typeName=%s, type=%s]", kind, typeName, type);
+        return String.format("CASE [value=%s, type=%s]", value, type);
     }
 
     public static final class Builder extends AstNode.Builder<AstVariantCaseNode>
     {
-        private Object kind;
-        private String typeName;
+        private Object value;
         private AstType type;
 
-        public Builder kind(
-            Object kind)
+        public Builder value(
+            Object value)
         {
-            this.kind = kind;
-            return this;
-        }
-
-        public Builder typeName(
-            String typeName)
-        {
-            this.typeName = typeName;
+            this.value = value;
             return this;
         }
 
@@ -117,7 +100,7 @@ public final class AstVariantCaseNode extends AstNode
         @Override
         public AstVariantCaseNode build()
         {
-            return new AstVariantCaseNode(kind, typeName, type);
+            return new AstVariantCaseNode(value, type);
         }
     }
 }

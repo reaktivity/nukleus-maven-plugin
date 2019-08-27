@@ -705,7 +705,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitUint_literal(
                 Uint_literalContext ctx)
             {
-                variantCaseBuilder.kind(Integer.decode(ctx.getText()));
+                variantCaseBuilder.value(Integer.decode(ctx.getText()));
                 return super.visitUint_literal(ctx);
             }
 
@@ -713,7 +713,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitDeclarator(
                 DeclaratorContext ctx)
             {
-                variantCaseBuilder.kind(ctx.ID().getText());
+                variantCaseBuilder.value(ctx.ID().getText());
                 return super.visitDeclarator(ctx);
             }
 
@@ -721,8 +721,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitInt8_type(
                 Int8_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.INT8);
+                variantCaseBuilder.type(AstType.INT8);
                 return super.visitInt8_type(ctx);
             }
 
@@ -730,8 +729,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitInt16_type(
                 Int16_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.INT16);
+                variantCaseBuilder.type(AstType.INT16);
                 return super.visitInt16_type(ctx);
             }
 
@@ -739,8 +737,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitInt32_type(
                 Int32_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.INT32);
+                variantCaseBuilder.type(AstType.INT32);
                 return super.visitInt32_type(ctx);
             }
 
@@ -748,8 +745,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitInt64_type(
                 Int64_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.INT64);
+                variantCaseBuilder.type(AstType.INT64);
                 return super.visitInt64_type(ctx);
             }
 
@@ -757,8 +753,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitUint8_type(
                 Uint8_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.UINT8);
+                variantCaseBuilder.type(AstType.UINT8);
                 return super.visitUint8_type(ctx);
             }
 
@@ -766,8 +761,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitUint16_type(
                 Uint16_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.UINT16);
+                variantCaseBuilder.type(AstType.UINT16);
                 return super.visitUint16_type(ctx);
             }
 
@@ -775,8 +769,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitUint32_type(
                 Uint32_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.UINT32);
+                variantCaseBuilder.type(AstType.UINT32);
                 return super.visitUint32_type(ctx);
             }
 
@@ -784,8 +777,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitUint64_type(
                 Uint64_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.UINT64);
+                variantCaseBuilder.type(AstType.UINT64);
                 return super.visitUint64_type(ctx);
             }
 
@@ -793,8 +785,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitString_type(
                 String_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.STRING);
+                variantCaseBuilder.type(AstType.STRING);
                 return super.visitString_type(ctx);
             }
 
@@ -802,8 +793,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitString16_type(
                 String16_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.STRING16);
+                variantCaseBuilder.type(AstType.STRING16);
                 return super.visitString16_type(ctx);
             }
 
@@ -811,8 +801,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitString32_type(
                 String32_typeContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.STRING32);
+                variantCaseBuilder.type(AstType.STRING32);
                 return super.visitString32_type(ctx);
             }
 
@@ -820,8 +809,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitVariant_int_literal(
                 Variant_int_literalContext ctx)
             {
-                variantCaseBuilder.typeName(ctx.getText())
-                                  .type(AstType.dynamicType(ctx.getText()));
+                variantCaseBuilder.type(AstType.dynamicType(ctx.getText()));
                 return super.visitVariant_int_literal(ctx);
             }
         }
