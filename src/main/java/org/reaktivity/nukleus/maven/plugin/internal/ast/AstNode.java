@@ -41,20 +41,24 @@ public abstract class AstNode
             AstScopeNode scopeNode)
         {
             return Stream.concat(
-                      Stream.concat(
-                          Stream.concat(
-                              scopeNode.scopes()
+                        Stream.concat(
+                              Stream.concat(
+                                  Stream.concat(
+                                      scopeNode.scopes()
+                                               .stream()
+                                               .map(this::visitNestedScope),
+                                      scopeNode.structs()
+                                               .stream()
+                                               .map(this::visitStruct)),
+                                scopeNode.enums()
+                                         .stream()
+                                         .map(this::visitEnum)),
+                              scopeNode.unions()
                                        .stream()
-                                       .map(this::visitNestedScope),
-                              scopeNode.structs()
-                                       .stream()
-                                       .map(this::visitStruct)),
-                        scopeNode.enums()
-                                 .stream()
-                                 .map(this::visitEnum)),
-                      scopeNode.unions()
-                               .stream()
-                               .map(this::visitUnion))
+                                       .map(this::visitUnion)),
+                          scopeNode.variants()
+                                   .stream()
+                                   .map(this::visitVariant))
                    .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
@@ -103,8 +107,23 @@ public abstract class AstNode
                     .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
+        public R visitVariant(
+            AstVariantNode variantNode)
+        {
+            return variantNode.cases()
+                              .stream()
+                              .map(this::visitVariantCase)
+                              .collect(reducing(defaultResult(), this::aggregateResult));
+        }
+
+        public R visitVariantCase(
+            AstVariantCaseNode variantCaseNode)
+        {
+            return defaultResult();
+        }
+
         public R visitCase(
-            AstCaseNode caseNode)
+            AstUnionCaseNode caseNode)
         {
             return defaultResult();
         }

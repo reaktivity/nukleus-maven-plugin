@@ -25,7 +25,7 @@ import java.util.Objects;
 public final class AstUnionNode extends AstNode
 {
     private final String name;
-    private final List<AstCaseNode> cases;
+    private final List<AstUnionCaseNode> cases;
 
     @Override
     public <R> R accept(
@@ -39,7 +39,7 @@ public final class AstUnionNode extends AstNode
         return name;
     }
 
-    public List<AstCaseNode> cases()
+    public List<AstUnionCaseNode> cases()
     {
         return cases;
     }
@@ -70,7 +70,7 @@ public final class AstUnionNode extends AstNode
 
     private AstUnionNode(
         String name,
-        List<AstCaseNode> cases)
+        List<AstUnionCaseNode> cases)
     {
         this.name = requireNonNull(name);
         this.cases = unmodifiableList(cases);
@@ -79,7 +79,7 @@ public final class AstUnionNode extends AstNode
     public static final class Builder extends AstNode.Builder<AstUnionNode>
     {
         private String name;
-        private List<AstCaseNode> cases;
+        private List<AstUnionCaseNode> cases;
 
         public Builder()
         {
@@ -92,7 +92,7 @@ public final class AstUnionNode extends AstNode
             return this;
         }
 
-        public Builder caseN(AstCaseNode caseN)
+        public Builder caseN(AstUnionCaseNode caseN)
         {
             this.cases.add(caseN);
             return this;

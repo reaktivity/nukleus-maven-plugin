@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 
 public abstract class MethodSpecGenerator
 {
@@ -28,4 +29,10 @@ public abstract class MethodSpecGenerator
     }
 
     public abstract MethodSpec generate();
+
+    public void mixin(
+        TypeSpec.Builder builder)
+    {
+        builder.addMethod(generate());
+    }
 }

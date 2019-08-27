@@ -32,7 +32,6 @@ public final class AstMemberNode extends AstNode
     private final List<AstType> types;
     private final int size;
     private final String sizeName;
-    private final AstType unsignedType;
     private final Object defaultValue;
     private final AstByteOrder byteOrder;
     private final boolean isArray;
@@ -46,7 +45,6 @@ public final class AstMemberNode extends AstNode
         List<AstType> types,
         int size,
         String sizeName,
-        AstType unsignedType,
         Object defaultValue,
         AstByteOrder byteOrder,
         boolean isArray)
@@ -55,7 +53,6 @@ public final class AstMemberNode extends AstNode
         this.types = unmodifiableList(requireNotEmpty(requireNonNull(types)));
         this.size = size;
         this.sizeName = sizeName;
-        this.unsignedType = unsignedType;
         this.defaultValue = defaultValue;
         this.byteOrder = byteOrder;
         this.isArray = isArray;
@@ -76,11 +73,6 @@ public final class AstMemberNode extends AstNode
     public AstType type()
     {
         return types.get(0);
-    }
-
-    public AstType unsignedType()
-    {
-        return unsignedType;
     }
 
     public List<AstType> types()
@@ -121,7 +113,7 @@ public final class AstMemberNode extends AstNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, unsignedType, sizeName, size, defaultValue, byteOrder);
+        return Objects.hash(name, types, sizeName, size, defaultValue, byteOrder);
     }
 
     @Override
@@ -141,7 +133,6 @@ public final class AstMemberNode extends AstNode
         return this.size == that.size &&
                 Objects.equals(this.name, that.name) &&
                 Objects.deepEquals(this.types, that.types) &&
-                Objects.equals(this.unsignedType, that.unsignedType) &&
                 Objects.equals(this.sizeName, that.sizeName) &&
                 Objects.equals(this.defaultValue, that.defaultValue) &&
                 Objects.equals(this.byteOrder, that.byteOrder);
@@ -151,8 +142,8 @@ public final class AstMemberNode extends AstNode
     public String toString()
     {
         String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
-        return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s, defaultValue=%s, byteOrder=%s]",
-                name, size, types, unsignedType, defaultValue, byteOrder);
+        return String.format("MEMBER [name=%s, size=%s, types=%s, defaultValue=%s, byteOrder=%s]",
+                name, size, types, defaultValue, byteOrder);
     }
 
     public void sizeType(AstType sizeType)
@@ -188,7 +179,6 @@ public final class AstMemberNode extends AstNode
         private int size;
         private String sizeName;
         private boolean isArray;
-        private AstType unsignedType;
         private Object defaultValue;
         private AstByteOrder byteOrder;
 
@@ -232,12 +222,6 @@ public final class AstMemberNode extends AstNode
             return this;
         }
 
-        public Builder unsignedType(AstType unsignedType)
-        {
-            this.unsignedType = requireNonNull(unsignedType);
-            return this;
-        }
-
         public  Builder defaultValue(
             int defaultValue)
         {
@@ -260,7 +244,7 @@ public final class AstMemberNode extends AstNode
         @Override
         public AstMemberNode build()
         {
-            return new AstMemberNode(name, types, size, sizeName, unsignedType, defaultValue, byteOrder, isArray);
+            return new AstMemberNode(name, types, size, sizeName, defaultValue, byteOrder, isArray);
         }
     }
 }

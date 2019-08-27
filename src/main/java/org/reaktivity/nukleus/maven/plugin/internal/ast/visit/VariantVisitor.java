@@ -15,38 +15,49 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
-import static java.util.Arrays.asList;
-
-import java.util.Collection;
-import java.util.List;
-
+import com.squareup.javapoet.TypeName;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGenerator;
 
-public final class EnumVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
+import java.util.Collection;
+import java.util.Set;
+
+import static java.util.Collections.singleton;
+
+public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
-    private final EnumTypeGenerator typeGenerator;
-    private final List<TypeSpecGenerator<?>> defaultResult;
+    private final VariantFlyweightGenerator generator;
+    private final TypeResolver resolver;
+    private final Set<TypeSpecGenerator<?>> defaultResult;
 
-    public EnumVisitor(
-        EnumTypeGenerator typeGenerator,
-        EnumFlyweightGenerator flyweightGenerator)
+    public VariantVisitor(
+        VariantFlyweightGenerator generator,
+        TypeResolver resolver)
     {
-        this.typeGenerator = typeGenerator;
-        this.defaultResult = asList(flyweightGenerator, typeGenerator);
+        this.generator = generator;
+        this.resolver = resolver;
+        this.defaultResult = singleton(generator);
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitStruct(
+        AstStructNode structNode)
+    {
+        return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitEnum(
         AstEnumNode enumNode)
     {
-        super.visitEnum(enumNode);
         return defaultResult();
     }
 
@@ -61,15 +72,18 @@ public final class EnumVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
     public Collection<TypeSpecGenerator<?>> visitVariant(
         AstVariantNode variantNode)
     {
-        return defaultResult();
+        return super.visitVariant(variantNode);
     }
 
     @Override
-    public Collection<TypeSpecGenerator<?>> visitValue(
-        AstValueNode valueNode)
+    public Collection<TypeSpecGenerator<?>> visitVariantCase(
+        AstVariantCaseNode variantCaseNode)
     {
-        typeGenerator.addValue(valueNode.name(), valueNode.value());
-
+        Object value = variantCaseNode.value();
+        AstType memberType = variantCaseNode.type();
+        TypeName typeName = resolver.resolveType(memberType);
+        TypeName unsignedTypeName = resolver.resolveUnsignedType(memberType);
+        generator.addMember(value, memberType.name(), typeName, unsignedTypeName);
         return defaultResult();
     }
 

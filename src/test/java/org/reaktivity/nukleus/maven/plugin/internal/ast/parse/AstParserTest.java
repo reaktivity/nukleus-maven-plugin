@@ -26,7 +26,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -35,6 +35,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusLexer;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
@@ -43,6 +45,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionC
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 
 public class AstParserTest
 {
@@ -133,12 +136,11 @@ public class AstParserTest
                                             .build())
                 .union(new AstUnionNode.Builder()
                                        .name("OneUnion")
-                                       .caseN(new AstCaseNode.Builder()
+                                       .caseN(new AstUnionCaseNode.Builder()
                                                              .value(0)
                                                              .member(new AstMemberNode.Builder()
                                                                                       .name("width")
                                                                                       .type(AstType.UINT8)
-                                                                                      .unsignedType(INT32)
                                                                                       .build())
                                                              .build())
                                        .build())
@@ -157,12 +159,11 @@ public class AstParserTest
                                                                    .build())
                                        .union(new AstUnionNode.Builder()
                                                               .name("TwoUnion")
-                                                              .caseN(new AstCaseNode.Builder()
+                                                              .caseN(new AstUnionCaseNode.Builder()
                                                                                     .value(0)
                                                                                     .member(new AstMemberNode.Builder()
                                                                                                              .name("width")
                                                                                                              .type(AstType.UINT8)
-                                                                                                             .unsignedType(INT32)
                                                                                                              .build())
                                                                                     .build())
                                                                 .build())
@@ -415,20 +416,18 @@ public class AstParserTest
 
         AstUnionNode expected = new AstUnionNode.Builder()
                 .name("Count")
-                .caseN(new AstCaseNode.Builder()
+                .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
                                       .member(new AstMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
-                                                               .unsignedType(INT32)
                                                                .build())
                                       .build())
-                .caseN(new AstCaseNode.Builder()
+                .caseN(new AstUnionCaseNode.Builder()
                                        .value(1)
                                        .member(new AstMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
-                                                                .unsignedType(INT32)
                                                                 .build())
                                        .build())
                 .build();
@@ -446,23 +445,78 @@ public class AstParserTest
 
         AstUnionNode expected = new AstUnionNode.Builder()
                 .name("Count")
-                .caseN(new AstCaseNode.Builder()
+                .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
                                       .member(new AstMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
-                                                               .unsignedType(INT32)
                                                                .build())
                                       .build())
-                .caseN(new AstCaseNode.Builder()
+                .caseN(new AstUnionCaseNode.Builder()
                                        .value(1)
                                        .member(new AstMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
-                                                                .unsignedType(INT32)
                                                                 .build())
                                        .build())
                 .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseVariantWithExplicitType()
+    {
+        NukleusParser parser = newParser("variant VariantUnsignedIntWithExplicitType switch (uint8) of uint32 " +
+            "{ case 0x04: uint32; case 0x01: uint8; case 0x00: 0; }");
+        Variant_typeContext ctx = parser.variant_type();
+        AstVariantNode actual = new AstParser().visitVariant_type(ctx);
+
+        AstVariantNode expected = new AstVariantNode.Builder()
+            .name("VariantUnsignedIntWithExplicitType")
+            .kindType(AstType.UINT8)
+            .of(AstType.UINT32)
+            .caseN(new AstVariantCaseNode.Builder()
+                .value(0x04)
+                .type(AstType.UINT32)
+                .build())
+            .caseN(new AstVariantCaseNode.Builder()
+                .value(0x01)
+                .type(AstType.UINT8)
+                .build())
+            .caseN(new AstVariantCaseNode.Builder()
+                .value(0x00)
+                .type(AstType.dynamicType("0"))
+                .build())
+            .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseVariantWithoutExplicitType()
+    {
+        NukleusParser parser = newParser("variant VariantUnsignedIntWithoutExplicitType switch (uint8) " +
+            "{ case 0x70: uint32; case 0x52: uint8; case 0x43: 0; }");
+        Variant_typeContext ctx = parser.variant_type();
+        AstVariantNode actual = new AstParser().visitVariant_type(ctx);
+
+        AstVariantNode expected = new AstVariantNode.Builder()
+            .name("VariantUnsignedIntWithoutExplicitType")
+            .kindType(AstType.UINT8)
+            .caseN(new AstVariantCaseNode.Builder()
+                .value(0x70)
+                .type(AstType.UINT32)
+                .build())
+            .caseN(new AstVariantCaseNode.Builder()
+                .value(0x52)
+                .type(AstType.UINT8)
+                .build())
+            .caseN(new AstVariantCaseNode.Builder()
+                .value(0x43)
+                .type(AstType.dynamicType("0"))
+                .build())
+            .build();
 
         assertEquals(expected, actual);
     }
@@ -492,8 +546,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(INT32)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
@@ -509,8 +562,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT32).unsignedType(AstType.INT64)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT32).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
@@ -526,8 +578,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
@@ -561,8 +612,7 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
                 .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
                         .name("field").defaultToNull().build())
                 .build();
@@ -643,7 +693,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT8)
-                .unsignedType(INT32)
                 .name("field")
                 .build();
 
@@ -659,7 +708,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT8)
-                .unsignedType(INT32)
                 .name("field")
                 .defaultValue(12)
                 .build();
@@ -683,7 +731,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT16)
-                .unsignedType(INT32)
                 .name("field")
                 .build();
 
@@ -699,7 +746,6 @@ public class AstParserTest
 
         AstMemberNode expected = new AstMemberNode.Builder()
                 .type(AstType.UINT16)
-                .unsignedType(INT32)
                 .name("field")
                 .size(10)
                 .build();
@@ -716,10 +762,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).unsignedType(INT32)
-                        .name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .sizeName("size").name("field").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT16).name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).sizeName("size").name("field").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -752,10 +796,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).unsignedType(AstType.INT64)
-                        .name("size").build())
-                .member(new AstMemberNode.Builder().type(INT32).sizeName("size")
-                        .name("field").defaultToNull().build())
+                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
+                .member(new AstMemberNode.Builder().type(INT32).sizeName("size").name("field").defaultToNull().build())
                 .build();
 
         assertEquals(expected, actual);
