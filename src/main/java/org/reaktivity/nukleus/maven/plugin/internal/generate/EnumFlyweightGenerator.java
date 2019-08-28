@@ -40,13 +40,23 @@ import java.util.Map;
 
 public final class EnumFlyweightGenerator extends ClassSpecGenerator
 {
-    private static Map<TypeName, String> stringValueTypeByTypeName = new HashMap<>();
+    private static final Map<TypeName, String> CLASS_NAMES;
 
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
     private final ClassName enumTypeName;
     private final TypeName valueTypeName;
     private final TypeName unsignedValueTypeName;
+
+    static
+    {
+        Map<TypeName, String> stringValueTypeByTypeName = new HashMap<>();
+        stringValueTypeByTypeName.put(TypeName.BYTE, "Byte");
+        stringValueTypeByTypeName.put(TypeName.SHORT, "Short");
+        stringValueTypeByTypeName.put(TypeName.INT, "Int");
+        stringValueTypeByTypeName.put(TypeName.LONG, "Long");
+        CLASS_NAMES = stringValueTypeByTypeName;
+    }
 
     public EnumFlyweightGenerator(
         ClassName enumName,
@@ -63,7 +73,6 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             valueTypeName, unsignedValueTypeName);
         this.valueTypeName = valueTypeName;
         this.unsignedValueTypeName = unsignedValueTypeName;
-        stringValueTypeByTypeName = initstringValueTypeByTypeName();
     }
 
     @Override
@@ -119,8 +128,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
     private FieldSpec fieldSizeValueConstant()
     {
-        String constantType = valueTypeName == null ? "BYTE"
-            : stringValueTypeByTypeName.get(unsignedValueTypeName == null ? valueTypeName :
+        String constantType = valueTypeName == null ? "BYTE" : CLASS_NAMES.get(unsignedValueTypeName == null ? valueTypeName :
             isTypeByte() ? TypeName.SHORT : unsignedValueTypeName).toUpperCase();
         return FieldSpec.builder(int.class, "FIELD_SIZE_VALUE", PRIVATE, STATIC, FINAL)
                 .initializer(String.format("$T.SIZE_OF_%s", constantType), BIT_UTIL_TYPE)
@@ -150,8 +158,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
     private MethodSpec getMethod()
     {
-        String bufferType = valueTypeName == null ? "Byte"
-            : stringValueTypeByTypeName.get(unsignedValueTypeName == null ? valueTypeName :
+        String bufferType = valueTypeName == null ? "Byte" : CLASS_NAMES.get(unsignedValueTypeName == null ? valueTypeName :
             isTypeByte() ? TypeName.SHORT : unsignedValueTypeName);
         String returnStatement = String.format("return %s", isValueTypeString() ?
             "stringRO.asString() != null ? $T.valueOf(stringRO.asString().toUpperCase()) : null" :
@@ -350,7 +357,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             else
             {
                 final String methodName = isParameterizedType() ? "value" : "ordinal";
-                final String bufferType = isParameterizedType() ? stringValueTypeByTypeName.get(isTypeUnsignedInt() ?
+                final String bufferType = isParameterizedType() ? CLASS_NAMES.get(isTypeUnsignedInt() ?
                     valueTypeName.equals(TypeName.BYTE) && unsignedValueTypeName.equals(TypeName.INT) ? TypeName.SHORT :
                     unsignedValueTypeName : valueTypeName) : "Byte";
                 final String castToByte = isParameterizedType() ? "" : "(byte) ";

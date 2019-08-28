@@ -111,7 +111,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
                       .build();
     }
 
-    private final class NameConstantGenerator extends ClassSpecMixinGenerator
+    private static final class NameConstantGenerator extends ClassSpecMixinGenerator
     {
         private final TypeName valueTypeName;
         private final TypeName unsignedValueTypeName;
