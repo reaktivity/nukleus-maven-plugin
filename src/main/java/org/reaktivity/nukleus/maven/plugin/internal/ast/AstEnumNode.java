@@ -53,7 +53,7 @@ public final class AstEnumNode extends AstNode
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 3) ^ values.hashCode();
+        return Objects.hash(name, values, valueType);
     }
 
     @Override
@@ -71,13 +71,14 @@ public final class AstEnumNode extends AstNode
 
         AstEnumNode that = (AstEnumNode)o;
         return Objects.equals(this.name, that.name) &&
-                Objects.equals(this.values, that.values);
+            Objects.equals(this.values, that.values) &&
+            Objects.equals(this.valueType, that.valueType);
     }
 
     @Override
     public String toString()
     {
-        return String.format("ENUM [name=%s, values=%s]", name, values);
+        return String.format("ENUM [name=%s, values=%s, valueType=%s]", name, values, valueType);
     }
 
     private AstEnumNode(
