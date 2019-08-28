@@ -191,6 +191,34 @@ scope test
             TWELVE (0x12L)
         }
 
+        enum EnumWithUint8 (uint8)
+        {
+            ICHI (201),
+            NI (202),
+            SAN (203)
+        }
+
+        enum EnumWithUint16 (uint16)
+        {
+            ICHI (60001),
+            NI (60002),
+            SAN (60003)
+        }
+
+        enum EnumWithUint32 (uint32)
+        {
+            ICHI (4000000001L),
+            NI (4000000002L),
+            SAN (4000000003L)
+        }
+
+        enum EnumWithUint64 (uint64)
+        {
+            ICHI (4000000001L),
+            NI (4000000002L),
+            SAN (4000000003L)
+        }
+
         enum EnumWithString (string)
         {
             BLUE ("blue"),

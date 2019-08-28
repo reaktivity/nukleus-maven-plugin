@@ -164,6 +164,7 @@ enum_explicit_type
    | int16_type
    | int32_type
    | int64_type
+   | unsigned_integer_type
    | string_type
    | string16_type
    | string32_type

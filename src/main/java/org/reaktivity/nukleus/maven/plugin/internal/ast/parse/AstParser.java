@@ -107,6 +107,10 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     private static Map<AstType, Function<RuleContext, Object>> initParserByType()
     {
         Map<AstType, Function<RuleContext, Object>> valueTypeByName = new HashMap<>();
+        valueTypeByName.put(AstType.UINT8, AstParser::parseShort);
+        valueTypeByName.put(AstType.UINT16, AstParser::parseInt);
+        valueTypeByName.put(AstType.UINT32, AstParser::parseLong);
+        valueTypeByName.put(AstType.UINT64, AstParser::parseLong);
         valueTypeByName.put(AstType.INT8, AstParser::parseByte);
         valueTypeByName.put(AstType.INT16, AstParser::parseShort);
         valueTypeByName.put(AstType.INT32, AstParser::parseInt);
@@ -967,6 +971,38 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
+        public AstEnumNode.Builder visitUint8_type(
+            Uint8_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT8);
+            return super.visitUint8_type(ctx);
+        }
+
+        @Override
+        public AstEnumNode.Builder visitUint16_type(
+            Uint16_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT16);
+            return super.visitUint16_type(ctx);
+        }
+
+        @Override
+        public AstEnumNode.Builder visitUint32_type(
+            Uint32_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT32);
+            return super.visitUint32_type(ctx);
+        }
+
+        @Override
+        public AstEnumNode.Builder visitUint64_type(
+            Uint64_typeContext ctx)
+        {
+            enumBuilder.valueType(AstType.UINT64);
+            return super.visitUint64_type(ctx);
+        }
+
+        @Override
         public AstEnumNode.Builder visitString_type(
             String_typeContext ctx)
         {
@@ -1023,8 +1059,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         private AstEnumNode.Builder visitLiteral(
             RuleContext ctx)
         {
-            AstType valueType = enumBuilder.valueType();
-            Function<RuleContext, Object> parser = parserByType.get(valueType);
+            Function<RuleContext, Object> parser = parserByType.get(enumBuilder.valueType());
             Object parsed = parser.apply(ctx);
             valueBuilder.value(parsed);
             return defaultResult();
