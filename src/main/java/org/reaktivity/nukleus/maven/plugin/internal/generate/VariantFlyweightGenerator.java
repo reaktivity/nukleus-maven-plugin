@@ -39,6 +39,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -52,6 +53,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private static final Map<String, Long> BIT_MASK_LONG;
     private static final Map<String, Integer> BIT_MASK_INT;
     private static final Map<TypeName, String> CLASS_NAMES;
+    private static final Set<TypeName> INTEGER_TYPES;
 
     private final String baseName;
     private final TypeSpec.Builder builder;
@@ -106,6 +108,12 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         classNames.put(TypeName.LONG, "Long");
         classNames.put(TypeName.DOUBLE, "Double");
         CLASS_NAMES = unmodifiableMap(classNames);
+
+        Set<TypeName> integerTypes = new HashSet<>();
+        integerTypes.add(TypeName.INT);
+        integerTypes.add(TypeName.SHORT);
+        integerTypes.add(TypeName.BYTE);
+        INTEGER_TYPES = integerTypes;
     }
 
     public VariantFlyweightGenerator(
@@ -347,11 +355,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
-                .addStatement("super.wrap(buffer, offset, maxLimit)"));
+                .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit))")
+                .addStatement("return null")
+                .endControlFlow());
             this.kindTypeName = kindTypeName;
             if (!kindTypeName.isPrimitive())
             {
-                builder.addStatement("$L.tryWrap(buffer, offset, maxLimit)", enumRO(kindTypeName));
+                builder.beginControlFlow("if (null == $L.tryWrap(buffer, offset, maxLimit))", enumRO(kindTypeName))
+                       .addStatement("return null")
+                       .endControlFlow();
             }
             builder.beginControlFlow("switch (kind())");
         }
@@ -608,19 +620,19 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private final class GetMethodGenerator extends MethodSpecGenerator
     {
         private final TypeName kindTypeName;
-        private final TypeName ofTypeName;
-        private final TypeName unsignedOfTypeName;
+        private final TypeName ofType;
+        private final TypeName unsignedOfType;
 
         private GetMethodGenerator(
             TypeName kindTypeName,
-            TypeName ofTypeName,
-            TypeName unsignedOfTypeName)
+            TypeName ofType,
+            TypeName unsignedOfType)
         {
             super(methodBuilder("get")
                 .addModifiers(PUBLIC));
             this.kindTypeName = kindTypeName;
-            this.ofTypeName = ofTypeName;
-            this.unsignedOfTypeName = unsignedOfTypeName;
+            this.ofType = ofType;
+            this.unsignedOfType = unsignedOfType;
             builder.beginControlFlow("switch (kind())");
         }
 
@@ -640,12 +652,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
+            TypeName primitiveReturnType = ofType.equals(TypeName.BYTE) || ofType.equals(TypeName.SHORT) ?
+                TypeName.INT : TypeName.LONG;
+            TypeName returnType = Objects.requireNonNullElseGet(unsignedOfType, () -> ofType.isPrimitive() ?
+                primitiveReturnType : ClassName.bestGuess("String"));
             return builder.beginControlFlow("default:")
                           .addStatement("throw new IllegalStateException(\"Unrecognized kind: \" + kind())")
                           .endControlFlow()
                           .endControlFlow()
-                          .returns(Objects.requireNonNullElseGet(unsignedOfTypeName,
-                              () -> ofTypeName.isPrimitive() ? ofTypeName : ClassName.bestGuess("String")))
+                          .returns(returnType)
                           .build();
         }
 
@@ -653,7 +668,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         public void mixin(
             TypeSpec.Builder builder)
         {
-            if (ofTypeName != null)
+            if (ofType != null)
             {
                 super.mixin(builder);
             }
@@ -680,9 +695,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         {
             if (ofTypeName != null && unsignedMemberTypeName == null && memberTypeName != null)
             {
-                FieldSpec.Builder bitMaskField = FieldSpec.builder(ofTypeName, bitMask(kindTypeName), PRIVATE,
+                boolean isTypeInt = INTEGER_TYPES.contains(ofTypeName);
+                TypeName bitMaskType = isTypeInt ? TypeName.INT : TypeName.LONG;
+                FieldSpec.Builder bitMaskField = FieldSpec.builder(bitMaskType, bitMask(kindTypeName), PRIVATE,
                     STATIC, FINAL);
-                if (ofTypeName.equals(TypeName.INT))
+                if (isTypeInt)
                 {
                     if (BIT_MASK_INT.get(kindTypeName) != null)
                     {
@@ -725,7 +742,14 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
             if (memberTypeName == null)
             {
-                builder.addStatement("return offset()");
+                if (kindTypeName.isPrimitive())
+                {
+                    builder.addStatement("return offset()");
+                }
+                else
+                {
+                    builder.addStatement("return $L.limit()", enumRO(kindTypeName));
+                }
             }
             else if (DIRECT_BUFFER_TYPE.equals(memberTypeName) || memberTypeName.isPrimitive())
             {
@@ -885,6 +909,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             public MethodSpec generate()
             {
                 boolean hasConstant = false;
+                boolean isParameterTypeLong = TypeName.LONG.equals(ofType) || TypeName.LONG.equals(unsignedOfType);
                 addVariableDefinitions();
 
                 builder.beginControlFlow("switch (highestByteIndex)");
@@ -897,7 +922,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         if (type.value() != Integer.MAX_VALUE)
                         {
                             builder.beginControlFlow("case 0:")
-                                   .beginControlFlow("switch ((int) value)")
+                                   .beginControlFlow("switch ($Lvalue)", isParameterTypeLong ? "(int) " : "")
                                    .beginControlFlow("case $L:", type.value())
                                    .addStatement("$L()", setAs(type.kindTypeName()))
                                    .addStatement("break")
@@ -908,19 +933,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         {
                             if (hasConstant)
                             {
-                                builder.beginControlFlow("default:")
-                                       .addStatement("$L(($L) value)", setAs(type.kindTypeName()),
-                                           type.unsignedKindType() == null ? type.kindType() : type.unsignedKindType())
-                                       .addStatement("break")
-                                       .endControlFlow()
-                                       .endControlFlow()
-                                       .addStatement("break")
-                                       .endControlFlow();
+                                addDefaultCase(type, isParameterTypeLong);
+                                hasConstant = false;
                             }
                             else
                             {
                                 builder.beginControlFlow("case 0:")
-                                       .addStatement(String.format("$L(%svalue)", ofType.equals(TypeName.LONG) ? "(int) " : ""),
+                                       .addStatement(String.format("$L(%svalue)", isParameterTypeLong ? "(int) " : ""),
                                            setAs(type.kindTypeName()))
                                        .addStatement("break")
                                        .endControlFlow();
@@ -928,13 +947,28 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         }
                         break;
                     case 16:
+                        if (hasConstant)
+                        {
+                            builder.endControlFlow()
+                                   .addStatement("break")
+                                   .endControlFlow();
+                            hasConstant = false;
+                        }
                         builder.beginControlFlow("case 1:")
-                               .addStatement(String.format("$L(%svalue)", ofType.equals(TypeName.LONG) ? "(int) " : ""),
+                               .addStatement(String.format("$L(%svalue)", isParameterTypeLong ? "(int) " : ""),
                                    setAs(type.kindTypeName()))
                                .addStatement("break")
                                .endControlFlow();
+
                         break;
                     case 32:
+                        if (hasConstant)
+                        {
+                            builder.endControlFlow()
+                                   .addStatement("break")
+                                   .endControlFlow();
+                            hasConstant = false;
+                        }
                         builder.beginControlFlow("case 2:")
                                .endControlFlow()
                                .beginControlFlow("case 3:")
@@ -944,6 +978,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                                .endControlFlow();
                         break;
                     case 64:
+                        if (hasConstant)
+                        {
+                            builder.endControlFlow()
+                                   .addStatement("break")
+                                   .endControlFlow();
+                            hasConstant = false;
+                        }
                         builder.beginControlFlow("case 4:")
                                .endControlFlow()
                                .beginControlFlow("case 5:")
@@ -975,9 +1016,22 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                        .endControlFlow()
                        .endControlFlow();
                 return builder.addParameter(Objects.requireNonNullElseGet(unsignedOfType, () -> ofType.isPrimitive() ?
-                    ofType : ClassName.bestGuess("String")), "value")
+                    ofType.equals(TypeName.LONG) ? TypeName.LONG : TypeName.INT : ClassName.bestGuess("String")), "value")
                               .addStatement("return this")
                               .build();
+            }
+
+            private void addDefaultCase(
+                TypeWidth type,
+                boolean isParameterTypeLong)
+            {
+                builder.beginControlFlow("default:")
+                       .addStatement("$L($Lvalue)", setAs(type.kindTypeName()), isParameterTypeLong ? "(int) " : "")
+                       .addStatement("break")
+                       .endControlFlow()
+                       .endControlFlow()
+                       .addStatement("break")
+                       .endControlFlow();
             }
 
             private void addVariableDefinitions()
@@ -993,8 +1047,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 {
                     if (unsignedOfType == null)
                     {
+                        TypeName className = ofType.equals(TypeName.LONG) ? TypeName.LONG : TypeName.INT;
                         builder.addStatement("int highestByteIndex = ($L.numberOfTrailingZeros($L.highestOneBit(value)) " +
-                            "+ 1)  >> 3", CLASS_NAMES.get(ofType), CLASS_NAMES.get(ofType));
+                            "+ 1)  >> 3", CLASS_NAMES.get(className), CLASS_NAMES.get(className));
                     }
                     else
                     {
@@ -1009,7 +1064,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 TypeWidth typeZero = kindTypeSet.iterator().next();
                 if (typeZero.width() == 0)
                 {
-                    builder.beginControlFlow(String.format("case %s:", ofType.equals(TypeName.LONG) ? "8" : "4"))
+                    builder.beginControlFlow(String.format("case %s:", unsignedOfType.equals(TypeName.LONG) ? "8" : "4"))
                            .addStatement("$L()", setAs(typeZero.kindTypeName()))
                            .addStatement("break")
                            .endControlFlow();
@@ -1024,38 +1079,41 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 while (iterator.hasNext())
                 {
                     TypeWidth currentType = iterator.next();
-//                    TypeName castType = !currentType.kindType().equals(TypeName.LONG) ? TypeName.INT : TypeName.LONG;
                     if (i == 0)
                     {
                         if (currentType.width() == 0)
                         {
                             builder.beginControlFlow("if (value == 0)")
-                                   .addStatement("$L()", setAs(currentType.kindTypeName));
+                                   .addStatement("$L()", setAs(currentType.kindTypeName))
+                                   .endControlFlow();
                         }
                         else
                         {
                             builder.beginControlFlow("if ((value & $L) == value)", bitMask(currentType.kindTypeName()))
                                    .addStatement(String.format("$L(%svalue)",
                                        currentType.kindType().equals(TypeName.LONG) ? "" :
-                                           ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()));
+                                           ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()))
+                                   .endControlFlow();
                         }
 
                     }
-                    else if (!iterator.hasNext())
+                    else if (!iterator.hasNext() && currentType.value() == Integer.MAX_VALUE)
                     {
                         builder.beginControlFlow("else")
                                .addStatement(String.format("$L(%svalue)",
                                    currentType.kindType().equals(TypeName.LONG) ? "" :
-                                       ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()));
+                                       ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()))
+                               .endControlFlow();
                     }
-                    else
+                    else if (currentType.value() == Integer.MAX_VALUE)
                     {
                         builder.beginControlFlow("else if ((value & $L) == value)",
                             bitMask(currentType.kindTypeName()))
                                .addStatement(String.format("$L(%svalue)", ofType.equals(TypeName.LONG) ? "(int) " : ""),
-                                   setAs(currentType.kindTypeName()));
+                                   setAs(currentType.kindTypeName()))
+                               .endControlFlow();
+
                     }
-                    builder.endControlFlow();
                     i++;
                 }
                 builder.addStatement("break");
@@ -1276,10 +1334,17 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 String memberName)
             {
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("int newLimit = offset() + $L", size("kind"))
-                    .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement("kind($L)", kind(memberName))
-                    .addStatement("limit(newLimit)");
+                if (kindTypeName.isPrimitive())
+                {
+                    code.addStatement("int newLimit = offset() + $L", size("kind"))
+                        .addStatement("checkLimit(newLimit, maxLimit())")
+                        .addStatement("kind($L)", kind(memberName))
+                        .addStatement("limit(newLimit)");
+                }
+                else
+                {
+                    code.addStatement("kind($L)", kind(memberName));
+                }
                 return code;
             }
 
