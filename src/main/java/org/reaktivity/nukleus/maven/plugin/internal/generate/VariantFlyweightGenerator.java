@@ -39,6 +39,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -52,6 +53,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private static final Map<String, Long> BIT_MASK_LONG;
     private static final Map<String, Integer> BIT_MASK_INT;
     private static final Map<TypeName, String> CLASS_NAMES;
+    private static final Set<TypeName> INTEGER_TYPES;
 
     private final String baseName;
     private final TypeSpec.Builder builder;
@@ -106,6 +108,12 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         classNames.put(TypeName.LONG, "Long");
         classNames.put(TypeName.DOUBLE, "Double");
         CLASS_NAMES = unmodifiableMap(classNames);
+
+        Set<TypeName> integerTypes = new HashSet<>();
+        integerTypes.add(TypeName.INT);
+        integerTypes.add(TypeName.SHORT);
+        integerTypes.add(TypeName.BYTE);
+        INTEGER_TYPES = integerTypes;
     }
 
     public VariantFlyweightGenerator(
@@ -612,19 +620,19 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private final class GetMethodGenerator extends MethodSpecGenerator
     {
         private final TypeName kindTypeName;
-        private final TypeName ofTypeName;
-        private final TypeName unsignedOfTypeName;
+        private final TypeName ofType;
+        private final TypeName unsignedOfType;
 
         private GetMethodGenerator(
             TypeName kindTypeName,
-            TypeName ofTypeName,
-            TypeName unsignedOfTypeName)
+            TypeName ofType,
+            TypeName unsignedOfType)
         {
             super(methodBuilder("get")
                 .addModifiers(PUBLIC));
             this.kindTypeName = kindTypeName;
-            this.ofTypeName = ofTypeName;
-            this.unsignedOfTypeName = unsignedOfTypeName;
+            this.ofType = ofType;
+            this.unsignedOfType = unsignedOfType;
             builder.beginControlFlow("switch (kind())");
         }
 
@@ -644,14 +652,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            TypeName primitiveReturnType = ofTypeName.equals(TypeName.BYTE) || ofTypeName.equals(TypeName.SHORT) ||
-                ofTypeName.equals(TypeName.BYTE) ? TypeName.INT : TypeName.LONG;
+            TypeName primitiveReturnType = ofType.equals(TypeName.BYTE) || ofType.equals(TypeName.SHORT) ?
+                TypeName.INT : TypeName.LONG;
+            TypeName returnType = Objects.requireNonNullElseGet(unsignedOfType, () -> ofType.isPrimitive() ?
+                primitiveReturnType : ClassName.bestGuess("String"));
             return builder.beginControlFlow("default:")
                           .addStatement("throw new IllegalStateException(\"Unrecognized kind: \" + kind())")
                           .endControlFlow()
                           .endControlFlow()
-                          .returns(Objects.requireNonNullElseGet(unsignedOfTypeName,
-                              () -> ofTypeName.isPrimitive() ? primitiveReturnType : ClassName.bestGuess("String")))
+                          .returns(returnType)
                           .build();
         }
 
@@ -659,7 +668,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         public void mixin(
             TypeSpec.Builder builder)
         {
-            if (ofTypeName != null)
+            if (ofType != null)
             {
                 super.mixin(builder);
             }
@@ -686,8 +695,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         {
             if (ofTypeName != null && unsignedMemberTypeName == null && memberTypeName != null)
             {
-                boolean isTypeInt = ofTypeName.equals(TypeName.INT) || ofTypeName.equals(TypeName.SHORT)
-                    || ofTypeName.equals(TypeName.BYTE);
+                boolean isTypeInt = INTEGER_TYPES.contains(ofTypeName);
                 TypeName bitMaskType = isTypeInt ? TypeName.INT : TypeName.LONG;
                 FieldSpec.Builder bitMaskField = FieldSpec.builder(bitMaskType, bitMask(kindTypeName), PRIVATE,
                     STATIC, FINAL);
@@ -901,8 +909,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             public MethodSpec generate()
             {
                 boolean hasConstant = false;
-                boolean isParameterTypeLong = ofType.equals(TypeName.LONG) ||
-                    (unsignedOfType != null && unsignedOfType.equals(TypeName.LONG));
+                boolean isParameterTypeLong = TypeName.LONG.equals(ofType) || TypeName.LONG.equals(unsignedOfType);
                 addVariableDefinitions();
 
                 builder.beginControlFlow("switch (highestByteIndex)");
