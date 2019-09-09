@@ -16,37 +16,31 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
 import static java.util.Collections.singleton;
-import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGenerator;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
-public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
+public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
-    private final UnionFlyweightGenerator generator;
+    private final VariantFlyweightGenerator generator;
     private final TypeResolver resolver;
     private final Set<TypeSpecGenerator<?>> defaultResult;
 
-    public UnionVisitor(
-        UnionFlyweightGenerator generator,
+    public VariantVisitor(
+        VariantFlyweightGenerator generator,
         TypeResolver resolver)
     {
         this.generator = generator;
@@ -72,49 +66,25 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     public Collection<TypeSpecGenerator<?>> visitUnion(
         AstUnionNode unionNode)
     {
-        return super.visitUnion(unionNode);
+        return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitVariant(
         AstVariantNode variantNode)
     {
-        return defaultResult();
+        return super.visitVariant(variantNode);
     }
 
     @Override
-    public Collection<TypeSpecGenerator<?>> visitCase(
-        AstUnionCaseNode caseNode)
+    public Collection<TypeSpecGenerator<?>> visitVariantCase(
+        AstVariantCaseNode variantCaseNode)
     {
-        int value = caseNode.value();
-        AstMemberNode memberNode = caseNode.member();
-        String memberName = memberNode.name();
-        AstType memberType = memberNode.type();
-        int size = memberNode.size();
-        String sizeName = memberNode.sizeName();
-        AstByteOrder byteOrder = memberNode.byteOrder();
-
-        if (memberType == AstType.LIST)
-        {
-            ClassName rawType = resolver.resolveClass(memberType);
-            TypeName[] typeArguments = memberNode.types()
-                    .stream()
-                    .skip(1)
-                    .map(resolver::resolveType)
-                    .collect(toList())
-                    .toArray(new TypeName[0]);
-            ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
-            List<AstType> memberTypes = memberNode.types();
-            TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberTypes.get(1));
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
-        }
-        else
-        {
-            TypeName memberTypeName = resolver.resolveType(memberType);
-            TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
-        }
-
+        Object value = variantCaseNode.value();
+        AstType memberType = variantCaseNode.type();
+        TypeName typeName = resolver.resolveType(memberType);
+        TypeName unsignedTypeName = resolver.resolveUnsignedType(memberType);
+        generator.addMember(value, memberType.name(), typeName, unsignedTypeName);
         return defaultResult();
     }
 

@@ -19,12 +19,12 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-// TODO: Will be removed
-public final class NumberFW extends Flyweight
+
+public final class EnumWithUint16FW extends Flyweight
 {
     private static final int FIELD_OFFSET_VALUE = 0;
 
-    private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_BYTE;
+    private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_INT;
 
     @Override
     public int limit()
@@ -32,14 +32,16 @@ public final class NumberFW extends Flyweight
         return offset() + FIELD_SIZE_VALUE;
     }
 
-    public Number get()
+    public EnumWithUint16 get()
     {
-        return Number.valueOf(buffer().getByte(offset() + FIELD_OFFSET_VALUE));
+        return EnumWithUint16.valueOf(buffer().getInt(offset() + FIELD_OFFSET_VALUE));
     }
 
     @Override
-    public NumberFW tryWrap(
-        DirectBuffer buffer, int offset, int maxLimit)
+    public EnumWithUint16FW tryWrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
         if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)
         {
@@ -49,8 +51,10 @@ public final class NumberFW extends Flyweight
     }
 
     @Override
-    public NumberFW wrap(
-        DirectBuffer buffer, int offset, int maxLimit)
+    public EnumWithUint16FW wrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
         checkLimit(limit(), maxLimit);
@@ -63,24 +67,26 @@ public final class NumberFW extends Flyweight
         return maxLimit() == offset() ? "null" : get().toString();
     }
 
-    public static final class Builder extends Flyweight.Builder<NumberFW>
+    public static final class Builder extends Flyweight.Builder<EnumWithUint16FW>
     {
         private boolean valueSet;
 
         public Builder()
         {
-            super(new NumberFW());
+            super(new EnumWithUint16FW());
         }
 
         public Builder wrap(
-            MutableDirectBuffer buffer, int offset, int maxLimit)
+            MutableDirectBuffer buffer,
+            int offset,
+            int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
             return this;
         }
 
         public Builder set(
-            NumberFW value)
+            EnumWithUint16FW value)
         {
             int newLimit = offset() + value.sizeof();
             checkLimit(newLimit, maxLimit());
@@ -91,24 +97,24 @@ public final class NumberFW extends Flyweight
         }
 
         public Builder set(
-            Number value)
+            EnumWithUint16 value)
         {
             MutableDirectBuffer buffer = buffer();
             int offset = offset();
-            int newLimit = offset + BitUtil.SIZE_OF_BYTE;
+            int newLimit = offset + FIELD_SIZE_VALUE;
             checkLimit(newLimit, maxLimit());
-            buffer.putByte(offset, (byte) value.value());
+            buffer.putInt(offset, value.value());
             limit(newLimit);
             valueSet = true;
             return this;
         }
 
         @Override
-        public NumberFW build()
+        public EnumWithUint16FW build()
         {
             if (!valueSet)
             {
-                throw new IllegalStateException("Number not set");
+                throw new IllegalStateException("EnumWithUint16 not set");
             }
             return super.build();
         }

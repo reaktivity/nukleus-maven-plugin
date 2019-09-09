@@ -20,7 +20,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public class BigNumberFW extends Flyweight
+public final class EnumWithUint32FW extends Flyweight
 {
     private static final int FIELD_OFFSET_VALUE = 0;
 
@@ -32,14 +32,16 @@ public class BigNumberFW extends Flyweight
         return offset() + FIELD_SIZE_VALUE;
     }
 
-    public BigNumber get()
+    public EnumWithUint32 get()
     {
-        return BigNumber.valueOf(buffer().getLong(offset()));
+        return EnumWithUint32.valueOf(buffer().getLong(offset() + FIELD_OFFSET_VALUE));
     }
 
     @Override
-    public BigNumberFW tryWrap(
-        DirectBuffer buffer, int offset, int maxLimit)
+    public EnumWithUint32FW tryWrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
         if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)
         {
@@ -49,8 +51,10 @@ public class BigNumberFW extends Flyweight
     }
 
     @Override
-    public BigNumberFW wrap(
-        DirectBuffer buffer, int offset, int maxLimit)
+    public EnumWithUint32FW wrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
         checkLimit(limit(), maxLimit);
@@ -63,24 +67,26 @@ public class BigNumberFW extends Flyweight
         return maxLimit() == offset() ? "null" : get().toString();
     }
 
-    public static final class Builder extends Flyweight.Builder<BigNumberFW>
+    public static final class Builder extends Flyweight.Builder<EnumWithUint32FW>
     {
         private boolean valueSet;
 
         public Builder()
         {
-            super(new BigNumberFW());
+            super(new EnumWithUint32FW());
         }
 
         public Builder wrap(
-            MutableDirectBuffer buffer, int offset, int maxLimit)
+            MutableDirectBuffer buffer,
+            int offset,
+            int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
             return this;
         }
 
         public Builder set(
-            BigNumberFW value)
+            EnumWithUint32FW value)
         {
             int newLimit = offset() + value.sizeof();
             checkLimit(newLimit, maxLimit());
@@ -91,7 +97,7 @@ public class BigNumberFW extends Flyweight
         }
 
         public Builder set(
-            BigNumber value)
+            EnumWithUint32 value)
         {
             MutableDirectBuffer buffer = buffer();
             int offset = offset();
@@ -104,11 +110,11 @@ public class BigNumberFW extends Flyweight
         }
 
         @Override
-        public BigNumberFW build()
+        public EnumWithUint32FW build()
         {
             if (!valueSet)
             {
-                throw new IllegalStateException("BigNumber not set");
+                throw new IllegalStateException("EnumWithUint32 not set");
             }
             return super.build();
         }

@@ -30,6 +30,7 @@ public final class AstScopeNode extends AstNode
     private final List<AstEnumNode> enums;
     private final List<AstStructNode> structs;
     private final List<AstUnionNode> unions;
+    private final List<AstVariantNode> variants;
 
     private AstScopeNode(
         int depth,
@@ -37,7 +38,8 @@ public final class AstScopeNode extends AstNode
         List<AstEnumNode> enums,
         List<AstStructNode> structs,
         List<AstUnionNode> unions,
-        List<AstScopeNode> scopes)
+        List<AstScopeNode> scopes,
+        List<AstVariantNode> variants)
     {
         this.depth = depth;
         this.name = requireNonNull(name);
@@ -45,6 +47,7 @@ public final class AstScopeNode extends AstNode
         this.structs = unmodifiableList(structs);
         this.unions = unmodifiableList(unions);
         this.scopes = unmodifiableList(scopes);
+        this.variants = unmodifiableList(variants);
     }
 
     @Override
@@ -84,12 +87,17 @@ public final class AstScopeNode extends AstNode
         return scopes;
     }
 
+    public List<AstVariantNode> variants()
+    {
+        return variants;
+    }
+
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 11) ^ (scopes.hashCode() << 7) ^
-                (enums.hashCode() << 5) ^ (structs.hashCode() << 3) ^
-                unions.hashCode();
+        return (name.hashCode() << 13) ^ (scopes.hashCode() << 11) ^
+                (enums.hashCode() << 7) ^ (structs.hashCode() << 5) ^
+                (unions.hashCode() << 3) ^ variants.hashCode();
     }
 
     @Override
@@ -111,7 +119,8 @@ public final class AstScopeNode extends AstNode
                 Objects.equals(this.enums, that.enums) &&
                 Objects.equals(this.structs, that.structs) &&
                 Objects.equals(this.unions, that.unions) &&
-                Objects.equals(this.scopes, that.scopes);
+                Objects.equals(this.scopes, that.scopes) &&
+                Objects.equals(this.variants, that.variants);
     }
 
     public static final class Builder extends AstNode.Builder<AstScopeNode>
@@ -122,6 +131,7 @@ public final class AstScopeNode extends AstNode
         private List<AstEnumNode> enums;
         private List<AstStructNode> structs;
         private List<AstUnionNode> unions;
+        private List<AstVariantNode> variants;
 
         public Builder()
         {
@@ -129,6 +139,7 @@ public final class AstScopeNode extends AstNode
             this.enums = new LinkedList<>();
             this.structs = new LinkedList<>();
             this.unions = new LinkedList<>();
+            this.variants = new LinkedList<>();
         }
 
         public Builder depth(int depth)
@@ -176,10 +187,17 @@ public final class AstScopeNode extends AstNode
             return this;
         }
 
+        public Builder variant(
+            AstVariantNode variant)
+        {
+            this.variants.add(variant);
+            return this;
+        }
+
         @Override
         public AstScopeNode build()
         {
-            return new AstScopeNode(depth, name, enums, structs, unions, scopes);
+            return new AstScopeNode(depth, name, enums, structs, unions, scopes, variants);
         }
     }
 }

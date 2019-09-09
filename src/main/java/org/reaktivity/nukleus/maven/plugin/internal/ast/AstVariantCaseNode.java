@@ -17,87 +17,90 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import java.util.Objects;
 
-public final class AstCaseNode extends AstNode
+public final class AstVariantCaseNode extends AstNode
 {
-    private final int value;
-    private final AstMemberNode member;
+    private final Object value;
+    private final AstType type;
 
     @Override
     public <R> R accept(
         Visitor<R> visitor)
     {
-        return visitor.visitCase(this);
+        return visitor.visitVariantCase(this);
     }
 
-    public int value()
+    public Object value()
     {
         return value;
     }
 
-    public AstMemberNode member()
+    public AstType type()
     {
-        return member;
+        return type;
     }
 
     @Override
     public int hashCode()
     {
-        return (member.hashCode() << 11) ^ value;
+        return Objects.hash(value, type);
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(
+        Object o)
     {
         if (o == this)
         {
             return true;
         }
 
-        if (!(o instanceof AstCaseNode))
+        if (!(o instanceof AstVariantCaseNode))
         {
             return false;
         }
 
-        AstCaseNode that = (AstCaseNode)o;
-        return this.value == that.value &&
-                Objects.equals(this.member, that.member);
+        AstVariantCaseNode that = (AstVariantCaseNode)o;
+        return Objects.equals(this.value, that.value) &&
+            Objects.equals(this.type, that.type);
     }
 
-    private AstCaseNode(
-        int value,
-        AstMemberNode member)
+    private AstVariantCaseNode(
+        Object value,
+        AstType type)
     {
         this.value = value;
-        this.member = member;
+        this.type = type;
     }
 
     @Override
     public String toString()
     {
-        return String.format("CASE [value=%d, member=%s]", value, member);
+        return String.format("CASE [value=%s, type=%s]", value, type);
     }
 
-    public static final class Builder extends AstNode.Builder<AstCaseNode>
+    public static final class Builder extends AstNode.Builder<AstVariantCaseNode>
     {
-        private int value;
-        private AstMemberNode member;
+        private Object value;
+        private AstType type;
 
-        public Builder value(int value)
+        public Builder value(
+            Object value)
         {
             this.value = value;
             return this;
         }
 
-        public Builder member(AstMemberNode member)
+        public Builder type(
+            AstType type)
         {
-            this.member = member;
+            this.type = type;
             return this;
         }
 
         @Override
-        public AstCaseNode build()
+        public AstVariantCaseNode build()
         {
-            return new AstCaseNode(value, member);
+            return new AstVariantCaseNode(value, type);
         }
     }
 }

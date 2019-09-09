@@ -15,54 +15,35 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import java.nio.charset.Charset;
-
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 
-// TODO: Will be removed
-public final class ColorFW extends Flyweight
+public final class EnumWithUint64FW extends Flyweight
 {
     private static final int FIELD_OFFSET_VALUE = 0;
 
-    private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_BYTE;
-
-    private final StringFW stringRO = new StringFW();
-
-    public StringFW string()
-    {
-        return stringRO;
-    }
+    private static final int FIELD_SIZE_VALUE = BitUtil.SIZE_OF_LONG;
 
     @Override
     public int limit()
     {
-        return stringRO.limit();
+        return offset() + FIELD_SIZE_VALUE;
     }
 
-    public Color get()
+    public EnumWithUint64 get()
     {
-        return stringRO.asString() != null ? Color.valueOf(stringRO.asString().toUpperCase()) : null;
+        return EnumWithUint64.valueOf(buffer().getLong(offset() + FIELD_OFFSET_VALUE));
     }
 
     @Override
-    public ColorFW tryWrap(
+    public EnumWithUint64FW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
     {
-        if (null == super.tryWrap(buffer, offset, maxLimit))
-        {
-            return null;
-        }
-        if (null == stringRO.tryWrap(buffer, offset, maxLimit))
-        {
-            return null;
-        }
-        if (limit() > maxLimit)
+        if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)
         {
             return null;
         }
@@ -70,13 +51,12 @@ public final class ColorFW extends Flyweight
     }
 
     @Override
-    public ColorFW wrap(
+    public EnumWithUint64FW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        stringRO.wrap(buffer, offset, maxLimit);
         checkLimit(limit(), maxLimit);
         return this;
     }
@@ -87,15 +67,13 @@ public final class ColorFW extends Flyweight
         return maxLimit() == offset() ? "null" : get().toString();
     }
 
-    public static final class Builder extends Flyweight.Builder<ColorFW>
+    public static final class Builder extends Flyweight.Builder<EnumWithUint64FW>
     {
-        private final StringFW.Builder stringRW = new StringFW.Builder();
-
         private boolean valueSet;
 
         public Builder()
         {
-            super(new ColorFW());
+            super(new EnumWithUint64FW());
         }
 
         public Builder wrap(
@@ -103,36 +81,40 @@ public final class ColorFW extends Flyweight
             int offset,
             int maxLimit)
         {
-            stringRW.wrap(buffer, offset, maxLimit);
             super.wrap(buffer, offset, maxLimit);
             return this;
         }
 
         public Builder set(
-            ColorFW value)
+            EnumWithUint64FW value)
         {
-            stringRW.set(value.string());
-            limit(stringRW.build().limit());
+            int newLimit = offset() + value.sizeof();
+            checkLimit(newLimit, maxLimit());
+            buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof());
+            limit(newLimit);
             valueSet = true;
             return this;
         }
 
         public Builder set(
-            Color value,
-            Charset charset)
+            EnumWithUint64 value)
         {
-            stringRW.set(value.value(), charset);
-            limit(stringRW.build().limit());
+            MutableDirectBuffer buffer = buffer();
+            int offset = offset();
+            int newLimit = offset + FIELD_SIZE_VALUE;
+            checkLimit(newLimit, maxLimit());
+            buffer.putLong(offset, value.value());
+            limit(newLimit);
             valueSet = true;
             return this;
         }
 
         @Override
-        public ColorFW build()
+        public EnumWithUint64FW build()
         {
             if (!valueSet)
             {
-                throw new IllegalStateException("Color not set");
+                throw new IllegalStateException("EnumWithUint64 not set");
             }
             return super.build();
         }

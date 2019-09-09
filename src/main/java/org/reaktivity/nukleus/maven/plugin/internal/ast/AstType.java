@@ -79,9 +79,14 @@ public final class AstType
         return Objects.equals(this.name, that.name);
     }
 
-    boolean isSignedInteger()
+    boolean isSignedInt()
     {
         return this == INT8 || this == INT16 || this == INT32 || this == INT64 || this == VARINT32 || this == VARINT64;
+    }
+
+    public boolean isUnsignedInt()
+    {
+        return this == UINT8 || this == UINT16 || this == UINT32 || this == UINT64;
     }
 
     @Override

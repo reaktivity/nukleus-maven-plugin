@@ -15,41 +15,43 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.agrona.collections.Long2ObjectHashMap;
 
-// TODO: Will be removed
-public enum Color
+public enum EnumWithUint32
 {
-    RED("red"),
+    ICHI(4000000001L),
 
-    BLUE("blue"),
+    NI(4000000002L),
 
-    YELLOW("yellow");
+    SAN(4000000003L);
 
-    private final String value;
+    private static final Long2ObjectHashMap<EnumWithUint32> VALUE_BY_LONG;
 
-    Color(String value)
+    static
+    {
+        Long2ObjectHashMap<EnumWithUint32> valueByLong = new Long2ObjectHashMap<>();
+        valueByLong.put(4000000001L, ICHI);
+        valueByLong.put(4000000002L, NI);
+        valueByLong.put(4000000003L, SAN);
+        VALUE_BY_LONG = valueByLong;
+    }
+
+    private final long value;
+
+    EnumWithUint32(
+        long value)
     {
         this.value = value;
     }
 
-    public String value()
+    public long value()
     {
         return value;
     }
 
-    public static Color valueOf(StringFW value)
+    public static EnumWithUint32 valueOf(
+        long value)
     {
-        String kind = value.asString();
-        switch (kind)
-        {
-        case "red":
-            return RED;
-        case "blue":
-            return BLUE;
-        case "yellow":
-            return YELLOW;
-        }
-        return null;
+        return VALUE_BY_LONG.get(value);
     }
 }

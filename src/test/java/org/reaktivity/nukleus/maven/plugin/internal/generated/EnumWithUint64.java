@@ -15,40 +15,44 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-// TODO: Will be removed
-public enum Number
+import org.agrona.collections.Long2ObjectHashMap;
+
+public enum EnumWithUint64
 {
-    ONE(1),
+    ICHI(4000000001L),
 
-    TWO(2),
+    NI(4000000002L),
 
-    THREE(3);
+    SAN(4000000003L);
 
-    private final byte value;
+    private static final Long2ObjectHashMap<EnumWithUint64> VALUE_BY_LONG;
 
-    Number(
-        int value)
+    static
     {
-        this.value = (byte) value;
+        Long2ObjectHashMap<EnumWithUint64> valueByLong = new Long2ObjectHashMap<>();
+        valueByLong.put(4000000001L, ICHI);
+        valueByLong.put(4000000002L, NI);
+        valueByLong.put(4000000003L, SAN);
+        VALUE_BY_LONG = valueByLong;
     }
 
-    public byte value()
+    private final long value;
+
+    EnumWithUint64(
+        long value)
+    {
+        this.value = value;
+    }
+
+    public long value()
     {
         return value;
     }
 
-    public static Number valueOf(
-        byte value)
+    public static EnumWithUint64 valueOf(
+        long value)
     {
-        switch (value)
-        {
-        case 1:
-            return ONE;
-        case 2:
-            return TWO;
-        case 3:
-            return THREE;
-        }
-        return null;
+        return VALUE_BY_LONG.get(value);
     }
 }
+

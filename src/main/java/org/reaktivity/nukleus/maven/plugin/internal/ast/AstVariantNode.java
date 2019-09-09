@@ -22,17 +22,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-public final class AstEnumNode extends AstNode
+public final class AstVariantNode extends AstNode
 {
     private final String name;
-    private final List<AstValueNode> values;
-    private final AstType valueType;
+    private final AstType ofType;
+    private final AstType kindType;
+    private final List<AstVariantCaseNode> cases;
 
     @Override
     public <R> R accept(
         Visitor<R> visitor)
     {
-        return visitor.visitEnum(this);
+        return visitor.visitVariant(this);
     }
 
     public String name()
@@ -40,66 +41,70 @@ public final class AstEnumNode extends AstNode
         return name;
     }
 
-    public List<AstValueNode> values()
+    public AstType of()
     {
-        return values;
+        return ofType;
     }
 
-    public AstType valueType()
+    public AstType kindType()
     {
-        return valueType;
+        return kindType;
+    }
+
+    public List<AstVariantCaseNode> cases()
+    {
+        return cases;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, values, valueType);
+        return Objects.hash(name, ofType, kindType, cases);
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(
+        Object o)
     {
         if (o == this)
         {
             return true;
         }
 
-        if (!(o instanceof AstEnumNode))
+        if (!(o instanceof AstVariantNode))
         {
             return false;
         }
 
-        AstEnumNode that = (AstEnumNode)o;
+        AstVariantNode that = (AstVariantNode)o;
         return Objects.equals(this.name, that.name) &&
-            Objects.equals(this.values, that.values) &&
-            Objects.equals(this.valueType, that.valueType);
+            Objects.equals(this.cases, that.cases) &&
+            Objects.equals(this.ofType, that.ofType) &&
+            Objects.equals(this.kindType, that.kindType);
     }
 
-    @Override
-    public String toString()
-    {
-        return String.format("ENUM [name=%s, values=%s, valueType=%s]", name, values, valueType);
-    }
-
-    private AstEnumNode(
+    private AstVariantNode(
         String name,
-        List<AstValueNode> values,
-        AstType valueType)
+        AstType ofType,
+        AstType kindType,
+        List<AstVariantCaseNode> cases)
     {
         this.name = requireNonNull(name);
-        this.values = unmodifiableList(values);
-        this.valueType = valueType;
+        this.ofType = ofType;
+        this.kindType = kindType;
+        this.cases = unmodifiableList(cases);
     }
 
-    public static final class Builder extends AstNode.Builder<AstEnumNode>
+    public static final class Builder extends AstNode.Builder<AstVariantNode>
     {
         private String name;
-        private List<AstValueNode> values;
-        private AstType valueType;
+        private AstType ofType;
+        private List<AstVariantCaseNode> cases;
+        private AstType kindType;
 
         public Builder()
         {
-            this.values = new LinkedList<>();
+            this.cases = new LinkedList<>();
         }
 
         public Builder name(
@@ -109,34 +114,31 @@ public final class AstEnumNode extends AstNode
             return this;
         }
 
-        public Builder value(
-            AstValueNode value)
+        public Builder of(
+            AstType ofType)
         {
-            this.values.add(value);
+            this.ofType = ofType;
             return this;
         }
 
-        public Builder valueType(
-            AstType valueType)
+        public Builder kindType(
+            AstType kindType)
         {
-            this.valueType = valueType;
+            this.kindType = kindType;
             return this;
         }
 
-        public AstType valueType()
+        public Builder caseN(
+            AstVariantCaseNode caseN)
         {
-            return valueType;
-        }
-
-        public int size()
-        {
-            return values.size();
+            this.cases.add(caseN);
+            return this;
         }
 
         @Override
-        public AstEnumNode build()
+        public AstVariantNode build()
         {
-            return new AstEnumNode(name, values, valueType);
+            return new AstVariantNode(name, ofType, kindType, cases);
         }
     }
 }

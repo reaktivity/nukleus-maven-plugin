@@ -13,26 +13,41 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.reaktivity.nukleus.maven.plugin.internal.generate;
+package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
-
-public abstract class MethodSpecGenerator
+public enum EnumWithUint16
 {
-    protected final MethodSpec.Builder builder;
+    ICHI(60001),
 
-    protected MethodSpecGenerator(
-        MethodSpec.Builder builder)
+    NI(60002),
+
+    SAN(60003);
+
+    private final int value;
+
+    EnumWithUint16(
+        int value)
     {
-        this.builder = builder;
+        this.value = value;
     }
 
-    public abstract MethodSpec generate();
-
-    public void mixin(
-        TypeSpec.Builder builder)
+    public int value()
     {
-        builder.addMethod(generate());
+        return value;
+    }
+
+    public static EnumWithUint16 valueOf(
+        int value)
+    {
+        switch (value)
+        {
+        case 60001:
+            return ICHI;
+        case 60002:
+            return NI;
+        case 60003:
+            return SAN;
+        }
+        return null;
     }
 }
