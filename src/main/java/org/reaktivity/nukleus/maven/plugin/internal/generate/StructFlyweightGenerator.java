@@ -1418,22 +1418,25 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             Object defaultValue,
             AstByteOrder byteOrder)
         {
-            final Object actualDefaultValue = usedAsSize ? 0 : defaultValue;
+            if (usedAsSize)
+            {
+                defaultValue = 0;
+            }
             Consumer<CodeBlock.Builder> defaultPriorField = priorFieldIfDefaulted == null ? null
                     : b -> defaultPriorField(b);
-            memberConstant.addMember(name, type, unsignedType, size, sizeName, usedAsSize, actualDefaultValue);
+            memberConstant.addMember(name, type, unsignedType, size, sizeName, usedAsSize, defaultValue);
             memberField.addMember(name, type, unsignedType, size, sizeName, usedAsSize, byteOrder);
-            memberAccessor.addMember(name, type, unsignedType, usedAsSize, size, sizeName, actualDefaultValue,
+            memberAccessor.addMember(name, type, unsignedType, usedAsSize, size, sizeName, defaultValue,
                     priorFieldIfDefaulted, defaultPriorField);
             memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                    byteOrder, actualDefaultValue, priorFieldIfDefaulted, defaultPriorField);
+                    byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
             wrapMethod.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType,
-                    byteOrder, actualDefaultValue, priorFieldIfDefaulted, defaultPriorField);
-            if (actualDefaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
+                    byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
+            if (defaultValue != null || isImplicitlyDefaulted(type, size, sizeName))
             {
                 priorFieldIfDefaulted = name;
                 priorDefaultedIsPrimitive = type.isPrimitive() || isVarintType(type);
-                priorDefaultValue = actualDefaultValue;
+                priorDefaultValue = defaultValue;
                 priorSizeName = sizeName;
                 priorSizeType = sizeType;
             }
