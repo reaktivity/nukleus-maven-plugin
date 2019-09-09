@@ -56,7 +56,7 @@ public class OctetsFWTest
         byte value = 1;
         buffer.putByte(10, value);
         OctetsFW octets = octetsRO.tryWrap(buffer, 10, 11);
-        byte result[] = new byte[1];
+        byte[] result = new byte[1];
         octets.get((b, o, l) -> result[0] = b.getByte(o));
         assertEquals(value, result[0]);
     }
@@ -67,7 +67,7 @@ public class OctetsFWTest
         byte value = 1;
         buffer.putByte(10, value);
         OctetsFW octets = octetsRO.wrap(buffer, 10, 11);
-        byte result[] = new byte[1];
+        byte[] result = new byte[1];
         octets.get((b, o, l) -> result[0] = b.getByte(o));
         assertEquals(value, result[0]);
     }
@@ -98,7 +98,10 @@ public class OctetsFWTest
         {
             octetsRW.wrap(buffer, 10, 11)
                 .set((b, o, l) ->
-                    { b.putBytes(o, "12".getBytes(UTF_8)); return 2; });
+                {
+                    b.putBytes(o, "12".getBytes(UTF_8));
+                    return 2;
+                });
         }
         finally
         {
@@ -193,12 +196,18 @@ public class OctetsFWTest
     public void shouldFailToPutUsingMutatorWhenExceedsMaxLimit()
     {
         octetsRW.wrap(buffer, 10, 11)
-        .set((b, o, l) ->
-            { b.putBytes(o, "1".getBytes(UTF_8)); return 1; });
+            .set((b, o, l) ->
+            {
+                b.putBytes(o, "1".getBytes(UTF_8));
+                return 1;
+            });
         try
         {
             octetsRW.set((b, o, l) ->
-                    { b.putBytes(o, "2".getBytes(UTF_8)); return 2; });
+            {
+                b.putBytes(o, "2".getBytes(UTF_8));
+                return 2;
+            });
         }
         finally
         {
@@ -294,9 +303,15 @@ public class OctetsFWTest
     {
         int limit = octetsRW.wrap(buffer, 0, buffer.capacity())
                 .put((b, o, l) ->
-                     { b.putBytes(o, "val".getBytes(UTF_8)); return 3; })
+                {
+                    b.putBytes(o, "val".getBytes(UTF_8));
+                    return 3;
+                })
                 .put((b, o, l) ->
-                     { b.putBytes(o, "ue1".getBytes(UTF_8)); return 3; })
+                {
+                    b.putBytes(o, "ue1".getBytes(UTF_8));
+                    return 3;
+                })
                 .build()
                 .limit();
         octetsRO.wrap(buffer,  0,  limit);
@@ -322,5 +337,4 @@ public class OctetsFWTest
         octets.buffer().getBytes(octets.offset(), bytes);
         return new String(bytes, UTF_8);
     }
-
 }

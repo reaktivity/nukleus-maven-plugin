@@ -74,8 +74,8 @@ public class FlatWithListFWTest
     {
         assertEquals(10, flyweight.fixed1());
         assertEquals("value1", flyweight.string1().asString());
-        final String listValue[] = new String[1];
-        flyweight.list1().forEach((s) -> listValue[0] = s.asString());
+        final String[] listValue = new String[1];
+        flyweight.list1().forEach(s -> listValue[0] = s.asString());
         assertEquals("listItem1", listValue[0]);
         assertEquals(11, flyweight.fixed2());
     }
@@ -207,8 +207,7 @@ public class FlatWithListFWTest
         flatRW.wrap(buffer, 0, 100)
             .string1("value1")
             .list1Item(b -> b.set("item1", UTF_8))
-            .list1(b ->
-                   { });
+            .list1(b -> {});
     }
 
     @Test(expected = AssertionError.class)
@@ -234,7 +233,7 @@ public class FlatWithListFWTest
         assertEquals(10, flyweightRO.fixed1());
         assertEquals("value1", flyweightRO.string1().asString());
         final List<String> listValues = new ArrayList<>();
-        flyweightRO.list1().forEach((s) -> listValues.add(s.asString()));
+        flyweightRO.list1().forEach(s -> listValues.add(s.asString()));
         assertEquals(Arrays.asList("item1", "item2", "item3"), listValues);
     }
 
@@ -261,8 +260,7 @@ public class FlatWithListFWTest
                .set("value1", UTF_8)
                .build();
         FlatWithListFW flatWithList = builder.string1(value)
-                .list1(b ->
-                       { })
+                .list1(b -> {})
                .build();
         flyweightRO.wrap(buffer,  0,  flatWithList.limit());
         assertEquals(10, flyweightRO.fixed1());

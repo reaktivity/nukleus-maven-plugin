@@ -27,14 +27,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.lang.model.element.Modifier;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-
-import javax.lang.model.element.Modifier;
 
 public final class EnumTypeGenerator extends ClassSpecGenerator
 {
@@ -258,11 +258,10 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
                 {
                     String enumConstant = constantNames.get(index);
 
-                        Object kind =
-                            valueByConstantName.get(enumConstant) == null ? index : valueByConstantName.get(enumConstant);
-                        builder.beginControlFlow("case $L:", kind)
-                               .addStatement("return $N", enumConstant)
-                               .endControlFlow();
+                    Object kind = valueByConstantName.get(enumConstant) == null ? index : valueByConstantName.get(enumConstant);
+                    builder.beginControlFlow("case $L:", kind)
+                           .addStatement("return $N", enumConstant)
+                           .endControlFlow();
                 }
 
                 builder.endControlFlow().addStatement("return null");

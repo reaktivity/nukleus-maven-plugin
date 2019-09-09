@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.squareup.javapoet.TypeName;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
@@ -36,6 +35,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGenerator;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 
 public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
@@ -167,7 +167,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         AstStructNode currentNode = structNode;
         while (currentNode != null && currentNode.typeId() == 0 && currentNode.supertype() != null)
         {
-           currentNode = resolver.resolve(currentNode.supertype());
+            currentNode = resolver.resolve(currentNode.supertype());
         }
 
         return (currentNode != null) ? currentNode.typeId() : 0;

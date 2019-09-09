@@ -15,23 +15,22 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.agrona.DirectBuffer;
-import org.agrona.MutableDirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW.Builder;
-
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.agrona.BitUtil.SIZE_OF_LONG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+
+import org.agrona.DirectBuffer;
+import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW.Builder;
 
 public class EnumWithInt64FWTest
 {

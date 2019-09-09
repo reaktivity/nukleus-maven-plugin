@@ -15,6 +15,15 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
+
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.function.Function;
+
 import org.antlr.v4.runtime.RuleContext;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
@@ -66,15 +75,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_t
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_array_memberContext;
-
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.function.Function;
-
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>

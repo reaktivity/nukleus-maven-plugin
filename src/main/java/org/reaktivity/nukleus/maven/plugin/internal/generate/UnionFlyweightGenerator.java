@@ -590,9 +590,9 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             TypeName type)
         {
             builder.beginControlFlow("case $L:", kind(name));
-            if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName())
-                || type instanceof ClassName && "String16FW".equals(((ClassName) type).simpleName())
-                || type instanceof ClassName && "String32FW".equals(((ClassName) type).simpleName()))
+            if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName()) ||
+                type instanceof ClassName && "String16FW".equals(((ClassName) type).simpleName()) ||
+                type instanceof ClassName && "String32FW".equals(((ClassName) type).simpleName()))
             {
                 builder.addStatement("return String.format(\"$L [$L=%s]\", $LRO.asString())", baseName.toUpperCase(), name, name);
             }
@@ -978,8 +978,9 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 ClassName className,
                 String sizeName)
             {
-                if ("StringFW".equals(className.simpleName()) || "String16FW".equals(className.simpleName())
-                    || "String32FW".equals(className.simpleName()))
+                if ("StringFW".equals(className.simpleName()) ||
+                    "String16FW".equals(className.simpleName()) ||
+                    "String32FW".equals(className.simpleName()))
                 {
                     CodeBlock.Builder codeBlock = CodeBlock.builder();
                     ClassName builderType = className.nestedClass("Builder");

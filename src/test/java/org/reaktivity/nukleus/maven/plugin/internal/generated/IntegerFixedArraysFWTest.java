@@ -191,87 +191,87 @@ public class IntegerFixedArraysFWTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUint16ArrayBeyondLimit()
     {
-      flyweightRW.wrap(buffer, 10, 13)
-          .appendUint8Array(10)
-          .appendUint16Array((short) 0)
-          .appendUint16Array((short) 0);
+        flyweightRW.wrap(buffer, 10, 13)
+            .appendUint8Array(10)
+            .appendUint16Array((short) 0)
+            .appendUint16Array((short) 0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetUint16ArrayToNull()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-          .appendUint8Array(10)
-          .uint16Array(null);
+            .appendUint8Array(10)
+            .uint16Array(null);
     }
 
     @Test(expected = AssertionError.class)
     public void shouldFailToIncompletelySetUint16ArrayUsingAppend()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-          .appendUint8Array(10)
-          .appendUint16Array(15)
-          .appendUint32Array(13);
+            .appendUint8Array(10)
+            .appendUint16Array(15)
+            .appendUint32Array(13);
     }
 
     @Test(expected =  IllegalArgumentException.class)
     public void shouldFailToIncompletelySetUint16ArrayUsingIterator()
     {
-      flyweightRW.wrap(buffer, 0, buffer.capacity())
-          .appendUint8Array(0)
-          .uint16Array(IntStream.of(1).iterator());
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .appendUint8Array(0)
+            .uint16Array(IntStream.of(1).iterator());
     }
 
     @Test(expected = AssertionError.class)
     public void shouldFailToBuildWithIncompletelySetUint16ArrayUsingAppend()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-          .appendUint8Array(10)
-          .appendUint16Array(15)
-          .build();
+            .appendUint8Array(10)
+            .appendUint16Array(15)
+            .build();
     }
 
     @Test(expected = AssertionError.class)
     public void shouldFailToSetInt32ArrayWithIteratorExceedingSize() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-                .uint8Array(IntStream.of(0xFF).iterator())
-                .uint16Array(IntStream.of(3, 0xFFFF).iterator())
-                .uint32Array(LongStream.of(10, 11, 0xFFFFFFFFL).iterator())
-                .uint64Array(LongStream.of(20, 21, 22, 23).iterator())
-                .anchor("anchor")
-                .int8Array(IntStream.of(127).iterator())
-                .int16Array(IntStream.of(3, 0xFFFF).iterator())
-                .int32Array(IntStream.of(-10, -11, -12, -13).iterator()) // too many values
-                .build();
+            .uint8Array(IntStream.of(0xFF).iterator())
+            .uint16Array(IntStream.of(3, 0xFFFF).iterator())
+            .uint32Array(LongStream.of(10, 11, 0xFFFFFFFFL).iterator())
+            .uint64Array(LongStream.of(20, 21, 22, 23).iterator())
+            .anchor("anchor")
+            .int8Array(IntStream.of(127).iterator())
+            .int16Array(IntStream.of(3, 0xFFFF).iterator())
+            .int32Array(IntStream.of(-10, -11, -12, -13).iterator()) // too many values
+            .build();
     }
 
     @Test
     public void shouldSetAllValuesUsingAppend() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-                .appendUint8Array(0xFF)
-                .appendUint16Array(3)
-                .appendUint16Array(0xFFFF)
-                .appendUint32Array(10)
-                .appendUint32Array(11)
-                .appendUint32Array(0xFFFFFFFFL)
-                .appendUint64Array(20)
-                .appendUint64Array(21)
-                .appendUint64Array(22)
-                .appendUint64Array(23)
-                .anchor("anchor")
-                .appendInt8Array((byte) 127)
-                .appendInt16Array((short) 3)
-                .appendInt16Array((short) 0xFFFF)
-                .appendInt32Array(-10)
-                .appendInt32Array(-11)
-                .appendInt32Array(-12)
-                .appendInt64Array(-20)
-                .appendInt64Array(-21)
-                .appendInt64Array(-22)
-                .appendInt64Array(-23)
-                .build();
+            .appendUint8Array(0xFF)
+            .appendUint16Array(3)
+            .appendUint16Array(0xFFFF)
+            .appendUint32Array(10)
+            .appendUint32Array(11)
+            .appendUint32Array(0xFFFFFFFFL)
+            .appendUint64Array(20)
+            .appendUint64Array(21)
+            .appendUint64Array(22)
+            .appendUint64Array(23)
+            .anchor("anchor")
+            .appendInt8Array((byte) 127)
+            .appendInt16Array((short) 3)
+            .appendInt16Array((short) 0xFFFF)
+            .appendInt32Array(-10)
+            .appendInt32Array(-11)
+            .appendInt32Array(-12)
+            .appendInt64Array(-20)
+            .appendInt64Array(-21)
+            .appendInt64Array(-22)
+            .appendInt64Array(-23)
+            .build();
 
         expected.putByte(0, (byte) 0xFF); // uint8Array[1]
         expected.putShort(1, (short) 3); // uint16Array[2]
@@ -303,16 +303,16 @@ public class IntegerFixedArraysFWTest
     public void shouldSetAllValuesUsingIterators() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-                .uint8Array(IntStream.of(0xFF).iterator())
-                .uint16Array(IntStream.of(3, 0xFFFF).iterator())
-                .uint32Array(LongStream.of(10, 11, 0xFFFFFFFFL).iterator())
-                .uint64Array(LongStream.of(20, 21, 22, 23).iterator())
-                .anchor("anchor")
-                .int8Array(IntStream.of(127).iterator())
-                .int16Array(IntStream.of(3, 0xFFFF).iterator())
-                .int32Array(IntStream.of(-10, -11, -12).iterator())//, -13))
-                .int64Array(LongStream.of(-20, -21, -22, -23).iterator())
-                .build();
+            .uint8Array(IntStream.of(0xFF).iterator())
+            .uint16Array(IntStream.of(3, 0xFFFF).iterator())
+            .uint32Array(LongStream.of(10, 11, 0xFFFFFFFFL).iterator())
+            .uint64Array(LongStream.of(20, 21, 22, 23).iterator())
+            .anchor("anchor")
+            .int8Array(IntStream.of(127).iterator())
+            .int16Array(IntStream.of(3, 0xFFFF).iterator())
+            .int32Array(IntStream.of(-10, -11, -12).iterator())//, -13))
+            .int64Array(LongStream.of(-20, -21, -22, -23).iterator())
+            .build();
 
         expected.putByte(0, (byte) 0xFF); // uint8Array[1]
         expected.putShort(1, (short) 3); // uint16Array[2]
@@ -370,5 +370,4 @@ public class IntegerFixedArraysFWTest
         assertTrue(flyweightRO.toString().contains("uint16Array=[3, 65535]"));
         assertTrue(flyweightRO.toString().contains("int16Array=[3, -1]"));
     }
-
 }

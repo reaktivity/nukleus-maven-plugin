@@ -108,6 +108,22 @@ public final class AstMemberNode extends AstNode
         return sizeType;
     }
 
+    public void sizeType(
+        AstType sizeType)
+    {
+        this.sizeType = sizeType;
+    }
+
+    public void usedAsSize(boolean value)
+    {
+        usedAsSize = value;
+    }
+
+    public boolean usedAsSize()
+    {
+        return usedAsSize;
+    }
+
     public Object defaultValue()
     {
         return defaultValue;
@@ -153,21 +169,6 @@ public final class AstMemberNode extends AstNode
         String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
         return String.format("MEMBER [name=%s, size=%s, types=%s, unsignedType=%s, defaultValue=%s, byteOrder=%s]",
                 name, size, types, unsignedType, defaultValue, byteOrder);
-    }
-
-    public void sizeType(AstType sizeType)
-    {
-        this.sizeType = sizeType;
-    }
-
-    public void usedAsSize(boolean value)
-    {
-        usedAsSize = value;
-    }
-
-    public boolean usedAsSize()
-    {
-        return usedAsSize;
     }
 
     private static <T extends Collection<?>> T requireNotEmpty(

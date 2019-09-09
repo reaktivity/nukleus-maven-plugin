@@ -15,13 +15,13 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import java.nio.charset.Charset;
+
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
-
-import java.nio.charset.Charset;
 
 // TODO: Will be removed
 public final class ColorFW extends Flyweight

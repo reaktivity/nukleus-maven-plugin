@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.stream.Collectors.reducing;
+
 import java.util.stream.Stream;
 
 public abstract class AstNode

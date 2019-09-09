@@ -56,7 +56,7 @@ public class PotentialNameConflitsFWTest
         assertEquals("value", potentialNameConflictsRO.value().asString());
         assertEquals(11, potentialNameConflictsRO.newLimit());
         final String octetsValue = potentialNameConflictsRO.offset$().get(
-                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("1234567890", octetsValue);
         assertEquals("limit", potentialNameConflictsRO.limit$().asString());
     }

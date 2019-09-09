@@ -137,6 +137,11 @@ public final class AstScopeNode extends AstNode
             return this;
         }
 
+        public String name()
+        {
+            return name;
+        }
+
         public Builder name(String name)
         {
             this.name = name;
@@ -169,11 +174,6 @@ public final class AstScopeNode extends AstNode
         {
             this.scopes.add(scope);
             return this;
-        }
-
-        public String name()
-        {
-            return name;
         }
 
         @Override

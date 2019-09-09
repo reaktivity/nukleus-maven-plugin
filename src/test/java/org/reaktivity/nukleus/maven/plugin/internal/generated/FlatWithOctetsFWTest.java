@@ -355,10 +355,10 @@ public class FlatWithOctetsFWTest
         assertEquals(5, flatWithOctetsRO.fixed1());
         assertEquals("value1", flatWithOctetsRO.string1().asString());
         final String octets3 = flatWithOctetsRO.octets3().get(
-                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("678", octets3);
         final String extension = flatWithOctetsRO.extension().get(
-                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("octetsValue", extension);
     }
 
@@ -379,13 +379,13 @@ public class FlatWithOctetsFWTest
         assertEquals(5, flatWithOctetsRO.fixed1());
         assertEquals("value1", flatWithOctetsRO.string1().asString());
         final String octets2 = flatWithOctetsRO.octets2().get(
-                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("12345", octets2);
         final String octets3 = flatWithOctetsRO.octets3().get(
-                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("678", octets3);
         final String extension = flatWithOctetsRO.extension().get(
-                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("octetsValue", extension);
     }
 
@@ -404,7 +404,7 @@ public class FlatWithOctetsFWTest
         assertEquals(5, flatWithOctetsRO.fixed1());
         assertEquals("value1", flatWithOctetsRO.string1().asString());
         final String octetsValue = flatWithOctetsRO.extension().get(
-                (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("octetsValue", octetsValue);
     }
 
