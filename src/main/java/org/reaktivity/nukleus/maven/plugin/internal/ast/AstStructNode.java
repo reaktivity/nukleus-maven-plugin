@@ -82,7 +82,7 @@ public final class AstStructNode extends AstNode
             return false;
         }
 
-        AstStructNode that = (AstStructNode)o;
+        AstStructNode that = (AstStructNode) o;
         return Objects.equals(this.name, that.name) &&
                 this.typeId == that.typeId &&
                 Objects.equals(this.supertype, that.supertype) &&

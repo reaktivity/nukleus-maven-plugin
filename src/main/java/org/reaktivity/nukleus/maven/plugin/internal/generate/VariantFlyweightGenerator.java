@@ -1277,7 +1277,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 String castType = "";
                 if (unsignedMemberTypeName == null)
                 {
-                    if(memberTypeName.equals(TypeName.BYTE))
+                    if (memberTypeName.equals(TypeName.BYTE))
                     {
                         castType = "(byte) ";
                     }

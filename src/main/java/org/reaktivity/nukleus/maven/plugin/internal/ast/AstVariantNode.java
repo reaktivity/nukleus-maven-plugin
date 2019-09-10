@@ -76,7 +76,7 @@ public final class AstVariantNode extends AstNode
             return false;
         }
 
-        AstVariantNode that = (AstVariantNode)o;
+        AstVariantNode that = (AstVariantNode) o;
         return Objects.equals(this.name, that.name) &&
             Objects.equals(this.cases, that.cases) &&
             Objects.equals(this.ofType, that.ofType) &&

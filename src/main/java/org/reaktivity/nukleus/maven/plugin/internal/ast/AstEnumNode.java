@@ -69,7 +69,7 @@ public final class AstEnumNode extends AstNode
             return false;
         }
 
-        AstEnumNode that = (AstEnumNode)o;
+        AstEnumNode that = (AstEnumNode) o;
         return Objects.equals(this.name, that.name) &&
             Objects.equals(this.values, that.values) &&
             Objects.equals(this.valueType, that.valueType);

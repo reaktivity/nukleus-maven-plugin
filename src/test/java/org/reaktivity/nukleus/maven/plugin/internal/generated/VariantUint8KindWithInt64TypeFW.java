@@ -196,7 +196,7 @@ public class VariantUint8KindWithInt64TypeFW extends Flyweight
         private Builder kind(
             int value)
         {
-            buffer().putByte(offset() + FIELD_OFFSET_KIND, (byte)(value & 0xFF));
+            buffer().putByte(offset() + FIELD_OFFSET_KIND, (byte) (value & 0xFF));
             return this;
         }
 

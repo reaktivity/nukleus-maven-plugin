@@ -64,9 +64,9 @@ public class FlyweightBM
     public void init()
     {
         this.buffer = new UnsafeBuffer(allocateDirect(1024).order(nativeOrder()));
-        this.buffer.setMemory(0, 1024, (byte)new Random().nextInt(256));
+        this.buffer.setMemory(0, 1024, (byte) new Random().nextInt(256));
         this.values = new UnsafeBuffer(allocateDirect(1024).order(nativeOrder()));
-        this.values.setMemory(0, 1024, (byte)new Random().nextInt(256));
+        this.values.setMemory(0, 1024, (byte) new Random().nextInt(256));
         iterations = 0;
     }
 

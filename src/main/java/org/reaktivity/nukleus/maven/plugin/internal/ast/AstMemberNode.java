@@ -145,7 +145,7 @@ public final class AstMemberNode extends AstNode
             return false;
         }
 
-        AstMemberNode that = (AstMemberNode)o;
+        AstMemberNode that = (AstMemberNode) o;
         return this.size == that.size &&
                 Objects.equals(this.name, that.name) &&
                 Objects.deepEquals(this.types, that.types) &&

@@ -63,7 +63,7 @@ public final class AstUnionNode extends AstNode
             return false;
         }
 
-        AstUnionNode that = (AstUnionNode)o;
+        AstUnionNode that = (AstUnionNode) o;
         return Objects.equals(this.name, that.name) &&
                 Objects.equals(this.cases, that.cases);
     }

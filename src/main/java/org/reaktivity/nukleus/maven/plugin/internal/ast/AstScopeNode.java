@@ -113,7 +113,7 @@ public final class AstScopeNode extends AstNode
             return false;
         }
 
-        AstScopeNode that = (AstScopeNode)o;
+        AstScopeNode that = (AstScopeNode) o;
         return this.depth == that.depth &&
                 Objects.equals(this.name, that.name) &&
                 Objects.equals(this.enums, that.enums) &&

@@ -75,7 +75,7 @@ public final class AstType
             return false;
         }
 
-        AstType that = (AstType)obj;
+        AstType that = (AstType) obj;
         return Objects.equals(this.name, that.name);
     }
 

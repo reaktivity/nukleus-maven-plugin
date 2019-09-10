@@ -59,7 +59,7 @@ public final class AstVariantCaseNode extends AstNode
             return false;
         }
 
-        AstVariantCaseNode that = (AstVariantCaseNode)o;
+        AstVariantCaseNode that = (AstVariantCaseNode) o;
         return Objects.equals(this.value, that.value) &&
             Objects.equals(this.type, that.type);
     }
