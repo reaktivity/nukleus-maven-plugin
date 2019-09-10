@@ -27,6 +27,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt16;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfInt16FW;
 
 public class VariantEnumKindOfInt16FWTest
 {
