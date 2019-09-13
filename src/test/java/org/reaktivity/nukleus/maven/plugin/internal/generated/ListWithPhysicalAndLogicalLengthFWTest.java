@@ -245,14 +245,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(30, flyweightRO.physicalLength());
-        assertEquals(3, flyweightRO.logicalLength());
+        assertEquals(30, flyweightRO.sizeof());
+        assertEquals(3, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
-        assertEquals(100L, (long) flyweightRO.field1());
+        assertEquals(100L, flyweightRO.field1());
         assertEquals("value2", flyweightRO.field2().asString());
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldSetRequiredAndOptionalValues() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -261,14 +261,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(26, flyweightRO.physicalLength());
-        assertEquals(2, flyweightRO.logicalLength());
+        assertEquals(26, flyweightRO.sizeof());
+        assertEquals(2, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals("value2", flyweightRO.field2().asString());
-        assertNull(flyweightRO.field1());
+        flyweightRO.field1();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldSetOnlyRequiredValues() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -276,11 +276,11 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(19, flyweightRO.physicalLength());
-        assertEquals(1, flyweightRO.logicalLength());
+        assertEquals(19, flyweightRO.sizeof());
+        assertEquals(1, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
-        assertNull(flyweightRO.field1());
-        assertNull(flyweightRO.field2());
+        flyweightRO.field1();
+        flyweightRO.field2();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -320,7 +320,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldSetStringFieldsUsingStringFW()
     {
         ListWithPhysicalAndLogicalLengthFW.Builder builder = flyweightRW.wrap(buffer, 0, buffer.capacity());
@@ -335,14 +335,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(26, flyweightRO.physicalLength());
-        assertEquals(2, flyweightRO.logicalLength());
+        assertEquals(26, flyweightRO.sizeof());
+        assertEquals(2, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
-        assertNull(flyweightRO.field1());
         assertEquals("value2", flyweightRO.field2().asString());
+        flyweightRO.field1();
     }
 
-    @Test
+    @Test(expected = AssertionError.class)
     public void shouldSetStringFieldsUsingBuffer()
     {
         valueBuffer.putStringWithoutLengthUtf8(0, "value0");
@@ -353,11 +353,11 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(26, flyweightRO.physicalLength());
-        assertEquals(2, flyweightRO.logicalLength());
+        assertEquals(26, flyweightRO.sizeof());
+        assertEquals(2, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
-        assertNull(flyweightRO.field1());
         assertEquals("value2", flyweightRO.field2().asString());
+        flyweightRO.field1();
     }
 
     @Test(expected = AssertionError.class)

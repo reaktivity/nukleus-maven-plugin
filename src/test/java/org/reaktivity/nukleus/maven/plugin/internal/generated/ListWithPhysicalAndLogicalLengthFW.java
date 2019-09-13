@@ -53,12 +53,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
     private final int[] optionalOffsets = new int[FIELD_INDEX_FIELD2 + 1];
 
-    public long physicalLength()
-    {
-        return buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET) & 0xFFFF_FFFFL;
-    }
-
-    public long logicalLength()
+    public long length()
     {
         return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET) & 0xFFFF_FFFFL;
     }
@@ -73,21 +68,15 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         return field0RO;
     }
 
-    public Long field1()
+    public long field1()
     {
-        if (optionalOffsets[FIELD_INDEX_FIELD1] == 0)
-        {
-            return null;
-        }
+        assert (bitmask() & (1 << FIELD_INDEX_FIELD1)) != 0 : "Field \"fixed1\" is not set";
         return buffer().getInt(optionalOffsets[FIELD_INDEX_FIELD1]) & 0xFFFF_FFFFL;
     }
 
     public StringFW field2()
     {
-        if ((bitmask() & (1 << FIELD_INDEX_FIELD2)) == 0)
-        {
-            return null;
-        }
+        assert (bitmask() & (1 << FIELD_INDEX_FIELD2)) != 0 : "Field \"fixed2\" is not set";
         return field2RO;
     }
 
@@ -98,7 +87,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        long bitmask = bitmask();
+        final long bitmask = bitmask();
         int fieldLimit = offset + FIELD_OFFSET_FIELD0;
         for (int field = FIELD_INDEX_FIELD0; field < FIELD_INDEX_FIELD2 + 1; field++)
         {
@@ -142,43 +131,40 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             return null;
         }
-        long bitmask = bitmask();
+        final long bitmask = bitmask();
         int fieldLimit = offset + FIELD_OFFSET_FIELD0;
         for (int field = FIELD_INDEX_FIELD0; field < FIELD_INDEX_FIELD2 + 1; field++)
         {
-            if ((bitmask & 1) != 0)
+            switch (field)
             {
-                switch (field)
+            case FIELD_INDEX_FIELD0:
+                if ((bitmask & (1 << FIELD_INDEX_FIELD0)) == 0)
                 {
-                case FIELD_INDEX_FIELD0:
-                    if ((bitmask & (1 << FIELD_INDEX_FIELD0)) == 0)
-                    {
-                        return null;
-                    }
-                    if (null == field0RO.tryWrap(buffer, fieldLimit, maxLimit))
-                    {
-                        return null;
-                    }
-                    fieldLimit = field0RO.limit();
-                    break;
-                case FIELD_INDEX_FIELD1:
-                    if ((bitmask & (1 << FIELD_INDEX_FIELD1)) != 0)
-                    {
-                        optionalOffsets[FIELD_INDEX_FIELD1] = fieldLimit;
-                        fieldLimit += FIELD_SIZE_FIELD1;
-                    }
-                    break;
-                case FIELD_INDEX_FIELD2:
-                    if ((bitmask & (1 << FIELD_INDEX_FIELD2)) != 0)
-                    {
-                        if (null == field2RO.tryWrap(buffer, fieldLimit, maxLimit))
-                        {
-                            return null;
-                        }
-                        fieldLimit = field2RO.limit();
-                    }
-                    break;
+                    return null;
                 }
+                if (null == field0RO.tryWrap(buffer, fieldLimit, maxLimit))
+                {
+                    return null;
+                }
+                fieldLimit = field0RO.limit();
+                break;
+            case FIELD_INDEX_FIELD1:
+                if ((bitmask & (1 << FIELD_INDEX_FIELD1)) != 0)
+                {
+                    optionalOffsets[FIELD_INDEX_FIELD1] = fieldLimit;
+                    fieldLimit += FIELD_SIZE_FIELD1;
+                }
+                break;
+            case FIELD_INDEX_FIELD2:
+                if ((bitmask & (1 << FIELD_INDEX_FIELD2)) != 0)
+                {
+                    if (null == field2RO.tryWrap(buffer, fieldLimit, maxLimit))
+                    {
+                        return null;
+                    }
+                    fieldLimit = field2RO.limit();
+                }
+                break;
             }
         }
         if (limit() > maxLimit)
@@ -191,7 +177,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
     @Override
     public int limit()
     {
-        return (int) physicalLength();
+        return offset() + (int) (buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET) & 0xFFFF_FFFFL);
     }
 
     @Override
@@ -207,11 +193,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
         private final StringFW.Builder field2RW = new StringFW.Builder();
 
-        private int currentBit;
-
-        private int physicalLength;
-
-        private int initialOffset;
+        private int fieldsMask;
 
         public Builder()
         {
@@ -220,7 +202,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
         private StringFW.Builder field0()
         {
-            int newBit = currentBit | (1 << FIELD_INDEX_FIELD0);
+            int newBit = fieldsMask | (1 << FIELD_INDEX_FIELD0);
             assert newBit == (newBit & 0x01) : "Value out of order for field \"field0\" in the list";
             return field0RW.wrap(buffer(), limit(), maxLimit());
         }
@@ -230,8 +212,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             StringFW.Builder field0RW = field0();
             field0RW.set(value, StandardCharsets.UTF_8);
-            currentBit |= 1 << FIELD_INDEX_FIELD0;
-            physicalLength = field0RW.limit();
+            fieldsMask |= 1 << FIELD_INDEX_FIELD0;
             limit(field0RW.build().limit());
             return this;
         }
@@ -241,8 +222,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             StringFW.Builder field0RW = field0();
             field0RW.set(value);
-            currentBit |= 1 << FIELD_INDEX_FIELD0;
-            physicalLength = field0RW.limit();
+            fieldsMask |= 1 << FIELD_INDEX_FIELD0;
             limit(field0RW.build().limit());
             return this;
         }
@@ -254,8 +234,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             StringFW.Builder field0RW = field0();
             field0RW.set(buffer, offset, length);
-            currentBit |= 1 << FIELD_INDEX_FIELD0;
-            physicalLength = field0RW.limit();
+            fieldsMask |= 1 << FIELD_INDEX_FIELD0;
             limit(field0RW.build().limit());
             return this;
         }
@@ -268,20 +247,19 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
                 throw new IllegalArgumentException(String.format("Value %d too low for field \"field1\"", value));
             }
             assert (value & 0xffff_ffff_0000_0000L) == 0L : "Value out of range for field \"field1\"";
-            int newBit = currentBit | (1 << FIELD_INDEX_FIELD1);
+            int newBit = fieldsMask | (1 << FIELD_INDEX_FIELD1);
             assert newBit == (newBit & 0x03) : "Value out of order for field \"field1\" in the list";
             int newLimit = limit() + FIELD_SIZE_FIELD1;
             checkLimit(newLimit, maxLimit());
             buffer().putInt(limit(), (int) (value & 0xFFFF_FFFFL));
-            currentBit |= 1 << FIELD_INDEX_FIELD1;
-            physicalLength += FIELD_SIZE_FIELD1;
+            fieldsMask |= 1 << FIELD_INDEX_FIELD1;
             limit(newLimit);
             return this;
         }
 
         private StringFW.Builder field2()
         {
-            int newBit = currentBit | (1 << FIELD_INDEX_FIELD2);
+            int newBit = fieldsMask | (1 << FIELD_INDEX_FIELD2);
             assert newBit == (newBit & 0x07) : "Value out of order for field \"field2\" in the list";
             return field2RW.wrap(buffer(), limit(), maxLimit());
         }
@@ -291,8 +269,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             StringFW.Builder field2RW = field2();
             field2RW.set(value, StandardCharsets.UTF_8);
-            currentBit |= 1 << FIELD_INDEX_FIELD2;
-            physicalLength = field2RW.limit();
+            fieldsMask |= 1 << FIELD_INDEX_FIELD2;
             limit(field2RW.build().limit());
             return this;
         }
@@ -302,8 +279,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             StringFW.Builder field2RW = field2();
             field2RW.set(value);
-            currentBit |= 1 << FIELD_INDEX_FIELD2;
-            physicalLength = field2RW.limit();
+            fieldsMask |= 1 << FIELD_INDEX_FIELD2;
             limit(field2RW.build().limit());
             return this;
         }
@@ -315,8 +291,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             StringFW.Builder field2RW = field2();
             field2RW.set(buffer, offset, length);
-            currentBit |= 1 << FIELD_INDEX_FIELD2;
-            physicalLength = field2RW.limit();
+            fieldsMask |= 1 << FIELD_INDEX_FIELD2;
             limit(field2RW.build().limit());
             return this;
         }
@@ -328,9 +303,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
             int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
-            currentBit = 0;
-            initialOffset = offset;
-            physicalLength = FIELD_OFFSET_FIELD0;
+            fieldsMask = 0;
             int newLimit = limit() + FIELD_OFFSET_FIELD0;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
@@ -340,11 +313,11 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         @Override
         public ListWithPhysicalAndLogicalLengthFW build()
         {
-            assert (currentBit & 0x01) != 0 : "Required field \"field0\" is not populated";
-            buffer().putInt(initialOffset + PHYSICAL_LENGTH_OFFSET, (int) (physicalLength & 0xFFFF_FFFFL));
-            buffer().putInt(initialOffset + LOGICAL_LENGTH_OFFSET, (int) (Integer.bitCount(currentBit) & 0xFFFF_FFFFL));
-            buffer().putInt(initialOffset + BIT_MASK_OFFSET, (int) (currentBit & 0xFFFF_FFFFL));
-            currentBit = 0;
+            assert (fieldsMask & 0x01) != 0 : "Required field \"field0\" is not populated";
+            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, (int) (limit() & 0xFFFF_FFFFL));
+            buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, (int) (Integer.bitCount(fieldsMask) & 0xFFFF_FFFFL));
+            buffer().putInt(offset() + BIT_MASK_OFFSET, (int) (fieldsMask & 0xFFFF_FFFFL));
+            fieldsMask = 0;
             return super.build();
         }
     }
