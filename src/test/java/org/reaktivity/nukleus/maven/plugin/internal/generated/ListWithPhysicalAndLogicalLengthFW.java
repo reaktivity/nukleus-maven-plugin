@@ -177,7 +177,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
     @Override
     public int limit()
     {
-        return offset() + (int) (buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET) & 0xFFFF_FFFFL);
+        return offset() + buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET) & 0xFFFF;
     }
 
     @Override
@@ -202,14 +202,13 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
         private StringFW.Builder field0()
         {
-            int newBit = fieldsMask | (1 << FIELD_INDEX_FIELD0);
-            assert newBit == (newBit & 0x01) : "Value out of order for field \"field0\" in the list";
             return field0RW.wrap(buffer(), limit(), maxLimit());
         }
 
         public Builder field0(
             String value)
         {
+            assert (fieldsMask & ~0x00) == 0 : "Field \"field0\" is already set or subsequent fields are already set";
             StringFW.Builder field0RW = field0();
             field0RW.set(value, StandardCharsets.UTF_8);
             fieldsMask |= 1 << FIELD_INDEX_FIELD0;
@@ -220,6 +219,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         public Builder field0(
             StringFW value)
         {
+            assert (fieldsMask & ~0x00) == 0 : "Field \"field0\" is already set or subsequent fields are already set";
             StringFW.Builder field0RW = field0();
             field0RW.set(value);
             fieldsMask |= 1 << FIELD_INDEX_FIELD0;
@@ -232,6 +232,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
             int offset,
             int length)
         {
+            assert (fieldsMask & ~0x00) == 0 : "Field \"field0\" is already set or subsequent fields are already set";
             StringFW.Builder field0RW = field0();
             field0RW.set(buffer, offset, length);
             fieldsMask |= 1 << FIELD_INDEX_FIELD0;
@@ -242,6 +243,8 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         public Builder field1(
             long value)
         {
+            assert (fieldsMask & ~0x01) == 0 : "Field \"field1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & 0x01) != 0 : "Prior required field \"field0\" is not set";
             if (value < 0)
             {
                 throw new IllegalArgumentException(String.format("Value %d too low for field \"field1\"", value));
@@ -259,14 +262,14 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
         private StringFW.Builder field2()
         {
-            int newBit = fieldsMask | (1 << FIELD_INDEX_FIELD2);
-            assert newBit == (newBit & 0x07) : "Value out of order for field \"field2\" in the list";
             return field2RW.wrap(buffer(), limit(), maxLimit());
         }
 
         public Builder field2(
             String value)
         {
+            assert (fieldsMask & ~0x03) == 0 : "Field \"field2\" is already set or subsequent fields are already set";
+            assert (fieldsMask & 0x01) != 0 : "Prior required field \"field0\" is not set";
             StringFW.Builder field2RW = field2();
             field2RW.set(value, StandardCharsets.UTF_8);
             fieldsMask |= 1 << FIELD_INDEX_FIELD2;
@@ -277,6 +280,8 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         public Builder field2(
             StringFW value)
         {
+            assert (fieldsMask & ~0x03) == 0 : "Field \"field2\" is already set or subsequent fields are already set";
+            assert (fieldsMask & 0x01) != 0 : "Prior required field \"field0\" is not set";
             StringFW.Builder field2RW = field2();
             field2RW.set(value);
             fieldsMask |= 1 << FIELD_INDEX_FIELD2;
@@ -289,6 +294,8 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
             int offset,
             int length)
         {
+            assert (fieldsMask & ~0x03) == 0 : "Field \"field2\" is already set or subsequent fields are already set";
+            assert (fieldsMask & 0x01) != 0 : "Prior required field \"field0\" is not set";
             StringFW.Builder field2RW = field2();
             field2RW.set(buffer, offset, length);
             fieldsMask |= 1 << FIELD_INDEX_FIELD2;
@@ -313,7 +320,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         @Override
         public ListWithPhysicalAndLogicalLengthFW build()
         {
-            assert (fieldsMask & 0x01) != 0 : "Required field \"field0\" is not populated";
+            assert (fieldsMask & 0x01) != 0 : "Required field \"field0\" is not set";
             buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, (int) (limit() & 0xFFFF_FFFFL));
             buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, (int) (Integer.bitCount(fieldsMask) & 0xFFFF_FFFFL));
             buffer().putInt(offset() + BIT_MASK_OFFSET, (int) (fieldsMask & 0xFFFF_FFFFL));
