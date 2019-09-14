@@ -321,10 +321,9 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         public ListWithPhysicalAndLogicalLengthFW build()
         {
             assert (fieldsMask & 0x01) != 0 : "Required field \"field0\" is not set";
-            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, (int) (limit() & 0xFFFF_FFFFL));
-            buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, (int) (Integer.bitCount(fieldsMask) & 0xFFFF_FFFFL));
-            buffer().putInt(offset() + BIT_MASK_OFFSET, (int) (fieldsMask & 0xFFFF_FFFFL));
-            fieldsMask = 0;
+            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, limit() - offset() & 0xFFFF);
+            buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, Integer.bitCount(fieldsMask) & 0xFFFF);
+            buffer().putInt(offset() + BIT_MASK_OFFSET, fieldsMask & 0xFFFF);
             return super.build();
         }
     }
