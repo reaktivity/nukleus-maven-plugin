@@ -58,9 +58,9 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET) & 0xFFFF_FFFFL;
     }
 
-    private long bitmask()
+    private int bitmask()
     {
-        return buffer().getInt(offset() + BIT_MASK_OFFSET) & 0xFFFF_FFFFL;
+        return buffer().getInt(offset() + BIT_MASK_OFFSET) & 0xFFFF;
     }
 
     public StringFW field0()
@@ -87,7 +87,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        final long bitmask = bitmask();
+        final int bitmask = bitmask();
         int fieldLimit = offset + FIELD_OFFSET_FIELD0;
         for (int field = FIELD_INDEX_FIELD0; field < FIELD_INDEX_FIELD2 + 1; field++)
         {
@@ -250,8 +250,6 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
                 throw new IllegalArgumentException(String.format("Value %d too low for field \"field1\"", value));
             }
             assert (value & 0xffff_ffff_0000_0000L) == 0L : "Value out of range for field \"field1\"";
-            int newBit = fieldsMask | (1 << FIELD_INDEX_FIELD1);
-            assert newBit == (newBit & 0x03) : "Value out of order for field \"field1\" in the list";
             int newLimit = limit() + FIELD_SIZE_FIELD1;
             checkLimit(newLimit, maxLimit());
             buffer().putInt(limit(), (int) (value & 0xFFFF_FFFFL));
