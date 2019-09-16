@@ -53,9 +53,9 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
     private final int[] optionalOffsets = new int[FIELD_INDEX_FIELD2 + 1];
 
-    public long length()
+    public int length()
     {
-        return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET) & 0xFFFF_FFFFL;
+        return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET) & 0xFFFF;
     }
 
     private int bitmask()
