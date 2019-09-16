@@ -60,7 +60,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
 
-        for (int maxLimit=10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
         }
@@ -82,14 +82,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
 
-        for (int maxLimit=10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
         {
             try
             {
                 flyweightRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {

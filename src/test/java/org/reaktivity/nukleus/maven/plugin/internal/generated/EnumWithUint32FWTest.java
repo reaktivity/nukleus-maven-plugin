@@ -73,7 +73,7 @@ public class EnumWithUint32FWTest
     public void shouldNotTryWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -83,14 +83,14 @@ public class EnumWithUint32FWTest
     public void shouldNotWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
                 flyweightRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown for maxLimit " + maxLimit);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {

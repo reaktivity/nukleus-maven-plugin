@@ -83,7 +83,7 @@ public class ArrayFWTest
     public void shouldNotTryWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, arrayRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -93,14 +93,14 @@ public class ArrayFWTest
     public void shouldNotWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
                 arrayRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown for maxLimit " + maxLimit);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {

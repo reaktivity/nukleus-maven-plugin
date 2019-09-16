@@ -70,7 +70,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldNotTryWrapWhenIncompleteCase()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -80,14 +80,14 @@ public class VariantEnumKindWithString32FWTest
     public void shouldNotWrapWhenIncompleteCase()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
                 flyweightRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {
