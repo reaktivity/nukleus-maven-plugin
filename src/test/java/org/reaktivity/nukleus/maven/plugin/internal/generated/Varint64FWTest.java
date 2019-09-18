@@ -88,7 +88,7 @@ public class Varint64FWTest
     {
         int offset = 37;
         buffer.putByte(offset, (byte) 0xfe);
-        for (int i=0; i < 9; i++)
+        for (int i = 0; i < 9; i++)
         {
             buffer.putByte(offset + i, (byte) 0xff);
         }
@@ -173,7 +173,7 @@ public class Varint64FWTest
         // 7-bit values are 01 then 7f 8 times then 7e (which must be reversed)
         int offset = 37;
         buffer.putByte(offset, (byte) 0xfe);
-        for (int i=1; i < 9; i++)
+        for (int i = 1; i < 9; i++)
         {
             buffer.putByte(offset + i, (byte) 0xff);
         }
@@ -189,7 +189,7 @@ public class Varint64FWTest
         // Zig-zagged value is 0xffffffff_ffffffff
         // 7-bit values are 01 followed by 7f 9 times (which must be reversed)
         int offset = 10;
-        for (int i=0; i < 9; i++)
+        for (int i = 0; i < 9; i++)
         {
             buffer.putByte(offset + i, (byte) 0xff);
         }
@@ -206,7 +206,7 @@ public class Varint64FWTest
         // 7-bit values are 01 then 7f 8 times then 7e (which must be reversed)
         int offset = 0;
         expected.putByte(offset, (byte) 0xfe);
-        for (int i=1; i < 9; i++)
+        for (int i = 1; i < 9; i++)
         {
             expected.putByte(offset + i, (byte) 0xff);
         }
@@ -224,7 +224,7 @@ public class Varint64FWTest
         // Zig-zagged value is 0xffffffff_ffffffff
         // 7-bit values are 01 then 7f 8 times then 7f (which must be reversed)
         int offset = 0;
-        for (int i=0; i < 9; i++)
+        for (int i = 0; i < 9; i++)
         {
             expected.putByte(offset + i, (byte) 0xff);
         }

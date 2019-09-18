@@ -66,7 +66,7 @@ public class Generator
         {
             for (int i = 0; i < args.length; i++)
             {
-                switch(args[i])
+                switch (args[i])
                 {
                 case "-v":
                     verbose = true;

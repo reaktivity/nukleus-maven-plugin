@@ -63,7 +63,7 @@ public class VariantUint8KindWithInt64TypeFWTest
     public void shouldNotTryWrapWhenIncompleteCaseInt8()
     {
         int size = setAllTestValuesCaseInt8(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -73,14 +73,14 @@ public class VariantUint8KindWithInt64TypeFWTest
     public void shouldNotWrapWhenIncompleteCaseInt8()
     {
         int size = setAllTestValuesCaseInt8(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
                 flyweightRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {

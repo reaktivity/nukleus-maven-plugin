@@ -105,7 +105,7 @@ public class IntegerVariableArraysFWTest
     public void shouldNotTryWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -115,14 +115,14 @@ public class IntegerVariableArraysFWTest
     public void shouldNotWrapWhenIncomplete()
     {
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
                 flyweightRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {
@@ -207,7 +207,7 @@ public class IntegerVariableArraysFWTest
     public void shouldFailToSetUnsigned64WithInsufficientSpace()
     {
         flyweightRW.wrap(buffer, 10, 10 + 5 + 32);
-        for (int i=0; i < 5; i++)
+        for (int i = 0; i < 5; i++)
         {
             flyweightRW.appendUnsigned64Array(i);
         }
@@ -224,7 +224,7 @@ public class IntegerVariableArraysFWTest
     public void shouldFailToSetSigned16WithInsufficientSpace()
     {
         flyweightRW.wrap(buffer, 10, 10 + 6 + 4);
-        for (int i=0; i < 5; i++)
+        for (int i = 0; i < 5; i++)
         {
             flyweightRW.appendSigned16Array((short) i);
         }

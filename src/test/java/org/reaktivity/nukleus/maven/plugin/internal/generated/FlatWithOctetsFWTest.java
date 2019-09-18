@@ -58,7 +58,7 @@ public class FlatWithOctetsFWTest
         buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
         int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
         buffer.putInt(10 + offsetLengthOctets4, 0);
-        for (int maxLimit=31; maxLimit < 10 + offsetLengthOctets4 + Integer.BYTES; maxLimit++)
+        for (int maxLimit = 31; maxLimit < 10 + offsetLengthOctets4 + Integer.BYTES; maxLimit++)
         {
             assertNull(flatWithOctetsRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -75,14 +75,14 @@ public class FlatWithOctetsFWTest
         buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
         int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
         buffer.putInt(10 + offsetLengthOctets4, 0);
-        for (int maxLimit=10; maxLimit < 10 + offsetLengthOctets4 + Integer.BYTES; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + offsetLengthOctets4 + Integer.BYTES; maxLimit++)
         {
             try
             {
                 flatWithOctetsRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {
