@@ -347,14 +347,14 @@ public class AstParserTest
     @Test
     public void shouldParseStructWithListMember()
     {
-        NukleusParser parser = newParser("struct Person { string lastName; list<string> foreNames; }");
+        NukleusParser parser = newParser("struct Person { string lastName; string[] foreNames; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
                 .member(new AstMemberNode.Builder().type(AstType.STRING).name("lastName").build())
-                .member(new AstMemberNode.Builder().type(AstType.LIST).type(AstType.STRING).name("foreNames").build())
+                .member(new AstMemberNode.Builder().type(AstType.ARRAY).type(AstType.STRING).name("foreNames").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -851,13 +851,13 @@ public class AstParserTest
     @Test
     public void shouldParseListMember()
     {
-        NukleusParser parser = newParser("list<string> field;");
+        NukleusParser parser = newParser("string[] field;");
 
         MemberContext ctx = parser.member();
         AstNode actual = new AstParser().visitMember(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
-                .type(AstType.LIST)
+                .type(AstType.ARRAY)
                 .type(AstType.STRING)
                 .name("field")
                 .build();
@@ -868,12 +868,12 @@ public class AstParserTest
     @Test
     public void shouldParseListMemberString16()
     {
-        NukleusParser parser = newParser("list<string16> field;");
+        NukleusParser parser = newParser("string16[] field;");
         MemberContext ctx = parser.member();
         AstMemberNode actual = new AstParser().visitMember(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
-                .type(AstType.LIST)
+                .type(AstType.ARRAY)
                 .type(AstType.STRING16)
                 .name("field")
                 .build();

@@ -43,7 +43,7 @@ scope test
         {
             uint64 fixed1 = 111;
             string string1;
-            list<string> list1;
+            string[] list1;
             int32 fixed2 = 5;
         }
 

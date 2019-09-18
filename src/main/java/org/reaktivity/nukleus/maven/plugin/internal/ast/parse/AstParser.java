@@ -39,6 +39,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Default_nullContext;
@@ -52,7 +53,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_lit
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.KindContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
@@ -331,11 +331,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitList_member(
-            List_memberContext ctx)
+    public AstNode visitArray_member(
+        Array_memberContext ctx)
     {
-        memberBuilder.type(AstType.LIST);
-        return super.visitList_member(ctx);
+        memberBuilder.type(AstType.ARRAY);
+        return super.visitArray_member(ctx);
     }
 
     @Override

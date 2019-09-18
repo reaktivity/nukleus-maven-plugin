@@ -94,7 +94,7 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String sizeName = memberNode.sizeName();
         AstByteOrder byteOrder = memberNode.byteOrder();
 
-        if (memberType == AstType.LIST)
+        if (memberType == AstType.ARRAY)
         {
             ClassName rawType = resolver.resolveClass(memberType);
             TypeName[] typeArguments = memberNode.types()
