@@ -205,7 +205,7 @@ member
    | octets_member_with_default SEMICOLON
    | integer_array_member SEMICOLON
    | varint_array_member SEMICOLON
-   | list_member SEMICOLON
+   | array_member SEMICOLON
    ;
    
 uint_member_with_default
@@ -236,8 +236,8 @@ varint_array_member
    | varint64_type LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET declarator default_null?
    ;
 
-list_member
-   : list_type declarators
+array_member
+   : array_type declarators
    ;
 
 default_null
@@ -297,8 +297,8 @@ variant_member
    | variant_int_literal
    ;
 
-list_type 
-   : KW_LIST LEFT_ANG_BRACKET simple_type_spec RIGHT_ANG_BRACKET
+array_type
+   : simple_type_spec LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
    ;
 
 string_type

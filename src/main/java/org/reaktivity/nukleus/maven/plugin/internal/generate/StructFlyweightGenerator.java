@@ -2959,7 +2959,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addCode(code.build())
                         .build());
 
-                if ("ListFW".equals(rawType.simpleName()))
+                if ("ArrayFW".equals(rawType.simpleName()))
                 {
                     // Add a method to append list items
                     code = CodeBlock.builder();

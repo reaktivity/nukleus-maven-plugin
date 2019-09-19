@@ -345,16 +345,16 @@ public class AstParserTest
     }
 
     @Test
-    public void shouldParseStructWithListMember()
+    public void shouldParseStructWithArrayMember()
     {
-        NukleusParser parser = newParser("struct Person { string lastName; list<string> foreNames; }");
+        NukleusParser parser = newParser("struct Person { string lastName; string[] foreNames; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
                 .member(new AstMemberNode.Builder().type(AstType.STRING).name("lastName").build())
-                .member(new AstMemberNode.Builder().type(AstType.LIST).type(AstType.STRING).name("foreNames").build())
+                .member(new AstMemberNode.Builder().type(AstType.ARRAY).type(AstType.STRING).name("foreNames").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -522,9 +522,9 @@ public class AstParserTest
     }
 
     @Test(expected = ParseCancellationException.class)
-    public void shouldNotParseStructWithUnboundedListMemberNotLast()
+    public void shouldNotParseStructWithUnboundedArrayMemberNotLast()
     {
-        NukleusParser parser = newParser("struct s {list<uint8> field1; uint8 field2;");
+        NukleusParser parser = newParser("struct s {uint8[] field1; uint8 field2;");
         Struct_typeContext ctx = parser.struct_type();
         new AstParser().visitStruct_type(ctx);
     }
@@ -849,15 +849,15 @@ public class AstParserTest
     }
 
     @Test
-    public void shouldParseListMember()
+    public void shouldParseArrayMember()
     {
-        NukleusParser parser = newParser("list<string> field;");
+        NukleusParser parser = newParser("string[] field;");
 
         MemberContext ctx = parser.member();
         AstNode actual = new AstParser().visitMember(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
-                .type(AstType.LIST)
+                .type(AstType.ARRAY)
                 .type(AstType.STRING)
                 .name("field")
                 .build();
@@ -866,14 +866,14 @@ public class AstParserTest
     }
 
     @Test
-    public void shouldParseListMemberString16()
+    public void shouldParseArrayMemberString16()
     {
-        NukleusParser parser = newParser("list<string16> field;");
+        NukleusParser parser = newParser("string16[] field;");
         MemberContext ctx = parser.member();
         AstMemberNode actual = new AstParser().visitMember(ctx);
 
         AstMemberNode expected = new AstMemberNode.Builder()
-                .type(AstType.LIST)
+                .type(AstType.ARRAY)
                 .type(AstType.STRING16)
                 .name("field")
                 .build();

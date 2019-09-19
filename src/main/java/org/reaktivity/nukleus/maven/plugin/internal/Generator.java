@@ -35,7 +35,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.visit.ScopeVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ArrayFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.FlyweightGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.OctetsFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String16FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String32FlyweightGenerator;
@@ -113,7 +112,6 @@ public class Generator
         typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
         typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
         typeSpecs.add(new String32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new ListFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
         typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
         typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
         typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
