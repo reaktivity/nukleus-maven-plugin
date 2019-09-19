@@ -15,23 +15,22 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.agrona.DirectBuffer;
-import org.agrona.MutableDirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW.Builder;
-
 import static java.nio.ByteBuffer.allocateDirect;
 import static org.agrona.BitUtil.SIZE_OF_LONG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+
+import org.agrona.DirectBuffer;
+import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt64FW.Builder;
 
 public class EnumWithInt64FWTest
 {
@@ -98,7 +97,7 @@ public class EnumWithInt64FWTest
             }
         };
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -115,14 +114,14 @@ public class EnumWithInt64FWTest
             }
         };
         int size = setAllTestValues(buffer, 10);
-        for (int maxLimit=10; maxLimit < 10 + size; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
         {
             try
             {
                 flyweightRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown for maxLimit " + maxLimit);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {

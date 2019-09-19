@@ -19,6 +19,7 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
@@ -28,6 +29,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -81,21 +83,28 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
     }
 
     @Override
+    public Collection<TypeSpecGenerator<?>> visitVariant(
+        AstVariantNode variantNode)
+    {
+        return defaultResult();
+    }
+
+    @Override
     public Collection<TypeSpecGenerator<?>> visitMember(
         AstMemberNode memberNode)
     {
         String memberName = memberNode.name();
         AstType memberType = memberNode.type();
-        AstType memberUnsignedType = memberNode.unsignedType();
         int size = memberNode.size();
         String sizeName = memberNode.sizeName();
-        TypeName sizeTypeName = resolver.resolveType(memberNode.sizeType());
+        TypeName sizeTypeName = memberNode.sizeType() == null ? null : memberNode.sizeType().isUnsignedInt() ?
+            resolver.resolveUnsignedType(memberNode.sizeType()) : resolver.resolveType(memberNode.sizeType());
 
         boolean usedAsSize = memberNode.usedAsSize();
         Object defaultValue = memberNode.defaultValue();
         AstByteOrder byteOrder = memberNode.byteOrder();
 
-        if (memberType == AstType.LIST || memberType == AstType.ARRAY)
+        if (memberType == AstType.ARRAY)
         {
             ClassName rawType = resolver.resolveClass(memberType);
             TypeName[] typeArguments = memberNode.types()
@@ -105,7 +114,8 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                     .collect(toList())
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
-            TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
+            List<AstType> memberTypes = memberNode.types();
+            TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberTypes.get(1));
             generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
                     false, defaultValue, byteOrder);
         }
@@ -117,7 +127,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                 throw new IllegalArgumentException(String.format(
                         " Unable to resolve type %s for field %s", memberType, memberName));
             }
-            TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
+            TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
             generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
                     usedAsSize, defaultValue, byteOrder);
         }

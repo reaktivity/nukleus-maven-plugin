@@ -32,6 +32,7 @@ public final class AstStructNode extends AstNode
     private final String supertype;
     private final List<AstMemberNode> members;
 
+
     @Override
     public <R> R accept(
         Visitor<R> visitor)
@@ -81,7 +82,7 @@ public final class AstStructNode extends AstNode
             return false;
         }
 
-        AstStructNode that = (AstStructNode)o;
+        AstStructNode that = (AstStructNode) o;
         return Objects.equals(this.name, that.name) &&
                 this.typeId == that.typeId &&
                 Objects.equals(this.supertype, that.supertype) &&
@@ -139,7 +140,8 @@ public final class AstStructNode extends AstNode
                 if (sizeField.isPresent())
                 {
                     AstMemberNode size = sizeField.get();
-                    member.sizeType(size.unsignedType() != null ? size.unsignedType() : size.type());
+                    member.sizeType(size.type());
+
                     if (size.defaultValue() != null)
                     {
                         throw new IllegalArgumentException(format(
@@ -161,14 +163,14 @@ public final class AstStructNode extends AstNode
                                 member.sizeName(), member.name()));
                         }
                     }
-                    else if (defaultsToNull && !size.type().isSignedInteger())
+                    else if (defaultsToNull && !size.type().isSignedInt())
                     {
                         Object sizeType = size.type();
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
                                 member.sizeName(), member.name()));
                     }
-                    else if (!defaultsToNull && size.unsignedType() == null)
+                    else if (!defaultsToNull && !size.type().isUnsignedInt())
                     {
                         throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" must be an unsigned integer type",

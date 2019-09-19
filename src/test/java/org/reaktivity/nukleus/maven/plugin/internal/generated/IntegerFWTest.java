@@ -159,14 +159,14 @@ public class IntegerFWTest
     public void shouldFailToSetUnsigned16WithInsufficientSpace()
     {
         integersRW.wrap(buffer, 10, 12)
-               .unsigned16(10);
+            .unsigned16(10);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetUnsigned16WithValueTooHigh()
     {
         integersRW.wrap(buffer, 0, buffer.capacity())
-               .unsigned16(0xFFFF + 1);
+            .unsigned16(0xFFFF + 1);
     }
 
     @Test
@@ -175,7 +175,7 @@ public class IntegerFWTest
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage("unsigned16");
         integersRW.wrap(buffer, 0, buffer.capacity())
-               .unsigned16(-1);
+            .unsigned16(-1);
     }
 
     @Test(expected = AssertionError.class)
@@ -199,15 +199,15 @@ public class IntegerFWTest
     public void shouldSetAllValues() throws Exception
     {
         integersRW.wrap(buffer, 0, buffer.capacity())
-                .unsigned8(10)
-                .unsigned16(20)
-                .unsigned32(30)
-                .unsigned64(40)
-                .signed8((byte) -10)
-                .signed16((short) -20)
-                .signed32(-30)
-                .signed64(-40)
-                .build();
+            .unsigned8(10)
+            .unsigned16(20)
+            .unsigned32(30)
+            .unsigned64(40)
+            .signed8((byte) -10)
+            .signed16((short) -20)
+            .signed32(-30)
+            .signed64(-40)
+            .build();
         integersRO.wrap(buffer,  0,  100);
         assertEquals(10, integersRO.unsigned8());
     }

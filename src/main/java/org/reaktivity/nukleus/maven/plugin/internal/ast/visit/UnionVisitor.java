@@ -19,16 +19,18 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGenerator;
@@ -74,8 +76,15 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     }
 
     @Override
+    public Collection<TypeSpecGenerator<?>> visitVariant(
+        AstVariantNode variantNode)
+    {
+        return defaultResult();
+    }
+
+    @Override
     public Collection<TypeSpecGenerator<?>> visitCase(
-        AstCaseNode caseNode)
+        AstUnionCaseNode caseNode)
     {
         int value = caseNode.value();
         AstMemberNode memberNode = caseNode.member();
@@ -83,10 +92,9 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         AstType memberType = memberNode.type();
         int size = memberNode.size();
         String sizeName = memberNode.sizeName();
-        AstType memberUnsignedType = memberNode.unsignedType();
         AstByteOrder byteOrder = memberNode.byteOrder();
 
-        if (memberType == AstType.LIST)
+        if (memberType == AstType.ARRAY)
         {
             ClassName rawType = resolver.resolveClass(memberType);
             TypeName[] typeArguments = memberNode.types()
@@ -96,13 +104,14 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
                     .collect(toList())
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
-            TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
+            List<AstType> memberTypes = memberNode.types();
+            TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberTypes.get(1));
             generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
         }
         else
         {
             TypeName memberTypeName = resolver.resolveType(memberType);
-            TypeName memberUnsignedTypeName = resolver.resolveType(memberUnsignedType);
+            TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
             generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
         }
 

@@ -39,11 +39,11 @@ scope test
             int64 fixed5;
         }
 
-        struct FlatWithList
+        struct FlatWithArray
         {
             uint64 fixed1 = 111;
             string string1;
-            list<string> list1;
+            string[] array1;
             int32 fixed2 = 5;
         }
 
@@ -68,11 +68,50 @@ scope test
             octets extension;
         }
 
+//        list[uint32, uint32] ListWithPhysicalAndLogicalLength
+//        {
+//            required string field0;
+//            uint32 field1;
+//            string field2;
+//        }
+
         union UnionOctets switch (uint8)
         {
             case 1: octets[4] octets4;
             case 2: octets[16] octets16;
             case 3: string string1;
+        }
+
+        variant VariantUint8KindWithUint64Type switch (uint8) of uint64
+        {
+            case 0x80: uint64;
+            case 0x53: uint8;
+            case 0x44: 0;
+            case 0x01: 1;
+            case 0x70: uint32;
+            case 0x60: uint16;
+        }
+
+        variant VariantUint8KindWithString32Type switch (uint8) of string32
+        {
+           case 0xa1: string;
+           case 0x16: string16;
+           case 0xb1: string32;
+        }
+
+        variant VariantUnsignedIntWithoutExplicitType switch (uint8)
+        {
+           case 0x70: uint32;
+           case 0x52: uint8;
+           case 0x43: 0;
+        }
+
+        variant VariantUint8KindWithInt64Type switch (uint8) of int64
+        {
+            case 0x71: int32;
+            case 0x81: int64;
+            case 0x51: int8;
+            case 0x61: int16;
         }
 
         struct Integers
@@ -159,6 +198,34 @@ scope test
             TWELVE (0x12L)
         }
 
+        enum EnumWithUint8 (uint8)
+        {
+            ICHI (201),
+            NI (202),
+            SAN (203)
+        }
+
+        enum EnumWithUint16 (uint16)
+        {
+            ICHI (60001),
+            NI (60002),
+            SAN (60003)
+        }
+
+        enum EnumWithUint32 (uint32)
+        {
+            ICHI (4000000001L),
+            NI (4000000002L),
+            SAN (4000000003L)
+        }
+
+        enum EnumWithUint64 (uint64)
+        {
+            ICHI (4000000001L),
+            NI (4000000002L),
+            SAN (4000000003L)
+        }
+
         enum EnumWithString (string)
         {
             BLUE ("blue"),
@@ -202,5 +269,53 @@ scope test
             int8[length4] array4 = null;
         }
 
+        variant VariantEnumKindWithInt32 switch (EnumWithInt8) of int32
+        {
+            case ONE: int8;
+            case TWO: int16;
+            case THREE: int32;
+        }
+
+        variant VariantEnumKindWithString32 switch (EnumWithInt8) of string32
+        {
+            case ONE: string;
+            case TWO: string16;
+            case THREE: string32;
+        }
+
+        variant VariantEnumKindOfInt8 switch (EnumWithInt8) of int8
+        {
+            case ONE: int8;
+            case TWO: 0;
+            case THREE: 1;
+        }
+
+        variant VariantEnumKindOfInt16 switch (EnumWithInt16) of int16
+        {
+            case ONE: 0;
+            case TWO: int8;
+            case THREE: int16;
+        }
+
+        variant VariantEnumKindOfUint8 switch (EnumWithUint8) of uint8
+        {
+            case ICHI: uint8;
+            case NI: 0;
+            case SAN: 1;
+        }
+
+        variant VariantEnumKindOfUint16 switch (EnumWithUint16) of uint16
+        {
+            case ICHI: uint16;
+            case NI: uint8;
+            case SAN: 0;
+        }
+
+        variant VariantEnumKindOfUint32 switch (EnumWithUint32) of uint32
+        {
+            case ICHI: 0;
+            case NI: uint32;
+            case SAN: 1;
+        }
     }
 }

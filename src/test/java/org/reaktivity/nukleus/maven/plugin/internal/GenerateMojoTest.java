@@ -77,9 +77,9 @@ public class GenerateMojoTest
     @Ignore("TODO: validate this in the grammar by defining unbounded_struct_type")
     public void shouldNotGenerateInvalidStructOctetsNotLastNested()
         throws Exception
-        {
-            generator.scopeNames("invalidOctetsNotLastNested")
-                .generate();
+    {
+        generator.scopeNames("invalidOctetsNotLastNested")
+                 .generate();
     }
 
     @Test(expected = IllegalArgumentException.class)

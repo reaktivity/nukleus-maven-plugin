@@ -30,6 +30,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
@@ -39,12 +40,14 @@ public final class TypeResolver
     private final String packageName;
     private final Map<String, AstStructNode> structsByName;
     private final Map<AstType, TypeName> namesByType;
+    private final Map<AstType, TypeName> namesByUnsignedType;
 
     public TypeResolver(
         String packageName)
     {
         this.structsByName = new HashMap<>();
         this.namesByType = initNamesByType(packageName);
+        this.namesByUnsignedType =  initNamesByUnsignedType();
         this.packageName = packageName;
     }
 
@@ -70,6 +73,12 @@ public final class TypeResolver
         return namesByType.get(type);
     }
 
+    public TypeName resolveUnsignedType(
+        AstType type)
+    {
+        return namesByUnsignedType.get(type);
+    }
+
     public ClassName resolveClass(
         AstType type)
     {
@@ -91,7 +100,6 @@ public final class TypeResolver
         namesByType.put(AstType.STRING, ClassName.get(packageName, "StringFW"));
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.STRING32, ClassName.get(packageName, "String32FW"));
-        namesByType.put(AstType.LIST, ClassName.get(packageName, "ListFW"));
         namesByType.put(AstType.ARRAY, ClassName.get(packageName, "ArrayFW"));
         namesByType.put(AstType.OCTETS, ClassName.get(packageName, "OctetsFW"));
         namesByType.put(AstType.INT8, TypeName.BYTE);
@@ -105,6 +113,16 @@ public final class TypeResolver
         namesByType.put(AstType.INT64, TypeName.LONG);
         namesByType.put(AstType.UINT64, TypeName.LONG);
         return namesByType;
+    }
+
+    private static Map<AstType, TypeName> initNamesByUnsignedType()
+    {
+        Map<AstType, TypeName> namesByUnsignedType = new HashMap<>();
+        namesByUnsignedType.put(AstType.UINT8, TypeName.INT);
+        namesByUnsignedType.put(AstType.UINT16, TypeName.INT);
+        namesByUnsignedType.put(AstType.UINT32, TypeName.LONG);
+        namesByUnsignedType.put(AstType.UINT64, TypeName.LONG);
+        return namesByUnsignedType;
     }
 
     private static final class QualifiedNameVisitor extends AstNode.Visitor<Map<String, AstStructNode>>
@@ -205,6 +223,13 @@ public final class TypeResolver
             AstUnionNode unionNode)
         {
             return visitNamedType(unionNode, unionNode.name(), super::visitUnion);
+        }
+
+        @Override
+        public Map<AstType, TypeName> visitVariant(
+            AstVariantNode variantNode)
+        {
+            return visitNamedType(variantNode, variantNode.name(), super::visitVariant);
         }
 
         private <N extends AstNode> Map<AstType, TypeName> visitNamedType(

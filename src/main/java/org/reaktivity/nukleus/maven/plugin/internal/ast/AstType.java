@@ -38,7 +38,6 @@ public final class AstType
     public static final AstType STRING16 = new AstType("string16");
     public static final AstType STRING32 = new AstType("string32");
 
-    public static final AstType LIST = new AstType("list");
     public static final AstType ARRAY = new AstType("array");
     public static final AstType STRUCT = new AstType("struct");
 
@@ -75,13 +74,18 @@ public final class AstType
             return false;
         }
 
-        AstType that = (AstType)obj;
+        AstType that = (AstType) obj;
         return Objects.equals(this.name, that.name);
     }
 
-    boolean isSignedInteger()
+    boolean isSignedInt()
     {
         return this == INT8 || this == INT16 || this == INT32 || this == INT64 || this == VARINT32 || this == VARINT64;
+    }
+
+    public boolean isUnsignedInt()
+    {
+        return this == UINT8 || this == UINT16 || this == UINT32 || this == UINT64;
     }
 
     @Override

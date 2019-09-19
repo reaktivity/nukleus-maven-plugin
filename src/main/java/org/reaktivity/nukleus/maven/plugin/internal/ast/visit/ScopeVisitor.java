@@ -21,21 +21,23 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.squareup.javapoet.TypeName;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGenerator;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 
 public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
@@ -127,14 +129,37 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = enumNode.name();
         AstType enumType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         TypeName valueTypeName = resolver.resolveType(enumNode.valueType());
+        TypeName unsignedValueTypeName = resolver.resolveUnsignedType(enumNode.valueType());
         ClassName enumFlyweightName = resolver.resolveClass(enumType);
         ClassName enumTypeName = enumFlyweightName.peerClass(baseName);
 
-        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName, valueTypeName);
-        EnumFlyweightGenerator flyweightGenerator =
-                new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(), enumTypeName, valueTypeName);
+        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName, valueTypeName, unsignedValueTypeName);
+        EnumFlyweightGenerator flyweightGenerator = new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(),
+            enumTypeName, valueTypeName, unsignedValueTypeName);
 
         return new EnumVisitor(typeGenerator, flyweightGenerator).visitEnum(enumNode);
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitVariant(
+        AstVariantNode variantNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        String baseName = variantNode.name();
+        AstType variantType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+        ClassName variantName = resolver.resolveClass(variantType);
+
+        TypeName kindTypeName = variantNode.kindType().equals(AstType.UINT8) ? resolver.resolveType(AstType.UINT8) :
+            resolver.resolveClass(variantNode.kindType());
+        TypeName ofTypeName = resolver.resolveType(variantNode.of());
+        TypeName unsignedOfTypeName = resolver.resolveUnsignedType(variantNode.of());
+        VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName,
+            kindTypeName, ofTypeName, unsignedOfTypeName);
+        return new VariantVisitor(generator, resolver).visitVariant(variantNode);
     }
 
     @Override
@@ -167,7 +192,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         AstStructNode currentNode = structNode;
         while (currentNode != null && currentNode.typeId() == 0 && currentNode.supertype() != null)
         {
-           currentNode = resolver.resolve(currentNode.supertype());
+            currentNode = resolver.resolve(currentNode.supertype());
         }
 
         return (currentNode != null) ? currentNode.typeId() : 0;

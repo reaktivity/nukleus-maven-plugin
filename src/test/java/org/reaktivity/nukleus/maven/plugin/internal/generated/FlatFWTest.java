@@ -70,7 +70,7 @@ public class FlatFWTest
         buffer.putByte(10 + offsetString1, (byte) 0);
         int offsetString2 = offsetString1 + Byte.BYTES + Integer.BYTES;
         buffer.putByte(10 + offsetString2, (byte) 1);
-        for (int maxLimit=10; maxLimit < 10 + offsetString2 + Byte.BYTES; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + offsetString2 + Byte.BYTES; maxLimit++)
         {
             assertNull(flatRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -83,14 +83,14 @@ public class FlatFWTest
         buffer.putByte(10 + offsetString1, (byte) 0);
         int offsetString2 = offsetString1 + Byte.BYTES + Integer.BYTES;
         buffer.putByte(10 + offsetString2, (byte) 1);
-        for (int maxLimit=10; maxLimit < 10 + offsetString2 + Byte.BYTES; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + offsetString2 + Byte.BYTES; maxLimit++)
         {
             try
             {
                 flatRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (!(e instanceof IndexOutOfBoundsException))
                 {

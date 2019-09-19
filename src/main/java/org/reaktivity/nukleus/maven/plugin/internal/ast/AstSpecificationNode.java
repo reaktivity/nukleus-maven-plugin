@@ -54,7 +54,7 @@ public final class AstSpecificationNode extends AstNode
             return false;
         }
 
-        AstSpecificationNode that = (AstSpecificationNode)o;
+        AstSpecificationNode that = (AstSpecificationNode) o;
         return Objects.equals(this.scope, that.scope);
     }
 

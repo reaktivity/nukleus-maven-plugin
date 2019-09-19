@@ -76,7 +76,7 @@ public final class AstValueNode extends AstNode
             return false;
         }
 
-        AstValueNode that = (AstValueNode)o;
+        AstValueNode that = (AstValueNode) o;
         return this.ordinal == that.ordinal &&
                 Objects.equals(this.name, that.name);
     }
