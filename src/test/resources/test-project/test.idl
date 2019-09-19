@@ -39,11 +39,11 @@ scope test
             int64 fixed5;
         }
 
-        struct FlatWithList
+        struct FlatWithArray
         {
             uint64 fixed1 = 111;
             string string1;
-            string[] list1;
+            string[] array1;
             int32 fixed2 = 5;
         }
 

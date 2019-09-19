@@ -345,7 +345,7 @@ public class AstParserTest
     }
 
     @Test
-    public void shouldParseStructWithListMember()
+    public void shouldParseStructWithArrayMember()
     {
         NukleusParser parser = newParser("struct Person { string lastName; string[] foreNames; }");
         Struct_typeContext ctx = parser.struct_type();
@@ -522,9 +522,9 @@ public class AstParserTest
     }
 
     @Test(expected = ParseCancellationException.class)
-    public void shouldNotParseStructWithUnboundedListMemberNotLast()
+    public void shouldNotParseStructWithUnboundedArrayMemberNotLast()
     {
-        NukleusParser parser = newParser("struct s {list<uint8> field1; uint8 field2;");
+        NukleusParser parser = newParser("struct s {uint8[] field1; uint8 field2;");
         Struct_typeContext ctx = parser.struct_type();
         new AstParser().visitStruct_type(ctx);
     }
@@ -849,7 +849,7 @@ public class AstParserTest
     }
 
     @Test
-    public void shouldParseListMember()
+    public void shouldParseArrayMember()
     {
         NukleusParser parser = newParser("string[] field;");
 
@@ -866,7 +866,7 @@ public class AstParserTest
     }
 
     @Test
-    public void shouldParseListMemberString16()
+    public void shouldParseArrayMemberString16()
     {
         NukleusParser parser = newParser("string16[] field;");
         MemberContext ctx = parser.member();
