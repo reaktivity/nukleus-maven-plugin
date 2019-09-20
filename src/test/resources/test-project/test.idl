@@ -24,7 +24,7 @@ scope test
             uint64 fixed1;
         }
 
-        struct Flat extends test::inner::FlatParent [0x10000001]
+        struct Flat extends FlatParent [0x10000001]
         {
             uint16 fixed2 = 222;
             string string1;
@@ -35,7 +35,7 @@ scope test
         struct Nested
         {
             uint64 fixed4 = 444;
-            test::inner::Flat flat;
+            Flat flat;
             int64 fixed5;
         }
 
@@ -160,7 +160,7 @@ scope test
         struct NestedAllDefaulting
         {
             uint8 fixed1 = 11;
-            test::inner::Integers integers;
+            Integers integers;
         }
 
         enum Roll

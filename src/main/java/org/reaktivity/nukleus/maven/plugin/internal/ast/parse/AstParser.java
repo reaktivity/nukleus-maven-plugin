@@ -235,7 +235,9 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         Scoped_nameContext scopedName = ctx.scoped_name();
         if (scopedName != null)
         {
-            structBuilder.supertype(scopedName.getText());
+            final String superType = scopedName.getText();
+            final String qualifiedSuperTypeName = qualifiedNamesByLocalName.getOrDefault(superType, superType);
+            structBuilder.supertype(qualifiedSuperTypeName);
         }
 
         super.visitStruct_type(ctx);
