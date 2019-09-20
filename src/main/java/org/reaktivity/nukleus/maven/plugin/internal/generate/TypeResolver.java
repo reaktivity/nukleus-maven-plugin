@@ -157,11 +157,9 @@ public final class TypeResolver
         {
             try
             {
-                final String structName = structNode.name();
-                nestedNames.addLast(structName);
+                nestedNames.addLast(structNode.name());
                 String qualifiedName = String.join("::", nestedNames);
                 structsByName.put(qualifiedName, structNode);
-                structsByName.put(structName, structNode);
                 return super.visitStruct(structNode);
             }
             finally
