@@ -9,13 +9,13 @@ import java.nio.charset.MalformedInputException;
 import static java.lang.Byte.MAX_VALUE;
 
 public class Varbyteint32FW extends Flyweight {
-    private final static int BYTE_MASK = 255;
+    private final static int BYTE_MASK = 0xFF;
 
-    private final static int CONTINUATION_BIT = 128;
+    private final static int CONTINUATION_BIT = 0x80;
 
-    private final static int MAX_INPUT = 268435455;
+    private final static int MAX_INPUT = 0x0FFFFFFF;
 
-    private final static int MAX_MULTIPLIER = 2097152;
+    private final static int MAX_MULTIPLIER = 0x200000;
 
     private int size;
 
@@ -99,26 +99,26 @@ public class Varbyteint32FW extends Flyweight {
         }
 
         public Varbyteint32FW.Builder set(int value) {
-            int zigzagged = (value << 1) ^ (value >> 31);
+            int encoded = encode(value);
             int pos = offset();
-            int bits = 1 + Integer.numberOfTrailingZeros(Integer.highestOneBit(zigzagged));
+            int bits = 1 + Integer.numberOfTrailingZeros(Integer.highestOneBit(encoded));
             int size = bits / 7;
             if (size * 7 < bits) {
                 size++;
             }
             int newLimit = pos + size;
             checkLimit(newLimit, maxLimit());
-            while ((zigzagged & 0xFFFFFF80) != 0) {
-                buffer().putByte(pos++, (byte) ((zigzagged & 0x7F) | 0x80));
-                zigzagged >>>= 7;
+            while ((encoded & 0x7FFFFFFF) != 0) {
+                buffer().putByte(pos++, (byte) ((encoded & 0x7F) | 0x80));
+                encoded >>>= 8;
             }
-            buffer().putByte(pos, (byte) (zigzagged & 0x7F));
+            buffer().putByte(pos, (byte) (encoded & 0x7F));
             limit(newLimit);
             valueSet = true;
             return this;
         }
 
-        private static int encodeToVlq32(int input) {
+        private static int encode(int input) {
             if (input > MAX_INPUT) {
                 return -1;
             }
@@ -136,7 +136,7 @@ public class Varbyteint32FW extends Flyweight {
             return varint;
         }
 
-        private static int decodeFromVlq32(int input) throws MalformedInputException {
+        private static int decode(int input) throws MalformedInputException {
             int multiplier = 1;
             int value = 0;
             int encodedByte;
@@ -147,7 +147,7 @@ public class Varbyteint32FW extends Flyweight {
                     throw new MalformedInputException(multiplier);
                 }
                 multiplier *= CONTINUATION_BIT;
-                input >>= 8;
+                input >>>= 8;
             }
             while ((encodedByte & CONTINUATION_BIT) != 0);
             return value;
