@@ -68,12 +68,12 @@ scope test
             octets extension;
         }
 
-//        list[uint32, uint32] ListWithPhysicalAndLogicalLength
-//        {
-//            required string field0;
-//            uint32 field1;
-//            string field2;
-//        }
+        list[uint32, uint32] ListWithPhysicalAndLogicalLength
+        {
+            required string field0;
+            uint32 field1;
+            string field2;
+        }
 
         union UnionOctets switch (uint8)
         {

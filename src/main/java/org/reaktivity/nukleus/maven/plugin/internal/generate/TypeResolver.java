@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
@@ -230,6 +231,13 @@ public final class TypeResolver
             AstVariantNode variantNode)
         {
             return visitNamedType(variantNode, variantNode.name(), super::visitVariant);
+        }
+
+        @Override
+        public Map<AstType, TypeName> visitList(
+            AstListNode listNode)
+        {
+            return visitNamedType(listNode, listNode.name(), super::visitList);
         }
 
         private <N extends AstNode> Map<AstType, TypeName> visitNamedType(

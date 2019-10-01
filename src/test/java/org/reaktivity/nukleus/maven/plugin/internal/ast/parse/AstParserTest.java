@@ -27,9 +27,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
@@ -99,11 +99,11 @@ public class AstParserTest
                                                                 .build())
                                        .struct(new AstStructNode.Builder()
                                                                 .name("Type")
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::inner::Inner"))
                                                                                          .name("inner")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::Outer"))
                                                                                          .name("outer")
                                                                                          .build())
@@ -138,7 +138,7 @@ public class AstParserTest
                                        .name("OneUnion")
                                        .caseN(new AstUnionCaseNode.Builder()
                                                              .value(0)
-                                                             .member(new AstMemberNode.Builder()
+                                                             .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                       .name("width")
                                                                                       .type(AstType.UINT8)
                                                                                       .build())
@@ -160,36 +160,36 @@ public class AstParserTest
                                        .union(new AstUnionNode.Builder()
                                                               .name("TwoUnion")
                                                               .caseN(new AstUnionCaseNode.Builder()
-                                                                                    .value(0)
-                                                                                    .member(new AstMemberNode.Builder()
-                                                                                                             .name("width")
-                                                                                                             .type(AstType.UINT8)
-                                                                                                             .build())
-                                                                                    .build())
-                                                                .build())
+                                                                  .value(0)
+                                                                  .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                                                                      .name("width")
+                                                                      .type(AstType.UINT8)
+                                                                      .build())
+                                                                  .build())
+                                                                  .build())
                                        .struct(new AstStructNode.Builder()
                                                                 .name("Type")
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("one::two::Two"))
                                                                                          .name("twoStruct")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("one::two::TwoEnum"))
                                                                                          .name("twoEnum")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("one::two::TwoUnion"))
                                                                                          .name("twoUnion")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("one::One"))
                                                                                          .name("oneStruct")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("one::OneEnum"))
                                                                                          .name("oneEnum")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("one::OneUnion"))
                                                                                          .name("oneUnion")
                                                                                          .build())
@@ -222,19 +222,19 @@ public class AstParserTest
                                                                 .build())
                                        .struct(new AstStructNode.Builder()
                                                                 .name("Type1")
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::inner::In"))
                                                                                          .name("absoluteInner")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::Outer"))
                                                                                          .name("absoluteOuter")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::inner::In"))
                                                                                          .name("relativeInner")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::Outer"))
                                                                                          .name("relativeOuter")
                                                                                          .build())
@@ -248,11 +248,11 @@ public class AstParserTest
                                                                 .build())
                                        .struct(new AstStructNode.Builder()
                                                                 .name("Type2")
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::inner2::In"))
                                                                                          .name("absoluteInner2Inner")
                                                                                          .build())
-                                                                .member(new AstMemberNode.Builder()
+                                                                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                                          .type(dynamicType("outer::inner2::In"))
                                                                                          .name("relativeInner2Inner")
                                                                                          .build())
@@ -289,7 +289,8 @@ public class AstParserTest
                 .name("common")
                 .struct(new AstStructNode.Builder()
                     .name("Holder")
-                    .member(new AstMemberNode.Builder().type(INT32).name("value").byteOrder(NETWORK).build())
+                    .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                        .type(INT32).name("value").byteOrder(NETWORK).build())
                     .build())
                 .build();
 
@@ -337,8 +338,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
-                .member(new AstMemberNode.Builder().type(AstType.STRING).name("firstName").build())
-                .member(new AstMemberNode.Builder().type(AstType.STRING).name("lastName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("firstName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("lastName").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -353,8 +354,9 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
-                .member(new AstMemberNode.Builder().type(AstType.STRING).name("lastName").build())
-                .member(new AstMemberNode.Builder().type(AstType.ARRAY).type(AstType.STRING).name("foreNames").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("lastName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.ARRAY).type(AstType.STRING).name("foreNames").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -369,8 +371,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Frame")
-                .member(new AstMemberNode.Builder().type(AstType.STRING).name("source").build())
-                .member(new AstMemberNode.Builder().type(AstType.OCTETS).name("extension").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("source").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.OCTETS).name("extension").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -385,8 +387,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
-                .member(new AstMemberNode.Builder().type(AstType.STRING16).name("firstName").build())
-                .member(new AstMemberNode.Builder().type(AstType.STRING16).name("lastName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING16).name("firstName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING16).name("lastName").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -418,14 +420,14 @@ public class AstParserTest
                 .name("Count")
                 .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
-                                      .member(new AstMemberNode.Builder()
+                                      .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
                                                                .build())
                                       .build())
                 .caseN(new AstUnionCaseNode.Builder()
                                        .value(1)
-                                       .member(new AstMemberNode.Builder()
+                                       .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
                                                                 .build())
@@ -447,14 +449,14 @@ public class AstParserTest
                 .name("Count")
                 .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
-                                      .member(new AstMemberNode.Builder()
+                                      .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                .name("width1")
                                                                .type(AstType.UINT8)
                                                                .build())
                                       .build())
                 .caseN(new AstUnionCaseNode.Builder()
                                        .value(1)
-                                       .member(new AstMemberNode.Builder()
+                                       .member((AstStructMemberNode) new AstStructMemberNode.Builder()
                                                                 .name("width2")
                                                                 .type(AstType.UINT16)
                                                                 .build())
@@ -546,8 +548,10 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.UINT16).name("size").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -562,8 +566,10 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT32).name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.UINT32).name("size").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -578,8 +584,10 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.UINT64).name("size").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.OCTETS).sizeName("size").name("field").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -594,9 +602,9 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.INT16)
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.INT16)
                         .name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
                         .name("field").defaultToNull().build())
                 .build();
 
@@ -612,8 +620,8 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.UINT64).name("size").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
                         .name("field").defaultToNull().build())
                 .build();
 
@@ -625,9 +633,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("int64 field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.INT64)
                 .name("field")
                 .build();
@@ -640,9 +648,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("int64 field = 123;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.INT64)
                 .name("field")
                 .defaultValue(123)
@@ -660,8 +668,10 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
-                .member(new AstMemberNode.Builder().type(AstType.INT16).name("field1").build())
-                .member(new AstMemberNode.Builder().type(AstType.INT16).name("field2").defaultValue(-123).build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.INT16).name("field1").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.INT16).name("field2").defaultValue(-123).build())
                 .build();
 
         assertEquals(expected, actual);
@@ -672,9 +682,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("int64 field = -12;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.INT64)
                 .name("field")
                 .defaultValue(-12)
@@ -689,9 +699,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("uint8 field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.UINT8)
                 .name("field")
                 .build();
@@ -704,9 +714,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("uint8 field = 12;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.UINT8)
                 .name("field")
                 .defaultValue(12)
@@ -727,9 +737,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("uint16 field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.UINT16)
                 .name("field")
                 .build();
@@ -742,9 +752,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("uint16[10] field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.UINT16)
                 .name("field")
                 .size(10)
@@ -762,8 +772,10 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT16).name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).sizeName("size").name("field").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.UINT16).name("size").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(AstType.UINT64).sizeName("size").name("field").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -778,9 +790,9 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.INT8)
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.INT8)
                         .name("size").build())
-                .member(new AstMemberNode.Builder().type(INT32).sizeName("size")
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(INT32).sizeName("size")
                         .name("field").defaultToNull().build())
                 .build();
 
@@ -796,8 +808,9 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("arrayField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT64).name("size").build())
-                .member(new AstMemberNode.Builder().type(INT32).sizeName("size").name("field").defaultToNull().build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.UINT64).name("size").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder()
+                    .type(INT32).sizeName("size").name("field").defaultToNull().build())
                 .build();
 
         assertEquals(expected, actual);
@@ -808,9 +821,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("string field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.STRING)
                 .name("field")
                 .build();
@@ -823,9 +836,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("string<10> field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.STRING)
                 .name("field")
                 .build();
@@ -838,9 +851,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("string16 field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.STRING16)
                 .name("field")
                 .build();
@@ -856,7 +869,7 @@ public class AstParserTest
         MemberContext ctx = parser.member();
         AstNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.ARRAY)
                 .type(AstType.STRING)
                 .name("field")
@@ -870,9 +883,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("string16[] field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.ARRAY)
                 .type(AstType.STRING16)
                 .name("field")

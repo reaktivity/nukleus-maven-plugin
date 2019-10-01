@@ -22,9 +22,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
@@ -91,7 +91,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitMember(
-        AstMemberNode memberNode)
+        AstAbstractMemberNode memberNode)
     {
         String memberName = memberNode.name();
         AstType memberType = memberNode.type();

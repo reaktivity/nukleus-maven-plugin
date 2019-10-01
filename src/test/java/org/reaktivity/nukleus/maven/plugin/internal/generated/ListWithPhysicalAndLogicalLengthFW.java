@@ -37,7 +37,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
     private static final int BIT_MASK_SIZE = BitUtil.SIZE_OF_INT;
 
-    public static final int FIELD_OFFSET_FIELD0 = BIT_MASK_OFFSET + BIT_MASK_SIZE;
+    public static final int FIRST_FIELD_OFFSET = BIT_MASK_OFFSET + BIT_MASK_SIZE;
 
     private static final int FIELD_SIZE_FIELD1 = BitUtil.SIZE_OF_INT;
 
@@ -88,7 +88,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
     {
         super.wrap(buffer, offset, maxLimit);
         final int bitmask = bitmask();
-        int fieldLimit = offset + FIELD_OFFSET_FIELD0;
+        int fieldLimit = offset + FIRST_FIELD_OFFSET;
         for (int field = FIELD_INDEX_FIELD0; field < FIELD_INDEX_FIELD2 + 1; field++)
         {
             switch (field)
@@ -132,7 +132,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
             return null;
         }
         final long bitmask = bitmask();
-        int fieldLimit = offset + FIELD_OFFSET_FIELD0;
+        int fieldLimit = offset + FIRST_FIELD_OFFSET;
         for (int field = FIELD_INDEX_FIELD0; field < FIELD_INDEX_FIELD2 + 1; field++)
         {
             switch (field)
@@ -309,7 +309,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         {
             super.wrap(buffer, offset, maxLimit);
             fieldsMask = 0;
-            int newLimit = limit() + FIELD_OFFSET_FIELD0;
+            int newLimit = limit() + FIRST_FIELD_OFFSET;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
             return this;

@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
@@ -30,6 +31,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -160,6 +162,25 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName,
             kindTypeName, ofTypeName, unsignedOfTypeName);
         return new VariantVisitor(generator, resolver).visitVariant(variantNode);
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitList(
+        AstListNode listNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        String baseName = listNode.name();
+        AstType listType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+        ClassName listName = resolver.resolveClass(listType);
+        TypeName physicalLengthType = resolver.resolveType(listNode.physicalLengthSize());
+        TypeName logicalLengthType = resolver.resolveType(listNode.logicalLengthSize());
+        ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
+            physicalLengthType, logicalLengthType);
+        return new ListVisitor(generator, resolver).visitList(listNode);
     }
 
     @Override

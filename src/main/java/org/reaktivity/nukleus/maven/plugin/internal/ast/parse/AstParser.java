@@ -27,10 +27,13 @@ import java.util.function.Function;
 import org.antlr.v4.runtime.RuleContext;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
@@ -53,6 +56,9 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_lit
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.KindContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_lengthContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
@@ -91,7 +97,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
 
     private AstSpecificationNode.Builder specificationBuilder;
     private AstStructNode.Builder structBuilder;
-    private AstMemberNode.Builder memberBuilder;
+    private AstStructMemberNode.Builder memberBuilder;
     private AstUnionNode.Builder unionBuilder;
     private AstUnionCaseNode.Builder caseBuilder;
     private AstByteOrder byteOrder;
@@ -224,6 +230,22 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
+    public AstNode visitList_type(
+        List_typeContext ctx)
+    {
+        visitLocalName(ctx.ID().getText());
+        AstListNode.Builder listBuilder = new ListVisitor().visitList_type(ctx);
+        AstListNode list = listBuilder.build();
+
+        AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
+        if (scopeBuilder != null)
+        {
+            scopeBuilder.list(list);
+        }
+        return list;
+    }
+
+    @Override
     public AstStructNode visitStruct_type(
         Struct_typeContext ctx)
     {
@@ -256,14 +278,15 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstMemberNode visitMember(
+    public AstStructMemberNode visitMember(
         MemberContext ctx)
     {
-        memberBuilder = new AstMemberNode.Builder().byteOrder(byteOrder);
+        memberBuilder = new AstStructMemberNode.Builder();
+        memberBuilder.byteOrder(byteOrder);
 
         super.visitMember(ctx);
 
-        AstMemberNode member = memberBuilder.build();
+        AstStructMemberNode member = memberBuilder.build();
         memberBuilder = null;
 
         if (caseBuilder != null)
@@ -279,14 +302,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstMemberNode visitUnbounded_member(
+    public AstStructMemberNode visitUnbounded_member(
         Unbounded_memberContext ctx)
     {
-        memberBuilder = new AstMemberNode.Builder();
+        memberBuilder = new AstStructMemberNode.Builder();
 
         super.visitUnbounded_member(ctx);
 
-        AstMemberNode member = memberBuilder.build();
+        AstStructMemberNode member = memberBuilder.build();
         memberBuilder = null;
 
         if (caseBuilder != null)
@@ -631,6 +654,335 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         RuleContext ctx)
     {
         return ctx.getText();
+    }
+
+    public final class ListVisitor extends NukleusBaseVisitor<AstListNode.Builder>
+    {
+        private final AstListNode.Builder listBuilder;
+        private AstListMemberNode.Builder listMemberBuilder;
+
+        public ListVisitor()
+        {
+            this.listBuilder = new AstListNode.Builder();
+        }
+
+        @Override
+        public AstListNode.Builder visitList_type(
+            List_typeContext ctx)
+        {
+            listBuilder.name(ctx.ID().getText());
+            return super.visitList_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitList_length(
+            List_lengthContext ctx)
+        {
+            AstListNode.Builder physicalLengthSizeBuilder =
+                new ListPhysicalLengthSizeVisitor(listBuilder).visitList_length(ctx);
+            AstType physicalLengthSize = physicalLengthSizeBuilder.build().physicalLengthSize();
+            listBuilder.physicalLengthSize(physicalLengthSize);
+
+            AstListNode.Builder logicalLengthSizeBuilder =
+                new ListLogicalLengthSizeVisitor(listBuilder).visitList_length(ctx);
+            AstType logicalLengthSize = logicalLengthSizeBuilder.build().logicalLengthSize();
+            listBuilder.logicalLengthSize(logicalLengthSize);
+            return listBuilder;
+        }
+
+        @Override
+        public Builder visitList_member(
+            List_memberContext ctx)
+        {
+            listMemberBuilder = new AstListMemberNode.Builder();
+            listMemberBuilder.byteOrder(byteOrder);
+            if (ctx.KW_REQUIRED() != null)
+            {
+                listMemberBuilder.isRequired(true);
+            }
+
+            super.visitList_member(ctx);
+
+            AstListMemberNode member = listMemberBuilder.build();
+            listBuilder.member(member);
+            listMemberBuilder = null;
+            return listBuilder;
+        }
+
+        @Override
+        public AstListNode.Builder visitDeclarator(
+            DeclaratorContext ctx)
+        {
+            listMemberBuilder.name(ctx.ID().toString());
+            return super.visitDeclarator(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitVarint_array_member(
+            Varint_array_memberContext ctx)
+        {
+            listMemberBuilder.type(AstType.ARRAY);
+            return super.visitVarint_array_member(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitVarint32_type(
+            Varint32_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.VARINT32);
+            return super.visitVarint32_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitVarint64_type(
+            Varint64_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.VARINT64);
+            return super.visitVarint64_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitInt64_type(
+            Int64_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.INT64);
+            return super.visitInt64_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitInt32_type(
+            Int32_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.INT32);
+            return super.visitInt32_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitInt16_type(
+            Int16_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.INT16);
+            return super.visitInt16_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitInt8_type(
+            Int8_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.INT8);
+            return super.visitInt8_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitUint64_type(
+            Uint64_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.UINT64);
+            return super.visitUint64_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitUint32_type(
+            Uint32_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.UINT32);
+            return super.visitUint32_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitUint16_type(
+            Uint16_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.UINT16);
+            return super.visitUint16_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitUint8_type(
+            Uint8_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.UINT8);
+            return super.visitUint8_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitString_type(
+            String_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.STRING);
+            return super.visitString_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitString16_type(
+            String16_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.STRING16);
+            return super.visitString16_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitString32_type(
+            String32_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.STRING32);
+            return super.visitString32_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitOctets_type(
+            Octets_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.OCTETS);
+            if (ctx.positive_int_const() != null)
+            {
+                listMemberBuilder.size(Integer.parseInt(ctx.positive_int_const().getText()));
+            }
+            else if (ctx.ID() != null)
+            {
+                listMemberBuilder.sizeName(ctx.ID().getText());
+            }
+            return super.visitOctets_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitUnbounded_octets_type(
+            Unbounded_octets_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.OCTETS);
+            return super.visitUnbounded_octets_type(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitScoped_name(
+            Scoped_nameContext ctx)
+        {
+            String typeName = ctx.getText();
+            if (listMemberBuilder != null)
+            {
+                String qualifiedTypeName = qualifiedNamesByLocalName.getOrDefault(typeName, typeName);
+                listMemberBuilder.type(AstType.dynamicType(qualifiedTypeName));
+            }
+            return super.visitScoped_name(ctx);
+        }
+
+        public final class ListPhysicalLengthSizeVisitor extends NukleusBaseVisitor<AstListNode.Builder>
+        {
+            private final AstListNode.Builder physicalLengthSizeBuilder;
+
+            public ListPhysicalLengthSizeVisitor(
+                AstListNode.Builder physicalLengthSizeBuilder)
+            {
+                this.physicalLengthSizeBuilder = physicalLengthSizeBuilder;
+            }
+
+            @Override
+            public Builder visitList_length(
+                List_lengthContext ctx)
+            {
+                return visitUnsigned_integer_type(ctx.unsigned_integer_type(0));
+            }
+
+            @Override
+            public Builder visitUint8_type(
+                Uint8_typeContext ctx)
+            {
+                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT8);
+                return super.visitUint8_type(ctx);
+            }
+
+            @Override
+            public Builder visitUint16_type(
+                Uint16_typeContext ctx)
+            {
+                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT16);
+                return super.visitUint16_type(ctx);
+            }
+
+            @Override
+            public Builder visitUint32_type(
+                Uint32_typeContext ctx)
+            {
+                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT32);
+                return super.visitUint32_type(ctx);
+            }
+
+            @Override
+            public Builder visitUint64_type(
+                Uint64_typeContext ctx)
+            {
+                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT64);
+                return super.visitUint64_type(ctx);
+            }
+
+            @Override
+            protected AstListNode.Builder defaultResult()
+            {
+                return physicalLengthSizeBuilder;
+            }
+        }
+
+        public final class ListLogicalLengthSizeVisitor extends NukleusBaseVisitor<AstListNode.Builder>
+        {
+            private final AstListNode.Builder logicalLengthSizeBuilder;
+
+            public ListLogicalLengthSizeVisitor(
+                AstListNode.Builder logicalLengthSizeBuilder)
+            {
+                this.logicalLengthSizeBuilder = logicalLengthSizeBuilder;
+            }
+
+            @Override
+            public Builder visitList_length(
+                List_lengthContext ctx)
+            {
+                return visitUnsigned_integer_type(ctx.unsigned_integer_type(1));
+            }
+
+            @Override
+            public Builder visitUint8_type(
+                Uint8_typeContext ctx)
+            {
+                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT8);
+                return super.visitUint8_type(ctx);
+            }
+
+            @Override
+            public Builder visitUint16_type(
+                Uint16_typeContext ctx)
+            {
+                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT16);
+                return super.visitUint16_type(ctx);
+            }
+
+            @Override
+            public Builder visitUint32_type(
+                Uint32_typeContext ctx)
+            {
+                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT32);
+                return super.visitUint32_type(ctx);
+            }
+
+            @Override
+            public Builder visitUint64_type(
+                Uint64_typeContext ctx)
+            {
+                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT64);
+                return super.visitUint64_type(ctx);
+            }
+
+            @Override
+            protected AstListNode.Builder defaultResult()
+            {
+                return logicalLengthSizeBuilder;
+            }
+        }
+
+        @Override
+        protected AstListNode.Builder defaultResult()
+        {
+            return listBuilder;
+        }
     }
 
     public final class VariantVisitor extends NukleusBaseVisitor<AstVariantNode.Builder>

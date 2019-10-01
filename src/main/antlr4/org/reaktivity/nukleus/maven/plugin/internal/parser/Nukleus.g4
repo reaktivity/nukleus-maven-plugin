@@ -74,6 +74,7 @@ base_type_spec
 constr_type_spec
    : enum_type
    | struct_type
+   | list_type
    | union_type
    | variant_type
    ;
@@ -243,7 +244,27 @@ array_member
 default_null
    : '= null'
    ;
-   
+
+list_type
+   : KW_LIST (list_length)? ID LEFT_BRACE list_member_list RIGHT_BRACE
+   ;
+
+list_length
+   : LEFT_SQUARE_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_SQUARE_BRACKET
+   ;
+
+list_member_list
+   : list_member* list_unbounded_member?
+   ;
+
+list_member
+   : KW_REQUIRED? member
+   ;
+
+list_unbounded_member
+   : KW_REQUIRED? unbounded_octets_member
+   ;
+
 unbounded_member
    : unbounded_octets_member
    ;
@@ -483,6 +504,11 @@ KW_DEFAULT
 
 KW_LIST
    : 'list'
+   ;
+
+
+KW_REQUIRED
+   : 'required'
    ;
 
 

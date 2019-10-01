@@ -16,37 +16,34 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
 import static java.util.Collections.singleton;
-import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.UnionFlyweightGenerator;
 
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
-public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
+public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
-    private final UnionFlyweightGenerator generator;
+    private final ListFlyweightGenerator generator;
     private final TypeResolver resolver;
     private final Set<TypeSpecGenerator<?>> defaultResult;
 
-    public UnionVisitor(
-        UnionFlyweightGenerator generator,
+    public ListVisitor(
+        ListFlyweightGenerator generator,
         TypeResolver resolver)
     {
         this.generator = generator;
@@ -55,9 +52,44 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     }
 
     @Override
+    public Collection<TypeSpecGenerator<?>> visitList(
+        AstListNode listNode)
+    {
+        super.visitList(listNode);
+        return defaultResult();
+    }
+
+    @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
         AstStructNode structNode)
     {
+        return defaultResult();
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitMember(
+        AstAbstractMemberNode memberNode)
+    {
+        AstListMemberNode listMemberNode = (AstListMemberNode) memberNode;
+        String memberName = listMemberNode.name();
+        AstType memberType = listMemberNode.type();
+        int size = listMemberNode.size();
+        String sizeName = listMemberNode.sizeName();
+        TypeName sizeTypeName = listMemberNode.sizeType() == null ? null : listMemberNode.sizeType().isUnsignedInt() ?
+            resolver.resolveUnsignedType(listMemberNode.sizeType()) : resolver.resolveType(listMemberNode.sizeType());
+        boolean usedAsSize = listMemberNode.usedAsSize();
+        Object defaultValue = listMemberNode.defaultValue();
+        AstByteOrder byteOrder = listMemberNode.byteOrder();
+
+        TypeName memberTypeName = resolver.resolveType(memberType);
+        if (memberTypeName == null)
+        {
+            throw new IllegalArgumentException(String.format(
+                " Unable to resolve type %s for field %s", memberType, memberName));
+        }
+        TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
+        generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
+            usedAsSize, defaultValue, byteOrder, listMemberNode.isRequired());
         return defaultResult();
     }
 
@@ -72,49 +104,13 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     public Collection<TypeSpecGenerator<?>> visitUnion(
         AstUnionNode unionNode)
     {
-        return super.visitUnion(unionNode);
+        return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitVariant(
         AstVariantNode variantNode)
     {
-        return defaultResult();
-    }
-
-    @Override
-    public Collection<TypeSpecGenerator<?>> visitCase(
-        AstUnionCaseNode caseNode)
-    {
-        int value = caseNode.value();
-        AstStructMemberNode memberNode = caseNode.member();
-        String memberName = memberNode.name();
-        AstType memberType = memberNode.type();
-        int size = memberNode.size();
-        String sizeName = memberNode.sizeName();
-        AstByteOrder byteOrder = memberNode.byteOrder();
-
-        if (memberType == AstType.ARRAY)
-        {
-            ClassName rawType = resolver.resolveClass(memberType);
-            TypeName[] typeArguments = memberNode.types()
-                    .stream()
-                    .skip(1)
-                    .map(resolver::resolveType)
-                    .collect(toList())
-                    .toArray(new TypeName[0]);
-            ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
-            List<AstType> memberTypes = memberNode.types();
-            TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberTypes.get(1));
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
-        }
-        else
-        {
-            TypeName memberTypeName = resolver.resolveType(memberType);
-            TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
-            generator.addMember(value, memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, byteOrder);
-        }
-
         return defaultResult();
     }
 

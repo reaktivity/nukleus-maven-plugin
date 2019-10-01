@@ -18,54 +18,52 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode.NULL_DEFAULT;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class AstStructNode extends AstNode
+public final class AstListNode extends AstNode
 {
+    public static final Object NULL_DEFAULT = new Object();
+
     private final String name;
-    private final int typeId;
-    private final String supertype;
-    private final List<AstStructMemberNode> members;
-
-
-    @Override
-    public <R> R accept(
-        Visitor<R> visitor)
-    {
-        return visitor.visitStruct(this);
-    }
+    private final List<AstListMemberNode> members;
+    private final AstType physicalLengthSize;
+    private final AstType logicalLengthSize;
 
     public String name()
     {
         return name;
     }
 
-    public int typeId()
-    {
-        return typeId;
-    }
-
-    public String supertype()
-    {
-        return supertype;
-    }
-
-    public List<AstStructMemberNode> members()
+    public List<AstListMemberNode> members()
     {
         return members;
+    }
+
+    public AstType physicalLengthSize()
+    {
+        return physicalLengthSize;
+    }
+
+    public AstType logicalLengthSize()
+    {
+        return logicalLengthSize;
+    }
+
+    @Override
+    public <R> R accept(
+        Visitor<R> visitor)
+    {
+        return visitor.visitList(this);
     }
 
     @Override
     public int hashCode()
     {
-        return supertype != null
-               ? (name.hashCode() << 11) ^ supertype.hashCode() << 7 ^ members.hashCode() << 3 ^ typeId
-               : (name.hashCode() << 11) ^ members.hashCode() << 3 ^ typeId;
+        return Objects.hash(name, members, physicalLengthSize, logicalLengthSize);
     }
 
     @Override
@@ -77,36 +75,36 @@ public final class AstStructNode extends AstNode
             return true;
         }
 
-        if (!(o instanceof AstStructNode))
+        if (!(o instanceof AstListNode))
         {
             return false;
         }
 
-        AstStructNode that = (AstStructNode) o;
+        AstListNode that = (AstListNode) o;
         return Objects.equals(this.name, that.name) &&
-                this.typeId == that.typeId &&
-                Objects.equals(this.supertype, that.supertype) &&
-                Objects.equals(this.members, that.members);
+            Objects.equals(this.members, that.members) &&
+            Objects.equals(this.physicalLengthSize, that.physicalLengthSize) &&
+            Objects.equals(this.logicalLengthSize, that.logicalLengthSize);
     }
 
-    private AstStructNode(
+    private AstListNode(
         String name,
-        int typeId,
-        String supertype,
-        List<AstStructMemberNode> members)
+        List<AstListMemberNode> members,
+        AstType physicalLengthSize,
+        AstType logicalLengthSize)
     {
         this.name = requireNonNull(name);
-        this.typeId = typeId;
-        this.supertype = supertype;
         this.members = unmodifiableList(members);
+        this.physicalLengthSize = physicalLengthSize;
+        this.logicalLengthSize = logicalLengthSize;
     }
 
-    public static final class Builder extends AstNode.Builder<AstStructNode>
+    public static final class Builder extends AstNode.Builder<AstListNode>
     {
         private String name;
-        private String supertype;
-        private int typeId;
-        private List<AstStructMemberNode> members;
+        private List<AstListMemberNode> members;
+        private AstType physicalLengthSize;
+        private AstType logicalLengthSize;
 
         public Builder()
         {
@@ -120,37 +118,23 @@ public final class AstStructNode extends AstNode
             return this;
         }
 
-        public Builder typeId(
-            int typeId)
-        {
-            this.typeId = typeId;
-            return this;
-        }
-
-        public Builder supertype(
-            String supertype)
-        {
-            this.supertype = supertype;
-            return this;
-        }
-
         public Builder member(
-            AstStructMemberNode member)
+            AstListMemberNode member)
         {
             if (member.sizeName() != null)
             {
                 final String target = member.sizeName();
-                Optional<AstStructMemberNode> sizeField = members.stream().filter(n -> target.equals(n.name())).findFirst();
+                Optional<AstListMemberNode> sizeField = members.stream().filter(n -> target.equals(n.name())).findFirst();
                 if (sizeField.isPresent())
                 {
-                    AstStructMemberNode size = sizeField.get();
+                    AstListMemberNode size = sizeField.get();
                     member.sizeType(size.type());
 
                     if (size.defaultValue() != null)
                     {
                         throw new IllegalArgumentException(format(
-                                "Size field \"%s\" for field \"%s\" must not have a default value's",
-                                member.sizeName(), member.name()));
+                            "Size field \"%s\" for field \"%s\" must not have a default value's",
+                            member.sizeName(), member.name()));
                     }
                     boolean defaultsToNull = member.defaultValue() == NULL_DEFAULT;
                     boolean sizeIsVarint = size.type() == AstType.VARINT32 || size.type() == AstType.VARINT64;
@@ -171,14 +155,14 @@ public final class AstStructNode extends AstNode
                     {
                         Object sizeType = size.type();
                         throw new IllegalArgumentException(format(
-                                "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
-                                member.sizeName(), member.name()));
+                            "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
+                            member.sizeName(), member.name()));
                     }
                     else if (!defaultsToNull && !size.type().isUnsignedInt())
                     {
                         throw new IllegalArgumentException(format(
-                                "Size field \"%s\" for field \"%s\" must be an unsigned integer type",
-                                member.sizeName(), member.name()));
+                            "Size field \"%s\" for field \"%s\" must be an unsigned integer type",
+                            member.sizeName(), member.name()));
                     }
                     else
                     {
@@ -188,17 +172,31 @@ public final class AstStructNode extends AstNode
                 else
                 {
                     throw new IllegalArgumentException(format("Size field \"%s\" not found for field \"%s\"",
-                            member.sizeName(), member.name()));
+                        member.sizeName(), member.name()));
                 }
             }
             this.members.add(member);
             return this;
         }
 
-        @Override
-        public AstStructNode build()
+        public Builder physicalLengthSize(
+            AstType physicalLengthSize)
         {
-            return new AstStructNode(name, typeId, supertype, members);
+            this.physicalLengthSize = physicalLengthSize;
+            return this;
+        }
+
+        public Builder logicalLengthSize(
+            AstType logicalLengthSize)
+        {
+            this.logicalLengthSize = logicalLengthSize;
+            return this;
+        }
+
+        @Override
+        public AstListNode build()
+        {
+            return new AstListNode(name, members, physicalLengthSize, logicalLengthSize);
         }
     }
 }

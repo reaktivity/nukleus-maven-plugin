@@ -24,30 +24,27 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-public final class AstMemberNode extends AstNode
+public abstract class AstAbstractMemberNode extends AstNode
 {
     public static final Object NULL_DEFAULT = new Object();
 
-    private final String name;
-    private final List<AstType> types;
-    private final int size;
-    private final String sizeName;
-    private final Object defaultValue;
-    private final AstByteOrder byteOrder;
-    private final boolean isArray;
+    protected final String name;
+    protected final List<AstType> types;
+    protected final int size;
+    protected final String sizeName;
+    protected final Object defaultValue;
+    protected final AstByteOrder byteOrder;
 
     private AstType sizeType;
     private boolean usedAsSize;
 
-
-    private AstMemberNode(
+    AstAbstractMemberNode(
         String name,
         List<AstType> types,
         int size,
         String sizeName,
         Object defaultValue,
-        AstByteOrder byteOrder,
-        boolean isArray)
+        AstByteOrder byteOrder)
     {
         this.name = requireNonNull(name);
         this.types = unmodifiableList(requireNotEmpty(requireNonNull(types)));
@@ -55,7 +52,6 @@ public final class AstMemberNode extends AstNode
         this.sizeName = sizeName;
         this.defaultValue = defaultValue;
         this.byteOrder = byteOrder;
-        this.isArray = isArray;
     }
 
     @Override
@@ -80,11 +76,6 @@ public final class AstMemberNode extends AstNode
         return types;
     }
 
-    public boolean isArray()
-    {
-        return isArray;
-    }
-
     public int size()
     {
         return size;
@@ -106,7 +97,8 @@ public final class AstMemberNode extends AstNode
         this.sizeType = sizeType;
     }
 
-    public void usedAsSize(boolean value)
+    public void usedAsSize(
+        boolean value)
     {
         usedAsSize = value;
     }
@@ -133,25 +125,26 @@ public final class AstMemberNode extends AstNode
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(
+        Object o)
     {
         if (o == this)
         {
             return true;
         }
 
-        if (!(o instanceof AstMemberNode))
+        if (!(o instanceof AstAbstractMemberNode))
         {
             return false;
         }
 
-        AstMemberNode that = (AstMemberNode) o;
+        AstAbstractMemberNode that = (AstAbstractMemberNode) o;
         return this.size == that.size &&
-                Objects.equals(this.name, that.name) &&
-                Objects.deepEquals(this.types, that.types) &&
-                Objects.equals(this.sizeName, that.sizeName) &&
-                Objects.equals(this.defaultValue, that.defaultValue) &&
-                Objects.equals(this.byteOrder, that.byteOrder);
+            Objects.equals(this.name, that.name) &&
+            Objects.deepEquals(this.types, that.types) &&
+            Objects.equals(this.sizeName, that.sizeName) &&
+            Objects.equals(this.defaultValue, that.defaultValue) &&
+            Objects.equals(this.byteOrder, that.byteOrder);
     }
 
     @Override
@@ -159,7 +152,7 @@ public final class AstMemberNode extends AstNode
     {
         String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
         return String.format("MEMBER [name=%s, size=%s, types=%s, defaultValue=%s, byteOrder=%s]",
-                name, size, types, defaultValue, byteOrder);
+            name, size, types, defaultValue, byteOrder);
     }
 
     private static <T extends Collection<?>> T requireNotEmpty(
@@ -173,15 +166,14 @@ public final class AstMemberNode extends AstNode
         return c;
     }
 
-    public static final class Builder extends AstNode.Builder<AstMemberNode>
+    public abstract static class Builder<T extends AstAbstractMemberNode> extends AstNode.Builder
     {
-        private String name;
-        private List<AstType> types;
-        private int size;
-        private String sizeName;
-        private boolean isArray;
-        private Object defaultValue;
-        private AstByteOrder byteOrder;
+        protected String name;
+        protected List<AstType> types;
+        protected int size;
+        protected String sizeName;
+        protected Object defaultValue;
+        protected AstByteOrder byteOrder;
 
         public Builder()
         {
@@ -190,28 +182,24 @@ public final class AstMemberNode extends AstNode
             this.byteOrder = NATIVE;
         }
 
-        public Builder name(String name)
+        public Builder name(
+            String name)
         {
             this.name = name;
             return this;
         }
 
-        public Builder type(AstType type)
+        public Builder type(
+            AstType type)
         {
             types.add(requireNonNull(type));
             return this;
         }
 
-        public void isArray(
-            boolean isArray)
-        {
-            this.isArray = isArray;
-        }
-
-        public Builder size(int size)
+        public Builder size(
+            int size)
         {
             this.size = size;
-            isArray(true);
             return this;
         }
 
@@ -219,7 +207,6 @@ public final class AstMemberNode extends AstNode
             String sizeName)
         {
             this.sizeName = sizeName;
-            isArray(true);
             return this;
         }
 
@@ -236,16 +223,11 @@ public final class AstMemberNode extends AstNode
             return this;
         }
 
-        public Builder byteOrder(AstByteOrder byteOrder)
+        public Builder byteOrder(
+            AstByteOrder byteOrder)
         {
             this.byteOrder = byteOrder;
             return this;
-        }
-
-        @Override
-        public AstMemberNode build()
-        {
-            return new AstMemberNode(name, types, size, sizeName, defaultValue, byteOrder, isArray);
         }
     }
 }
