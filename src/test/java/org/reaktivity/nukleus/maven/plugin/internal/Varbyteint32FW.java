@@ -109,18 +109,18 @@ public class Varbyteint32FW extends Flyweight {
             int newLimit = pos + size;
             checkLimit(newLimit, maxLimit());
             while ((encoded & 0x7FFFFFFF) != 0) {
-                buffer().putByte(pos++, (byte) ((encoded & 0x7F) | 0x80));
+                buffer().putByte(pos++, (byte) (encoded & 0xFF));
                 encoded >>>= 8;
             }
-            buffer().putByte(pos, (byte) (encoded & 0x7F));
+//            buffer().putByte(pos, (byte) (encoded & 0x7F));
             limit(newLimit);
             valueSet = true;
             return this;
         }
 
-        private static int encode(int input) {
+        private int encode(int input) {
             if (input > MAX_INPUT) {
-                return -1;
+                throw new IllegalArgumentException("varbyteint32 value too long");
             }
             int varint = 0;
             int i = 0;
@@ -136,7 +136,7 @@ public class Varbyteint32FW extends Flyweight {
             return varint;
         }
 
-        private static int decode(int input) throws MalformedInputException {
+        private int decode(int input) throws MalformedInputException {
             int multiplier = 1;
             int value = 0;
             int encodedByte;
@@ -144,7 +144,7 @@ public class Varbyteint32FW extends Flyweight {
                 encodedByte = input & BYTE_MASK;
                 value += (encodedByte & MAX_VALUE) * multiplier;
                 if (multiplier > MAX_MULTIPLIER) {
-                    throw new MalformedInputException(multiplier);
+                    throw new IllegalArgumentException("varbyteint32 value is too long");
                 }
                 multiplier *= CONTINUATION_BIT;
                 input >>>= 8;
