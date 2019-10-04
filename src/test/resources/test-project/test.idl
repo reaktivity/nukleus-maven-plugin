@@ -75,6 +75,20 @@ scope test
             string field2;
         }
 
+//        list[uint8, uint8] ListWithOctets
+//        {
+//            uint32 fixed1 = 11;
+//            required octets[10] octets1;
+//            uint16 lengthOctets2;
+//            octets[lengthOctets2] octets2;
+//            required string string1;
+//            varint32 lengthOctets3;
+//            octets[lengthOctets3] octets3 = null;
+//            int32 lengthOctets4;
+//            octets[lengthOctets4] octets4 = null;
+//            octets extension;
+//        }
+
         union UnionOctets switch (uint8)
         {
             case 1: octets[4] octets4;

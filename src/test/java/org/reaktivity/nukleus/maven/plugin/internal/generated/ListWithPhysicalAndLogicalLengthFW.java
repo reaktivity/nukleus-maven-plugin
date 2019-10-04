@@ -35,7 +35,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
     public static final int BIT_MASK_OFFSET = LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE;
 
-    private static final int BIT_MASK_SIZE = BitUtil.SIZE_OF_INT;
+    private static final int BIT_MASK_SIZE = BitUtil.SIZE_OF_LONG;
 
     public static final int FIRST_FIELD_OFFSET = BIT_MASK_OFFSET + BIT_MASK_SIZE;
 
@@ -55,12 +55,12 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
     public int length()
     {
-        return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET) & 0xFFFF;
+        return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET);
     }
 
-    private int bitmask()
+    private long bitmask()
     {
-        return buffer().getInt(offset() + BIT_MASK_OFFSET) & 0xFFFF;
+        return buffer().getLong(offset() + BIT_MASK_OFFSET);
     }
 
     public StringFW field0()
@@ -70,13 +70,13 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
     public long field1()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_FIELD1)) != 0 : "Field \"fixed1\" is not set";
+        assert (bitmask() & (1 << FIELD_INDEX_FIELD1)) != 0 : "Field \"field1\" is not set";
         return buffer().getInt(optionalOffsets[FIELD_INDEX_FIELD1]) & 0xFFFF_FFFFL;
     }
 
     public StringFW field2()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_FIELD2)) != 0 : "Field \"fixed2\" is not set";
+        assert (bitmask() & (1 << FIELD_INDEX_FIELD2)) != 0 : "Field \"field2\" is not set";
         return field2RO;
     }
 
@@ -87,7 +87,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        final int bitmask = bitmask();
+        final long bitmask = bitmask();
         int fieldLimit = offset + FIRST_FIELD_OFFSET;
         for (int field = FIELD_INDEX_FIELD0; field < FIELD_INDEX_FIELD2 + 1; field++)
         {
@@ -96,7 +96,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
             case FIELD_INDEX_FIELD0:
                 if ((bitmask & (1 << FIELD_INDEX_FIELD0)) == 0)
                 {
-                    throw new IllegalArgumentException("Field \"fixed0\" is required but not set");
+                    throw new IllegalArgumentException("Field \"field0\" is required but not set");
                 }
                 field0RO.wrap(buffer, fieldLimit, maxLimit);
                 fieldLimit = field0RO.limit();
@@ -177,14 +177,14 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
     @Override
     public int limit()
     {
-        return offset() + buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET) & 0xFFFF;
+        return offset() + buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET);
     }
 
     @Override
     public String toString()
     {
         return String.format("LIST_WITH_PHYSICAL_AND_LOGICAL_LENGTH [field0=%s, field1=%d, field2=%s]",
-            field0() != null ? field0RO.asString() : null, field1(), field2() != null ? field2RO.asString() : null);
+            field0(), field1(), field2());
     }
 
     public static final class Builder extends Flyweight.Builder<ListWithPhysicalAndLogicalLengthFW>
@@ -193,7 +193,7 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
 
         private final StringFW.Builder field2RW = new StringFW.Builder();
 
-        private int fieldsMask;
+        private long fieldsMask;
 
         public Builder()
         {
@@ -319,9 +319,9 @@ public class ListWithPhysicalAndLogicalLengthFW extends Flyweight
         public ListWithPhysicalAndLogicalLengthFW build()
         {
             assert (fieldsMask & 0x01) != 0 : "Required field \"field0\" is not set";
-            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, limit() - offset() & 0xFFFF);
-            buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, Integer.bitCount(fieldsMask) & 0xFFFF);
-            buffer().putInt(offset() + BIT_MASK_OFFSET, fieldsMask & 0xFFFF);
+            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, limit() - offset());
+            buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, Long.bitCount(fieldsMask));
+            buffer().putLong(offset() + BIT_MASK_OFFSET, fieldsMask);
             return super.build();
         }
     }
