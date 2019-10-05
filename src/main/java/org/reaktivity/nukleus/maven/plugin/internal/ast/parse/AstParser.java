@@ -27,6 +27,7 @@ import java.util.function.Function;
 import org.antlr.v4.runtime.RuleContext;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode.Builder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
@@ -1042,6 +1043,12 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             enumBuilder.value(value);
             this.valueBuilder = null;
             return result;
+        }
+
+        @Override
+        public Builder visitInt_literal(Int_literalContext ctx)
+        {
+            return visitLiteral(ctx);
         }
 
         @Override
