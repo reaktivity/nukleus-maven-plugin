@@ -2,9 +2,8 @@ package org.reaktivity.nukleus.maven.plugin.internal;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-
-import java.nio.charset.MalformedInputException;
 
 import static java.lang.Byte.MAX_VALUE;
 
@@ -19,6 +18,17 @@ public class Varbyteint32FW extends Flyweight {
 
     private int size;
 
+    public static void main(String[] args) {
+        Varbyteint32FW.Builder varbyteint32RW = new Varbyteint32FW.Builder();
+        MutableDirectBuffer writeBuffer = new UnsafeBuffer(new byte[8192]);
+
+        Varbyteint32FW varbyteint32 = varbyteint32RW.wrap(writeBuffer, 0, writeBuffer.capacity())
+                .set(268435455)
+                .build();
+
+        final int value = varbyteint32.value();
+    }
+
     @Override
     public int limit() {
         return offset() + size;
@@ -27,35 +37,16 @@ public class Varbyteint32FW extends Flyweight {
     public int value() {
         int value = 0;
         int multiplier = 1;
-        int b;
         int pos  = offset();
         int encodedByte;
-        while (((b = buffer().getByte(pos++)) & 0x80) != 0) {
-            encodedByte = b & BYTE_MASK;
+        while ((encodedByte = (buffer().getByte(pos++) & 0x80)) != 0) {
             value += (encodedByte & MAX_VALUE) * multiplier;
             if (multiplier > MAX_MULTIPLIER) {
                 throw new IllegalArgumentException("varbyteint32 value is too long");
             }
             multiplier *= CONTINUATION_BIT;
         }
-//        int unsigned = value  | (b << i);
-//        int result = (((unsigned << 31) >> 31) ^ unsigned) >> 1;
-//        result = result ^ (unsigned & (1 << 31));
         return value;
-//        int i = 0;;
-//        int b;
-//        int pos  = offset();
-//        while (((b = buffer().getByte(pos++)) & 0x80) != 0) {
-//            value |= (b & 0x7F) << i;
-//            i += 7;
-//            if (i > 35) {
-//                throw new IllegalArgumentException("varbyteint32 value too long");
-//            }
-//        }
-//        int unsigned = value  | (b << i);;
-//        int result = (((unsigned << 31) >> 31) ^ unsigned) >> 1;
-//        result = result ^ (unsigned & (1 << 31));
-//        return result;
     }
 
     @Override
@@ -115,40 +106,32 @@ public class Varbyteint32FW extends Flyweight {
         }
 
         public Varbyteint32FW.Builder set(int value) {
-            int encoded = encode(value);
+            if (value > MAX_INPUT) {
+                throw new IllegalArgumentException("varbyteint32 value too long");
+            }
             int pos = offset();
-            int bits = 1 + Integer.numberOfTrailingZeros(Integer.highestOneBit(encoded));
+            int varint = 0;
+            int i = 0;
+            while (value > 0) {
+                int encodedByte = value % CONTINUATION_BIT;
+                value = value / CONTINUATION_BIT;
+                if (value > 0) {
+                    encodedByte = encodedByte | CONTINUATION_BIT;
+                }
+                varint |= ((varint & CONTINUATION_BIT) > 0 ? encodedByte << (8*i) : encodedByte) | varint;
+                buffer().putByte(pos++, (byte) (encodedByte & BYTE_MASK));
+                i++;
+            }
+            int bits = 1 + Integer.numberOfTrailingZeros(Integer.highestOneBit(varint));
             int size = bits / 7;
             if (size * 7 < bits) {
                 size++;
             }
             int newLimit = pos + size;
             checkLimit(newLimit, maxLimit());
-            while ((encoded & 0x7FFFFFFF) != 0) {
-                buffer().putByte(pos++, (byte) (encoded & 0xFF));
-                encoded >>>= 8;
-            }
             limit(newLimit);
             valueSet = true;
             return this;
-        }
-
-        private int encode(int input) {
-            if (input > MAX_INPUT) {
-                throw new IllegalArgumentException("varbyteint32 value too long");
-            }
-            int varint = 0;
-            int i = 0;
-            while (input > 0) {
-                int encodedByte = input % CONTINUATION_BIT;
-                input = input / CONTINUATION_BIT;
-                if (input > 0) {
-                    encodedByte = encodedByte | CONTINUATION_BIT;
-                }
-                varint |= ((varint & CONTINUATION_BIT) > 0 ? encodedByte << (8*i) : encodedByte) | varint;
-                i++;
-            }
-            return varint;
         }
 
         @Override
