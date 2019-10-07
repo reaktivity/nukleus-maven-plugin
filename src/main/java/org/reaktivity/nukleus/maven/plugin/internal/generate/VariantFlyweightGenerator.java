@@ -89,14 +89,14 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         TYPE_NAMES = unmodifiableMap(typeNames);
 
         Map<String, Long> longBitMaskValues = new HashMap<>();
-        longBitMaskValues.put("int8", 0xffffffffffffff00L);
-        longBitMaskValues.put("int16", 0xffffffffffff0000L);
-        longBitMaskValues.put("int32", 0xffffffff00000000L);
+        longBitMaskValues.put("int8", 0xffffffffffffff80L);
+        longBitMaskValues.put("int16", 0xffffffffffff8000L);
+        longBitMaskValues.put("int32", 0xffffffff80000000L);
         BIT_MASK_LONG = unmodifiableMap(longBitMaskValues);
 
         Map<String, Integer> intBitMaskValues = new HashMap<>();
-        intBitMaskValues.put("int8", 0xffffff00);
-        intBitMaskValues.put("int16", 0xffff0000);
+        intBitMaskValues.put("int8", 0xffffff80);
+        intBitMaskValues.put("int16", 0xffff8000);
         BIT_MASK_INT = unmodifiableMap(intBitMaskValues);
 
         Map<TypeName, String> classNames = new HashMap<>();
@@ -1088,7 +1088,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         }
                         else
                         {
-                            builder.beginControlFlow("if ((value & $L) == value)", bitMask(currentType.kindTypeName()))
+                            builder.beginControlFlow("if ((value & $L) == $L)", bitMask(currentType.kindTypeName()),
+                                bitMask(currentType.kindTypeName()))
                                    .addStatement(String.format("$L(%svalue)",
                                        currentType.kindType().equals(TypeName.LONG) ? "" :
                                            ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()))
@@ -1106,8 +1107,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (currentType.value() == Integer.MAX_VALUE)
                     {
-                        builder.beginControlFlow("else if ((value & $L) == value)",
-                            bitMask(currentType.kindTypeName()))
+                        builder.beginControlFlow("else if ((value & $L) == $L)",
+                            bitMask(currentType.kindTypeName()), bitMask(currentType.kindTypeName()))
                                .addStatement(String.format("$L(%svalue)", ofType.equals(TypeName.LONG) ? "(int) " : ""),
                                    setAs(currentType.kindTypeName()))
                                .endControlFlow();

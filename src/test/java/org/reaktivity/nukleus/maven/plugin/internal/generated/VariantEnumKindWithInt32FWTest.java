@@ -204,4 +204,43 @@ public class VariantEnumKindWithInt32FWTest
         assertEquals(100, flyweightRO.get());
         assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
     }
+
+    @Test
+    public void shouldSetNegativeInt32ValueUsingSet()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(-2000000000)
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer, 0, limit);
+        assertEquals(-2000000000, flyweightRO.getAsInt32());
+        assertEquals(-2000000000, flyweightRO.get());
+        assertEquals(EnumWithInt8.THREE, flyweightRO.kind());
+    }
+
+    @Test
+    public void shouldSetNegativeInt16ValueUsingSet()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(-30000)
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer, 0, limit);
+        assertEquals(-30000, flyweightRO.getAsInt16());
+        assertEquals(-30000, flyweightRO.get());
+        assertEquals(EnumWithInt8.TWO, flyweightRO.kind());
+    }
+
+    @Test
+    public void shouldSetNegativeInt8ValueUsingSet()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(-100)
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer, 0, limit);
+        assertEquals(-100, flyweightRO.getAsInt8());
+        assertEquals(-100, flyweightRO.get());
+        assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
+    }
 }

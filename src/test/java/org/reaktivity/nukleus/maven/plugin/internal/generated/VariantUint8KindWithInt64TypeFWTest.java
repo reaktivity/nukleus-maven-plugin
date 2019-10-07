@@ -230,6 +230,58 @@ public class VariantUint8KindWithInt64TypeFWTest
         assertEquals(0x51, flyweightRO.kind());
     }
 
+    @Test
+    public void shouldSetNegativeInt64ValueUsingSet()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(-5000000000L)
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer, 0, limit);
+        assertEquals(-5000000000L, flyweightRO.getAsInt64());
+        assertEquals(-5000000000L, flyweightRO.get());
+        assertEquals(0x81, flyweightRO.kind());
+    }
+
+    @Test
+    public void shouldSetNegativeInt32ValueUsingSet()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(-2000000000L)
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer, 0, limit);
+        assertEquals(-2000000000L, flyweightRO.getAsInt32());
+        assertEquals(-2000000000L, flyweightRO.get());
+        assertEquals(0x71, flyweightRO.kind());
+    }
+
+    @Test
+    public void shouldSetNegativeInt16ValueUsingSet()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(-30000)
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer, 0, limit);
+        assertEquals(-30000, flyweightRO.getAsInt16());
+        assertEquals(-30000, flyweightRO.get());
+        assertEquals(0x61, flyweightRO.kind());
+    }
+
+    @Test
+    public void shouldSetNegativeInt8ValueUsingSet()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(-100)
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer, 0, limit);
+        assertEquals(-100, flyweightRO.getAsInt8());
+        assertEquals(-100, flyweightRO.get());
+        assertEquals(0x51, flyweightRO.kind());
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUint32WithInsufficientSpace()
     {
