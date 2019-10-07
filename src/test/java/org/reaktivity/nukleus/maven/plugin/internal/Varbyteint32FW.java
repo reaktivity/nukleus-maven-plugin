@@ -26,20 +26,36 @@ public class Varbyteint32FW extends Flyweight {
 
     public int value() {
         int value = 0;
-        int i = 0;;
+        int multiplier = 1;
         int b;
         int pos  = offset();
+        int encodedByte;
         while (((b = buffer().getByte(pos++)) & 0x80) != 0) {
-            value |= (b & 0x7F) << i;
-            i += 7;
-            if (i > 35) {
-                throw new IllegalArgumentException("varbyteint32 value too long");
+            encodedByte = b & BYTE_MASK;
+            value += (encodedByte & MAX_VALUE) * multiplier;
+            if (multiplier > MAX_MULTIPLIER) {
+                throw new IllegalArgumentException("varbyteint32 value is too long");
             }
+            multiplier *= CONTINUATION_BIT;
         }
-        int unsigned = value  | (b << i);;
-        int result = (((unsigned << 31) >> 31) ^ unsigned) >> 1;
-        result = result ^ (unsigned & (1 << 31));
-        return result;
+//        int unsigned = value  | (b << i);
+//        int result = (((unsigned << 31) >> 31) ^ unsigned) >> 1;
+//        result = result ^ (unsigned & (1 << 31));
+        return value;
+//        int i = 0;;
+//        int b;
+//        int pos  = offset();
+//        while (((b = buffer().getByte(pos++)) & 0x80) != 0) {
+//            value |= (b & 0x7F) << i;
+//            i += 7;
+//            if (i > 35) {
+//                throw new IllegalArgumentException("varbyteint32 value too long");
+//            }
+//        }
+//        int unsigned = value  | (b << i);;
+//        int result = (((unsigned << 31) >> 31) ^ unsigned) >> 1;
+//        result = result ^ (unsigned & (1 << 31));
+//        return result;
     }
 
     @Override
@@ -112,7 +128,6 @@ public class Varbyteint32FW extends Flyweight {
                 buffer().putByte(pos++, (byte) (encoded & 0xFF));
                 encoded >>>= 8;
             }
-//            buffer().putByte(pos, (byte) (encoded & 0x7F));
             limit(newLimit);
             valueSet = true;
             return this;
@@ -134,23 +149,6 @@ public class Varbyteint32FW extends Flyweight {
                 i++;
             }
             return varint;
-        }
-
-        private int decode(int input) throws MalformedInputException {
-            int multiplier = 1;
-            int value = 0;
-            int encodedByte;
-            do {
-                encodedByte = input & BYTE_MASK;
-                value += (encodedByte & MAX_VALUE) * multiplier;
-                if (multiplier > MAX_MULTIPLIER) {
-                    throw new IllegalArgumentException("varbyteint32 value is too long");
-                }
-                multiplier *= CONTINUATION_BIT;
-                input >>>= 8;
-            }
-            while ((encodedByte & CONTINUATION_BIT) != 0);
-            return value;
         }
 
         @Override
