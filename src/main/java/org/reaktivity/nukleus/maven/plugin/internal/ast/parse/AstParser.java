@@ -1397,6 +1397,13 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
+        public AstEnumNode.Builder visitInt_literal(
+            Int_literalContext ctx)
+        {
+            return visitLiteral(ctx);
+        }
+
+        @Override
         public AstEnumNode.Builder visitUint_literal(
             Uint_literalContext ctx)
         {
