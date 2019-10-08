@@ -115,9 +115,10 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                     .toArray(new TypeName[0]);
             ParameterizedTypeName memberTypeName = ParameterizedTypeName.get(rawType, typeArguments);
             List<AstType> memberTypes = memberNode.types();
-            TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberTypes.get(1));
-            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
-                    false, defaultValue, byteOrder);
+            AstType memberUnsignedType = memberTypes.get(1);
+            TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberUnsignedType);
+            generator.addMember(memberName, memberType, memberTypeName, memberUnsignedType, memberUnsignedTypeName, size,
+                    sizeName, sizeTypeName, false, defaultValue, byteOrder);
         }
         else
         {
@@ -127,9 +128,10 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
                 throw new IllegalArgumentException(String.format(
                         " Unable to resolve type %s for field %s", memberType, memberName));
             }
-            TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
-            generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
-                    usedAsSize, defaultValue, byteOrder);
+            AstType memberUnsignedType = memberType.isUnsignedInt() ? memberType : null;
+            TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberUnsignedType);
+            generator.addMember(memberName, memberType, memberTypeName, memberUnsignedType, memberUnsignedTypeName, size,
+                    sizeName, sizeTypeName, usedAsSize, defaultValue, byteOrder);
         }
 
         return defaultResult();

@@ -27,6 +27,7 @@ public final class TypeNames
     private static final String AGRONA_COLLECTIONS_PACKAGE = AGRONA_PACKAGE + ".collections";
 
     public static final ClassName BIT_UTIL_TYPE = ClassName.get(AGRONA_PACKAGE, "BitUtil");
+    public static final ClassName BUFFER_UTIL_TYPE = ClassName.get(AGRONA_PACKAGE, "BufferUtil");
     public static final ClassName DIRECT_BUFFER_TYPE = ClassName.get(AGRONA_PACKAGE, "DirectBuffer");
     public static final ClassName MUTABLE_DIRECT_BUFFER_TYPE = ClassName.get(AGRONA_PACKAGE, "MutableDirectBuffer");
 

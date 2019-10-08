@@ -94,6 +94,7 @@ integer_type
 signed_integer_type
    : int8_type
    | int16_type
+   | int24_type
    | int32_type
    | int64_type
    | varint32_type
@@ -103,6 +104,7 @@ signed_integer_type
 unsigned_integer_type
    : uint8_type
    | uint16_type
+   | uint24_type
    | uint32_type
    | uint64_type
    ;
@@ -113,6 +115,10 @@ int8_type
 
 int16_type
    : KW_INT16
+   ;
+
+int24_type
+   : KW_INT24
    ;
 
 int32_type
@@ -129,6 +135,10 @@ uint8_type
 
 uint16_type
    : KW_UINT16
+   ;
+
+uint24_type
+   : KW_UINT24
    ;
 
 uint32_type
@@ -162,6 +172,7 @@ enum_type
 enum_explicit_type
    : int8_type
    | int16_type
+   | int24_type
    | int32_type
    | int64_type
    | unsigned_integer_type
@@ -223,10 +234,12 @@ octets_member_with_default
 integer_array_member
    : int8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | int16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | int24_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | int32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | int64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
+   | uint24_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint32_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | uint64_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    ;
@@ -521,6 +534,11 @@ KW_INT16
    ;
 
 
+KW_INT24
+   : 'int24'
+   ;
+
+
 KW_INT32
    : 'int32'
    ;
@@ -538,6 +556,11 @@ KW_UINT8
 
 KW_UINT16
    : 'uint16'
+   ;
+
+
+KW_UINT24
+   : 'uint24'
    ;
 
 

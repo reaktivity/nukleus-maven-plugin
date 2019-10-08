@@ -46,7 +46,7 @@
     <antlr4.version>4.7</antlr4.version>
     <agrona.version>0.9.35</agrona.version>
     <jmh.version>1.12</jmh.version>
-    <jacoco.coverage.ratio>0.83</jacoco.coverage.ratio>
+    <jacoco.coverage.ratio>0.82</jacoco.coverage.ratio>
     <jacoco.missed.count>2</jacoco.missed.count>
   </properties>
 

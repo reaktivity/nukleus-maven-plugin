@@ -91,12 +91,14 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         Map<String, Long> longBitMaskValues = new HashMap<>();
         longBitMaskValues.put("int8", 0xffffffffffffff00L);
         longBitMaskValues.put("int16", 0xffffffffffff0000L);
+        longBitMaskValues.put("int24", 0xffffffffff000000L);
         longBitMaskValues.put("int32", 0xffffffff00000000L);
         BIT_MASK_LONG = unmodifiableMap(longBitMaskValues);
 
         Map<String, Integer> intBitMaskValues = new HashMap<>();
         intBitMaskValues.put("int8", 0xffffff00);
         intBitMaskValues.put("int16", 0xffff0000);
+        intBitMaskValues.put("int24", 0xff000000);
         BIT_MASK_INT = unmodifiableMap(intBitMaskValues);
 
         Map<TypeName, String> classNames = new HashMap<>();

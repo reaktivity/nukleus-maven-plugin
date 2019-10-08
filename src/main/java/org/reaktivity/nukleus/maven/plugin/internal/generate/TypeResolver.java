@@ -106,6 +106,8 @@ public final class TypeResolver
         namesByType.put(AstType.UINT8, TypeName.BYTE);
         namesByType.put(AstType.INT16, TypeName.SHORT);
         namesByType.put(AstType.UINT16, TypeName.SHORT);
+        namesByType.put(AstType.INT24, TypeName.INT);
+        namesByType.put(AstType.UINT24, TypeName.INT);
         namesByType.put(AstType.INT32, TypeName.INT);
         namesByType.put(AstType.UINT32, TypeName.INT);
         namesByType.put(AstType.VARINT32, ClassName.get(packageName, "Varint32FW"));
@@ -120,6 +122,7 @@ public final class TypeResolver
         Map<AstType, TypeName> namesByUnsignedType = new HashMap<>();
         namesByUnsignedType.put(AstType.UINT8, TypeName.INT);
         namesByUnsignedType.put(AstType.UINT16, TypeName.INT);
+        namesByUnsignedType.put(AstType.UINT24, TypeName.INT);
         namesByUnsignedType.put(AstType.UINT32, TypeName.LONG);
         namesByUnsignedType.put(AstType.UINT64, TypeName.LONG);
         return namesByUnsignedType;
