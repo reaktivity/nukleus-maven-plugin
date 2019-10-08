@@ -566,8 +566,9 @@ public class AstParserTest
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("octetsWithSizeField")
-                .member(new AstMemberNode.Builder().type(AstType.UINT24).name("size").build())
-                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.UINT24).name("size").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.OCTETS).sizeName("size")
+                    .name("field").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -768,9 +769,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("uint24 field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.UINT24)
                 .name("field")
                 .build();
@@ -799,9 +800,9 @@ public class AstParserTest
     {
         NukleusParser parser = newParser("uint24[10] field;");
         MemberContext ctx = parser.member();
-        AstMemberNode actual = new AstParser().visitMember(ctx);
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
-        AstMemberNode expected = new AstMemberNode.Builder()
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.UINT24)
                 .name("field")
                 .size(10)
