@@ -23,6 +23,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BYTE_ARRAY;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
@@ -98,7 +99,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         memberKindConstant.addMember(value, name);
         memberOffsetConstant.addMember(name);
         memberSizeConstant.addMember(name, type, size);
-        memberField.addMember(name, type);
+        memberField.addMember(name, type, byteOrder);
         memberAccessor.addMember(name, type, unsignedType);
         tryWrapMethod.addMember(name, type, size, sizeName);
         wrapMethod.addMember(name, type, size, sizeName);
@@ -233,7 +234,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
         public MemberFieldGenerator addMember(
             String name,
-            TypeName type)
+            TypeName type,
+            AstByteOrder byteOrder)
         {
             if (!type.isPrimitive())
             {
@@ -249,6 +251,11 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
                     TypeName typeArgument = parameterizedType.typeArguments.get(0);
                     fieldBuilder.initializer("new $T(new $T())", type, typeArgument);
+                }
+                else if (type instanceof ClassName && (isString16Type((ClassName) type) ||
+                        isString32Type((ClassName) type)) && byteOrder == NETWORK)
+                {
+                    fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", type, ByteOrder.class);
                 }
                 else
                 {
@@ -1160,6 +1167,20 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             }
 
         }
+    }
+
+    private static boolean isString16Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String16FW".equals(name);
+    }
+
+    private static boolean isString32Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String32FW".equals(name);
     }
 
     private static String kind(
