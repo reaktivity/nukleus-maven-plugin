@@ -405,7 +405,7 @@ public final class ListWithOctetsFW extends Flyweight
 
         private long fieldsMask;
 
-        protected Builder()
+        public Builder()
         {
             super(new ListWithOctetsFW());
         }

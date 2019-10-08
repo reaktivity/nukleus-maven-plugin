@@ -346,5 +346,15 @@ scope test
             case NI: uint32;
             case SAN: 1;
         }
+
+//        list[uint8, uint8] ListWithVariantOfInt
+//        {
+//            int8 intField1;
+//            VariantUint8KindWithInt64Type variantOfInt64Uint8Kind;
+//            VariantEnumKindOfInt8 variantOfInt8EnumKind;
+//            int16 intField2;
+//            VariantEnumKindOfInt16 variantOfInt16EnumKind;
+//            VariantEnumKindWithInt32 variantOfInt32EnumKind;
+//        }
     }
 }
