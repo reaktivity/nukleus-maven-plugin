@@ -49,6 +49,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Default
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int16_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int24_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int8_typeContext;
@@ -72,6 +73,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Type_idContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint16_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint24_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint64_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint8_typeContext;
@@ -115,10 +117,12 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         Map<AstType, Function<RuleContext, Object>> valueTypeByName = new HashMap<>();
         valueTypeByName.put(AstType.UINT8, AstParser::parseShort);
         valueTypeByName.put(AstType.UINT16, AstParser::parseInt);
+        valueTypeByName.put(AstType.UINT24, AstParser::parseMedium);
         valueTypeByName.put(AstType.UINT32, AstParser::parseLong);
         valueTypeByName.put(AstType.UINT64, AstParser::parseLong);
         valueTypeByName.put(AstType.INT8, AstParser::parseByte);
         valueTypeByName.put(AstType.INT16, AstParser::parseShort);
+        valueTypeByName.put(AstType.INT24, AstParser::parseMedium);
         valueTypeByName.put(AstType.INT32, AstParser::parseInt);
         valueTypeByName.put(AstType.INT64, AstParser::parseLong);
         valueTypeByName.put(AstType.STRING, AstParser::parseString);
@@ -463,6 +467,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
+    public AstNode visitInt24_type(
+        Int24_typeContext ctx)
+    {
+        memberBuilder.type(AstType.INT24);
+        return super.visitInt24_type(ctx);
+    }
+
+    @Override
     public AstNode visitInt16_type(
         Int16_typeContext ctx)
     {
@@ -500,6 +512,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.type(AstType.UINT16);
         return super.visitUint16_type(ctx);
+    }
+
+    @Override
+    public AstNode visitUint24_type(
+        Uint24_typeContext ctx)
+    {
+        memberBuilder.type(AstType.UINT24);
+        return super.visitUint24_type(ctx);
     }
 
     @Override
@@ -618,6 +638,18 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         String text)
     {
         return Short.decode(text);
+    }
+
+    private static int parseMedium(
+        RuleContext ctx)
+    {
+        final String text = ctx.getText();
+        final int value = parseInt(text);
+        if ((value & 0x7f_00_00_00) != 0)
+        {
+            throw new NumberFormatException(String.format("Value out of range for medium int (%s)", text));
+        }
+        return ctx != null ? value : 0;
     }
 
     private static int parseInt(
@@ -1092,6 +1124,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             }
 
             @Override
+            public AstVariantCaseNode.Builder visitInt24_type(
+                Int24_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.INT24);
+                return super.visitInt24_type(ctx);
+            }
+
+            @Override
             public AstVariantCaseNode.Builder visitInt32_type(
                 Int32_typeContext ctx)
             {
@@ -1121,6 +1161,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             {
                 variantCaseBuilder.type(AstType.UINT16);
                 return super.visitUint16_type(ctx);
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint24_type(
+                Uint24_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.UINT24);
+                return super.visitUint24_type(ctx);
             }
 
             @Override
@@ -1242,6 +1290,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             variantBuilder.of(AstType.UINT32);
             return super.visitUint32_type(ctx);
+        }
+
+        @Override
+        public AstVariantNode.Builder visitUint24_type(
+            Uint24_typeContext ctx)
+        {
+            variantBuilder.of(AstType.UINT24);
+            return super.visitUint24_type(ctx);
         }
 
         @Override

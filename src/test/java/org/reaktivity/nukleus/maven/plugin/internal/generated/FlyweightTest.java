@@ -16,11 +16,13 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static org.agrona.BufferUtil.NATIVE_BYTE_ORDER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import org.agrona.MutableDirectBuffer;
@@ -118,5 +120,35 @@ public class FlyweightTest
         buffer.putStringWithoutLengthUtf8(0, "asdf");
         Flyweight flyweight = new TestFlyweight().wrap(buffer,  0,  4);
         assertEquals(Arrays.hashCode("asdf".getBytes()), flyweight.hashCode());
+    }
+
+    public static void putMediumInt(
+        MutableDirectBuffer buffer,
+        int index,
+        int value)
+    {
+        final byte byte0 = (byte) (value & 0xff);
+        final byte byte1 = (byte) ((value >> 8) & 0xff);
+        final byte byte2 = (byte) ((value >> 16) & 0xff);
+        final byte byte3 = (byte) ((value >> 24) & 0xff);
+
+        assert byte3 == 0 || byte3 == -1;
+
+        if (NATIVE_BYTE_ORDER == ByteOrder.BIG_ENDIAN)
+        {
+            buffer.putByte(index + 2, byte0);
+            buffer.putByte(index + 1, byte1);
+            buffer.putByte(index, byte2);
+        }
+        else if (NATIVE_BYTE_ORDER == ByteOrder.LITTLE_ENDIAN)
+        {
+            buffer.putByte(index + 2, byte2);
+            buffer.putByte(index + 1, byte1);
+            buffer.putByte(index, byte0);
+        }
+        else
+        {
+            assert false : "unexpected native byte order";
+        }
     }
 }

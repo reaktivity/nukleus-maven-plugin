@@ -558,6 +558,22 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseOctetsWithUint24SizeField()
+    {
+        NukleusParser parser = newParser("struct octetsWithSizeField { uint24 size; octets[size] field; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                .name("octetsWithSizeField")
+                .member(new AstMemberNode.Builder().type(AstType.UINT24).name("size").build())
+                .member(new AstMemberNode.Builder().type(AstType.OCTETS).sizeName("size").name("field").build())
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseOctetsWithUint32SizeField()
     {
         NukleusParser parser = newParser("struct octetsWithSizeField { uint32 size; octets[size] field; }");
@@ -748,6 +764,21 @@ public class AstParserTest
     }
 
     @Test
+    public void shouldParseUint24Member()
+    {
+        NukleusParser parser = newParser("uint24 field;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.UINT24)
+                .name("field")
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void shouldParseUint16FixedArrayMember()
     {
         NukleusParser parser = newParser("uint16[10] field;");
@@ -756,6 +787,22 @@ public class AstParserTest
 
         AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                 .type(AstType.UINT16)
+                .name("field")
+                .size(10)
+                .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseUint24FixedArrayMember()
+    {
+        NukleusParser parser = newParser("uint24[10] field;");
+        MemberContext ctx = parser.member();
+        AstMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstMemberNode expected = new AstMemberNode.Builder()
+                .type(AstType.UINT24)
                 .name("field")
                 .size(10)
                 .build();

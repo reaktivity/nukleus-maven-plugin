@@ -28,8 +28,10 @@ scope test
         {
             uint16 fixed2 = 222;
             string string1;
-            int32 fixed3 = 333;
+            uint24 fixed3 = 333;
             string string2;
+            int32 fixed4 = 444;
+            string string3;
         }
 
         struct Nested
@@ -58,6 +60,8 @@ scope test
             octets[lengthOctets3] octets3 = null;
             int32 lengthOctets4;
             octets[lengthOctets4] octets4 = null;
+            int24 lengthOctets5;
+            octets[lengthOctets5] octets5 = null;
             octets extension;
         }
 
@@ -104,6 +108,7 @@ scope test
             case 0x01: 1;
             case 0x70: uint32;
             case 0x60: uint16;
+            case 0x50: uint24;
         }
 
         variant VariantUint8KindWithString32Type switch (uint8) of string32
@@ -116,6 +121,7 @@ scope test
         variant VariantUnsignedIntWithoutExplicitType switch (uint8)
         {
            case 0x70: uint32;
+           case 0x50: uint24;
            case 0x52: uint8;
            case 0x43: 0;
         }
@@ -124,6 +130,7 @@ scope test
         {
             case 0x71: int32;
             case 0x81: int64;
+            case 0x50: int24;
             case 0x51: int8;
             case 0x61: int16;
         }
@@ -132,11 +139,13 @@ scope test
         {
             uint8  unsigned8  = 0xFF;
             uint16 unsigned16 = 0xFFFF;
+            uint24 unsigned24 = 0xFFFFFF;
             uint32 unsigned32 = 0x7FFFFFFF; // TODO: 0xFFFFFFFF;
             uint64 unsigned64 = 0x7FFFFFFF; // TODO: 0xFFFFFFFFFFFFFFFF;
             varint32 variable32 = 123;
             int8  signed8  =  -8;
             int16 signed16 = -16;
+            int24 signed24 = -24;
             int32 signed32 = -32;
             int64 signed64 = -64;
             varint64 variable64 = -234;
@@ -146,13 +155,15 @@ scope test
         {
             uint8[1]  uint8Array;
             uint16[2] uint16Array;
-            uint32[3] uint32Array;
-            uint64[4] uint64Array;
+            uint24[3] uint24Array;
+            uint32[4] uint32Array;
+            uint64[8] uint64Array;
             string anchor;
             int8[1]  int8Array;
             int16[2] int16Array;
-            int32[3] int32Array;
-            int64[4] int64Array;
+            int24[3] int24Array;
+            int32[4] int32Array;
+            int64[8] int64Array;
         }
 
         struct IntegerVariableArrays
@@ -164,11 +175,15 @@ scope test
             uint64[lengthUnsigned64] unsigned64Array = null;
             uint8 lengthSigned16;
             int16[lengthSigned16] signed16Array;
+            uint8 lengthSigned24;
+            int24[lengthSigned24] signed24Array;
             varint64[] varint64Array;
             int8 lengthInt8;
             int32[lengthInt8] arrayWithInt8Size = null;
             int16 lengthInt16;
             int32[lengthInt16] arrayWithInt16Size = null;
+            int24 lengthInt24;
+            int32[lengthInt24] arrayWithInt24Size = null;
         }
 
         struct NestedAllDefaulting

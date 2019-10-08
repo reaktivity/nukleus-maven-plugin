@@ -21,17 +21,19 @@ import java.util.Objects;
 
 public final class AstType
 {
-    public static final AstType INT8 = new AstType("int8");
-    public static final AstType INT16 = new AstType("int16");
-    public static final AstType INT32 = new AstType("int32");
-    public static final AstType INT64 = new AstType("int64");
+    public static final AstType INT8 = new AstType("int8", 8);
+    public static final AstType INT16 = new AstType("int16", 16);
+    public static final AstType INT24 = new AstType("int24", 24);
+    public static final AstType INT32 = new AstType("int32", 32);
+    public static final AstType INT64 = new AstType("int64", 64);
     public static final AstType VARINT32 = new AstType("varint32");
     public static final AstType VARINT64 = new AstType("varint64");
 
-    public static final AstType UINT8 = new AstType("uint8");
-    public static final AstType UINT16 = new AstType("uint16");
-    public static final AstType UINT32 = new AstType("uint32");
-    public static final AstType UINT64 = new AstType("uint64");
+    public static final AstType UINT8 = new AstType("uint8", 8);
+    public static final AstType UINT16 = new AstType("uint16", 16);
+    public static final AstType UINT24 = new AstType("uint24", 24);
+    public static final AstType UINT32 = new AstType("uint32", 32);
+    public static final AstType UINT64 = new AstType("uint64", 64);
 
     public static final AstType OCTETS = new AstType("octets");
     public static final AstType STRING = new AstType("string");
@@ -42,11 +44,20 @@ public final class AstType
     public static final AstType STRUCT = new AstType("struct");
 
     private final String name;
+    private final int bits;
 
     private AstType(
         String name)
     {
+        this(name, -1);
+    }
+
+    private AstType(
+        String name,
+        int bits)
+    {
         this.name = requireNonNull(name);
+        this.bits = bits;
     }
 
     public String name()
@@ -54,10 +65,15 @@ public final class AstType
         return name;
     }
 
+    public int bits()
+    {
+        return bits;
+    }
+
     @Override
     public int hashCode()
     {
-        return name.hashCode();
+        return name.hashCode() ^ Integer.hashCode(bits);
     }
 
     @Override
@@ -75,17 +91,19 @@ public final class AstType
         }
 
         AstType that = (AstType) obj;
-        return Objects.equals(this.name, that.name);
+        return this.bits == that.bits &&
+               Objects.equals(this.name, that.name);
     }
 
     boolean isSignedInt()
     {
-        return this == INT8 || this == INT16 || this == INT32 || this == INT64 || this == VARINT32 || this == VARINT64;
+        return this == INT8 || this == INT16 || this == INT24 || this == INT32 || this == INT64 ||
+               this == VARINT32 || this == VARINT64;
     }
 
     public boolean isUnsignedInt()
     {
-        return this == UINT8 || this == UINT16 || this == UINT32 || this == UINT64;
+        return this == UINT8 || this == UINT16 || this == UINT24 || this == UINT32 || this == UINT64;
     }
 
     @Override
