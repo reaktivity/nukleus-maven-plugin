@@ -78,7 +78,6 @@ public class Varbyteint32FW extends Flyweight {
         return Integer.toString(value());
     }
 
-    // Count the amount of bytes this actually uses
     private int length0() {
         int pos = offset();
         byte b = (byte) 0;
@@ -87,7 +86,7 @@ public class Varbyteint32FW extends Flyweight {
             pos++;
         }
         int size = 1 + pos - offset();
-        int mask = size < 5 ? 0x80 : 0xf0;
+        int mask = size < 5 ? 0x80 : 0xF0;
         if ((b & mask) != 0 && size >= 5) {
             throw new IllegalArgumentException(String.format("varbyteint32 value at offset %d exceeds 32 bits", offset()));
         }
