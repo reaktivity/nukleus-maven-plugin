@@ -356,5 +356,15 @@ scope test
 //            VariantEnumKindOfInt16 variantOfInt16EnumKind;
 //            VariantEnumKindWithInt32 variantOfInt32EnumKind;
 //        }
+//
+//        list[uint8, uint8] ListWithEnum
+//        {
+//            required Roll roll;
+//            EnumWithInt8 enumWithInt8;
+//            EnumWithInt64 enumWithInt64 = TEN;
+//            required EnumWithUint16 enumWithUint16;
+//            EnumWithUint32 enumWithUint32 = SAN;
+//            EnumWithString enumWithString;
+//        }
     }
 }
