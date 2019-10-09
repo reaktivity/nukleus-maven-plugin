@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
+import static org.reaktivity.nukleus.maven.plugin.internal.generated.FlyweightTest.putMediumInt;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -34,6 +35,8 @@ import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 
 public class FlatWithOctetsFWTest
 {
+    private static final int MEDIUM_INT_BYTES = 3;
+
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
         {
@@ -103,7 +106,9 @@ public class FlatWithOctetsFWTest
         buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
         int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
         buffer.putInt(10 + offsetLengthOctets4, 0);
-        assertSame(flatWithOctetsRO, flatWithOctetsRO.tryWrap(buffer, 10, 10 + offsetLengthOctets4 + Integer.BYTES));
+        int offsetLengthOctets5 = offsetLengthOctets4 + Integer.BYTES;
+        putMediumInt(buffer, 10 + offsetLengthOctets5, 0);
+        assertSame(flatWithOctetsRO, flatWithOctetsRO.tryWrap(buffer, 10, 10 + offsetLengthOctets5 + MEDIUM_INT_BYTES));
     }
 
     @Test
@@ -117,7 +122,9 @@ public class FlatWithOctetsFWTest
         buffer.putByte(10 + offsetLengthOctets3, (byte) 0);
         int offsetLengthOctets4 = offsetLengthOctets3 + Byte.BYTES;
         buffer.putInt(10 + offsetLengthOctets4, 0);
-        assertSame(flatWithOctetsRO, flatWithOctetsRO.wrap(buffer, 10, 10 + offsetLengthOctets4 + Integer.BYTES));
+        int offsetLengthOctets5 = offsetLengthOctets4 + Integer.BYTES;
+        putMediumInt(buffer, 10 + offsetLengthOctets5, 0);
+        assertSame(flatWithOctetsRO, flatWithOctetsRO.wrap(buffer, 10, 10 + offsetLengthOctets5 + MEDIUM_INT_BYTES));
     }
 
     @Test
@@ -458,5 +465,4 @@ public class FlatWithOctetsFWTest
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
         return new StringFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
-
 }
