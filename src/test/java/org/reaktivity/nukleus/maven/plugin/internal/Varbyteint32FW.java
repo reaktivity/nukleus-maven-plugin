@@ -27,6 +27,7 @@ public class Varbyteint32FW extends Flyweight {
                 .build();
 
         final int value = varbyteint32.value();
+        System.out.printf("value=%d\n", value);
     }
 
     @Override
@@ -39,13 +40,15 @@ public class Varbyteint32FW extends Flyweight {
         int multiplier = 1;
         int pos  = offset();
         int encodedByte;
-        while ((encodedByte = (buffer().getByte(pos++) & 0x80)) != 0) {
+        do {
+            encodedByte = buffer().getByte(pos++);
             value += (encodedByte & MAX_VALUE) * multiplier;
             if (multiplier > MAX_MULTIPLIER) {
                 throw new IllegalArgumentException("varbyteint32 value is too long");
             }
             multiplier *= CONTINUATION_BIT;
         }
+        while ((encodedByte & CONTINUATION_BIT) != 0);
         return value;
     }
 
