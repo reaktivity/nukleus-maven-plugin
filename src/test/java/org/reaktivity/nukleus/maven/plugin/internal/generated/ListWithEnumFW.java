@@ -74,6 +74,8 @@ public final class ListWithEnumFW extends Flyweight
 
     private final EnumWithStringFW enumWithStringRO = new EnumWithStringFW();
 
+    private final int[] optionalOffsets = new int[FIELD_INDEX_ENUM_WITH_STRING + 1];
+
     public int length()
     {
         return buffer().getByte(offset() + LOGICAL_LENGTH_OFFSET);

@@ -289,6 +289,7 @@ public final class ListWithVariantOfIntFW extends Flyweight
         private final VariantEnumKindWithInt32FW.Builder variantOfInt32EnumKindRW = new VariantEnumKindWithInt32FW.Builder();
 
         private long fieldsMask;
+
         public Builder()
         {
             super(new ListWithVariantOfIntFW());

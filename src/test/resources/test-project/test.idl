@@ -366,5 +366,11 @@ scope test
 //            EnumWithUint32 enumWithUint32 = SAN;
 //            EnumWithString enumWithString;
 //        }
+//
+//        list[uint8, uint8] ListWithUnion
+//        {
+//            UnionOctets unionOctets;
+//            uint8 field1 = 1;
+//        }
     }
 }
