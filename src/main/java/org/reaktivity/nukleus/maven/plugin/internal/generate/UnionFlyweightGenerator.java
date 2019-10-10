@@ -452,9 +452,9 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
-                    .returns(thisName)
-                    .addStatement("super.wrap(buffer, offset, maxLimit)")
-                    .beginControlFlow("switch (kind())"));
+                    .returns(thisName));
+            addFailIfStatement("null == super.tryWrap(buffer, offset, maxLimit)");
+            builder.beginControlFlow("switch (kind())");
         }
 
         public TryWrapMethodGenerator addMember(
