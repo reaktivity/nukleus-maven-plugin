@@ -19,73 +19,11 @@ import static java.lang.Byte.MAX_VALUE;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public class Varbyteuint32FW extends Flyweight
 {
-    private static final int BYTE_MASK = 0xFF;
-
-    private static final int CONTINUATION_BIT = 0x80;
-
-    private static final int MAX_INPUT = 0x0FFFFFFF;
-
-    private static final int MAX_MULTIPLIER = 0x200000;
-
     private int size;
-
-    public static void main(String[] args)
-    {
-        Varbyteuint32FW.Builder varbyteint32RW = new Varbyteuint32FW.Builder();
-        MutableDirectBuffer writeBuffer = new UnsafeBuffer(new byte[8192]);
-        // 0
-        Varbyteuint32FW varbyteint32 = varbyteint32RW.wrap(writeBuffer, 0, writeBuffer.capacity())
-                .set(0)
-                .build();
-        int value = varbyteint32.value();
-        System.out.printf("value=%d, bytes=%d\n", value, varbyteint32.length0());
-
-        // 127
-        varbyteint32 = varbyteint32RW.wrap(writeBuffer, 0, writeBuffer.capacity())
-                .set(127)
-                .build();
-        value = varbyteint32.value();
-        System.out.printf("value=%d, bytes=%d\n", value, varbyteint32.length0());
-
-        // 16383
-        varbyteint32 = varbyteint32RW.wrap(writeBuffer, 0, writeBuffer.capacity())
-                .set(16383)
-                .build();
-        value = varbyteint32.value();
-        System.out.printf("value=%d, bytes=%d\n", value, varbyteint32.length0());
-
-        // 2097151
-        varbyteint32 = varbyteint32RW.wrap(writeBuffer, 0, writeBuffer.capacity())
-                .set(2097151)
-                .build();
-        value = varbyteint32.value();
-        System.out.printf("value=%d, bytes=%d\n", value, varbyteint32.length0());
-
-        // 268435455
-        varbyteint32 = varbyteint32RW.wrap(writeBuffer, 0, writeBuffer.capacity())
-                .set(268435455)
-                .build();
-        value = varbyteint32.value();
-        System.out.printf("value=%d, bytes=%d\n", value, varbyteint32.length0());
-
-        final int largeInput = 268435456;
-        // final int largeInput = 2147483647;
-        try
-        {
-            Varbyteuint32FW tooBig = varbyteint32RW.wrap(writeBuffer, 0, writeBuffer.capacity())
-                    .set(largeInput)
-                    .build();
-        }
-        catch (IllegalArgumentException iae)
-        {
-            System.out.printf("Input was too large: %d, error=\"%s\"\n", largeInput, iae);
-        }
-    }
 
     @Override
     public int limit()
@@ -103,13 +41,13 @@ public class Varbyteuint32FW extends Flyweight
         {
             encodedByte = buffer().getByte(pos++);
             value += (encodedByte & MAX_VALUE) * multiplier;
-            if (multiplier > MAX_MULTIPLIER)
+            if (multiplier > 0x200000)
             {
-                throw new IllegalArgumentException(String.format("varbyteint32 value=%d is too long", value));
+                throw new IllegalArgumentException(String.format("varbyteint32 value at pos %d exceeds 32 bits", pos));
             }
-            multiplier *= CONTINUATION_BIT;
+            multiplier *= 0x80;
         }
-        while ((encodedByte & CONTINUATION_BIT) != 0);
+        while ((encodedByte & 0x80) != 0);
         return value;
     }
 
@@ -157,7 +95,7 @@ public class Varbyteuint32FW extends Flyweight
         int mask = size < 5 ? 0x80 : 0xF0;
         if ((b & mask) != 0 && size >= 5)
         {
-            throw new IllegalArgumentException(String.format("varbyteint32 value at offset %d exceeds 32 bits", offset()));
+            throw new IllegalArgumentException(String.format("varbyteint32 value at pos %d exceeds 32 bits", pos));
         }
         return size;
     }
@@ -182,23 +120,26 @@ public class Varbyteuint32FW extends Flyweight
 
         public Varbyteuint32FW.Builder set(int value)
         {
-            if (value > MAX_INPUT)
+            if (value < 0) {
+                throw new IllegalArgumentException(String.format("Input value %d too low", value));
+            }
+            if (value > 0x0FFFFFFF)
             {
-                throw new IllegalArgumentException("Input value too long");
+                throw new IllegalArgumentException(String.format("Input value %d too long", value));
             }
             int pos = offset();
             int varint = 0;
             int i = 0;
             do
             {
-                int encodedByte = value % CONTINUATION_BIT;
-                value = value / CONTINUATION_BIT;
+                int encodedByte = value % 0x80;
+                value = value / 0x80;
                 if (value > 0)
                 {
-                    encodedByte = encodedByte | CONTINUATION_BIT;
+                    encodedByte = encodedByte | 0x80;
                 }
-                varint |= ((varint & CONTINUATION_BIT) > 0 ? encodedByte << (8 * i) : encodedByte) | varint;
-                buffer().putByte(pos++, (byte) (encodedByte & BYTE_MASK));
+                varint |= ((varint & 0x80) > 0 ? encodedByte << (8 * i) : encodedByte) | varint;
+                buffer().putByte(pos++, (byte) (encodedByte & 0xFF));
                 i++;
             }
             while (value > 0);
