@@ -15,6 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import java.text.MessageFormat;
 import java.util.function.Consumer;
 
 import org.agrona.BitUtil;
@@ -56,7 +57,7 @@ public final class ListWithUnionFW extends Flyweight
         return buffer().getByte(offset() + LOGICAL_LENGTH_OFFSET);
     }
 
-    public long bitmask()
+    private long bitmask()
     {
         return buffer().getLong(offset() + BIT_MASK_OFFSET);
     }
@@ -112,7 +113,7 @@ public final class ListWithUnionFW extends Flyweight
         int offset,
         int maxLimit)
     {
-        if (null == super.tryWrap(buffer, offset, maxLimit))
+        if (super.tryWrap(buffer, offset, maxLimit) == null)
         {
             return null;
         }
@@ -125,11 +126,12 @@ public final class ListWithUnionFW extends Flyweight
             case FIELD_INDEX_UNION_OCTETS:
                 if ((bitmask & (1 << FIELD_INDEX_UNION_OCTETS)) != 0)
                 {
-                    if (null == unionOctetsRO.tryWrap(buffer, fieldLimit, maxLimit))
+                    final UnionOctetsFW unionOctets = unionOctetsRO.tryWrap(buffer, fieldLimit, maxLimit);
+                    if (unionOctets == null)
                     {
                         return null;
                     }
-                    fieldLimit = unionOctetsRO.limit();
+                    fieldLimit = unionOctets.limit();
                 }
                 break;
             case FIELD_INDEX_FIELD1:
@@ -157,10 +159,19 @@ public final class ListWithUnionFW extends Flyweight
     @Override
     public String toString()
     {
-        final long bitmask = bitmask();
-        return String.format("LIST_WITH_UNION [bitmask=%s%s, field1=%d]",
-            String.format("0x%04X", bitmask),
-            (bitmask & (1 << FIELD_INDEX_UNION_OCTETS)) != 0 ? String.format(", unionOctets=%s", unionOctets()) : "",
+        final long bitmask = bitmask() | (1 << FIELD_INDEX_FIELD1);
+        boolean unionOctetsIsSet = (bitmask & (1 << FIELD_INDEX_UNION_OCTETS)) != 0;
+        StringBuilder format = new StringBuilder();
+        format.append("LIST_WITH_UNION [bitmask={0}");
+        if (unionOctetsIsSet)
+        {
+            format.append(", unionOctets={1}");
+        }
+        format.append(", field1={2}");
+        format.append("]");
+        return MessageFormat.format(format.toString(),
+            String.format("0x%02X", bitmask),
+            unionOctetsIsSet ? unionOctets() : null,
             field1());
     }
 
@@ -177,7 +188,7 @@ public final class ListWithUnionFW extends Flyweight
         public Builder unionOctets(
             UnionOctetsFW value)
         {
-            assert (fieldsMask & ~0x00) == 0 : "Field \"unionOctets\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x00) == 0 : "Field \"unionOctets\" cannot be set out of order";
             int newLimit = limit() + value.sizeof();
             checkLimit(newLimit, maxLimit());
             buffer().putBytes(limit(), value.buffer(), value.offset(), value.sizeof());
@@ -189,7 +200,7 @@ public final class ListWithUnionFW extends Flyweight
         public Builder unionOctets(
             Consumer<UnionOctetsFW.Builder> mutator)
         {
-            assert (fieldsMask & ~0x00) == 0 : "Field \"unionOctets\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x00) == 0 : "Field \"unionOctets\" cannot be set out of order";
             UnionOctetsFW.Builder unionOctetsRW = this.unionOctetsRW.wrap(buffer(), limit(), maxLimit());
             mutator.accept(unionOctetsRW);
             fieldsMask |= 1 << FIELD_INDEX_UNION_OCTETS;
@@ -200,7 +211,7 @@ public final class ListWithUnionFW extends Flyweight
         public Builder field1(
             byte value)
         {
-            assert (fieldsMask & ~0x01) == 0 : "Field \"field1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x01) == 0 : "Field \"field1\" cannot be set out of order";
             int newLimit = limit() + FIELD_SIZE_FIELD1;
             checkLimit(newLimit, maxLimit());
             buffer().putByte(limit(), value);

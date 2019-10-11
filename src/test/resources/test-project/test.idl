@@ -90,7 +90,7 @@ scope test
 //            octets[lengthOctets3] octets3 = null;
 //            int32 lengthOctets4;
 //            octets[lengthOctets4] octets4 = null;
-//            octets extension;
+//
 //        }
 
         union UnionOctets switch (uint8)

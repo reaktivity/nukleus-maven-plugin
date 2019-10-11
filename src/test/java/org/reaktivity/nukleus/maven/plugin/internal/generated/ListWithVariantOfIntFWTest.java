@@ -171,7 +171,6 @@ public class ListWithVariantOfIntFWTest
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithVariantOfIntRO.limit() - offsetPhysicalLength);
         assertEquals(logicalLength, listWithVariantOfIntRO.length());
-        assertEquals(bitmask, listWithVariantOfIntRO.bitmask());
         assertEquals(1, listWithVariantOfIntRO.intField1());
         assertEquals(100000, listWithVariantOfIntRO.variantOfInt64Uint8Kind().get());
         assertEquals(EnumWithInt8.ONE, listWithVariantOfIntRO.variantOfInt8EnumKind().kind());
@@ -221,7 +220,6 @@ public class ListWithVariantOfIntFWTest
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithVariantOfIntRO.limit() - offsetPhysicalLength);
         assertEquals(logicalLength, listWithVariantOfIntRO.length());
-        assertEquals(bitmask, listWithVariantOfIntRO.bitmask());
         assertEquals(1, listWithVariantOfIntRO.intField1());
         assertEquals(100000, listWithVariantOfIntRO.variantOfInt64Uint8Kind().get());
         assertEquals(EnumWithInt8.ONE, listWithVariantOfIntRO.variantOfInt8EnumKind().kind());

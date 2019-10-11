@@ -192,7 +192,6 @@ public class ListWithEnumFWTest
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithEnumRO.limit() - offsetPhysicalLength);
         assertEquals(logicalLength, listWithEnumRO.length());
-        assertEquals(bitmask, listWithEnumRO.bitmask());
         assertEquals(Roll.EGG, listWithEnumRO.roll());
         assertEquals(EnumWithInt8.THREE, listWithEnumRO.enumWithInt8());
         assertEquals(EnumWithInt64.ELEVEN, listWithEnumRO.enumWithInt64());
@@ -242,7 +241,6 @@ public class ListWithEnumFWTest
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithEnumRO.limit() - offsetPhysicalLength);
         assertEquals(logicalLength, listWithEnumRO.length());
-        assertEquals(bitmask, listWithEnumRO.bitmask());
         assertEquals(Roll.EGG, listWithEnumRO.roll());
         assertEquals(EnumWithInt8.THREE, listWithEnumRO.enumWithInt8());
         assertEquals(EnumWithInt64.ELEVEN, listWithEnumRO.enumWithInt64());

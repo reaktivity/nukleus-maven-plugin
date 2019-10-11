@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.function.Consumer;
 
 import org.agrona.BitUtil;
@@ -91,7 +92,7 @@ public final class ListWithOctetsFW extends Flyweight
         return buffer().getByte(offset() + LOGICAL_LENGTH_OFFSET);
     }
 
-    public long bitmask()
+    private long bitmask()
     {
         return buffer().getLong(offset() + BIT_MASK_OFFSET);
     }
@@ -143,12 +144,6 @@ public final class ListWithOctetsFW extends Flyweight
     public OctetsFW octets4()
     {
         return (bitmask() & (1 << FIELD_INDEX_OCTETS4)) == 0 || lengthOctets4() == -1 ? null : octets4RO;
-    }
-
-    public OctetsFW extension()
-    {
-        assert (bitmask() & (1 << FIELD_INDEX_EXTENSION)) != 0 : "Field \"extension\" is not set";
-        return extensionRO;
     }
 
     @Override
@@ -229,13 +224,6 @@ public final class ListWithOctetsFW extends Flyweight
                     fieldLimit = octets4RO.limit();
                 }
                 break;
-            case FIELD_INDEX_EXTENSION:
-                if ((bitmask & (1 << FIELD_INDEX_EXTENSION)) != 0)
-                {
-                    extensionRO.wrap(buffer, fieldLimit, maxLimit);
-                    fieldLimit = extensionRO.limit();
-                }
-                break;
             }
         }
         checkLimit(limit(), maxLimit);
@@ -248,7 +236,7 @@ public final class ListWithOctetsFW extends Flyweight
         int offset,
         int maxLimit)
     {
-        if (null == super.tryWrap(buffer, offset, maxLimit))
+        if (super.tryWrap(buffer, offset, maxLimit) == null)
         {
             return null;
         }
@@ -270,11 +258,12 @@ public final class ListWithOctetsFW extends Flyweight
                 {
                     return null;
                 }
-                if (null == octets1RO.tryWrap(buffer, fieldLimit, fieldLimit + 10))
+                final OctetsFW octets1 = octets1RO.tryWrap(buffer, fieldLimit, fieldLimit + 10);
+                if (octets1 == null)
                 {
                     return null;
                 }
-                fieldLimit = octets1RO.limit();
+                fieldLimit = octets1.limit();
                 break;
             case FIELD_INDEX_LENGTHOCTETS2:
                 if ((bitmask & (1 << FIELD_INDEX_LENGTHOCTETS2)) != 0)
@@ -286,11 +275,12 @@ public final class ListWithOctetsFW extends Flyweight
             case FIELD_INDEX_OCTETS2:
                 if ((bitmask & (1 << FIELD_INDEX_OCTETS2)) != 0)
                 {
-                    if (null == octets2RO.tryWrap(buffer, fieldLimit, fieldLimit + lengthOctets2()))
+                    final OctetsFW octets2 = octets2RO.tryWrap(buffer, fieldLimit, fieldLimit + lengthOctets2());
+                    if (octets2 == null)
                     {
                         return null;
                     }
-                    fieldLimit = octets2RO.limit();
+                    fieldLimit = octets2.limit();
                 }
                 break;
             case FIELD_INDEX_STRING1:
@@ -298,31 +288,34 @@ public final class ListWithOctetsFW extends Flyweight
                 {
                     return null;
                 }
-                if (null == string1RO.tryWrap(buffer, fieldLimit, maxLimit))
+                final StringFW string1 = string1RO.tryWrap(buffer, fieldLimit, maxLimit);
+                if (string1 == null)
                 {
                     return null;
                 }
-                fieldLimit = string1RO.limit();
+                fieldLimit = string1.limit();
                 break;
             case FIELD_INDEX_LENGTHOCTETS3:
                 if ((bitmask & (1 << FIELD_INDEX_LENGTHOCTETS3)) != 0)
                 {
-                    if (null == lengthOctets3RO.tryWrap(buffer, fieldLimit, maxLimit))
+                    final Varint32FW lengthOctets3 = lengthOctets3RO.tryWrap(buffer, fieldLimit, maxLimit);
+                    if (lengthOctets3 == null)
                     {
                         return null;
                     }
-                    fieldLimit = lengthOctets3RO.limit();
+                    fieldLimit = lengthOctets3.limit();
                 }
                 break;
             case FIELD_INDEX_OCTETS3:
                 if ((bitmask & (1 << FIELD_INDEX_OCTETS3)) != 0)
                 {
-                    if (null == octets3RO.tryWrap(buffer, fieldLimit, lengthOctets3() >= 0 ? fieldLimit + lengthOctets3() :
-                        fieldLimit))
+                    final OctetsFW octets3 = octets3RO.tryWrap(buffer, fieldLimit, lengthOctets3() >= 0 ?
+                        fieldLimit + lengthOctets3() : fieldLimit);
+                    if (octets3 == null)
                     {
                         return null;
                     }
-                    fieldLimit = octets3RO.limit();
+                    fieldLimit = octets3.limit();
                 }
                 break;
             case FIELD_INDEX_LENGTHOCTETS4:
@@ -335,22 +328,13 @@ public final class ListWithOctetsFW extends Flyweight
             case FIELD_INDEX_OCTETS4:
                 if ((bitmask & (1 << FIELD_INDEX_OCTETS4)) != 0)
                 {
-                    if (null == octets4RO.tryWrap(buffer, fieldLimit, lengthOctets4() >= 0 ? fieldLimit + lengthOctets4() :
-                        fieldLimit))
+                    final OctetsFW octets4 = octets4RO.tryWrap(buffer, fieldLimit, lengthOctets4() >= 0 ?
+                        fieldLimit + lengthOctets4() : fieldLimit);
+                    if (octets4 == null)
                     {
                         return null;
                     }
-                    fieldLimit = octets4RO.limit();
-                }
-                break;
-            case FIELD_INDEX_EXTENSION:
-                if ((bitmask & (1 << FIELD_INDEX_EXTENSION)) != 0)
-                {
-                    if (null == extensionRO.tryWrap(buffer, fieldLimit, maxLimit))
-                    {
-                        return null;
-                    }
-                    fieldLimit = extensionRO.limit();
+                    fieldLimit = octets4.limit();
                 }
                 break;
             }
@@ -371,20 +355,40 @@ public final class ListWithOctetsFW extends Flyweight
     @Override
     public String toString()
     {
-        final long bitmask = bitmask();
-        return String.format("LIST_WITH_OCTETS [bitmask=%s, fixed1=%d, octets1=%s%s%s, string1=%s, " +
-                "lengthOctets3=%s, octets3=%s, lengthOctets4=%s, octets4=%s%s]",
+        final long bitmask = bitmask() | (1 << FIELD_INDEX_FIXED1) | (1 << FIELD_INDEX_OCTETS3) | (1 << FIELD_INDEX_OCTETS4);
+        boolean lengthOctets2IsSet = (bitmask & (1 << FIELD_INDEX_LENGTHOCTETS2)) != 0;
+        boolean octets2IsSet = (bitmask & (1 << FIELD_INDEX_OCTETS2)) != 0;
+
+        StringBuilder format = new StringBuilder();
+        format.append("LIST_WITH_OCTETS [bitmask={0}");
+        format.append(", fixed1={1}");
+        format.append(", octets1={2}");
+        if (lengthOctets2IsSet)
+        {
+            format.append(", lengthOctets2={3}");
+        }
+        if (octets2IsSet)
+        {
+            format.append(", octets2={4}");
+        }
+        format.append(", string1={5}");
+        format.append(", lengthOctets3={6}");
+        format.append(", octets3={7}");
+        format.append(", lengthOctets4={8}");
+        format.append(", octets4={9}");
+
+        format.append("]");
+        return MessageFormat.format(format.toString(),
             String.format("0x%04X", bitmask),
             fixed1(),
             octets1(),
-            (bitmask & (1 << FIELD_INDEX_LENGTHOCTETS2)) != 0 ? String.format(", lengthOctets2=%s", lengthOctets2()) : "",
-            (bitmask & (1 << FIELD_INDEX_OCTETS2)) != 0 ? String.format(", octets2=%s", octets2()) : "",
+            lengthOctets2IsSet ? lengthOctets2() : null,
+            octets2IsSet ? octets2() : null,
             string1(),
             lengthOctets3(),
             octets3(),
             lengthOctets4(),
-            octets4(),
-            (bitmask & (1 << FIELD_INDEX_EXTENSION)) != 0 ? String.format(", extension=%s", extension()) : "");
+            octets4());
     }
 
     public static final class Builder extends Flyweight.Builder<ListWithOctetsFW>
@@ -401,8 +405,6 @@ public final class ListWithOctetsFW extends Flyweight
 
         private final OctetsFW.Builder octets4RW = new OctetsFW.Builder();
 
-        private final OctetsFW.Builder extensionRW = new OctetsFW.Builder();
-
         private long fieldsMask;
 
         public Builder()
@@ -413,7 +415,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder fixed1(
             long value)
         {
-            assert (fieldsMask & ~0x00) == 0 : "Field \"fixed1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x00) == 0 : "Field \"fixed1\" cannot be set out of order";
             if (value < 0)
             {
                 throw new IllegalArgumentException(String.format("Value %d too low for field \"fixed1\"", value));
@@ -437,7 +439,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets1(
             OctetsFW value)
         {
-            assert (fieldsMask & ~0x01) == 0 : "Field \"octets1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x01) == 0 : "Field \"octets1\" cannot be set out of order";
             OctetsFW.Builder octets1RW = octets1();
             octets1RW.set(value);
             int expectedLimit = octets1RW.maxLimit();
@@ -455,7 +457,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets1(
             Consumer<OctetsFW.Builder> mutator)
         {
-            assert (fieldsMask & ~0x01) == 0 : "Field \"octets1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x01) == 0 : "Field \"octets1\" cannot be set out of order";
             OctetsFW.Builder octets1RW = octets1();
             mutator.accept(octets1RW);
             int expectedLimit = octets1RW.maxLimit();
@@ -475,7 +477,7 @@ public final class ListWithOctetsFW extends Flyweight
             int offset,
             int length)
         {
-            assert (fieldsMask & ~0x01) == 0 : "Field \"octets1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x01) == 0 : "Field \"octets1\" cannot be set out of order";
             OctetsFW.Builder octets1RW = octets1();
             int fieldSize = octets1RW.maxLimit() - limit();
             if (length != fieldSize)
@@ -513,7 +515,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets2(
             OctetsFW value)
         {
-            assert (fieldsMask & ~0x07) == 0 : "Field \"octets2\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x07) == 0 : "Field \"octets2\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
             OctetsFW.Builder octets2RW = octets2();
             if (value == null)
@@ -535,7 +537,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets2(
             Consumer<OctetsFW.Builder> mutator)
         {
-            assert (fieldsMask & ~0x07) == 0 : "Field \"octets2\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x07) == 0 : "Field \"octets2\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
             OctetsFW.Builder octets2RW = octets2();
             mutator.accept(octets2RW);
@@ -555,7 +557,7 @@ public final class ListWithOctetsFW extends Flyweight
             int offset,
             int length)
         {
-            assert (fieldsMask & ~0x07) == 0 : "Field \"octets2\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x07) == 0 : "Field \"octets2\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
             lengthOctets2(length);
             OctetsFW.Builder octets2RW = octets2();
@@ -574,7 +576,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder string1(
             String value)
         {
-            assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
             StringFW.Builder string1RW = string1();
             string1RW.set(value, StandardCharsets.UTF_8);
@@ -586,7 +588,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder string1(
             StringFW value)
         {
-            assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
             StringFW.Builder string1RW = string1();
             string1RW.set(value);
@@ -600,7 +602,7 @@ public final class ListWithOctetsFW extends Flyweight
             int offset,
             int length)
         {
-            assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
             StringFW.Builder string1RW = string1();
             string1RW.set(buffer, offset, length);
@@ -627,7 +629,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets3(
             OctetsFW value)
         {
-            assert (fieldsMask & ~0x3F) == 0 : "Field \"octets3\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x3F) == 0 : "Field \"octets3\" cannot be set out of order";
             assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
             int newLimit;
             OctetsFW.Builder octets3RW = octets3();
@@ -654,7 +656,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets3(
             Consumer<OctetsFW.Builder> mutator)
         {
-            assert (fieldsMask & ~0x3F) == 0 : "Field \"octets3\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x3F) == 0 : "Field \"octets3\" cannot be set out of order";
             assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
             OctetsFW.Builder octets3RW = octets3();
             mutator.accept(octets3RW);
@@ -674,7 +676,7 @@ public final class ListWithOctetsFW extends Flyweight
             int offset,
             int length)
         {
-            assert (fieldsMask & ~0x3F) == 0 : "Field \"octets3\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0x3F) == 0 : "Field \"octets3\" cannot be set out of order";
             assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
             lengthOctets3(length);
             OctetsFW.Builder octets3RW = octets3();
@@ -704,7 +706,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets4(
             OctetsFW value)
         {
-            assert (fieldsMask & ~0xFF) == 0 : "Field \"octets4\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0xFF) == 0 : "Field \"octets4\" cannot be set out of order";
             assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
             int newLimit;
             OctetsFW.Builder octets4RW = octets4();
@@ -731,7 +733,7 @@ public final class ListWithOctetsFW extends Flyweight
         public Builder octets4(
             Consumer<OctetsFW.Builder> mutator)
         {
-            assert (fieldsMask & ~0xFF) == 0 : "Field \"octets4\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0xFF) == 0 : "Field \"octets4\" cannot be set out of order";
             assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
             OctetsFW.Builder octets4RW = octets4();
             mutator.accept(octets4RW);
@@ -751,7 +753,7 @@ public final class ListWithOctetsFW extends Flyweight
             int offset,
             int length)
         {
-            assert (fieldsMask & ~0xFF) == 0 : "Field \"octets4\" is already set or subsequent fields are already set";
+            assert (fieldsMask & ~0xFF) == 0 : "Field \"octets4\" cannot be set out of order";
             assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
             lengthOctets4(length);
             OctetsFW.Builder octets4RW = octets4();
@@ -759,49 +761,6 @@ public final class ListWithOctetsFW extends Flyweight
             int newLimit = octets4RW.build().limit();
             fieldsMask |= 1 << FIELD_INDEX_OCTETS4;
             limit(newLimit);
-            return this;
-        }
-
-        private OctetsFW.Builder extension()
-        {
-            return extensionRW.wrap(buffer(), limit(), maxLimit());
-        }
-
-        public Builder extension(
-            OctetsFW value)
-        {
-            assert (fieldsMask & ~0x01FF) == 0 : "Field \"extension\" is already set or subsequent fields are already set";
-            assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
-            OctetsFW.Builder extensionRW = extension();
-            extensionRW.set(value);
-            fieldsMask |= 1 << FIELD_INDEX_EXTENSION;
-            limit(extensionRW.build().limit());
-            return this;
-        }
-
-        public Builder extension(
-            Consumer<OctetsFW.Builder> mutator)
-        {
-            assert (fieldsMask & ~0x01FF) == 0 : "Field \"extension\" is already set or subsequent fields are already set";
-            assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
-            OctetsFW.Builder extensionRW = extension();
-            mutator.accept(extensionRW);
-            fieldsMask |= 1 << FIELD_INDEX_EXTENSION;
-            limit(extensionRW.build().limit());
-            return this;
-        }
-
-        public Builder extension(
-            DirectBuffer buffer,
-            int offset,
-            int length)
-        {
-            assert (fieldsMask & ~0x01FF) == 0 : "Field \"extension\" is already set or subsequent fields are already set";
-            assert (fieldsMask & 0x10) != 0 : "Prior required field \"string1\" is not set";
-            OctetsFW.Builder extensionRW = extension();
-            extensionRW.set(buffer, offset, length);
-            fieldsMask |= 1 << FIELD_INDEX_EXTENSION;
-            limit(extensionRW.build().limit());
             return this;
         }
 

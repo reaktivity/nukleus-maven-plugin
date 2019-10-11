@@ -177,7 +177,6 @@ public class ListWithOctetsFWTest
         buffer.putBytes(offsetString1, string1.buffer(), 0, string1.sizeof());
         assertSame(listWithOctetsRO, listWithOctetsRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
-        assertEquals(18L, listWithOctetsRO.bitmask());
         assertEquals(11L, listWithOctetsRO.fixed1());
         assertEquals(-1, listWithOctetsRO.lengthOctets3());
         assertNull(listWithOctetsRO.octets3());
@@ -188,7 +187,7 @@ public class ListWithOctetsFWTest
     @Test
     public void shouldWrapAllFields()
     {
-        byte physicalLength = 71;
+        byte physicalLength = 62;
         byte logicalLength = 10;
         long bitmask = 0x03FF;
         int offsetPhysicalLength = 10;
@@ -222,14 +221,11 @@ public class ListWithOctetsFWTest
         OctetsFW octets4 = asOctetsFW("123");
         buffer.putBytes(offsetOctets4, octets4.buffer(), 0, octets4.sizeof());
         int offsetExtension = offsetOctets4 + octets4.sizeof();
-        OctetsFW extension = asOctetsFW("extension");
-        buffer.putBytes(offsetExtension, extension.buffer(), 0, extension.sizeof());
 
         assertSame(listWithOctetsRO, listWithOctetsRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithOctetsRO.limit() - offsetPhysicalLength);
         assertEquals(logicalLength, listWithOctetsRO.length());
-        assertEquals(bitmask, listWithOctetsRO.bitmask());
         assertEquals(12345, listWithOctetsRO.fixed1());
         assertEquals("octets[10]", listWithOctetsRO.octets1().toString());
         assertEquals(15, listWithOctetsRO.lengthOctets2());
@@ -239,7 +235,6 @@ public class ListWithOctetsFWTest
         assertEquals("octets[5]", listWithOctetsRO.octets3().toString());
         assertEquals(3, listWithOctetsRO.lengthOctets4());
         assertEquals("octets[3]", listWithOctetsRO.octets4().toString());
-        assertEquals("octets[9]", listWithOctetsRO.extension().toString());
     }
 
     @Test
@@ -526,42 +521,6 @@ public class ListWithOctetsFWTest
     }
 
     @Test(expected = AssertionError.class)
-    public void shouldFailToResetExtensionUsingOctetsFW() throws Exception
-    {
-        listWithOctetsRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .octets1(asOctetsFW("1234567890"))
-            .string1("value1")
-            .extension(asOctetsFW("1234567890"))
-            .extension(asOctetsFW("01234"))
-            .build();
-    }
-
-    @Test(expected = AssertionError.class)
-    public void shouldFailToResetExtensionUsingConsumer() throws Exception
-    {
-        listWithOctetsRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .string1("value1")
-            .extension(b -> b.put("01234".getBytes(UTF_8)))
-            .extension(b -> b.put("1234567890".getBytes(UTF_8)))
-            .build();
-    }
-
-    @Test(expected = AssertionError.class)
-    public void shouldFailToResetExtensionUsingDirectBuffer() throws Exception
-    {
-        listWithOctetsRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .octets1(asBuffer("1234567890"), 0, "1234567890".length())
-            .string1("value1")
-            .extension(asBuffer("01234"), 0, "01234".length())
-            .extension(asBuffer("1234567890"), 0, "1234567890".length())
-            .build();
-    }
-
-    @Test(expected = AssertionError.class)
     public void shouldFailToBuildWhenRequiredOctets1NotSet() throws Exception
     {
         listWithOctetsRW.wrap(buffer, 0, 100)
@@ -690,36 +649,6 @@ public class ListWithOctetsFWTest
             .build();
     }
 
-    @Test(expected = AssertionError.class)
-    public void shouldFailToSetExtensionUsingOctetsFWWhenRequiredString1NotSet() throws Exception
-    {
-        listWithOctetsRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .extension(asOctetsFW("1234567890"))
-            .build();
-    }
-
-    @Test(expected = AssertionError.class)
-    public void shouldFailToSetExtensionUsingConsumeWhenRequiredString1NotSet() throws Exception
-    {
-        listWithOctetsRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .extension(b -> b.put("1234567890".getBytes(UTF_8)))
-            .build();
-    }
-
-    @Test(expected = AssertionError.class)
-    public void shouldFailToSetExtensionUsingDirectBufferWhenRequiredString1NotSet() throws Exception
-    {
-        listWithOctetsRW.wrap(buffer, 0, 100)
-            .fixed1(10)
-            .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .extension(asBuffer("12345"), 0, "12345".length())
-            .build();
-    }
-
     @Test
     public void shouldSetAllValuesUsingOctetsFW() throws Exception
     {
@@ -730,7 +659,6 @@ public class ListWithOctetsFWTest
             .string1("value1")
             .octets3(asOctetsFW("678"))
             .octets4(asOctetsFW("987654"))
-            .extension(asOctetsFW("octetsValue"))
             .build()
             .limit();
         listWithOctetsRO.wrap(buffer,  0,  limit);
@@ -751,9 +679,6 @@ public class ListWithOctetsFWTest
         final String octets4 = listWithOctetsRO.octets4().get(
             (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("987654", octets4);
-        final String extension = listWithOctetsRO.extension().get(
-            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
-        assertEquals("octetsValue", extension);
     }
 
     @Test
@@ -766,30 +691,26 @@ public class ListWithOctetsFWTest
             .string1("value1")
             .octets3(b -> b.put("678".getBytes(UTF_8)))
             .octets4(b -> b.put("987654".getBytes(UTF_8)))
-            .extension(b -> b.put("octetsValue".getBytes(UTF_8)))
             .build()
             .limit();
-        listWithOctetsRO.wrap(buffer,  0,  limit);
+        listWithOctetsRO.wrap(buffer, 0, limit);
         assertEquals(5, listWithOctetsRO.fixed1());
         final String octets1 = listWithOctetsRO.octets1().get(
-            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) -> buffer.getStringWithoutLengthUtf8(offset, limit2 - offset));
         assertEquals("1234567890", octets1);
         assertEquals(5, listWithOctetsRO.lengthOctets2());
         final String octets2 = listWithOctetsRO.octets2().get(
-            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) -> buffer.getStringWithoutLengthUtf8(offset, limit2 - offset));
         assertEquals("12345", octets2);
         assertEquals("value1", listWithOctetsRO.string1().asString());
         assertEquals(3, listWithOctetsRO.lengthOctets3());
         final String octets3 = listWithOctetsRO.octets3().get(
-            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) -> buffer.getStringWithoutLengthUtf8(offset, limit2 - offset));
         assertEquals("678", octets3);
         assertEquals(6, listWithOctetsRO.lengthOctets4());
         final String octets4 = listWithOctetsRO.octets4().get(
-            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
+            (buffer, offset, limit2) -> buffer.getStringWithoutLengthUtf8(offset, limit2 - offset));
         assertEquals("987654", octets4);
-        final String extension = listWithOctetsRO.extension().get(
-            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
-        assertEquals("octetsValue", extension);
     }
 
     @Test
@@ -802,7 +723,6 @@ public class ListWithOctetsFWTest
             .string1(asBuffer("value1"), 0, "value1".length())
             .octets3(asBuffer("678"), 0, "678".length())
             .octets4(asBuffer("987654"), 0, "987654".length())
-            .extension(asBuffer("octetsValue"), 0, "octetsValue".length())
             .build()
             .limit();
         listWithOctetsRO.wrap(buffer,  0,  limit);
@@ -823,9 +743,6 @@ public class ListWithOctetsFWTest
         final String octets4 = listWithOctetsRO.octets4().get(
             (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("987654", octets4);
-        final String extension = listWithOctetsRO.extension().get(
-            (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
-        assertEquals("octetsValue", extension);
     }
 
     @Test
@@ -836,7 +753,6 @@ public class ListWithOctetsFWTest
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .octets2(b -> b.put("12345".getBytes(UTF_8)))
             .string1(asStringFW("value1"))
-            .extension(b -> b.put("octetsValue".getBytes(UTF_8)))
             .build()
             .limit();
         listWithOctetsRO.wrap(buffer,  0,  limit);
