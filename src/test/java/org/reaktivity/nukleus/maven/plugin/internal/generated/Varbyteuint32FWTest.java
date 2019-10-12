@@ -24,7 +24,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.nukleus.maven.plugin.internal.Varbyteuint32FW;
+import org.reaktivity.reaktor.internal.test.types.Varbyteuint32FW;
 
 public class Varbyteuint32FWTest
 {

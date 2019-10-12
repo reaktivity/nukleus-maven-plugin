@@ -87,10 +87,10 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("int encodedByte")
                 .beginControlFlow("do")
                     .addStatement("encodedByte = buffer().getByte(pos++)")
-                    .addStatement("value += (encodedByte & MAX_VALUE) * multiplier")
+                    .addStatement("value += (encodedByte & 0x7F) * multiplier")
                     .beginControlFlow("if (multiplier > 0x200000)")
-                        .addStatement("throw new $T(String.format($S, pos))", IllegalArgumentException.class,
-                                "varbyteint32 value at pos %d exceeds 32 bits")
+                        .addStatement("throw new $T(String.format($S, offset()))", IllegalArgumentException.class,
+                                "varbyteuint32 value at offset %d exceeds 32 bits")
                     .endControlFlow()
                     .addStatement("multiplier *= 0x80")
                 .endControlFlow("while ((encodedByte & 0x80) != 0)")
@@ -154,13 +154,13 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("byte b = (byte) 0")
                 .addStatement("final int maxPos = Math.min(pos + 5,  maxLimit())")
                 .beginControlFlow("while (pos < maxPos && ((b = buffer().getByte(pos)) & 0x80) != 0)")
-                .addStatement("pos++")
+                    .addStatement("pos++")
                 .endControlFlow()
                 .addStatement("int size = 1 + pos - offset()")
                 .addStatement("int mask = size < 5 ? 0x80 : 0xf0") // 32 % 7 = 4 bits allowed only in 5th byte
                 .beginControlFlow("if ((b & mask) != 0 && size >= 5)")
-                .addStatement("throw new $T(String.format($S, offset()))", IllegalArgumentException.class,
-                        "varbyteuint32 value at offset %d exceeds 32 bits")
+                    .addStatement("throw new $T(String.format($S, offset()))", IllegalArgumentException.class,
+                            "varbyteuint32 value at offset %d exceeds 32 bits")
                 .endControlFlow()
                 .addStatement("return size")
                 .build();
@@ -239,9 +239,20 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                         .addStatement("throw new $T(String.format($S, value))", IllegalArgumentException.class,
                                 "Input value %d too long")
                     .endControlFlow()
-                    .addStatement("int zigzagged = (value << 1) ^ (value >> 31)")
                     .addStatement("int pos = offset()")
-                    .addStatement("int bits = 1 + $1T.numberOfTrailingZeros($1T.highestOneBit(zigzagged))",
+                    .addStatement("int varint = 0")
+                    .addStatement("int i = 0")
+                    .beginControlFlow("do")
+                        .addStatement("int encodedByte = value % 0x80")
+                        .addStatement("value /= 0x80")
+                        .beginControlFlow("if (value > 0)")
+                            .addStatement("encodedByte |= 0x80")
+                        .endControlFlow()
+                        .addStatement("varint |= ((varint & 0x80) > 0 ? encodedByte << (8 * i) : encodedByte) | varint")
+                        .addStatement("buffer().putByte(pos++, (byte) (encodedByte & 0xFF))")
+                        .addStatement("i++")
+                    .endControlFlow("while (value > 0)")
+                    .addStatement("int bits = 1 + $1T.numberOfTrailingZeros($1T.highestOneBit(varint))",
                             Integer.class)
                     .addStatement("int size = bits / 7")
                     .beginControlFlow("if (size * 7 < bits)")
@@ -249,11 +260,6 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                     .endControlFlow()
                     .addStatement("int newLimit = pos + size")
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .beginControlFlow("while ((zigzagged & 0xFFFFFF80) != 0)")
-                        .addStatement("buffer().putByte(pos++, (byte) ((zigzagged & 0x7F) | 0x80))")
-                        .addStatement("zigzagged >>>= 7")
-                    .endControlFlow()
-                    .addStatement("buffer().putByte(pos, (byte) (zigzagged & 0x7F))")
                     .addStatement("limit(newLimit)")
                     .addStatement("valueSet = true")
                     .addStatement("return this")
