@@ -149,7 +149,9 @@ public final class AstStructNode extends AstNode
                                 member.sizeName(), member.name()));
                     }
                     boolean defaultsToNull = member.defaultValue() == NULL_DEFAULT;
-                    boolean sizeIsVarint = size.type() == AstType.VARINT32 || size.type() == AstType.VARINT64;
+                    boolean sizeIsVarint = size.type() == AstType.VARBYTEUINT32 ||
+                                           size.type() == AstType.VARINT32 ||
+                                           size.type() == AstType.VARINT64;
                     if (sizeIsVarint)
                     {
                         if (member.type() == AstType.OCTETS)

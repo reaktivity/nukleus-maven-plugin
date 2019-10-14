@@ -122,6 +122,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
         }
         else
         {
+            System.out.printf("memberType=%s\n", memberType);
             TypeName memberTypeName = resolver.resolveType(memberType);
             if (memberTypeName == null)
             {

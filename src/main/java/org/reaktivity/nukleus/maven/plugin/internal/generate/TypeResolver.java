@@ -47,7 +47,7 @@ public final class TypeResolver
     {
         this.structsByName = new HashMap<>();
         this.namesByType = initNamesByType(packageName);
-        this.namesByUnsignedType =  initNamesByUnsignedType();
+        this.namesByUnsignedType =  initNamesByUnsignedType(packageName);
         this.packageName = packageName;
     }
 
@@ -70,6 +70,7 @@ public final class TypeResolver
     public TypeName resolveType(
         AstType type)
     {
+        System.out.printf("types=%s\n", namesByType);
         return namesByType.get(type);
     }
 
@@ -117,7 +118,8 @@ public final class TypeResolver
         return namesByType;
     }
 
-    private static Map<AstType, TypeName> initNamesByUnsignedType()
+    private static Map<AstType, TypeName> initNamesByUnsignedType(
+        String packageName)
     {
         Map<AstType, TypeName> namesByUnsignedType = new HashMap<>();
         namesByUnsignedType.put(AstType.UINT8, TypeName.INT);
@@ -125,6 +127,7 @@ public final class TypeResolver
         namesByUnsignedType.put(AstType.UINT24, TypeName.INT);
         namesByUnsignedType.put(AstType.UINT32, TypeName.LONG);
         namesByUnsignedType.put(AstType.UINT64, TypeName.LONG);
+        namesByUnsignedType.put(AstType.VARBYTEUINT32, ClassName.get(packageName, "Varbyteuint32FW"));
         return namesByUnsignedType;
     }
 
