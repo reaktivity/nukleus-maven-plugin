@@ -38,6 +38,7 @@ public final class TypeNames
     public static final TypeName BYTE_ARRAY = ArrayTypeName.of(byte.class);
 
     public static final TypeName VARINT = TypeVariableName.get("Varint");
+    public static final TypeName VARBYTEUINT = TypeVariableName.get("Varbyteuint");
 
 
     private TypeNames()

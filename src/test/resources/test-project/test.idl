@@ -128,6 +128,7 @@ scope test
             uint24 unsigned24 = 0xFFFFFF;
             uint32 unsigned32 = 0x7FFFFFFF; // TODO: 0xFFFFFFFF;
             uint64 unsigned64 = 0x7FFFFFFF; // TODO: 0xFFFFFFFFFFFFFFFF;
+            varbyteuint32 variableUnsigned32 = 32;
             varint32 variable32 = 123;
             int8  signed8  =  -8;
             int16 signed16 = -16;

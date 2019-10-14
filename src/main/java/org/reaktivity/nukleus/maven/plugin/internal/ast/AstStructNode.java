@@ -149,9 +149,8 @@ public final class AstStructNode extends AstNode
                                 member.sizeName(), member.name()));
                     }
                     boolean defaultsToNull = member.defaultValue() == NULL_DEFAULT;
-                    boolean sizeIsVarint = size.type() == AstType.VARBYTEUINT32 ||
-                                           size.type() == AstType.VARINT32 ||
-                                           size.type() == AstType.VARINT64;
+                    boolean sizeIsVarint = size.type() == AstType.VARINT32 || size.type() == AstType.VARINT64;
+                    boolean sizeIsVarbyteuint = size.type() == AstType.VARBYTEUINT32;
                     if (sizeIsVarint)
                     {
                         if (member.type() == AstType.OCTETS)
@@ -163,6 +162,20 @@ public final class AstStructNode extends AstNode
                             throw new IllegalArgumentException(format(
                                 "Size field \"%s\" for field \"%s\" may not be of type varint",
                                 member.sizeName(), member.name()));
+                        }
+                    }
+                    else if (sizeIsVarbyteuint)
+                    {
+                        System.out.printf("MEMBER TYPE = %s\n",  member.type());
+                        if (member.type() == AstType.OCTETS)
+                        {
+                            size.usedAsSize(true);
+                        }
+                        else
+                        {
+                            throw new IllegalArgumentException(format(
+                                    "Size field \"%s\" for field \"%s\" may not be of type varint",
+                                    member.sizeName(), member.name()));
                         }
                     }
                     else if (defaultsToNull && !size.type().isSignedInt())
