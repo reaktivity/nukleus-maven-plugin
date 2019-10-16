@@ -111,7 +111,7 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                     .addStatement("return null")
                 .endControlFlow()
                 .addStatement("size = length0()")
-                .beginControlFlow("if (size < 0 || size >= 5 || limit() > maxLimit)")
+                .beginControlFlow("if (size < 0 || size > 4 || limit() > maxLimit)")
                     .addStatement("return null")
                 .endControlFlow()
                 .addStatement("return this")
@@ -130,7 +130,7 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
                 .addStatement("checkLimit(offset + 1, maxLimit)")
                 .addStatement("size = length0()")
-                .beginControlFlow("if (size < 0 || size >= 5)")
+                .beginControlFlow("if (size < 0 || size > 4)")
                     .addStatement("throw new $T(String.format($S, offset))", IllegalArgumentException.class,
                             "varbyteuint32 value at offset %d exceeds 32 bits")
                 .endControlFlow()
