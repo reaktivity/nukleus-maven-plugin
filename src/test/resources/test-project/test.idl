@@ -56,7 +56,7 @@ scope test
             uint16 lengthOctets2;
             string string1;
             octets[lengthOctets2] octets2;
-            varint32 lengthOctets3;
+            varbyteuint32 lengthOctets3;
             octets[lengthOctets3] octets3 = null;
             int32 lengthOctets4;
             octets[lengthOctets4] octets4 = null;
@@ -128,7 +128,7 @@ scope test
             uint24 unsigned24 = 0xFFFFFF;
             uint32 unsigned32 = 0x7FFFFFFF; // TODO: 0xFFFFFFFF;
             uint64 unsigned64 = 0x7FFFFFFF; // TODO: 0xFFFFFFFFFFFFFFFF;
-            varbyteuint32 variableUnsigned32 = 32;
+            varbyteuint32 varuint32 = 123;
             varint32 variable32 = 123;
             int8  signed8  =  -8;
             int16 signed16 = -16;
