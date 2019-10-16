@@ -111,7 +111,7 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                     .addStatement("return null")
                 .endControlFlow()
                 .addStatement("size = length0()")
-                .beginControlFlow("if (size < 0 || size > 4 || limit() > maxLimit)")
+                .beginControlFlow("if (size < 0 || size > 5 || limit() > maxLimit)")
                     .addStatement("return null")
                 .endControlFlow()
                 .addStatement("return this")
@@ -130,7 +130,7 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
                 .addStatement("checkLimit(offset + 1, maxLimit)")
                 .addStatement("size = length0()")
-                .beginControlFlow("if (size < 0 || size > 4)")
+                .beginControlFlow("if (size < 0 || size > 5)")
                     .addStatement("throw new $T(String.format($S, offset))", IllegalArgumentException.class,
                             "varbyteuint32 value at offset %d exceeds 32 bits")
                 .endControlFlow()
@@ -156,18 +156,12 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .returns(int.class)
                 .addStatement("final DirectBuffer buffer = buffer()")
                 .addStatement("final int offset = offset()")
-                .addStatement("final int maxPos = Math.min(offset + 4,  maxLimit())")
+                .addStatement("final int maxPos = Math.min(offset + 5,  maxLimit())")
                 .addStatement("int index = 0")
-                // .addStatement("byte b = (byte) 0")
                 .beginControlFlow("while (index + offset < maxPos && (buffer.getByte(index + offset) & 0x80) != 0)")
                     .addStatement("index++")
                 .endControlFlow()
                 .addStatement("int size = 1 + index")
-                // .addStatement("int mask = size < 4 ? 0x80 : 0xf0") // 32 % 7 = 4 bits allowed only in 5th byte
-                // .beginControlFlow("if ((b & mask) != 0 && size > 4)")
-                //     .addStatement("throw new $T(String.format($S, offset))", IllegalArgumentException.class,
-                //             "varbyteuint32 value at offset %d exceeds 32 bits")
-                // .endControlFlow()
                 .addStatement("return size")
                 .build();
     }
