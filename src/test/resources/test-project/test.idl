@@ -56,7 +56,7 @@ scope test
             uint16 lengthOctets2;
             string string1;
             octets[lengthOctets2] octets2;
-            varbyteuint32 lengthOctets3;
+            varint32 lengthOctets3;
             octets[lengthOctets3] octets3 = null;
             int32 lengthOctets4;
             octets[lengthOctets4] octets4 = null;
