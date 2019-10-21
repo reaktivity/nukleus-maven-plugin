@@ -243,7 +243,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitList_type(
+    public AstListNode visitList_type(
         List_typeContext ctx)
     {
         AstListNode.Builder listBuilder = new ListVisitor().visitList_type(ctx);
@@ -921,22 +921,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             listMemberBuilder.type(AstType.STRING32);
             return super.visitString32_type(ctx);
-        }
-
-        @Override
-        public AstListNode.Builder visitOctets_type(
-            Octets_typeContext ctx)
-        {
-            listMemberBuilder.type(AstType.OCTETS);
-            if (ctx.positive_int_const() != null)
-            {
-                listMemberBuilder.size(Integer.parseInt(ctx.positive_int_const().getText()));
-            }
-            else if (ctx.ID() != null)
-            {
-                listMemberBuilder.sizeName(ctx.ID().getText());
-            }
-            return super.visitOctets_type(ctx);
         }
 
         @Override

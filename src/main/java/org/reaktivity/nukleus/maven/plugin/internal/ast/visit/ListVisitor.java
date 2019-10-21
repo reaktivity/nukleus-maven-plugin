@@ -70,7 +70,6 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
         String memberName = listMemberNode.name();
         AstType memberType = listMemberNode.type();
         int size = listMemberNode.size();
-        String sizeName = listMemberNode.sizeName();
         TypeName sizeTypeName = listMemberNode.sizeType() == null ? null : listMemberNode.sizeType().isUnsignedInt() ?
             resolver.resolveUnsignedType(listMemberNode.sizeType()) : resolver.resolveType(listMemberNode.sizeType());
         boolean usedAsSize = listMemberNode.usedAsSize();
@@ -84,7 +83,7 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
                 " Unable to resolve type %s for field %s", memberType, memberName));
         }
         TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
-        generator.addMember(memberName, memberType, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
+        generator.addMember(memberName, memberType, memberTypeName, memberUnsignedTypeName, size, sizeTypeName,
             usedAsSize, defaultValue, byteOrder, listMemberNode.isRequired());
         return defaultResult();
     }

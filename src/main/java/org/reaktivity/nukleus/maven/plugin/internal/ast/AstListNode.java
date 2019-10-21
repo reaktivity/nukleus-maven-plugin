@@ -15,13 +15,11 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
-import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public final class AstListNode extends AstNamedNode
 {
@@ -124,60 +122,6 @@ public final class AstListNode extends AstNamedNode
         public Builder member(
             AstListMemberNode member)
         {
-            if (member.sizeName() != null)
-            {
-                final String target = member.sizeName();
-                Optional<AstListMemberNode> sizeField = members.stream().filter(n -> target.equals(n.name())).findFirst();
-                if (sizeField.isPresent())
-                {
-                    AstListMemberNode size = sizeField.get();
-                    member.sizeType(size.type());
-
-                    if (size.defaultValue() != null)
-                    {
-                        throw new IllegalArgumentException(format(
-                            "Size field \"%s\" for field \"%s\" must not have a default value's",
-                            member.sizeName(), member.name()));
-                    }
-                    boolean defaultsToNull = member.defaultValue() == NULL_DEFAULT;
-                    boolean sizeIsVarint = size.type() == AstType.VARINT32 || size.type() == AstType.VARINT64;
-                    if (sizeIsVarint)
-                    {
-                        if (member.type() == AstType.OCTETS)
-                        {
-                            size.usedAsSize(true);
-                        }
-                        else
-                        {
-                            throw new IllegalArgumentException(format(
-                                "Size field \"%s\" for field \"%s\" may not be of type varint",
-                                member.sizeName(), member.name()));
-                        }
-                    }
-                    else if (defaultsToNull && !size.type().isSignedInt())
-                    {
-                        Object sizeType = size.type();
-                        throw new IllegalArgumentException(format(
-                            "Size field \"%s\" for field \"%s\" defaulting to null must be a signed integer type",
-                            member.sizeName(), member.name()));
-                    }
-                    else if (!defaultsToNull && !size.type().isUnsignedInt())
-                    {
-                        throw new IllegalArgumentException(format(
-                            "Size field \"%s\" for field \"%s\" must be an unsigned integer type",
-                            member.sizeName(), member.name()));
-                    }
-                    else
-                    {
-                        size.usedAsSize(true);
-                    }
-                }
-                else
-                {
-                    throw new IllegalArgumentException(format("Size field \"%s\" not found for field \"%s\"",
-                        member.sizeName(), member.name()));
-                }
-            }
             this.members.add(member);
             return this;
         }

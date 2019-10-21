@@ -150,7 +150,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         TypeName typeName,
         TypeName unsignedTypeName,
         int size,
-        String sizeName,
         TypeName sizeType,
         boolean usedAsSize,
         Object defaultValue,
@@ -166,7 +165,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         wrapMethod.addMember(name, typeName, defaultValue, isRequired);
         tryWrapMethod.addMember(name, typeName, defaultValue, isRequired);
         toStringMethod.addMember(name, typeName, defaultValue, isRequired);
-        builderClass.addMember(name, type, typeName, unsignedTypeName, size, sizeName, sizeType, usedAsSize, defaultValue,
+        builderClass.addMember(name, type, typeName, unsignedTypeName, size, sizeType, usedAsSize, defaultValue,
             byteOrder, isRequired);
         return this;
     }
@@ -954,7 +953,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             TypeName typeName,
             TypeName unsignedType,
             int size,
-            String sizeName,
             TypeName sizeType,
             boolean usedAsSize,
             Object defaultValue,
@@ -963,7 +961,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         {
             memberField.addMember(name, typeName, byteOrder);
             memberAccessor.addMember(name, typeName);
-            memberMutator.addMember(name, type, typeName, unsignedType, usedAsSize, size, sizeName, sizeType, byteOrder,
+            memberMutator.addMember(name, type, typeName, unsignedType, usedAsSize, size, sizeType, byteOrder,
                 defaultValue,
                 isRequired);
             buildMethod.addMember(name, isRequired);
@@ -1097,7 +1095,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 TypeName unsignedType,
                 boolean usedAsSize,
                 int size,
-                String sizeName,
                 TypeName sizeType,
                 AstByteOrder byteOrder,
                 Object defaultValue,

@@ -22,7 +22,7 @@ public final class AstListMemberNode extends AstAbstractMemberNode
 {
     private final boolean isRequired;
 
-    AstListMemberNode(
+    private AstListMemberNode(
         String name,
         List<AstType> types,
         int size,
@@ -43,7 +43,7 @@ public final class AstListMemberNode extends AstAbstractMemberNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, sizeName, size, defaultValue, byteOrder, isRequired);
+        return Objects.hash(name, types, defaultValue, byteOrder, isRequired);
     }
 
     @Override
@@ -61,11 +61,9 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         }
 
         AstListMemberNode that = (AstListMemberNode) o;
-        return this.size == that.size &&
-            this.isRequired == that.isRequired &&
+        return this.isRequired == that.isRequired &&
             Objects.equals(this.name, that.name) &&
             Objects.deepEquals(this.types, that.types) &&
-            Objects.equals(this.sizeName, that.sizeName) &&
             Objects.equals(this.defaultValue, that.defaultValue) &&
             Objects.equals(this.byteOrder, that.byteOrder);
     }
@@ -73,9 +71,8 @@ public final class AstListMemberNode extends AstAbstractMemberNode
     @Override
     public String toString()
     {
-        String size = this.size == 0 ? this.sizeName : Integer.toString(this.size);
-        return String.format("MEMBER [name=%s, size=%s, types=%s, defaultValue=%s, byteOrder=%s, isRequired=%s]",
-            name, size, types, defaultValue, byteOrder, isRequired);
+        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, isRequired=%s]",
+            name, types, defaultValue, byteOrder, isRequired);
     }
 
     public static final class Builder extends AstAbstractMemberNode.Builder<AstListMemberNode>

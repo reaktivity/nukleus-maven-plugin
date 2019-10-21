@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
 import static org.junit.Assert.assertEquals;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.INT32;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.dynamicType;
@@ -27,6 +28,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode;
@@ -40,6 +43,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusLexer;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
@@ -569,6 +573,44 @@ public class AstParserTest
         NukleusParser parser = newParser("struct s {octets field1; uint8 field2;");
         Struct_typeContext ctx = parser.struct_type();
         new AstParser().visitStruct_type(ctx);
+    }
+
+    @Test
+    public void shouldParseList()
+    {
+        NukleusParser parser = newParser("list [uint32, uint32] ListWithPhysicalAndLogicalLength " +
+            "{ required string field0; uint32 field1; string field2; }");
+
+        List_typeContext ctx = parser.list_type();
+        AstListNode actual = new AstParser().visitList_type(ctx);
+        AstListNode expected = new AstListNode.Builder()
+            .name("ListWithPhysicalAndLogicalLength")
+            .physicalLengthSize(AstType.UINT32)
+            .logicalLengthSize(AstType.UINT32)
+            .member(
+                (AstListMemberNode) new AstListMemberNode.Builder()
+                    .isRequired(true)
+                    .byteOrder(NATIVE)
+                    .type(AstType.STRING)
+                    .name("field0")
+                    .build())
+            .member(
+                (AstListMemberNode) new AstListMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .type(AstType.UINT32)
+                    .name("field1")
+                    .build())
+            .member(
+                (AstListMemberNode) new AstListMemberNode.Builder()
+                    .byteOrder(NATIVE)
+                    .type(AstType.STRING)
+                    .name("field2")
+                    .build())
+            .build();
+        assertEquals(expected, actual);
+        assertEquals(expected.members().get(0).toString(), actual.members().get(0).toString());
+        assertEquals(expected.members().get(1).toString(), actual.members().get(1).toString());
+        assertEquals(expected.members().get(2).toString(), actual.members().get(2).toString());
     }
 
     @Test
