@@ -41,7 +41,7 @@ public final class AstType
     public static final AstType STRING32 = new AstType("string32");
 
     public static final AstType ARRAY = new AstType("array");
-    public static final AstType STRUCT = new AstType("struct");
+    public static final AstType FLYWEIGHT = new AstType("flyweight");
 
     private final String name;
     private final int bits;

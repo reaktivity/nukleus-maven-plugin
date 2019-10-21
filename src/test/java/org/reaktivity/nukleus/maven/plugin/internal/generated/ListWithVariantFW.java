@@ -26,7 +26,7 @@ import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfInt8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithInt32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantUint8KindWithInt64TypeFW;
 
-public final class ListWithVariantOfIntFW extends Flyweight
+public final class ListWithVariantFW extends Flyweight
 {
     private static final int PHYSICAL_LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
@@ -84,16 +84,16 @@ public final class ListWithVariantOfIntFW extends Flyweight
         return buffer().getByte(optionalOffsets[FIELD_INDEX_INTFIELD1]);
     }
 
-    public VariantUint8KindWithInt64TypeFW variantOfInt64Uint8Kind()
+    public long variantOfInt64Uint8Kind()
     {
         assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT64OFUINT8KIND)) != 0 : "Field \"variantOfInt64Uint8Kind\" is not set";
-        return variantOfInt64Uint8KindRO;
+        return variantOfInt64Uint8KindRO.get();
     }
 
-    public VariantEnumKindOfInt8FW variantOfInt8EnumKind()
+    public int variantOfInt8EnumKind()
     {
         assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT8ENUMKIND)) != 0 : "Field \"variantOfInt8EnumKind\" is not set";
-        return variantOfInt8EnumKindRO;
+        return variantOfInt8EnumKindRO.get();
     }
 
     public int intField2()
@@ -102,21 +102,21 @@ public final class ListWithVariantOfIntFW extends Flyweight
         return buffer().getShort(optionalOffsets[FIELD_INDEX_INTFIELD2]);
     }
 
-    public VariantEnumKindOfInt16FW variantOfInt16EnumKind()
+    public int variantOfInt16EnumKind()
     {
         assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT16ENUMKIND)) != 0 : "Field \"variantOfInt16EnumKind\" is not set";
-        return variantOfInt16EnumKindRO;
+        return variantOfInt16EnumKindRO.get();
     }
 
-    public VariantEnumKindWithInt32FW variantOfInt32EnumKind()
+    public int variantOfInt32EnumKind()
     {
         assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT32ENUMKIND)) != 0 : "Field \"variantOfInt32EnumKind\" is not set";
-        return variantOfInt32EnumKindRO;
+        return variantOfInt32EnumKindRO.get();
     }
 
 
     @Override
-    public ListWithVariantOfIntFW wrap(
+    public ListWithVariantFW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -177,7 +177,7 @@ public final class ListWithVariantOfIntFW extends Flyweight
     }
 
     @Override
-    public ListWithVariantOfIntFW tryWrap(
+    public ListWithVariantFW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -316,7 +316,7 @@ public final class ListWithVariantOfIntFW extends Flyweight
             variantOfInt32EnumKindIsSet ? variantOfInt32EnumKind() : null);
     }
 
-    public static final class Builder extends Flyweight.Builder<ListWithVariantOfIntFW>
+    public static final class Builder extends Flyweight.Builder<ListWithVariantFW>
     {
         private final VariantUint8KindWithInt64TypeFW.Builder variantOfInt64Uint8KindRW =
             new VariantUint8KindWithInt64TypeFW.Builder();
@@ -331,7 +331,7 @@ public final class ListWithVariantOfIntFW extends Flyweight
 
         public Builder()
         {
-            super(new ListWithVariantOfIntFW());
+            super(new ListWithVariantFW());
         }
 
         public Builder intField1(
@@ -425,7 +425,7 @@ public final class ListWithVariantOfIntFW extends Flyweight
         }
 
         @Override
-        public ListWithVariantOfIntFW build()
+        public ListWithVariantFW build()
         {
             buffer().putByte(offset() + PHYSICAL_LENGTH_OFFSET, (byte) (limit() - offset()));
             buffer().putByte(offset() + LOGICAL_LENGTH_OFFSET, (byte) (Long.bitCount(fieldsMask)));

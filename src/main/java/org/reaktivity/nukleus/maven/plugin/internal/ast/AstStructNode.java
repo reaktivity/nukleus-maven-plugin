@@ -17,7 +17,6 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode.NULL_DEFAULT;
 
 import java.util.LinkedList;
@@ -25,13 +24,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class AstStructNode extends AstNode
+public final class AstStructNode extends AstNamedNode
 {
-    private final String name;
     private final int typeId;
-    private final String supertype;
+    private final AstType supertype;
     private final List<AstStructMemberNode> members;
-
 
     @Override
     public <R> R accept(
@@ -40,17 +37,12 @@ public final class AstStructNode extends AstNode
         return visitor.visitStruct(this);
     }
 
-    public String name()
-    {
-        return name;
-    }
-
     public int typeId()
     {
         return typeId;
     }
 
-    public String supertype()
+    public AstType supertype()
     {
         return supertype;
     }
@@ -58,6 +50,12 @@ public final class AstStructNode extends AstNode
     public List<AstStructMemberNode> members()
     {
         return members;
+    }
+
+    @Override
+    public Kind getKind()
+    {
+        return Kind.STRUCT;
     }
 
     @Override
@@ -92,19 +90,18 @@ public final class AstStructNode extends AstNode
     private AstStructNode(
         String name,
         int typeId,
-        String supertype,
+        AstType supertype,
         List<AstStructMemberNode> members)
     {
-        this.name = requireNonNull(name);
+        super(name);
         this.typeId = typeId;
         this.supertype = supertype;
         this.members = unmodifiableList(members);
     }
 
-    public static final class Builder extends AstNode.Builder<AstStructNode>
+    public static final class Builder extends AstNamedNode.Builder<AstStructNode>
     {
-        private String name;
-        private String supertype;
+        private AstType supertype;
         private int typeId;
         private List<AstStructMemberNode> members;
 
@@ -128,7 +125,7 @@ public final class AstStructNode extends AstNode
         }
 
         public Builder supertype(
-            String supertype)
+            AstType supertype)
         {
             this.supertype = supertype;
             return this;

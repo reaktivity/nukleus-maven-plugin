@@ -23,11 +23,11 @@ import java.util.List;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
@@ -86,8 +86,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
-        AstStructNode structNode)
+        AstNamedNode namedNode)
     {
+        AstStructNode structNode = (AstStructNode) namedNode;
         if (!targetScopes.stream().anyMatch(this::shouldVisit))
         {
             return defaultResult();
@@ -104,7 +105,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
-        AstUnionNode unionNode)
+        AstNamedNode unionNode)
     {
         if (!targetScopes.stream().anyMatch(this::shouldVisit))
         {
@@ -121,8 +122,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitEnum(
-        AstEnumNode enumNode)
+        AstNamedNode namedNode)
     {
+        AstEnumNode enumNode = (AstEnumNode) namedNode;
         if (!targetScopes.stream().anyMatch(this::shouldVisit))
         {
             return defaultResult();
@@ -144,8 +146,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitVariant(
-        AstVariantNode variantNode)
+        AstNamedNode namedNode)
     {
+        AstVariantNode variantNode = (AstVariantNode) namedNode;
         if (!targetScopes.stream().anyMatch(this::shouldVisit))
         {
             return defaultResult();
@@ -166,8 +169,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitList(
-        AstListNode listNode)
+        AstNamedNode namedNode)
     {
+        AstListNode listNode = (AstListNode) namedNode;
         if (!targetScopes.stream().anyMatch(this::shouldVisit))
         {
             return defaultResult();
@@ -179,7 +183,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         TypeName physicalLengthType = resolver.resolveType(listNode.physicalLengthSize());
         TypeName logicalLengthType = resolver.resolveType(listNode.logicalLengthSize());
         ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
-            physicalLengthType, logicalLengthType);
+            physicalLengthType, logicalLengthType, resolver);
         return new ListVisitor(generator, resolver).visitList(listNode);
     }
 
@@ -213,7 +217,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         AstStructNode currentNode = structNode;
         while (currentNode != null && currentNode.typeId() == 0 && currentNode.supertype() != null)
         {
-            currentNode = resolver.resolve(currentNode.supertype());
+            currentNode = (AstStructNode) resolver.resolve(currentNode.supertype().name());
         }
 
         return (currentNode != null) ? currentNode.typeId() : 0;

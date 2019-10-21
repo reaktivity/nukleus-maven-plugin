@@ -259,19 +259,30 @@ default_null
    ;
 
 list_type
-   : KW_LIST (list_length)? ID LEFT_BRACE list_member_list RIGHT_BRACE
+   : KW_LIST (list_length)? ID LEFT_BRACE list_members RIGHT_BRACE
    ;
 
 list_length
    : LEFT_SQUARE_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_SQUARE_BRACKET
    ;
 
-list_member_list
+list_members
    : list_member* list_unbounded_member?
    ;
 
 list_member
-   : KW_REQUIRED? member
+   : KW_REQUIRED? type_spec declarators SEMICOLON
+   | KW_REQUIRED? uint_member_with_default SEMICOLON
+   | KW_REQUIRED? int_member_with_default SEMICOLON
+   | KW_REQUIRED? octets_member_with_default SEMICOLON
+   | KW_REQUIRED? non_primitive_member_with_default SEMICOLON
+   | KW_REQUIRED? integer_array_member SEMICOLON
+   | KW_REQUIRED? varint_array_member SEMICOLON
+   | KW_REQUIRED? array_member SEMICOLON
+   ;
+
+non_primitive_member_with_default
+   : type_spec declarator EQUALS (ID | int_literal)
    ;
 
 list_unbounded_member

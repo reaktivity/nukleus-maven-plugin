@@ -211,7 +211,7 @@ public abstract class AstAbstractMemberNode extends AstNode
         }
 
         public  Builder defaultValue(
-            int defaultValue)
+            Object defaultValue)
         {
             this.defaultValue = defaultValue;
             return this;

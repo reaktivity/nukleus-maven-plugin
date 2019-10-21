@@ -36,6 +36,7 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16FW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithEnumFW;
 import org.reaktivity.reaktor.internal.test.types.inner.Roll;
 import org.reaktivity.reaktor.internal.test.types.inner.RollFW;
 

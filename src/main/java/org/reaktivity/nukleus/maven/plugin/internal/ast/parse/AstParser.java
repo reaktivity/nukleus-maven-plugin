@@ -20,6 +20,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETW
 
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.function.Function;
@@ -61,6 +62,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_le
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Non_primitive_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
@@ -94,7 +96,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint_
 public final class AstParser extends NukleusBaseVisitor<AstNode>
 {
     private final Deque<AstScopeNode.Builder> scopeBuilders;
-    private final Map<String, String> qualifiedNamesByLocalName;
+    private final Deque<String> qualifiedPrefixes;
+    private final Map<String, AstType> astTypesByQualifiedName;
     private final Map<AstType, Function<RuleContext, Object>> parserByType;
 
     private AstSpecificationNode.Builder specificationBuilder;
@@ -107,7 +110,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstParser()
     {
         this.scopeBuilders = new LinkedList<>();
-        this.qualifiedNamesByLocalName = new HashMap<>();
+        this.qualifiedPrefixes = new LinkedList<>();
+        this.astTypesByQualifiedName = new HashMap<>();
         this.byteOrder = NATIVE;
         this.parserByType = initParserByType();
     }
@@ -151,13 +155,21 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         AstScopeNode.Builder scopeBuilder = new AstScopeNode.Builder();
         scopeBuilder.depth(scopeBuilders.size());
         scopeBuilder.name(name);
-
-        visitLocalName(name);
+        if (!qualifiedPrefixes.isEmpty())
+        {
+            final String qualifiedName = String.format("%s%s::", qualifiedPrefixes.peekFirst(), name);
+            qualifiedPrefixes.addFirst(qualifiedName);
+        }
+        else
+        {
+            qualifiedPrefixes.addFirst(String.format("%s::", name));
+        }
 
         AstByteOrder byteOrder = this.byteOrder;
         scopeBuilders.offer(scopeBuilder);
         super.visitScope(ctx);
         scopeBuilders.pollLast();
+        qualifiedPrefixes.removeFirst();
         this.byteOrder = byteOrder;
 
         AstScopeNode.Builder parent = scopeBuilders.peekLast();
@@ -203,8 +215,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstEnumNode visitEnum_type(
         Enum_typeContext ctx)
     {
-        visitLocalName(ctx.ID().getText());
-
         AstEnumNode.Builder enumBuilder = new EnumVisitor().visitEnum_type(ctx);
         AstEnumNode enumeration = enumBuilder.build();
 
@@ -221,7 +231,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstVariantNode visitVariant_type(
         Variant_typeContext ctx)
     {
-        visitLocalName(ctx.ID().getText());
         AstVariantNode.Builder variantBuilder = new VariantVisitor().visitVariant_type(ctx);
         AstVariantNode variant = variantBuilder.build();
 
@@ -237,7 +246,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitList_type(
         List_typeContext ctx)
     {
-        visitLocalName(ctx.ID().getText());
         AstListNode.Builder listBuilder = new ListVisitor().visitList_type(ctx);
         AstListNode list = listBuilder.build();
 
@@ -254,16 +262,32 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         Struct_typeContext ctx)
     {
         structBuilder = new AstStructNode.Builder();
-        structBuilder.name(ctx.ID().getText());
-
-        visitLocalName(ctx.ID().getText());
-
+        final String structName = ctx.ID().getText();
+        final String prefix = qualifiedPrefixes.peekFirst();
+        final String qualifiedName = String.format("%s%s", prefix, structName);
+        astTypesByQualifiedName.put(qualifiedName, AstType.dynamicType(qualifiedName));
+        structBuilder.name(structName);
         Scoped_nameContext scopedName = ctx.scoped_name();
         if (scopedName != null)
         {
-            final String superType = scopedName.getText();
-            final String qualifiedSuperTypeName = qualifiedNamesByLocalName.getOrDefault(superType, superType);
-            structBuilder.supertype(qualifiedSuperTypeName);
+            final String superTypeName = scopedName.getText();
+            AstType astTypeName = astTypesByQualifiedName.get(superTypeName);
+            if (astTypeName == null)
+            {
+                Iterator prefixIterator = qualifiedPrefixes.iterator();
+                String currentPrefix = qualifiedPrefixes.peekFirst();
+                while (prefixIterator.hasNext() &&
+                    astTypesByQualifiedName.get(String.format("%s%s", currentPrefix, superTypeName)) == null)
+                {
+                    currentPrefix = (String) prefixIterator.next();
+                }
+                structBuilder.supertype(astTypesByQualifiedName.getOrDefault(
+                    String.format("%s%s", currentPrefix, superTypeName), AstType.dynamicType(superTypeName)));
+            }
+            else
+            {
+                structBuilder.supertype(astTypeName);
+            }
         }
 
         super.visitStruct_type(ctx);
@@ -380,9 +404,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         Union_typeContext ctx)
     {
         unionBuilder = new AstUnionNode.Builder();
-        unionBuilder.name(ctx.ID().getText());
-
-        visitLocalName(ctx.ID().getText());
+        final String prefix = qualifiedPrefixes.peekFirst();
+        final String unionName = ctx.ID().getText();
+        final String qualifiedUnionName = String.format("%s%s", prefix, unionName);
+        astTypesByQualifiedName.put(qualifiedUnionName, AstType.dynamicType(qualifiedUnionName));
+        unionBuilder.name(unionName);
 
         super.visitUnion_type(ctx);
 
@@ -585,8 +611,23 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         String typeName = ctx.getText();
         if (memberBuilder != null)
         {
-            String qualifiedTypeName = qualifiedNamesByLocalName.getOrDefault(typeName, typeName);
-            memberBuilder.type(AstType.dynamicType(qualifiedTypeName));
+            AstType qualifiedType = astTypesByQualifiedName.get(typeName);
+            if (qualifiedType == null)
+            {
+                Iterator prefixIterator = qualifiedPrefixes.iterator();
+                String prefix = qualifiedPrefixes.peekFirst();
+                while (prefixIterator.hasNext() &&
+                    astTypesByQualifiedName.get(String.format("%s%s", prefix, typeName)) == null)
+                {
+                    prefix = (String) prefixIterator.next();
+                }
+                memberBuilder.type(astTypesByQualifiedName.getOrDefault(String.format("%s%s", prefix, typeName),
+                    AstType.dynamicType(typeName)));
+            }
+            else
+            {
+                memberBuilder.type(qualifiedType);
+            }
         }
         return super.visitScoped_name(ctx);
     }
@@ -600,20 +641,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             structBuilder.typeId(parseInt(ctx.uint_literal()));
         }
         return super.visitType_id(ctx);
-    }
-
-    private void visitLocalName(
-        String name)
-    {
-        String qualifiedName = name;
-        AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
-        if (scopeBuilder != null)
-        {
-            String scopeName = scopeBuilder.name();
-            String qualifieScopeName = qualifiedNamesByLocalName.get(scopeName);
-            qualifiedName = String.format("%s::%s", qualifieScopeName, name);
-        }
-        qualifiedNamesByLocalName.put(name, qualifiedName);
     }
 
     private static byte parseByte(
@@ -702,7 +729,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstListNode.Builder visitList_type(
             List_typeContext ctx)
         {
-            listBuilder.name(ctx.ID().getText());
+            final String prefix = qualifiedPrefixes.peekFirst();
+            final String listName = ctx.ID().getText();
+            final String qualifiedListName = String.format("%s%s", prefix, listName);
+            astTypesByQualifiedName.put(qualifiedListName, AstType.dynamicType(qualifiedListName));
+            listBuilder.name(listName);
             return super.visitList_type(ctx);
         }
 
@@ -747,6 +778,37 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             listMemberBuilder.name(ctx.ID().toString());
             return super.visitDeclarator(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitUint_member_with_default(
+            Uint_member_with_defaultContext ctx)
+        {
+            listMemberBuilder.defaultValue(parseInt(ctx.uint_literal()));
+            return super.visitUint_member_with_default(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitInt_member_with_default(
+            Int_member_with_defaultContext ctx)
+        {
+            listMemberBuilder.defaultValue(parseInt(ctx.int_literal()));
+            return super.visitInt_member_with_default(ctx);
+        }
+
+        @Override
+        public AstListNode.Builder visitNon_primitive_member_with_default(
+            Non_primitive_member_with_defaultContext ctx)
+        {
+            if (ctx.ID() != null)
+            {
+                listMemberBuilder.defaultValue(ctx.ID().getText());
+            }
+            else
+            {
+                listMemberBuilder.defaultValue(ctx.int_literal().getText());
+            }
+            return super.visitNon_primitive_member_with_default(ctx);
         }
 
         @Override
@@ -890,10 +952,22 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             Scoped_nameContext ctx)
         {
             String typeName = ctx.getText();
-            if (listMemberBuilder != null)
+            AstType astTypeName = astTypesByQualifiedName.get(typeName);
+            if (astTypeName == null)
             {
-                String qualifiedTypeName = qualifiedNamesByLocalName.getOrDefault(typeName, typeName);
-                listMemberBuilder.type(AstType.dynamicType(qualifiedTypeName));
+                Iterator prefixIterator = qualifiedPrefixes.iterator();
+                String prefix = qualifiedPrefixes.peekFirst();
+                while (prefixIterator.hasNext() &&
+                    astTypesByQualifiedName.get(String.format("%s%s", prefix, typeName)) == null)
+                {
+                    prefix = (String) prefixIterator.next();
+                }
+                listMemberBuilder.type(astTypesByQualifiedName.getOrDefault(String.format("%s%s", prefix, typeName),
+                    AstType.dynamicType(typeName)));
+            }
+            else
+            {
+                listMemberBuilder.type(astTypeName);
             }
             return super.visitScoped_name(ctx);
         }
@@ -1030,7 +1104,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstVariantNode.Builder visitVariant_type(
             Variant_typeContext ctx)
         {
-            variantBuilder.name(ctx.ID().getText());
+            final String prefix = qualifiedPrefixes.peekFirst();
+            final String variantName = ctx.ID().getText();
+            final String qualifiedVariantName = String.format("%s%s", prefix, variantName);
+            astTypesByQualifiedName.put(qualifiedVariantName, AstType.dynamicType(qualifiedVariantName));
+            variantBuilder.name(variantName);
             return super.visitVariant_type(ctx);
         }
 
@@ -1049,9 +1127,24 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstVariantNode.Builder visitScoped_name(
             Scoped_nameContext ctx)
         {
-            String kindTypeName = ctx.ID(0).getText();
-            String qualifiedTypeName = qualifiedNamesByLocalName.getOrDefault(kindTypeName, kindTypeName);
-            variantBuilder.kindType(AstType.dynamicType(qualifiedTypeName));
+            String kindTypeName = ctx.getText();
+            AstType astTypeName = astTypesByQualifiedName.get(kindTypeName);
+            if (astTypeName == null)
+            {
+                Iterator prefixIterator = qualifiedPrefixes.iterator();
+                String prefix = qualifiedPrefixes.peekFirst();
+                while (prefixIterator.hasNext() &&
+                    astTypesByQualifiedName.get(String.format("%s%s", prefix, kindTypeName)) == null)
+                {
+                    prefix = (String) prefixIterator.next();
+                }
+                variantBuilder.kindType(astTypesByQualifiedName.getOrDefault(String.format("%s%s", prefix, kindTypeName),
+                    AstType.dynamicType(kindTypeName)));
+            }
+            else
+            {
+                variantBuilder.kindType(astTypeName);
+            }
             return super.visitScoped_name(ctx);
         }
 
@@ -1337,7 +1430,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstEnumNode.Builder visitEnum_type(
             Enum_typeContext ctx)
         {
-            enumBuilder.name(ctx.ID().getText());
+            final String prefix = qualifiedPrefixes.peekFirst();
+            final String enumName = ctx.ID().getText();
+            final String qualifiedEnumName = String.format("%s%s", prefix, enumName);
+            astTypesByQualifiedName.put(qualifiedEnumName, AstType.dynamicType(qualifiedEnumName));
+            enumBuilder.name(enumName);
 
             return super.visitEnum_type(ctx);
         }

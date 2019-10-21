@@ -22,14 +22,10 @@ import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -53,7 +49,7 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitList(
-        AstListNode listNode)
+        AstNamedNode listNode)
     {
         super.visitList(listNode);
         return defaultResult();
@@ -61,7 +57,7 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
-        AstStructNode structNode)
+        AstNamedNode structNode)
     {
         return defaultResult();
     }
@@ -88,28 +84,28 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
                 " Unable to resolve type %s for field %s", memberType, memberName));
         }
         TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
-        generator.addMember(memberName, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
+        generator.addMember(memberName, memberType, memberTypeName, memberUnsignedTypeName, size, sizeName, sizeTypeName,
             usedAsSize, defaultValue, byteOrder, listMemberNode.isRequired());
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitEnum(
-        AstEnumNode enumNode)
+        AstNamedNode enumNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
-        AstUnionNode unionNode)
+        AstNamedNode unionNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitVariant(
-        AstVariantNode variantNode)
+        AstNamedNode variantNode)
     {
         return defaultResult();
     }

@@ -31,15 +31,23 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MU
 
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -101,6 +109,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
     private final MemberSizeConstantGenerator memberSizeConstant;
     private final MemberOffsetConstantGenerator memberOffsetConstant;
     private final FieldIndexConstantGenerator fieldIndexConstant;
+    private final FieldDefaultValueGenerator fieldDefaultValue;
     private final MemberFieldGenerator memberField;
     private final OptionalOffsetsFieldGenerator optionalOffsets;
     private final MemberAccessorGenerator memberAccessor;
@@ -115,29 +124,31 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         ClassName flyweightName,
         String baseName,
         TypeName physicalLengthType,
-        TypeName logicalLengthType)
+        TypeName logicalLengthType,
+        TypeResolver resolver)
     {
         super(listName);
-
         this.baseName = baseName;
         this.builder = classBuilder(listName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
         this.memberSizeConstant = new MemberSizeConstantGenerator(listName, builder, physicalLengthType, logicalLengthType);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(listName, builder);
         this.fieldIndexConstant = new FieldIndexConstantGenerator(listName, builder);
+        this.fieldDefaultValue = new FieldDefaultValueGenerator(listName, builder, resolver);
         this.memberField = new MemberFieldGenerator(listName, builder);
         this.optionalOffsets = new OptionalOffsetsFieldGenerator(listName, builder);
-        this.memberAccessor = new MemberAccessorGenerator(listName, builder);
+        this.memberAccessor = new MemberAccessorGenerator(listName, builder, logicalLengthType, resolver);
         this.wrapMethod = new WrapMethodGenerator();
         this.tryWrapMethod = new TryWrapMethodGenerator();
-        this.limitMethod = new LimitMethodGenerator();
+        this.limitMethod = new LimitMethodGenerator(physicalLengthType);
         this.toStringMethod = new ToStringMethodGenerator();
-        this.builderClass = new BuilderClassGenerator(listName, flyweightName);
+        this.builderClass = new BuilderClassGenerator(listName, flyweightName, physicalLengthType, logicalLengthType, resolver);
     }
 
     public ListFlyweightGenerator addMember(
         String name,
-        TypeName type,
-        TypeName unsignedType,
+        AstType type,
+        TypeName typeName,
+        TypeName unsignedTypeName,
         int size,
         String sizeName,
         TypeName sizeType,
@@ -146,16 +157,17 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         AstByteOrder byteOrder,
         boolean isRequired)
     {
-        memberSizeConstant.addMember(name, type);
+        memberSizeConstant.addMember(name, typeName);
         fieldIndexConstant.addMember(name);
-        memberField.addMember(name, type, byteOrder, defaultValue);
+        fieldDefaultValue.addMember(name, type, typeName, unsignedTypeName, defaultValue);
+        memberField.addMember(name, typeName, byteOrder, defaultValue);
         optionalOffsets.addMember(name);
-        memberAccessor.addMember(name, type, unsignedType, byteOrder, isRequired);
-        wrapMethod.addMember(name, type, isRequired);
-        tryWrapMethod.addMember(name, type, isRequired);
-        toStringMethod.addMember(name, type, unsignedType, size, sizeName);
-        builderClass.addMember(name, type, unsignedType, size, sizeName, sizeType, usedAsSize, defaultValue, byteOrder,
-            isRequired);
+        memberAccessor.addMember(name, type, typeName, unsignedTypeName, byteOrder, isRequired, defaultValue);
+        wrapMethod.addMember(name, typeName, defaultValue, isRequired);
+        tryWrapMethod.addMember(name, typeName, defaultValue, isRequired);
+        toStringMethod.addMember(name, typeName, defaultValue, isRequired);
+        builderClass.addMember(name, type, typeName, unsignedTypeName, size, sizeName, sizeType, usedAsSize, defaultValue,
+            byteOrder, isRequired);
         return this;
     }
 
@@ -165,6 +177,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         memberSizeConstant.build();
         memberOffsetConstant.build();
         fieldIndexConstant.build();
+        fieldDefaultValue.build();
         memberField.build();
         optionalOffsets.build();
         memberAccessor.build();
@@ -219,7 +232,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     .build());
             builder.addField(
                 FieldSpec.builder(int.class, size(BIT_MASK), PRIVATE, STATIC, FINAL)
-                    .initializer("$T.SIZE_OF_$L", BIT_UTIL_TYPE, TYPE_NAMES.get(physicalLengthType))
+                    .initializer("$T.SIZE_OF_LONG", BIT_UTIL_TYPE)
                     .build());
         }
 
@@ -264,6 +277,70 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         {
             index = 0;
             return super.build();
+        }
+    }
+
+    private static final class FieldDefaultValueGenerator extends ClassSpecMixinGenerator
+    {
+        private final TypeResolver resolver;
+        FieldDefaultValueGenerator(
+            ClassName thisType,
+            TypeSpec.Builder builder,
+            TypeResolver resolver)
+        {
+            super(thisType, builder);
+            this.resolver = resolver;
+        }
+
+        public FieldDefaultValueGenerator addMember(
+            String fieldName,
+            AstType type,
+            TypeName typeName,
+            TypeName unsignedTypeName,
+            Object defaultValue)
+        {
+            TypeName generateType = (unsignedTypeName != null) ? unsignedTypeName : typeName;
+            if (defaultValue != null)
+            {
+                FieldSpec.Builder defaultValueBuilder = FieldSpec.builder(generateType, defaultConstant(fieldName), PRIVATE,
+                    STATIC, FINAL);
+                AstNamedNode node = resolver.resolve(type.name());
+                if (typeName.isPrimitive())
+                {
+                    defaultValueBuilder.initializer("$L", defaultValue);
+                }
+                else if (isStringType((ClassName) typeName))
+                {
+                    defaultValueBuilder.initializer("\"$L\"", defaultValue);
+                }
+                else if (node instanceof AstVariantNode)
+                {
+                    AstVariantNode variantNode = (AstVariantNode) node;
+                    AstType ofType = variantNode.of();
+                    TypeName typeOfConstant = Objects.requireNonNullElse(resolver.resolveUnsignedType(ofType),
+                        resolver.resolveType(ofType));
+                    defaultValueBuilder = FieldSpec.builder(typeOfConstant, defaultConstant(fieldName), PRIVATE,
+                        STATIC, FINAL);
+                    if (ofType.equals(AstType.STRING) || ofType.equals(AstType.STRING16) || ofType.equals(AstType.STRING32))
+                    {
+                        defaultValueBuilder.initializer("\"$L\"", defaultValue);
+                    }
+                    else
+                    {
+                        defaultValueBuilder.initializer("$L", defaultValue);
+                    }
+                }
+                else if (node instanceof AstEnumNode)
+                {
+                    AstEnumNode enumNode = (AstEnumNode) node;
+                    ClassName enumFlyweightName = (ClassName) typeName;
+                    ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
+                    defaultValueBuilder = FieldSpec.builder(enumName, defaultConstant(fieldName), PRIVATE, STATIC, FINAL)
+                        .initializer("$T.$L", enumName, defaultValue);
+                }
+                builder.addField(defaultValueBuilder.build());
+            }
+            return this;
         }
     }
 
@@ -342,37 +419,43 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
     private static final class MemberAccessorGenerator extends ClassSpecMixinGenerator
     {
+        private final TypeResolver resolver;
         private MemberAccessorGenerator(
             ClassName thisType,
-            TypeSpec.Builder builder)
+            TypeSpec.Builder builder,
+            TypeName logicalLengthType,
+            TypeResolver resolver)
         {
             super(thisType, builder);
             builder.addMethod(methodBuilder("length")
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return buffer().getInt(offset() + $L) & 0xFFFF", offset(LOGICAL_LENGTH))
+                .addStatement("return buffer().$L(offset() + $L)", GETTER_NAMES.get(logicalLengthType), offset(LOGICAL_LENGTH))
                 .build());
             builder.addMethod(methodBuilder("bitmask")
-                .addModifiers(PUBLIC)
-                .returns(int.class)
-                .addStatement("return buffer().getInt(offset() + $L) & 0xFFFF", offset(BIT_MASK))
+                .addModifiers(PRIVATE)
+                .returns(long.class)
+                .addStatement("return buffer().getLong(offset() + $L)", offset(BIT_MASK))
                 .build());
+            this.resolver = resolver;
         }
 
         public MemberAccessorGenerator addMember(
             String name,
-            TypeName type,
+            AstType type,
+            TypeName typeName,
             TypeName unsignedType,
             AstByteOrder byteOrder,
-            boolean isRequired)
+            boolean isRequired,
+            Object defaultValue)
         {
-            if (type.isPrimitive())
+            if (typeName.isPrimitive())
             {
-                addPrimitiveMember(name, type, unsignedType, byteOrder, isRequired);
+                addPrimitiveMember(name, typeName, unsignedType, byteOrder, isRequired, defaultValue);
             }
             else
             {
-                addNonPrimitiveMember(name, type, isRequired);
+                addNonPrimitiveMember(name, type, typeName, isRequired, defaultValue);
             }
             return this;
         }
@@ -382,7 +465,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             TypeName type,
             TypeName unsignedType,
             AstByteOrder byteOrder,
-            boolean isRequired)
+            boolean isRequired,
+            Object defaultValue)
         {
             TypeName generateType = (unsignedType != null) ? unsignedType : type;
 
@@ -394,13 +478,18 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 throw new IllegalStateException("member type not supported: " + type);
             }
 
-            if (!isRequired)
+            if (!isRequired && defaultValue == null)
             {
                 codeBlock.addStatement("assert (bitmask() & (1 << $L)) != 0 : " +
-                    "\"Field \\\"$L\\\" is not set\";", fieldIndex(name), name);
+                    "\"Field \\\"$L\\\" is not set\"", fieldIndex(name), name);
             }
 
             codeBlock.add("$[").add("return ");
+
+            if (defaultValue != null)
+            {
+                codeBlock.add("(bitmask() & (1 << $L)) == 0 ? $L : ", fieldIndex(name), defaultConstant(name));
+            }
 
             if (generateType != type)
             {
@@ -456,23 +545,94 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private void addNonPrimitiveMember(
             String name,
-            TypeName type,
-            boolean isRequired)
+            AstType type,
+            TypeName typeName,
+            boolean isRequired,
+            Object defaultValue)
         {
             CodeBlock.Builder codeBlock = CodeBlock.builder();
-
-            if (!isRequired)
+            TypeName returnType = typeName;
+            AstNamedNode namedNode = resolver.resolve(type.name());
+            if (namedNode == null)
             {
-                codeBlock.addStatement("assert (bitmask() & (1 << $L)) != 0 : " +
-                    "\"Field \\\"$L\\\" is not set\";", fieldIndex(name), name);
+                addMember(defaultValue, codeBlock, name, isRequired, "$LRO");
             }
-            codeBlock.addStatement("return $LRO", name);
+            else if (Kind.ENUM.equals(namedNode.getKind()))
+            {
+                returnType = addEnumMember(defaultValue, codeBlock, name, type, typeName, isRequired);
+            }
+            else if (Kind.VARIANT.equals(namedNode.getKind()))
+            {
+                returnType = addVariantMember(defaultValue, codeBlock, name, type, typeName, isRequired);
+            }
+            else
+            {
+                addMember(defaultValue, codeBlock, name, isRequired, "$LRO");
+            }
 
             builder.addMethod(methodBuilder(methodName(name))
                 .addModifiers(PUBLIC)
-                .returns(type)
+                .returns(returnType)
                 .addCode(codeBlock.build())
                 .build());
+        }
+
+        private TypeName addVariantMember(
+            Object defaultValue,
+            CodeBlock.Builder codeBlock,
+            String name,
+            AstType type,
+            TypeName typeName,
+            boolean isRequired)
+        {
+            AstVariantNode variantNode = (AstVariantNode) resolver.resolve(type.name());
+            AstType ofType = variantNode.of();
+            TypeName ofTypeName = resolver.resolveType(ofType);
+            TypeName primitiveReturnType = ofTypeName.equals(TypeName.BYTE) || ofTypeName.equals(TypeName.SHORT) ||
+                ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
+            TypeName returnType = Objects.requireNonNullElse(resolver.resolveUnsignedType(ofType),
+                ofTypeName.isPrimitive() ? primitiveReturnType : ClassName.get(String.class));
+            addMember(defaultValue, codeBlock, name, isRequired, "$LRO.get()");
+            return returnType;
+        }
+
+        private TypeName addEnumMember(
+            Object defaultValue,
+            CodeBlock.Builder codeBlock,
+            String name,
+            AstType type,
+            TypeName typeName,
+            boolean isRequired)
+        {
+            AstEnumNode enumNode = (AstEnumNode) resolver.resolve(type.name());
+            ClassName enumFlyweightName = (ClassName) typeName;
+            ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
+            addMember(defaultValue, codeBlock, name, isRequired, "$LRO.get()");
+            return enumName;
+        }
+
+        private void addMember(
+            Object defaultValue,
+            CodeBlock.Builder codeBlock,
+            String name,
+            boolean isRequired,
+            String returnValue)
+        {
+            String returnStatement = String.format("return %s", returnValue);
+            if (defaultValue != null)
+            {
+                codeBlock.addStatement("return (bitmask() & (1 << $L)) == 0 ? $L : $LRO.get()", fieldIndex(name),
+                    defaultConstant(name), name);
+            }
+            else
+            {
+                if (!isRequired)
+                {
+                    codeBlock.addStatement("assert (bitmask() & (1 << $L)) != 0 : \"Field \\\"$L\\\" is not set\"",
+                        fieldIndex(name), name);
+                }
+                codeBlock.addStatement(returnStatement, name);
+            }
         }
     }
 
@@ -494,9 +654,10 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         public WrapMethodGenerator addMember(
             String name,
             TypeName type,
+            Object defaultValue,
             boolean isRequired)
         {
-            fields.add(new ListField(name, type, isRequired));
+            fields.add(new ListField(name, type, isRequired, defaultValue));
             return this;
         }
 
@@ -504,7 +665,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         public MethodSpec generate()
         {
             builder.addStatement("super.wrap(buffer, offset, maxLimit)")
-                   .addStatement("final int bitmask = bitmask()")
+                   .addStatement("final long bitmask = bitmask()")
                    .addStatement("int fieldLimit = offset + $L", offset(FIRST_FIELD))
                    .beginControlFlow("for (int field = $L; field < $L + 1; field++)",
                        fieldIndex(fields.get(0).fieldName()), fieldIndex(fields.get(fields.size() - 1).fieldName()))
@@ -523,7 +684,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     if (field.type().isPrimitive())
                     {
                         builder.addStatement("optionalOffsets[$L] = fieldLimit", fieldIndex(fieldName))
-                            .addStatement("fieldLimit += $L", fieldIndex(fieldName));
+                            .addStatement("fieldLimit += $L", fieldSize(fieldName));
                     }
                     else
                     {
@@ -537,7 +698,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     if (field.type().isPrimitive())
                     {
                         builder.addStatement("optionalOffsets[$L] = fieldLimit", fieldIndex(fieldName))
-                            .addStatement("fieldLimit += $L", fieldIndex(fieldName));
+                            .addStatement("fieldLimit += $L", fieldSize(fieldName));
                     }
                     else
                     {
@@ -576,9 +737,10 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         public TryWrapMethodGenerator addMember(
             String name,
             TypeName type,
+            Object defaultValue,
             boolean isRequired)
         {
-            fields.add(new ListField(name, type, isRequired));
+            fields.add(new ListField(name, type, isRequired, defaultValue));
             return this;
         }
 
@@ -606,7 +768,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     if (field.type().isPrimitive())
                     {
                         builder.addStatement("optionalOffsets[$L] = fieldLimit", fieldIndex(fieldName))
-                            .addStatement("fieldLimit += $L", fieldIndex(fieldName));
+                            .addStatement("fieldLimit += $L", fieldSize(fieldName));
                     }
                     else
                     {
@@ -622,7 +784,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     if (field.type().isPrimitive())
                     {
                         builder.addStatement("optionalOffsets[$L] = fieldLimit", fieldIndex(fieldName))
-                            .addStatement("fieldLimit += $L", fieldIndex(fieldName));
+                            .addStatement("fieldLimit += $L", fieldSize(fieldName));
                     }
                     else
                     {
@@ -648,26 +810,27 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
     private final class LimitMethodGenerator extends MethodSpecGenerator
     {
-        private LimitMethodGenerator()
+        private LimitMethodGenerator(
+            TypeName physicalLengthType)
         {
             super(methodBuilder("limit")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class));
+            builder.addStatement("return offset() + buffer().$L(offset() + $L)", GETTER_NAMES.get(physicalLengthType),
+                offset(PHYSICAL_LENGTH));
         }
 
         @Override
         public MethodSpec generate()
         {
-            return builder.addStatement("return offset() + buffer().getInt(offset() + $L) & 0xFFFF", offset(PHYSICAL_LENGTH))
-                .build();
+            return builder.build();
         }
     }
 
     private final class ToStringMethodGenerator extends MethodSpecGenerator
     {
-        private final List<String> formats = new ArrayList<>();
-        private final List<String> args = new ArrayList<>();
+        private final List<ListField> fields = new ArrayList<>();
 
         private ToStringMethodGenerator()
         {
@@ -680,20 +843,10 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         public ToStringMethodGenerator addMember(
             String name,
             TypeName type,
-            TypeName unsignedType,
-            int size,
-            String sizeName)
+            Object defaultValue,
+            boolean isRequired)
         {
-            boolean isArray = size != -1 || sizeName != null;
-            formats.add(String.format("%s=%%%s", name, type.isPrimitive() && !isArray ? "d" : "s"));
-            if (type instanceof ClassName && isStringType((ClassName) type))
-            {
-                args.add(String.format("%s() != null ? %sRO.asString() : null", name, name));
-            }
-            else
-            {
-                args.add(String.format("%s()", name));
-            }
+            fields.add(new ListField(name, type, isRequired, defaultValue));
             return this;
         }
 
@@ -701,16 +854,55 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         public MethodSpec generate()
         {
             String typeName = constant(baseName);
-            if (formats.isEmpty())
+            CodeBlock.Builder bitmaskVariable = CodeBlock.builder();
+            CodeBlock.Builder whetherFieldIsSet = CodeBlock.builder();
+
+            bitmaskVariable.add("$[").add("final long bitmask = bitmask()");
+            for (ListField field : fields)
             {
-                builder.addStatement("return $S", typeName);
+                if (field.defaultValue() != null)
+                {
+                    bitmaskVariable.add(" | (1 << $L)", fieldIndex(field.fieldName()));
+                }
+                else if (!field.isRequired())
+                {
+                    whetherFieldIsSet.addStatement("boolean $LIsSet = (bitmask & (1 << $L)) != 0", field.fieldName(),
+                        fieldIndex(field.fieldName()));
+                }
             }
-            else
+            bitmaskVariable.add(";\n$]");
+
+            CodeBlock.Builder format = CodeBlock.builder();
+            CodeBlock.Builder returnStatement = CodeBlock.builder();
+            format.addStatement("StringBuilder format = new StringBuilder()")
+                .addStatement("format.append(\"$L [bitmask={0}\")", typeName);
+            returnStatement.add("$[").add("return $T.format(format.toString(), String.format(\"0x%16X\", bitmask)",
+                MessageFormat.class);
+            int fieldIndex = 1;
+            for (ListField field : fields)
             {
-                String format = String.format("%s [%s]", typeName, String.join(", ", formats));
-                builder.addStatement("return String.format($S, $L)", format, String.join(", ", args));
+                String name = field.fieldName();
+                if (field.isRequired() || field.defaultValue() != null)
+                {
+                    format.addStatement("format.append(\", $L={$L}\")", name, fieldIndex);
+                    returnStatement.add(", $L()", name);
+                }
+                else
+                {
+                    format.beginControlFlow("if ($LIsSet)", name)
+                        .addStatement("format.append(\", $L={$L}\")", name, fieldIndex)
+                        .endControlFlow();
+                    returnStatement.add(", $LIsSet ? $L() : null", name, name);
+                }
+                fieldIndex++;
             }
-            return builder.build();
+            format.addStatement("format.append(\"]\")");
+            returnStatement.add(");\n$]");
+            return builder.addCode(bitmaskVariable.build())
+                .addCode(whetherFieldIsSet.build())
+                .addCode(format.build())
+                .addCode(returnStatement.build())
+                .build();
         }
 
     }
@@ -727,15 +919,22 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private BuilderClassGenerator(
             ClassName listType,
-            ClassName flyweightType)
+            ClassName flyweightType,
+            TypeName physicalLengthType,
+            TypeName logicalLengthType,
+            TypeResolver resolver)
         {
-            this(listType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), listType);
+            this(listType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), listType, physicalLengthType,
+                logicalLengthType, resolver);
         }
 
         private BuilderClassGenerator(
             ClassName thisType,
             ClassName builderRawType,
-            ClassName listType)
+            ClassName listType,
+            TypeName physicalLengthType,
+            TypeName logicalLengthType,
+            TypeResolver resolver)
         {
             super(thisType);
             this.builder = classBuilder(thisType.simpleName())
@@ -744,14 +943,15 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             this.listType = listType;
             this.memberField = new MemberFieldGenerator(thisType, builder);
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder);
-            this.memberMutator = new MemberMutatorGenerator(thisType, builder);
-            this.wrapMethod = new WrapMethodGenerator(thisType, builder);
-            this.buildMethod = new BuildMethodGenerator(thisType, builder);
+            this.memberMutator = new MemberMutatorGenerator(thisType, builder, resolver);
+            this.wrapMethod = new WrapMethodGenerator();
+            this.buildMethod = new BuildMethodGenerator(thisType, builder, physicalLengthType, logicalLengthType);
         }
 
         private void addMember(
             String name,
-            TypeName type,
+            AstType type,
+            TypeName typeName,
             TypeName unsignedType,
             int size,
             String sizeName,
@@ -761,9 +961,10 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             AstByteOrder byteOrder,
             boolean isRequired)
         {
-            memberField.addMember(name, type, byteOrder);
-            memberAccessor.addMember(name, type);
-            memberMutator.addMember(name, type, unsignedType, usedAsSize, size, sizeName, sizeType, byteOrder, defaultValue,
+            memberField.addMember(name, typeName, byteOrder);
+            memberAccessor.addMember(name, typeName);
+            memberMutator.addMember(name, type, typeName, unsignedType, usedAsSize, size, sizeName, sizeType, byteOrder,
+                defaultValue,
                 isRequired);
             buildMethod.addMember(name, isRequired);
         }
@@ -783,7 +984,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private FieldSpec fieldsMask()
         {
-            return FieldSpec.builder(int.class, "fieldsMask")
+            return FieldSpec.builder(long.class, "fieldsMask")
                             .addModifiers(PRIVATE)
                             .build();
         }
@@ -873,21 +1074,26 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private static final class MemberMutatorGenerator extends ClassSpecMixinGenerator
         {
+            private final TypeResolver resolver;
             private int bitsOfOnes;
+            private int position;
             private String priorRequiredField = null;
-            private Map<String, Integer> bitsOfOnesByFieldName;
+            private Map<String, Integer> requiredFieldPosition;
 
             private MemberMutatorGenerator(
                 ClassName thisType,
-                TypeSpec.Builder builder)
+                TypeSpec.Builder builder,
+                TypeResolver resolver)
             {
                 super(thisType, builder);
-                bitsOfOnesByFieldName = new HashMap<>();
+                requiredFieldPosition = new HashMap<>();
+                this.resolver = resolver;
             }
 
             public MemberMutatorGenerator addMember(
                 String name,
-                TypeName type,
+                AstType type,
+                TypeName typeName,
                 TypeName unsignedType,
                 boolean usedAsSize,
                 int size,
@@ -897,20 +1103,21 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 Object defaultValue,
                 boolean isRequired)
             {
-                if (type.isPrimitive())
+                if (typeName.isPrimitive())
                 {
-                    addPrimitiveMember(name, type, unsignedType, usedAsSize, byteOrder);
+                    addPrimitiveMember(name, typeName, unsignedType, usedAsSize, byteOrder);
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type);
+                    addNonPrimitiveMember(name, type, typeName);
                 }
                 bitsOfOnes = (bitsOfOnes << 1) | 1;
                 if (isRequired)
                 {
-                    bitsOfOnesByFieldName.put(name, bitsOfOnes);
+                    requiredFieldPosition.put(name, 1 << position);
                     priorRequiredField = name;
                 }
+                position++;
                 return this;
             }
 
@@ -929,8 +1136,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
                 TypeName generateType = (unsignedType != null) ? unsignedType : type;
                 CodeBlock.Builder code = CodeBlock.builder();
-                code.addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" is already set or subsequent fields " +
-                    "are already set\"", String.format("0x%02X", bitsOfOnes), name);
+                code.addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" cannot be set out of order\"",
+                    String.format("0x%02X", bitsOfOnes), name);
                 if (unsignedType != null)
                 {
                     String[] range = UNSIGNED_INT_RANGES.get(type);
@@ -997,23 +1204,162 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
             private void addNonPrimitiveMember(
                 String name,
-                TypeName type)
+                AstType type,
+                TypeName typeName)
             {
-                if (type instanceof ClassName)
-                {
-                    ClassName className = (ClassName) type;
-                    addClassType(name, className);
-                }
-            }
-
-            private void addClassType(
-                String name,
-                ClassName className)
-            {
+                ClassName className = (ClassName) typeName;
+                AstNamedNode namedNode = resolver.resolve(type.name());
                 if (isStringType(className))
                 {
                     addStringType(className, name);
                 }
+                else if (Kind.ENUM.equals(namedNode.getKind()))
+                {
+                    addEnumType(name, type, className);
+                }
+                else if (Kind.VARIANT.equals(namedNode.getKind()))
+                {
+                    addVariantType(name, type, className);
+                }
+                else
+                {
+                    addUnionType(name, className);
+                }
+            }
+
+            private void addUnionType(
+                String name,
+                ClassName className)
+            {
+                ClassName consumerType = ClassName.get(Consumer.class);
+                ClassName builderType = className.nestedClass("Builder");
+                TypeName parameterType = isVarint32Type(className) ? TypeName.INT
+                    : isVarint64Type(className) ? TypeName.LONG
+                    : ParameterizedTypeName.get(consumerType, builderType);
+
+                MethodSpec.Builder methodBuilder = methodBuilder(methodName(name))
+                    .addModifiers(PUBLIC)
+                    .returns(thisType)
+                    .addParameter(className, "value")
+                    .addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" cannot be set out of order\"",
+                        String.format("0x%02X", bitsOfOnes), name);
+                if (priorRequiredField != null)
+                {
+                    methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
+                }
+                methodBuilder.addStatement("int newLimit = limit() + value.sizeof()")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
+                    .addStatement("buffer().putBytes(limit(), value.buffer(), value.offset(), value.sizeof())")
+                    .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                    .addStatement("limit(newLimit)")
+                    .addStatement("return this");
+                builder.addMethod(methodBuilder.build());
+
+                methodBuilder = methodBuilder(methodName(name))
+                    .addModifiers(PUBLIC)
+                    .returns(thisType)
+                    .addParameter(parameterType, "mutator")
+                    .addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" cannot be set out of order\"",
+                        String.format("0x%02X", bitsOfOnes), name);
+                if (priorRequiredField != null)
+                {
+                    methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
+                }
+                methodBuilder.addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                    .addStatement("mutator.accept($LRW)", name)
+                    .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                    .addStatement("limit($LRW.build().limit())", name)
+                    .addStatement("return this");
+                builder.addMethod(methodBuilder.build());
+            }
+
+            private void addVariantType(
+                String name,
+                AstType type,
+                ClassName variantFlyweightName)
+            {
+                AstVariantNode variantNode = (AstVariantNode) resolver.resolve(type.name());
+                ClassName builderType = variantFlyweightName.nestedClass("Builder");
+                AstType ofType = variantNode.of();
+                TypeName ofTypeName = resolver.resolveType(ofType);
+                TypeName primitiveReturnType = ofTypeName.equals(TypeName.BYTE) || ofTypeName.equals(TypeName.SHORT) ||
+                    ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
+                TypeName returnType = Objects.requireNonNullElse(resolver.resolveUnsignedType(variantNode.of()),
+                    ofTypeName.isPrimitive() ? primitiveReturnType : ClassName.get(String.class));
+                MethodSpec.Builder methodBuilder = methodBuilder(methodName(name))
+                    .addModifiers(PUBLIC)
+                    .returns(thisType)
+                    .addParameter(returnType, "value")
+                    .addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" cannot be set out of order\"",
+                        String.format("0x%02X", bitsOfOnes), name);
+                if (priorRequiredField != null)
+                {
+                    methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
+                }
+                methodBuilder.addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                    .addStatement("$LRW.set(value)", name)
+                    .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                    .addStatement("limit($LRW.build().limit())", name)
+                    .addStatement("return this");
+                builder.addMethod(methodBuilder.build());
+            }
+
+            private void addEnumType(
+                String name,
+                AstType type,
+                ClassName enumFlyweightName)
+            {
+                AstEnumNode enumNode = (AstEnumNode) resolver.resolve(type.name());
+                ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
+                ClassName builderType = enumFlyweightName.nestedClass("Builder");
+
+                MethodSpec.Builder methodBuilder = methodBuilder(methodName(name))
+                    .addModifiers(PUBLIC)
+                    .returns(thisType)
+                    .addParameter(enumFlyweightName, "value")
+                    .addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" cannot be set out of order\"",
+                        String.format("0x%02X", bitsOfOnes), name);
+                if (priorRequiredField != null)
+                {
+                    methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
+                }
+                methodBuilder.addStatement("int newLimit = limit() + value.sizeof()")
+                    .addStatement("checkLimit(newLimit, maxLimit())")
+                    .addStatement("buffer().putBytes(limit(), value.buffer(), value.offset(), value.sizeof())")
+                    .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                    .addStatement("limit(newLimit)")
+                    .addStatement("return this");
+                builder.addMethod(methodBuilder.build());
+
+                methodBuilder = methodBuilder(methodName(name))
+                    .addModifiers(PUBLIC)
+                    .returns(thisType)
+                    .addParameter(enumName, "value")
+                    .addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" cannot be set out of order\"",
+                        String.format("0x%02X", bitsOfOnes), name);
+                if (priorRequiredField != null)
+                {
+                    methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
+                }
+                methodBuilder.addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name);
+                if (AstType.STRING.equals(enumNode.valueType()) || AstType.STRING16.equals(enumNode.valueType()) ||
+                    AstType.STRING32.equals(enumNode.valueType()))
+                {
+                    methodBuilder.addStatement("$LRW.set(value, $T.UTF_8)", name, StandardCharsets.class);
+                }
+                else
+                {
+                    methodBuilder.addStatement("$LRW.set(value)", name);
+                }
+                methodBuilder.addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                    .addStatement("limit($LRW.build().limit())", name)
+                    .addStatement("return this");
+                builder.addMethod(methodBuilder.build());
             }
 
             private void addStringType(
@@ -1031,7 +1377,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 if (priorRequiredField != null)
                 {
                     methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
-                        "set\"", String.format("0x%02X", bitsOfOnesByFieldName.get(priorRequiredField)), priorRequiredField);
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
                 }
                 methodBuilder.addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                     .addStatement("$LRW.set(value, $T.UTF_8)", name, StandardCharsets.class)
@@ -1050,7 +1396,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 if (priorRequiredField != null)
                 {
                     methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
-                        "set\"", String.format("0x%02X", bitsOfOnesByFieldName.get(priorRequiredField)), priorRequiredField);
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
                 }
                 methodBuilder.addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                     .addStatement("$LRW.set(value)", name)
@@ -1070,7 +1416,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 if (priorRequiredField != null)
                 {
                     methodBuilder.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
-                        "set\"", String.format("0x%02X", bitsOfOnesByFieldName.get(priorRequiredField)), priorRequiredField);
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredField)), priorRequiredField);
                 }
                 methodBuilder.addStatement("$T $LRW = $L()", builderType, name, methodName(name))
                     .addStatement("$LRW.set(buffer, offset, length)", name)
@@ -1084,15 +1430,14 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             public Builder build()
             {
                 bitsOfOnes = 0;
+                position = 0;
                 return super.build();
             }
         }
 
         private final class WrapMethodGenerator extends MethodSpecGenerator
         {
-            private WrapMethodGenerator(
-                ClassName thisType,
-                TypeSpec.Builder builder)
+            private WrapMethodGenerator()
             {
                 super(methodBuilder("wrap")
                     .addAnnotation(Override.class)
@@ -1118,41 +1463,50 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private final class BuildMethodGenerator extends MethodSpecGenerator
         {
-            private int bitsOfOnes;
-            private Map<String, Integer> bitsOfOnesByFieldName;
+            private final TypeName physicalLengthType;
+            private final TypeName logicalLengthType;
+            private int position;
+            private Map<String, Integer> requiredFieldPosition;
 
             private BuildMethodGenerator(
                 ClassName thisType,
-                TypeSpec.Builder builder)
+                TypeSpec.Builder builder,
+                TypeName physicalLengthType,
+                TypeName logicalLengthType)
             {
                 super(methodBuilder("build")
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(listType));
-                bitsOfOnesByFieldName = new HashMap<>();
+                requiredFieldPosition = new HashMap<>();
+                this.physicalLengthType = physicalLengthType;
+                this.logicalLengthType = logicalLengthType;
             }
 
             public BuildMethodGenerator addMember(
                 String name,
                 boolean isRequired)
             {
-                bitsOfOnes = (bitsOfOnes << 1) | 1;
                 if (isRequired)
                 {
-                    bitsOfOnesByFieldName.put(name, bitsOfOnes);
+                    requiredFieldPosition.put(name, 1 << position);
                     builder.addStatement("assert (fieldsMask & $L) != 0 : \"Required field \\\"$L\\\" is not " +
-                        "set\"", String.format("0x%02X", bitsOfOnesByFieldName.get(name)), name);
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(name)), name);
                 }
+                position++;
                 return this;
             }
 
             @Override
             public MethodSpec generate()
             {
-                return builder.addStatement("buffer().putInt(offset() + $L, limit() - offset() & 0xFFFF)",
-                    offset(PHYSICAL_LENGTH))
-                    .addStatement("buffer().putInt(offset() + $L, Integer.bitCount(fieldsMask) & 0xFFFF)", offset(LOGICAL_LENGTH))
-                    .addStatement("buffer().putInt(offset() + $L, fieldsMask & 0xFFFF)", offset(BIT_MASK))
+                final String putPhysicalLength = physicalLengthType.equals(TypeName.BYTE) ? "buffer().$L(offset()" +
+                    " + $L, (byte) (limit() - offset()))" : "buffer().$L(offset() + $L, limit() - offset())";
+                final String putLogicalLength = logicalLengthType.equals(TypeName.BYTE) ? "buffer().$L(offset() " +
+                    "+ $L, (byte) (Long.bitCount(fieldsMask)))" : "buffer().$L(offset() + $L, Long.bitCount(fieldsMask))";
+                return builder.addStatement(putPhysicalLength, PUTTER_NAMES.get(physicalLengthType), offset(PHYSICAL_LENGTH))
+                    .addStatement(putLogicalLength, PUTTER_NAMES.get(logicalLengthType), offset(LOGICAL_LENGTH))
+                    .addStatement("buffer().putLong(offset() + $L, fieldsMask)", offset(BIT_MASK))
                     .addStatement("return super.build()")
                     .build();
             }
@@ -1164,15 +1518,18 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         private String fieldName;
         private TypeName type;
         private boolean isRequired;
+        private Object defaultValue;
 
         ListField(
             String fieldName,
             TypeName type,
-            boolean isRequired)
+            boolean isRequired,
+            Object defaultValue)
         {
             this.fieldName = fieldName;
             this.type = type;
             this.isRequired = isRequired;
+            this.defaultValue = defaultValue;
         }
 
         public String fieldName()
@@ -1180,14 +1537,19 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             return fieldName;
         }
 
+        public TypeName type()
+        {
+            return type;
+        }
+
         public boolean isRequired()
         {
             return isRequired;
         }
 
-        public TypeName type()
+        public Object defaultValue()
         {
-            return type;
+            return defaultValue;
         }
     }
 
@@ -1247,6 +1609,12 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         String fieldName)
     {
         return String.format("FIELD_OFFSET_%s", constant(fieldName));
+    }
+
+    private static String defaultConstant(
+        String fieldName)
+    {
+        return String.format("FIELD_DEFAULT_VALUE_%s", constant(fieldName));
     }
 
     private static String offset(

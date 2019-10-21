@@ -36,9 +36,11 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.parse.AstParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusLexer;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
@@ -155,12 +157,13 @@ class Parser
 
         @Override
         public Set<String> visitStruct(
-            AstStructNode structNode)
+            AstNamedNode namedNode)
         {
-            String supertype = structNode.supertype();
+            AstStructNode structNode = (AstStructNode) namedNode;
+            AstType supertype = structNode.supertype();
             if (supertype != null)
             {
-                qualifiedNames.add(supertype);
+                qualifiedNames.add(supertype.name());
             }
 
             return super.visitStruct(structNode);

@@ -17,18 +17,16 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class AstListNode extends AstNode
+public final class AstListNode extends AstNamedNode
 {
     public static final Object NULL_DEFAULT = new Object();
 
-    private final String name;
     private final List<AstListMemberNode> members;
     private final AstType physicalLengthSize;
     private final AstType logicalLengthSize;
@@ -51,6 +49,12 @@ public final class AstListNode extends AstNode
     public AstType logicalLengthSize()
     {
         return logicalLengthSize;
+    }
+
+    @Override
+    public Kind getKind()
+    {
+        return Kind.LIST;
     }
 
     @Override
@@ -93,15 +97,14 @@ public final class AstListNode extends AstNode
         AstType physicalLengthSize,
         AstType logicalLengthSize)
     {
-        this.name = requireNonNull(name);
+        super(name);
         this.members = unmodifiableList(members);
         this.physicalLengthSize = physicalLengthSize;
         this.logicalLengthSize = logicalLengthSize;
     }
 
-    public static final class Builder extends AstNode.Builder<AstListNode>
+    public static final class Builder extends AstNamedNode.Builder<AstListNode>
     {
-        private String name;
         private List<AstListMemberNode> members;
         private AstType physicalLengthSize;
         private AstType logicalLengthSize;

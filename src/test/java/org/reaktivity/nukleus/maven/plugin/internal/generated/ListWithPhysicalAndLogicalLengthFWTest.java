@@ -26,6 +26,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithPhysicalAndLogicalLengthFW;
 
 public class ListWithPhysicalAndLogicalLengthFWTest
 {

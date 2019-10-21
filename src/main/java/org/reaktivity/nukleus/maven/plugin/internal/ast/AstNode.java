@@ -74,9 +74,9 @@ public abstract class AstNode
         }
 
         public R visitEnum(
-            AstEnumNode enumNode)
+            AstNamedNode enumNode)
         {
-            return enumNode.values()
+            return ((AstEnumNode) enumNode).values()
                            .stream()
                            .map(this::visitValue)
                            .collect(reducing(defaultResult(), this::aggregateResult));
@@ -89,18 +89,18 @@ public abstract class AstNode
         }
 
         public R visitStruct(
-            AstStructNode structNode)
+            AstNamedNode structNode)
         {
-            return structNode.members()
+            return ((AstStructNode) structNode).members()
                              .stream()
                              .map(this::visitMember)
                              .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
         public R visitList(
-            AstListNode listNode)
+            AstNamedNode listNode)
         {
-            return listNode.members()
+            return ((AstListNode) listNode).members()
                            .stream()
                            .map(this::visitMember)
                            .collect(reducing(defaultResult(), this::aggregateResult));
@@ -113,18 +113,18 @@ public abstract class AstNode
         }
 
         public R visitUnion(
-            AstUnionNode unionNode)
+            AstNamedNode unionNode)
         {
-            return unionNode.cases()
+            return ((AstUnionNode) unionNode).cases()
                             .stream()
                             .map(this::visitCase)
                             .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
         public R visitVariant(
-            AstVariantNode variantNode)
+            AstNamedNode variantNode)
         {
-            return variantNode.cases()
+            return ((AstVariantNode) variantNode).cases()
                               .stream()
                               .map(this::visitVariantCase)
                               .collect(reducing(defaultResult(), this::aggregateResult));

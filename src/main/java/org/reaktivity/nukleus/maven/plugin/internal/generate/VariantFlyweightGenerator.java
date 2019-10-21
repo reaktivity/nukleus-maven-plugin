@@ -653,8 +653,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            TypeName primitiveReturnType = ofType.equals(TypeName.BYTE) || ofType.equals(TypeName.SHORT) ?
-                TypeName.INT : TypeName.LONG;
+            TypeName primitiveReturnType = ofType.equals(TypeName.BYTE) || ofType.equals(TypeName.SHORT) ||
+                ofType.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
             TypeName returnType = Objects.requireNonNullElseGet(unsignedOfType, () -> ofType.isPrimitive() ?
                 primitiveReturnType : ClassName.bestGuess("String"));
             return builder.beginControlFlow("default:")

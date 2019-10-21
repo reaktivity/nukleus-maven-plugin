@@ -24,12 +24,10 @@ import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -55,12 +53,13 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
-        AstStructNode structNode)
+        AstNamedNode namedNode)
     {
-        String supertype = structNode.supertype();
+        AstStructNode structNode = (AstStructNode) namedNode;
+        AstType supertype = structNode.supertype();
         if (supertype != null)
         {
-            AstStructNode superNode = resolver.resolve(supertype);
+            AstStructNode superNode = (AstStructNode) resolver.resolve(supertype.name());
             visitStruct(superNode);
         }
 
@@ -70,21 +69,21 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitEnum(
-        AstEnumNode enumNode)
+        AstNamedNode enumNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
-        AstUnionNode unionNode)
+        AstNamedNode unionNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitVariant(
-        AstVariantNode variantNode)
+        AstNamedNode variantNode)
     {
         return defaultResult();
     }

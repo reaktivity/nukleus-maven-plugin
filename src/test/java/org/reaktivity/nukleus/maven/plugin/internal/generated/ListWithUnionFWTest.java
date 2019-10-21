@@ -28,6 +28,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.OctetsFW.Builder;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithUnionFW;
 import org.reaktivity.reaktor.internal.test.types.inner.UnionOctetsFW;
 
 public class ListWithUnionFWTest
