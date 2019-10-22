@@ -34,6 +34,7 @@ public final class AstType
     public static final AstType UINT24 = new AstType("uint24", 24);
     public static final AstType UINT32 = new AstType("uint32", 32);
     public static final AstType UINT64 = new AstType("uint64", 64);
+    public static final AstType VARBYTEUINT32 = new AstType("varbyteuint32");
 
     public static final AstType OCTETS = new AstType("octets");
     public static final AstType STRING = new AstType("string");
@@ -103,7 +104,7 @@ public final class AstType
 
     public boolean isUnsignedInt()
     {
-        return this == UINT8 || this == UINT16 || this == UINT24 || this == UINT32 || this == UINT64;
+        return this == UINT8 || this == UINT16 || this == UINT24 || this == UINT32 || this == UINT64 || this == VARBYTEUINT32;
     }
 
     @Override

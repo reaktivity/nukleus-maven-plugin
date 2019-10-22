@@ -41,6 +41,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.String32FlyweightGe
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StringFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Varbyteuint32FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
 
@@ -113,6 +114,7 @@ public class Generator
         typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
         typeSpecs.add(new String32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
         typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new Varbyteuint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
         typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
         typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
 
