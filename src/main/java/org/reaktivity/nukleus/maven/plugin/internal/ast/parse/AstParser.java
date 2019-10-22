@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.RuleContext;
@@ -156,15 +157,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         AstScopeNode.Builder scopeBuilder = new AstScopeNode.Builder();
         scopeBuilder.depth(scopeBuilders.size());
         scopeBuilder.name(name);
+
+        String qualifiedName = name;
         if (!qualifiedPrefixes.isEmpty())
         {
-            final String qualifiedName = String.format("%s%s::", qualifiedPrefixes.peekFirst(), name);
-            qualifiedPrefixes.addFirst(qualifiedName);
+            final String qualifiedPrefix = qualifiedPrefixes.peekFirst();
+            qualifiedName = String.format("%s%s", qualifiedPrefix, name);
         }
-        else
-        {
-            qualifiedPrefixes.addFirst(String.format("%s::", name));
-        }
+        qualifiedPrefixes.addFirst(String.format("%s::", qualifiedName));
 
         AstByteOrder byteOrder = this.byteOrder;
         scopeBuilders.offer(scopeBuilder);
@@ -620,23 +620,17 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         String typeName = ctx.getText();
         if (memberBuilder != null)
         {
-            AstType qualifiedType = astTypesByQualifiedName.get(typeName);
-            if (qualifiedType == null)
+            AstType astTypeName = astTypesByQualifiedName.get(typeName);
+            if (astTypeName == null)
             {
-                Iterator prefixIterator = qualifiedPrefixes.iterator();
-                String prefix = qualifiedPrefixes.peekFirst();
-                while (prefixIterator.hasNext() &&
-                    astTypesByQualifiedName.get(String.format("%s%s", prefix, typeName)) == null)
-                {
-                    prefix = (String) prefixIterator.next();
-                }
-                memberBuilder.type(astTypesByQualifiedName.getOrDefault(String.format("%s%s", prefix, typeName),
-                    AstType.dynamicType(typeName)));
+                astTypeName = qualifiedPrefixes.stream()
+                    .map(qp -> String.format("%s%s", qp, typeName))
+                    .map(astTypesByQualifiedName::get)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(AstType.dynamicType(typeName));
             }
-            else
-            {
-                memberBuilder.type(qualifiedType);
-            }
+            memberBuilder.type(astTypeName);
         }
         return super.visitScoped_name(ctx);
     }
@@ -752,12 +746,12 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             AstListNode.Builder physicalLengthSizeBuilder =
                 new ListPhysicalLengthSizeVisitor(listBuilder).visitList_length(ctx);
-            AstType physicalLengthSize = physicalLengthSizeBuilder.build().physicalLengthSize();
-            listBuilder.physicalLengthSize(physicalLengthSize);
+            AstType physicalLengthSize = physicalLengthSizeBuilder.build().physicalLengthType();
+            listBuilder.physicalLengthType(physicalLengthSize);
 
             AstListNode.Builder logicalLengthSizeBuilder =
                 new ListLogicalLengthSizeVisitor(listBuilder).visitList_length(ctx);
-            AstType logicalLengthSize = logicalLengthSizeBuilder.build().logicalLengthSize();
+            AstType logicalLengthSize = logicalLengthSizeBuilder.build().logicalLengthType();
             listBuilder.logicalLengthSize(logicalLengthSize);
             return listBuilder;
         }
@@ -948,20 +942,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             AstType astTypeName = astTypesByQualifiedName.get(typeName);
             if (astTypeName == null)
             {
-                Iterator prefixIterator = qualifiedPrefixes.iterator();
-                String prefix = qualifiedPrefixes.peekFirst();
-                while (prefixIterator.hasNext() &&
-                    astTypesByQualifiedName.get(String.format("%s%s", prefix, typeName)) == null)
-                {
-                    prefix = (String) prefixIterator.next();
-                }
-                listMemberBuilder.type(astTypesByQualifiedName.getOrDefault(String.format("%s%s", prefix, typeName),
-                    AstType.dynamicType(typeName)));
+                astTypeName = qualifiedPrefixes.stream()
+                    .map(qp -> String.format("%s%s", qp, typeName))
+                    .map(astTypesByQualifiedName::get)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(AstType.dynamicType(typeName));
             }
-            else
-            {
-                listMemberBuilder.type(astTypeName);
-            }
+            listMemberBuilder.type(astTypeName);
             return super.visitScoped_name(ctx);
         }
 
@@ -986,7 +974,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint8_type(
                 Uint8_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT8);
+                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT8);
                 return super.visitUint8_type(ctx);
             }
 
@@ -994,7 +982,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint16_type(
                 Uint16_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT16);
+                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT16);
                 return super.visitUint16_type(ctx);
             }
 
@@ -1002,7 +990,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint32_type(
                 Uint32_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT32);
+                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT32);
                 return super.visitUint32_type(ctx);
             }
 
@@ -1010,7 +998,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint64_type(
                 Uint64_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthSize(AstType.UINT64);
+                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT64);
                 return super.visitUint64_type(ctx);
             }
 
@@ -1124,20 +1112,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             AstType astTypeName = astTypesByQualifiedName.get(kindTypeName);
             if (astTypeName == null)
             {
-                Iterator prefixIterator = qualifiedPrefixes.iterator();
-                String prefix = qualifiedPrefixes.peekFirst();
-                while (prefixIterator.hasNext() &&
-                    astTypesByQualifiedName.get(String.format("%s%s", prefix, kindTypeName)) == null)
-                {
-                    prefix = (String) prefixIterator.next();
-                }
-                variantBuilder.kindType(astTypesByQualifiedName.getOrDefault(String.format("%s%s", prefix, kindTypeName),
-                    AstType.dynamicType(kindTypeName)));
+                astTypeName = qualifiedPrefixes.stream()
+                    .map(qp -> String.format("%s%s", qp, kindTypeName))
+                    .map(astTypesByQualifiedName::get)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(AstType.dynamicType(kindTypeName));
             }
-            else
-            {
-                variantBuilder.kindType(astTypeName);
-            }
+            variantBuilder.kindType(astTypeName);
             return super.visitScoped_name(ctx);
         }
 

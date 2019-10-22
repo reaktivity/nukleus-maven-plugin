@@ -24,10 +24,12 @@ import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -53,37 +55,36 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
-        AstNamedNode namedNode)
+        AstStructNode namedNode)
     {
-        AstStructNode structNode = (AstStructNode) namedNode;
-        AstType supertype = structNode.supertype();
+        AstType supertype = namedNode.supertype();
         if (supertype != null)
         {
             AstStructNode superNode = (AstStructNode) resolver.resolve(supertype.name());
             visitStruct(superNode);
         }
 
-        super.visitStruct(structNode);
+        super.visitStruct(namedNode);
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitEnum(
-        AstNamedNode enumNode)
+        AstEnumNode enumNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
-        AstNamedNode unionNode)
+        AstUnionNode unionNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitVariant(
-        AstNamedNode variantNode)
+        AstVariantNode variantNode)
     {
         return defaultResult();
     }

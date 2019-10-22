@@ -20,10 +20,13 @@ import static java.util.Collections.singleton;
 import java.util.Collection;
 import java.util.Set;
 
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGenerator;
@@ -47,28 +50,28 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
-        AstNamedNode structNode)
+        AstStructNode structNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitEnum(
-        AstNamedNode enumNode)
+        AstEnumNode enumNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
-        AstNamedNode unionNode)
+        AstUnionNode unionNode)
     {
         return defaultResult();
     }
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitVariant(
-        AstNamedNode variantNode)
+        AstVariantNode variantNode)
     {
         return super.visitVariant(variantNode);
     }

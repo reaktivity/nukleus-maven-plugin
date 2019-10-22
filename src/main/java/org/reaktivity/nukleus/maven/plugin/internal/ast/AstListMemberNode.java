@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public final class AstListMemberNode extends AstAbstractMemberNode
 {
-    private final boolean isRequired;
+    private final boolean required;
 
     private AstListMemberNode(
         String name,
@@ -29,21 +29,21 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         String sizeName,
         Object defaultValue,
         AstByteOrder byteOrder,
-        boolean isRequired)
+        boolean required)
     {
         super(name, types, size, sizeName, defaultValue, byteOrder);
-        this.isRequired = isRequired;
+        this.required = required;
     }
 
     public boolean isRequired()
     {
-        return isRequired;
+        return required;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, defaultValue, byteOrder, isRequired);
+        return Objects.hash(name, types, defaultValue, byteOrder, required);
     }
 
     @Override
@@ -61,7 +61,7 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         }
 
         AstListMemberNode that = (AstListMemberNode) o;
-        return this.isRequired == that.isRequired &&
+        return this.required == that.required &&
             Objects.equals(this.name, that.name) &&
             Objects.deepEquals(this.types, that.types) &&
             Objects.equals(this.defaultValue, that.defaultValue) &&
@@ -71,25 +71,25 @@ public final class AstListMemberNode extends AstAbstractMemberNode
     @Override
     public String toString()
     {
-        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, isRequired=%s]",
-            name, types, defaultValue, byteOrder, isRequired);
+        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, required=%s]",
+            name, types, defaultValue, byteOrder, required);
     }
 
     public static final class Builder extends AstAbstractMemberNode.Builder<AstListMemberNode>
     {
-        private boolean isRequired;
+        private boolean required;
 
         public Builder isRequired(
-            boolean isRequired)
+            boolean required)
         {
-            this.isRequired = isRequired;
+            this.required = required;
             return this;
         }
 
         @Override
         public AstListMemberNode build()
         {
-            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, isRequired);
+            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, required);
         }
     }
 }

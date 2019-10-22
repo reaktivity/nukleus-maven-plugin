@@ -100,7 +100,6 @@ public final class AstScopeNode extends AstNode
         return lists;
     }
 
-
     @Override
     public int hashCode()
     {

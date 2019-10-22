@@ -278,9 +278,9 @@ list_members
 list_member
    : KW_REQUIRED? type_spec declarators SEMICOLON
    | KW_REQUIRED? uint_member_with_default SEMICOLON
-   | KW_REQUIRED? int_member_with_default SEMICOLON
-   | KW_REQUIRED? octets_member_with_default SEMICOLON
-   | KW_REQUIRED? non_primitive_member_with_default SEMICOLON
+   | int_member_with_default SEMICOLON
+   | octets_member_with_default SEMICOLON
+   | non_primitive_member_with_default SEMICOLON
    | KW_REQUIRED? integer_array_member SEMICOLON
    | KW_REQUIRED? varint_array_member SEMICOLON
    | KW_REQUIRED? array_member SEMICOLON

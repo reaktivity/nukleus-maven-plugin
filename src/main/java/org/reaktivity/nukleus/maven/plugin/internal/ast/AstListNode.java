@@ -26,27 +26,22 @@ public final class AstListNode extends AstNamedNode
     public static final Object NULL_DEFAULT = new Object();
 
     private final List<AstListMemberNode> members;
-    private final AstType physicalLengthSize;
-    private final AstType logicalLengthSize;
-
-    public String name()
-    {
-        return name;
-    }
+    private final AstType physicalLengthType;
+    private final AstType logicalLengthType;
 
     public List<AstListMemberNode> members()
     {
         return members;
     }
 
-    public AstType physicalLengthSize()
+    public AstType physicalLengthType()
     {
-        return physicalLengthSize;
+        return physicalLengthType;
     }
 
-    public AstType logicalLengthSize()
+    public AstType logicalLengthType()
     {
-        return logicalLengthSize;
+        return logicalLengthType;
     }
 
     @Override
@@ -65,7 +60,7 @@ public final class AstListNode extends AstNamedNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, members, physicalLengthSize, logicalLengthSize);
+        return Objects.hash(name, members, physicalLengthType, logicalLengthType);
     }
 
     @Override
@@ -85,27 +80,27 @@ public final class AstListNode extends AstNamedNode
         AstListNode that = (AstListNode) o;
         return Objects.equals(this.name, that.name) &&
             Objects.equals(this.members, that.members) &&
-            Objects.equals(this.physicalLengthSize, that.physicalLengthSize) &&
-            Objects.equals(this.logicalLengthSize, that.logicalLengthSize);
+            Objects.equals(this.physicalLengthType, that.physicalLengthType) &&
+            Objects.equals(this.logicalLengthType, that.logicalLengthType);
     }
 
     private AstListNode(
         String name,
         List<AstListMemberNode> members,
-        AstType physicalLengthSize,
-        AstType logicalLengthSize)
+        AstType physicalLengthType,
+        AstType logicalLengthType)
     {
         super(name);
         this.members = unmodifiableList(members);
-        this.physicalLengthSize = physicalLengthSize;
-        this.logicalLengthSize = logicalLengthSize;
+        this.physicalLengthType = physicalLengthType;
+        this.logicalLengthType = logicalLengthType;
     }
 
     public static final class Builder extends AstNamedNode.Builder<AstListNode>
     {
         private List<AstListMemberNode> members;
-        private AstType physicalLengthSize;
-        private AstType logicalLengthSize;
+        private AstType physicalLengthType;
+        private AstType logicalLengthType;
 
         public Builder()
         {
@@ -126,24 +121,24 @@ public final class AstListNode extends AstNamedNode
             return this;
         }
 
-        public Builder physicalLengthSize(
-            AstType physicalLengthSize)
+        public Builder physicalLengthType(
+            AstType physicalLengthType)
         {
-            this.physicalLengthSize = physicalLengthSize;
+            this.physicalLengthType = physicalLengthType;
             return this;
         }
 
         public Builder logicalLengthSize(
-            AstType logicalLengthSize)
+            AstType logicalLengthType)
         {
-            this.logicalLengthSize = logicalLengthSize;
+            this.logicalLengthType = logicalLengthType;
             return this;
         }
 
         @Override
         public AstListNode build()
         {
-            return new AstListNode(name, members, physicalLengthSize, logicalLengthSize);
+            return new AstListNode(name, members, physicalLengthType, logicalLengthType);
         }
     }
 }
