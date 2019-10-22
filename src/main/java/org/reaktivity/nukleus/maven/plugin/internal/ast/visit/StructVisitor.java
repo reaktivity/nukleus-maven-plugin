@@ -55,16 +55,16 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
 
     @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
-        AstStructNode namedNode)
+        AstStructNode structNode)
     {
-        AstType supertype = namedNode.supertype();
+        AstType supertype = structNode.supertype();
         if (supertype != null)
         {
             AstStructNode superNode = (AstStructNode) resolver.resolve(supertype.name());
             visitStruct(superNode);
         }
 
-        super.visitStruct(namedNode);
+        super.visitStruct(structNode);
         return defaultResult();
     }
 

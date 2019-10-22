@@ -156,15 +156,15 @@ class Parser
 
         @Override
         public Set<String> visitStruct(
-            AstStructNode namedNode)
+            AstStructNode structNode)
         {
-            AstType supertype = namedNode.supertype();
+            AstType supertype = structNode.supertype();
             if (supertype != null)
             {
                 qualifiedNames.add(supertype.name());
             }
 
-            return super.visitStruct(namedNode);
+            return super.visitStruct(structNode);
         }
 
         @Override
