@@ -744,15 +744,15 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstListNode.Builder visitList_length(
             List_lengthContext ctx)
         {
-            AstListNode.Builder physicalLengthSizeBuilder =
-                new ListPhysicalLengthSizeVisitor(listBuilder).visitList_length(ctx);
-            AstType physicalLengthSize = physicalLengthSizeBuilder.build().physicalLengthType();
-            listBuilder.physicalLengthType(physicalLengthSize);
+            AstListNode.Builder physicalLengthTypeBuilder =
+                new ListPhysicalLengthTypeVisitor(listBuilder).visitList_length(ctx);
+            AstType physicalLengthType = physicalLengthTypeBuilder.build().physicalLengthType();
+            listBuilder.physicalLengthType(physicalLengthType);
 
-            AstListNode.Builder logicalLengthSizeBuilder =
-                new ListLogicalLengthSizeVisitor(listBuilder).visitList_length(ctx);
-            AstType logicalLengthSize = logicalLengthSizeBuilder.build().logicalLengthType();
-            listBuilder.logicalLengthSize(logicalLengthSize);
+            AstListNode.Builder logicalLengthTypeBuilder =
+                new ListLogicalLengthTypeVisitor(listBuilder).visitList_length(ctx);
+            AstType logicalLengthType = logicalLengthTypeBuilder.build().logicalLengthType();
+            listBuilder.logicalLengthType(logicalLengthType);
             return listBuilder;
         }
 
@@ -953,14 +953,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             return super.visitScoped_name(ctx);
         }
 
-        public final class ListPhysicalLengthSizeVisitor extends NukleusBaseVisitor<AstListNode.Builder>
+        public final class ListPhysicalLengthTypeVisitor extends NukleusBaseVisitor<AstListNode.Builder>
         {
-            private final AstListNode.Builder physicalLengthSizeBuilder;
+            private final AstListNode.Builder physicalLengthTypeBuilder;
 
-            public ListPhysicalLengthSizeVisitor(
-                AstListNode.Builder physicalLengthSizeBuilder)
+            public ListPhysicalLengthTypeVisitor(
+                AstListNode.Builder physicalLengthTypeBuilder)
             {
-                this.physicalLengthSizeBuilder = physicalLengthSizeBuilder;
+                this.physicalLengthTypeBuilder = physicalLengthTypeBuilder;
             }
 
             @Override
@@ -974,7 +974,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint8_type(
                 Uint8_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT8);
+                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT8);
                 return super.visitUint8_type(ctx);
             }
 
@@ -982,7 +982,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint16_type(
                 Uint16_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT16);
+                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT16);
                 return super.visitUint16_type(ctx);
             }
 
@@ -990,7 +990,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint32_type(
                 Uint32_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT32);
+                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT32);
                 return super.visitUint32_type(ctx);
             }
 
@@ -998,25 +998,25 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint64_type(
                 Uint64_typeContext ctx)
             {
-                physicalLengthSizeBuilder.physicalLengthType(AstType.UINT64);
+                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT64);
                 return super.visitUint64_type(ctx);
             }
 
             @Override
             protected AstListNode.Builder defaultResult()
             {
-                return physicalLengthSizeBuilder;
+                return physicalLengthTypeBuilder;
             }
         }
 
-        public final class ListLogicalLengthSizeVisitor extends NukleusBaseVisitor<AstListNode.Builder>
+        public final class ListLogicalLengthTypeVisitor extends NukleusBaseVisitor<AstListNode.Builder>
         {
-            private final AstListNode.Builder logicalLengthSizeBuilder;
+            private final AstListNode.Builder logicalLengthTypeBuilder;
 
-            public ListLogicalLengthSizeVisitor(
-                AstListNode.Builder logicalLengthSizeBuilder)
+            public ListLogicalLengthTypeVisitor(
+                AstListNode.Builder logicalLengthTypeBuilder)
             {
-                this.logicalLengthSizeBuilder = logicalLengthSizeBuilder;
+                this.logicalLengthTypeBuilder = logicalLengthTypeBuilder;
             }
 
             @Override
@@ -1030,7 +1030,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint8_type(
                 Uint8_typeContext ctx)
             {
-                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT8);
+                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT8);
                 return super.visitUint8_type(ctx);
             }
 
@@ -1038,7 +1038,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint16_type(
                 Uint16_typeContext ctx)
             {
-                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT16);
+                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT16);
                 return super.visitUint16_type(ctx);
             }
 
@@ -1046,7 +1046,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint32_type(
                 Uint32_typeContext ctx)
             {
-                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT32);
+                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT32);
                 return super.visitUint32_type(ctx);
             }
 
@@ -1054,14 +1054,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint64_type(
                 Uint64_typeContext ctx)
             {
-                logicalLengthSizeBuilder.logicalLengthSize(AstType.UINT64);
+                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT64);
                 return super.visitUint64_type(ctx);
             }
 
             @Override
             protected AstListNode.Builder defaultResult()
             {
-                return logicalLengthSizeBuilder;
+                return logicalLengthTypeBuilder;
             }
         }
 

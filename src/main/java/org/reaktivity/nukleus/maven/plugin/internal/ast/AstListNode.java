@@ -128,7 +128,7 @@ public final class AstListNode extends AstNamedNode
             return this;
         }
 
-        public Builder logicalLengthSize(
+        public Builder logicalLengthType(
             AstType logicalLengthType)
         {
             this.logicalLengthType = logicalLengthType;

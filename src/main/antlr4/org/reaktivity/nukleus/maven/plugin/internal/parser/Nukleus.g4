@@ -277,7 +277,7 @@ list_members
 
 list_member
    : KW_REQUIRED? type_spec declarators SEMICOLON
-   | KW_REQUIRED? uint_member_with_default SEMICOLON
+   | uint_member_with_default SEMICOLON
    | int_member_with_default SEMICOLON
    | octets_member_with_default SEMICOLON
    | non_primitive_member_with_default SEMICOLON
