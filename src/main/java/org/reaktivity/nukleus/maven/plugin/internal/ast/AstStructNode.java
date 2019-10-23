@@ -17,21 +17,18 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode.NULL_DEFAULT;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode.NULL_DEFAULT;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public final class AstStructNode extends AstNode
+public final class AstStructNode extends AstNamedNode
 {
-    private final String name;
     private final int typeId;
-    private final String supertype;
-    private final List<AstMemberNode> members;
-
+    private final AstType supertype;
+    private final List<AstStructMemberNode> members;
 
     @Override
     public <R> R accept(
@@ -40,24 +37,25 @@ public final class AstStructNode extends AstNode
         return visitor.visitStruct(this);
     }
 
-    public String name()
-    {
-        return name;
-    }
-
     public int typeId()
     {
         return typeId;
     }
 
-    public String supertype()
+    public AstType supertype()
     {
         return supertype;
     }
 
-    public List<AstMemberNode> members()
+    public List<AstStructMemberNode> members()
     {
         return members;
+    }
+
+    @Override
+    public Kind getKind()
+    {
+        return Kind.STRUCT;
     }
 
     @Override
@@ -66,11 +64,11 @@ public final class AstStructNode extends AstNode
         return supertype != null
                ? (name.hashCode() << 11) ^ supertype.hashCode() << 7 ^ members.hashCode() << 3 ^ typeId
                : (name.hashCode() << 11) ^ members.hashCode() << 3 ^ typeId;
-
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(
+        Object o)
     {
         if (o == this)
         {
@@ -92,54 +90,57 @@ public final class AstStructNode extends AstNode
     private AstStructNode(
         String name,
         int typeId,
-        String supertype,
-        List<AstMemberNode> members)
+        AstType supertype,
+        List<AstStructMemberNode> members)
     {
-        this.name = requireNonNull(name);
+        super(name);
         this.typeId = typeId;
         this.supertype = supertype;
         this.members = unmodifiableList(members);
     }
 
-    public static final class Builder extends AstNode.Builder<AstStructNode>
+    public static final class Builder extends AstNamedNode.Builder<AstStructNode>
     {
-        private String name;
-        private String supertype;
+        private AstType supertype;
         private int typeId;
-        private List<AstMemberNode> members;
+        private List<AstStructMemberNode> members;
 
         public Builder()
         {
             this.members = new LinkedList<>();
         }
 
-        public Builder name(String name)
+        public Builder name(
+            String name)
         {
             this.name = name;
             return this;
         }
 
-        public Builder typeId(int typeId)
+        public Builder typeId(
+            int typeId)
         {
             this.typeId = typeId;
             return this;
         }
 
-        public Builder supertype(String supertype)
+        public Builder supertype(
+            AstType supertype)
         {
             this.supertype = supertype;
             return this;
         }
 
-        public Builder member(AstMemberNode member)
+        public Builder member(
+            AstStructMemberNode member)
         {
             if (member.sizeName() != null)
             {
                 final String target = member.sizeName();
-                Optional<AstMemberNode> sizeField = members.stream().filter(n -> target.equals(n.name())).findFirst();
+                Optional<AstStructMemberNode> sizeField = members.stream().filter(n -> target.equals(n.name())).findFirst();
                 if (sizeField.isPresent())
                 {
-                    AstMemberNode size = sizeField.get();
+                    AstStructMemberNode size = sizeField.get();
                     member.sizeType(size.type());
 
                     if (size.defaultValue() != null)

@@ -26,6 +26,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithPhysicalAndLogicalLengthFW;
 
 public class ListWithPhysicalAndLogicalLengthFWTest
 {
@@ -42,18 +43,18 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
     private final int physicalLengthSize = Integer.BYTES;
     private final int logicalLengthSize = Integer.BYTES;
-    private final int bitmaskSize = Integer.BYTES;
+    private final int bitmaskSize = Long.BYTES;
 
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 15;
+        int physicalLength = 19;
         int offsetPhysicalLength = 10;
         buffer.putInt(offsetPhysicalLength, physicalLength);
         int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
         buffer.putInt(offsetLogicalLength, 1);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, 1);
+        buffer.putLong(offsetBitMask, 1);
         int offsetField0 = offsetBitMask + bitmaskSize;
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("longValue", UTF_8)
@@ -69,13 +70,13 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 19;
+        int physicalLength = 23;
         int offsetPhysicalLength = 10;
         buffer.putInt(offsetPhysicalLength, physicalLength);
         int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
         buffer.putInt(offsetLogicalLength, 1);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, 1);
+        buffer.putLong(offsetBitMask, 1);
         int offsetField0 = offsetBitMask + bitmaskSize;
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("longValue", UTF_8)
@@ -102,13 +103,13 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 30;
+        int physicalLength = 34;
         int offsetPhysicalLength = 10;
         buffer.putInt(offsetPhysicalLength, physicalLength);
         int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
         buffer.putInt(offsetLogicalLength, 3);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, 7);
+        buffer.putLong(offsetBitMask, 7L);
         int offsetField0 = offsetBitMask + bitmaskSize;
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
@@ -128,13 +129,13 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 30;
+        int physicalLength = 34;
         int offsetPhysicalLength = 10;
         buffer.putInt(offsetPhysicalLength, physicalLength);
         int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
         buffer.putInt(offsetLogicalLength, 3);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, 7);
+        buffer.putLong(offsetBitMask, 7);
         int offsetField0 = offsetBitMask + bitmaskSize;
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
@@ -153,14 +154,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     @Test
     public void shouldWrapField0AndField1()
     {
-        int physicalLength = 23;
+        int physicalLength = 27;
         int logicalLength = 2;
-        int bitMask = 3;
+        long bitMask = 3;
         buffer.putInt(0, physicalLength);
         int offsetLogicalLength = physicalLengthSize;
         buffer.putInt(offsetLogicalLength, logicalLength);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, bitMask);
+        buffer.putLong(offsetBitMask, bitMask);
         int offsetField0 = offsetBitMask + bitmaskSize;
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
@@ -174,14 +175,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     @Test
     public void shouldWrapField0AndField2()
     {
-        int physicalLength = 26;
+        int physicalLength = 30;
         int logicalLength = 2;
-        int bitMask = 5;
+        long bitMask = 5;
         buffer.putInt(0, physicalLength);
         int offsetLogicalLength = physicalLengthSize;
         buffer.putInt(offsetLogicalLength, logicalLength);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, bitMask);
+        buffer.putLong(offsetBitMask, bitMask);
         int offsetField0 = offsetBitMask + bitmaskSize;
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
@@ -198,14 +199,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     @Test
     public void shouldWrapField0()
     {
-        int physicalLength = 19;
+        int physicalLength = 23;
         int logicalLength = 1;
-        int bitMask = 1;
+        long bitMask = 1;
         buffer.putInt(0, physicalLength);
         int offsetLogicalLength = physicalLengthSize;
         buffer.putInt(offsetLogicalLength, logicalLength);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, bitMask);
+        buffer.putLong(offsetBitMask, bitMask);
         int offsetField0 = offsetBitMask + bitmaskSize;
         StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
@@ -217,14 +218,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     @Test(expected = IllegalArgumentException.class)
     public void shouldNotWrapWhenRequiredFieldIsNotSet() throws Exception
     {
-        int physicalLength = 23;
+        int physicalLength = 27;
         int logicalLength = 2;
-        int bitMask = 6;
+        long bitMask = 6;
         buffer.putInt(0, physicalLength);
         int offsetLogicalLength = physicalLengthSize;
         buffer.putInt(offsetLogicalLength, logicalLength);
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
-        buffer.putInt(offsetBitMask, bitMask);
+        buffer.putLong(offsetBitMask, bitMask);
         int offsetField1 = offsetBitMask + bitmaskSize;
         buffer.putInt(offsetField1, 100);
         int offsetField2 = offsetField1 + Integer.BYTES;
@@ -245,7 +246,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(30, flyweightRO.sizeof());
+        assertEquals(34, flyweightRO.sizeof());
         assertEquals(3, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals(100L, flyweightRO.field1());
@@ -261,7 +262,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(26, flyweightRO.sizeof());
+        assertEquals(30, flyweightRO.sizeof());
         assertEquals(2, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals("value2", flyweightRO.field2().asString());
@@ -276,7 +277,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(19, flyweightRO.sizeof());
+        assertEquals(23, flyweightRO.sizeof());
         assertEquals(1, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
         flyweightRO.field1();
@@ -335,7 +336,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(26, flyweightRO.sizeof());
+        assertEquals(30, flyweightRO.sizeof());
         assertEquals(2, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals("value2", flyweightRO.field2().asString());
@@ -353,7 +354,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertEquals(26, flyweightRO.sizeof());
+        assertEquals(30, flyweightRO.sizeof());
         assertEquals(2, flyweightRO.length());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals("value2", flyweightRO.field2().asString());

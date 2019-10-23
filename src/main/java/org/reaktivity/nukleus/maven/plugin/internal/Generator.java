@@ -108,15 +108,15 @@ public class Generator
             typeSpecs.addAll(specification.accept(visitor));
         }
 
-        typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new OctetsFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new String32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new Varbyteuint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
-        typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.STRUCT)));
+        typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new OctetsFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new String32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new Varbyteuint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
+        typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
 
         System.out.println("Generating to " + outputDirectory);
 

@@ -72,53 +72,11 @@ scope test
             octets extension;
         }
 
-//        list[uint32, uint32] ListWithPhysicalAndLogicalLength
-//        {
-//            required string field0;
-//            uint32 field1;
-//            string field2;
-//        }
-
         union UnionOctets switch (uint8)
         {
             case 1: octets[4] octets4;
             case 2: octets[16] octets16;
             case 3: string string1;
-        }
-
-        variant VariantUint8KindWithUint64Type switch (uint8) of uint64
-        {
-            case 0x80: uint64;
-            case 0x53: uint8;
-            case 0x44: 0;
-            case 0x01: 1;
-            case 0x70: uint32;
-            case 0x60: uint16;
-            case 0x50: uint24;
-        }
-
-        variant VariantUint8KindWithString32Type switch (uint8) of string32
-        {
-           case 0xa1: string;
-           case 0x16: string16;
-           case 0xb1: string32;
-        }
-
-        variant VariantUnsignedIntWithoutExplicitType switch (uint8)
-        {
-           case 0x70: uint32;
-           case 0x50: uint24;
-           case 0x52: uint8;
-           case 0x43: 0;
-        }
-
-        variant VariantUint8KindWithInt64Type switch (uint8) of int64
-        {
-            case 0x71: int32;
-            case 0x81: int64;
-            case 0x50: int24;
-            case 0x51: int8;
-            case 0x61: int16;
         }
 
         struct Integers
@@ -285,11 +243,28 @@ scope test
             int8[length4] array4 = null;
         }
 
-        variant VariantEnumKindWithInt32 switch (EnumWithInt8) of int32
+        variant VariantUint8KindWithString32Type switch (uint8) of string32
         {
-            case ONE: int8;
-            case TWO: int16;
-            case THREE: int32;
+           case 0xa1: string;
+           case 0x16: string16;
+           case 0xb1: string32;
+        }
+
+        variant VariantUnsignedIntWithoutExplicitType switch (uint8)
+        {
+           case 0x70: uint32;
+           case 0x50: uint24;
+           case 0x52: uint8;
+           case 0x43: 0;
+        }
+
+        variant VariantUint8KindWithInt64Type switch (uint8) of int64
+        {
+            case 0x71: int32;
+            case 0x81: int64;
+            case 0x50: int24;
+            case 0x51: int8;
+            case 0x61: int16;
         }
 
         variant VariantEnumKindWithString32 switch (EnumWithInt8) of string32
@@ -313,6 +288,13 @@ scope test
             case THREE: int16;
         }
 
+        variant VariantEnumKindWithInt32 switch (EnumWithInt8) of int32
+        {
+            case ONE: int8;
+            case TWO: int16;
+            case THREE: int32;
+        }
+
         variant VariantEnumKindOfUint8 switch (EnumWithUint8) of uint8
         {
             case ICHI: uint8;
@@ -332,6 +314,54 @@ scope test
             case ICHI: 0;
             case NI: uint32;
             case SAN: 1;
+        }
+
+        variant VariantUint8KindWithUint64Type switch (uint8) of uint64
+        {
+            case 0x80: uint64;
+            case 0x53: uint8;
+            case 0x44: 0;
+            case 0x01: 1;
+            case 0x70: uint32;
+            case 0x60: uint16;
+            case 0x50: uint24;
+        }
+
+        list[uint32, uint32] ListWithPhysicalAndLogicalLength
+        {
+            required string field0;
+            uint32 field1;
+            string field2;
+        }
+
+        list[uint8, uint8] ListWithVariant
+        {
+            int8 intField1;
+            VariantUint8KindWithInt64Type variantOfInt64;
+            VariantEnumKindOfInt8 variantOfInt8;
+            int16 intField2;
+            VariantEnumKindOfInt16 variantOfInt16;
+            VariantEnumKindWithInt32 variantOfInt32;
+            required VariantEnumKindOfUint8 variantOfUint8;
+            VariantEnumKindOfUint16 variantOfUint16 = 60000;
+            VariantEnumKindOfUint32 variantOfUint32 = 0;
+            VariantEnumKindWithString32 variantOfString32;
+        }
+
+        list[uint8, uint8] ListWithEnum
+        {
+            required Roll roll;
+            EnumWithInt8 enumWithInt8;
+            EnumWithInt64 enumWithInt64 = TEN;
+            required EnumWithUint16 enumWithUint16;
+            EnumWithUint32 enumWithUint32 = SAN;
+            EnumWithString enumWithString;
+        }
+
+        list[uint8, uint8] ListWithUnion
+        {
+            UnionOctets unionOctets;
+            uint8 field1 = 1;
         }
     }
 }

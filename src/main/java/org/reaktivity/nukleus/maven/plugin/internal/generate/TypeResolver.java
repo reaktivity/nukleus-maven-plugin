@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
@@ -38,33 +40,28 @@ import com.squareup.javapoet.TypeName;
 public final class TypeResolver
 {
     private final String packageName;
-    private final Map<String, AstStructNode> structsByName;
+    private final Map<String, AstNamedNode> namedNodesByName;
     private final Map<AstType, TypeName> namesByType;
     private final Map<AstType, TypeName> namesByUnsignedType;
 
     public TypeResolver(
         String packageName)
     {
-        this.structsByName = new HashMap<>();
+        this.namedNodesByName = new HashMap<>();
         this.namesByType = initNamesByType(packageName);
         this.namesByUnsignedType =  initNamesByUnsignedType(packageName);
         this.packageName = packageName;
     }
 
-    public AstStructNode resolve(
+    public AstNamedNode resolve(
         String qualifiedName)
     {
-        AstStructNode structNode = structsByName.get(qualifiedName);
-        if (structNode == null)
-        {
-            throw new IllegalArgumentException("Unable to resolve: " + qualifiedName);
-        }
-        return structNode;
+        return namedNodesByName.get(qualifiedName);
     }
 
     public ClassName flyweightName()
     {
-        return (ClassName) namesByType.get(AstType.STRUCT);
+        return (ClassName) namesByType.get(AstType.FLYWEIGHT);
     }
 
     public TypeName resolveType(
@@ -88,7 +85,7 @@ public final class TypeResolver
     public void visit(
         AstSpecificationNode specification)
     {
-        structsByName.putAll(specification.accept(new QualifiedNameVisitor()));
+        namedNodesByName.putAll(specification.accept(new QualifiedNameVisitor()));
         namesByType.putAll(specification.accept(new ClassNameVisitor(packageName)));
     }
 
@@ -96,7 +93,7 @@ public final class TypeResolver
         String packageName)
     {
         Map<AstType, TypeName> namesByType = new HashMap<>();
-        namesByType.put(AstType.STRUCT, ClassName.get(packageName, "Flyweight"));
+        namesByType.put(AstType.FLYWEIGHT, ClassName.get(packageName, "Flyweight"));
         namesByType.put(AstType.STRING, ClassName.get(packageName, "StringFW"));
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.STRING32, ClassName.get(packageName, "String32FW"));
@@ -131,19 +128,19 @@ public final class TypeResolver
         return namesByUnsignedType;
     }
 
-    private static final class QualifiedNameVisitor extends AstNode.Visitor<Map<String, AstStructNode>>
+    private static final class QualifiedNameVisitor extends AstNode.Visitor<Map<String, AstNamedNode>>
     {
-        private final Map<String, AstStructNode> structsByName;
+        private final Map<String, AstNamedNode> namedNodesNyName;
         private final Deque<String> nestedNames;
 
         private QualifiedNameVisitor()
         {
-            this.structsByName = new HashMap<>();
+            this.namedNodesNyName = new HashMap<>();
             this.nestedNames = new LinkedList<>();
         }
 
         @Override
-        public Map<String, AstStructNode> visitScope(
+        public Map<String, AstNamedNode> visitScope(
             AstScopeNode scopeNode)
         {
             try
@@ -158,15 +155,50 @@ public final class TypeResolver
         }
 
         @Override
-        public Map<String, AstStructNode> visitStruct(
+        public Map<String, AstNamedNode> visitStruct(
             AstStructNode structNode)
+        {
+            return visitNamedNode(structNode, node -> super.visitStruct((AstStructNode) node));
+        }
+
+        @Override
+        public Map<String, AstNamedNode> visitEnum(
+            AstEnumNode enumNode)
+        {
+            return visitNamedNode(enumNode, node -> super.visitEnum((AstEnumNode) node));
+        }
+
+        @Override
+        public Map<String, AstNamedNode> visitList(
+            AstListNode listNode)
+        {
+            return visitNamedNode(listNode, node -> super.visitList((AstListNode) node));
+        }
+
+        @Override
+        public Map<String, AstNamedNode> visitUnion(
+            AstUnionNode unionNode)
+        {
+            return visitNamedNode(unionNode, node -> super.visitUnion((AstUnionNode) node));
+        }
+
+        @Override
+        public Map<String, AstNamedNode> visitVariant(
+            AstVariantNode variantNode)
+        {
+            return visitNamedNode(variantNode, node -> super.visitVariant((AstVariantNode) node));
+        }
+
+        private Map<String, AstNamedNode> visitNamedNode(
+            AstNamedNode namedNode,
+            Function<AstNamedNode, Map<String, AstNamedNode>> visit)
         {
             try
             {
-                nestedNames.addLast(structNode.name());
+                nestedNames.addLast(namedNode.name());
                 String qualifiedName = String.join("::", nestedNames);
-                structsByName.put(qualifiedName, structNode);
-                return super.visitStruct(structNode);
+                namedNodesNyName.put(qualifiedName, namedNode);
+                return visit.apply(namedNode);
             }
             finally
             {
@@ -175,9 +207,9 @@ public final class TypeResolver
         }
 
         @Override
-        protected Map<String, AstStructNode> defaultResult()
+        protected Map<String, AstNamedNode> defaultResult()
         {
-            return structsByName;
+            return namedNodesNyName;
         }
     }
 
@@ -236,6 +268,13 @@ public final class TypeResolver
             AstVariantNode variantNode)
         {
             return visitNamedType(variantNode, variantNode.name(), super::visitVariant);
+        }
+
+        @Override
+        public Map<AstType, TypeName> visitList(
+            AstListNode listNode)
+        {
+            return visitNamedType(listNode, listNode.name(), super::visitList);
         }
 
         private <N extends AstNode> Map<AstType, TypeName> visitNamedType(

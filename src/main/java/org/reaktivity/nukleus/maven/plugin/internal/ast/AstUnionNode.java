@@ -16,15 +16,13 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-public final class AstUnionNode extends AstNode
+public final class AstUnionNode extends AstNamedNode
 {
-    private final String name;
     private final List<AstUnionCaseNode> cases;
 
     @Override
@@ -34,9 +32,10 @@ public final class AstUnionNode extends AstNode
         return visitor.visitUnion(this);
     }
 
-    public String name()
+    @Override
+    public Kind getKind()
     {
-        return name;
+        return Kind.UNION;
     }
 
     public List<AstUnionCaseNode> cases()
@@ -72,13 +71,12 @@ public final class AstUnionNode extends AstNode
         String name,
         List<AstUnionCaseNode> cases)
     {
-        this.name = requireNonNull(name);
+        super(name);
         this.cases = unmodifiableList(cases);
     }
 
-    public static final class Builder extends AstNode.Builder<AstUnionNode>
+    public static final class Builder extends AstNamedNode.Builder<AstUnionNode>
     {
-        private String name;
         private List<AstUnionCaseNode> cases;
 
         public Builder()

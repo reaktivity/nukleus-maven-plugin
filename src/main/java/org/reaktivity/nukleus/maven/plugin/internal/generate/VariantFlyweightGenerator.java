@@ -89,16 +89,16 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         TYPE_NAMES = unmodifiableMap(typeNames);
 
         Map<String, Long> longBitMaskValues = new HashMap<>();
-        longBitMaskValues.put("int8", 0xffffffffffffff00L);
-        longBitMaskValues.put("int16", 0xffffffffffff0000L);
-        longBitMaskValues.put("int24", 0xffffffffff000000L);
-        longBitMaskValues.put("int32", 0xffffffff00000000L);
+        longBitMaskValues.put("int8", 0xffff_ffff_ffff_ff80L);
+        longBitMaskValues.put("int16", 0xffff_ffff_ffff_8000L);
+        longBitMaskValues.put("int24", 0xffff_ffff_ff80_0000L);
+        longBitMaskValues.put("int32", 0xffff_ffff_8000_0000L);
         BIT_MASK_LONG = unmodifiableMap(longBitMaskValues);
 
         Map<String, Integer> intBitMaskValues = new HashMap<>();
-        intBitMaskValues.put("int8", 0xffffff00);
-        intBitMaskValues.put("int16", 0xffff0000);
-        intBitMaskValues.put("int24", 0xff000000);
+        intBitMaskValues.put("int8", 0xffff_ff80);
+        intBitMaskValues.put("int16", 0xffff_8000);
+        intBitMaskValues.put("int24", 0xff80_0000);
         BIT_MASK_INT = unmodifiableMap(intBitMaskValues);
 
         Map<TypeName, String> classNames = new HashMap<>();
@@ -653,8 +653,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            TypeName primitiveReturnType = ofType.equals(TypeName.BYTE) || ofType.equals(TypeName.SHORT) ?
-                TypeName.INT : TypeName.LONG;
+            TypeName primitiveReturnType = ofType.equals(TypeName.BYTE) || ofType.equals(TypeName.SHORT) ||
+                ofType.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
             TypeName returnType = Objects.requireNonNullElseGet(unsignedOfType, () -> ofType.isPrimitive() ?
                 primitiveReturnType : ClassName.bestGuess("String"));
             return builder.beginControlFlow("default:")
@@ -1080,17 +1080,19 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 while (iterator.hasNext())
                 {
                     TypeWidth currentType = iterator.next();
+                    String kindTypeName = currentType.kindTypeName();
                     if (i == 0)
                     {
                         if (currentType.width() == 0)
                         {
                             builder.beginControlFlow("if (value == 0)")
-                                   .addStatement("$L()", setAs(currentType.kindTypeName))
+                                   .addStatement("$L()", setAs(kindTypeName))
                                    .endControlFlow();
                         }
                         else
                         {
-                            builder.beginControlFlow("if ((value & $L) == value)", bitMask(currentType.kindTypeName()))
+                            builder.beginControlFlow("if ((value & $L) == $L)", bitMask(kindTypeName),
+                                bitMask(kindTypeName))
                                    .addStatement(String.format("$L(%svalue)",
                                        currentType.kindType().equals(TypeName.LONG) ? "" :
                                            ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()))
@@ -1103,15 +1105,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         builder.beginControlFlow("else")
                                .addStatement(String.format("$L(%svalue)",
                                    currentType.kindType().equals(TypeName.LONG) ? "" :
-                                       ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()))
+                                       ofType.equals(TypeName.LONG) ? "(int) " : ""), setAs(kindTypeName))
                                .endControlFlow();
                     }
                     else if (currentType.value() == Integer.MAX_VALUE)
                     {
-                        builder.beginControlFlow("else if ((value & $L) == value)",
-                            bitMask(currentType.kindTypeName()))
+                        builder.beginControlFlow("else if ((value & $L) == $L)",
+                            bitMask(kindTypeName), bitMask(kindTypeName))
                                .addStatement(String.format("$L(%svalue)", ofType.equals(TypeName.LONG) ? "(int) " : ""),
-                                   setAs(currentType.kindTypeName()))
+                                   setAs(kindTypeName))
                                .endControlFlow();
 
                     }
