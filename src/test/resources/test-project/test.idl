@@ -363,5 +363,13 @@ scope test
             UnionOctets unionOctets;
             uint8 field1 = 1;
         }
+
+//        list[uint32, uint32, 0x40] ListWithDefaultNull
+//        {
+//            required VariantEnumKindWithString32 variantOfString1;
+//            VariantEnumKindWithString32 variantOfString2;
+//            VariantEnumKindOfUint32 variantOfUint = 4000000000;
+//            VariantEnumKindWithInt32 variantOfInt;
+//        }
     }
 }
