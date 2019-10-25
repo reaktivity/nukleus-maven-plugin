@@ -59,6 +59,8 @@ public class ListWithDefaultNullFW extends Flyweight
 
     private VariantEnumKindWithInt32FW variantOfIntRO = new VariantEnumKindWithInt32FW();
 
+    private long bitmask;
+
     public int length()
     {
         return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET);
@@ -69,56 +71,21 @@ public class ListWithDefaultNullFW extends Flyweight
         return variantOfString1RO.get();
     }
 
-    private int fieldLimitVariantOfString1()
-    {
-        return variantOfString1RO.limit();
-    }
-
     public String variantOfString2()
     {
-        assert variantOfString2IsSet() : "Field \"variantOfString2\" is not set";
+        assert (bitmask & 1 << FIELD_INDEX_VARIANT_OF_STRING2) != 0 : "Field \"variantOfString2\" is not set";
         return variantOfString2RO.get();
-    }
-
-    private int fieldLimitVariantOfString2()
-    {
-        return variantOfString2IsSet() ? variantOfString2RO.limit() : fieldLimitVariantOfString1() + 1;
-    }
-
-    private boolean variantOfString2IsSet()
-    {
-        return length() > FIELD_INDEX_VARIANT_OF_STRING2 && buffer().getByte(fieldLimitVariantOfString1()) != DEFAULT_NULL_VALUE;
     }
 
     public long variantOfUint()
     {
-        return variantOfUintIsSet() ? variantOfUintRO.get() : FIELD_DEFAULT_VALUE_VARIANT_OF_UINT;
-    }
-
-    private int fieldLimitVariantOfUint()
-    {
-        return variantOfUintIsSet() ? variantOfUintRO.limit() : fieldLimitVariantOfString2() + 1;
-    }
-
-    private boolean variantOfUintIsSet()
-    {
-        return length() > FIELD_INDEX_VARIANT_OF_UINT && buffer().getByte(fieldLimitVariantOfString2()) != DEFAULT_NULL_VALUE;
+        return (bitmask & 1 << FIELD_INDEX_VARIANT_OF_UINT) != 0 ? variantOfUintRO.get() : FIELD_DEFAULT_VALUE_VARIANT_OF_UINT;
     }
 
     public int variantOfInt()
     {
-        assert variantOfIntIsSet() : "Field \"variantOfInt\" is not set";
+        assert (bitmask & 1 << FIELD_INDEX_VARIANT_OF_INT) != 0 : "Field \"variantOfInt\" is not set";
         return variantOfIntRO.get();
-    }
-
-    private int fieldLimitVariantOfInt()
-    {
-        return variantOfIntIsSet() ? variantOfIntRO.limit() : fieldLimitVariantOfUint() + 1;
-    }
-
-    private boolean variantOfIntIsSet()
-    {
-        return length() > FIELD_INDEX_VARIANT_OF_INT && buffer().getByte(fieldLimitVariantOfUint()) != DEFAULT_NULL_VALUE;
     }
 
     @Override
@@ -137,12 +104,14 @@ public class ListWithDefaultNullFW extends Flyweight
             case FIELD_INDEX_VARIANT_OF_STRING1:
                 variantOfString1RO.wrap(buffer, fieldLimit, maxLimit);
                 fieldLimit = variantOfString1RO.limit();
+                bitmask |= 1 << FIELD_INDEX_VARIANT_OF_STRING1;
                 break;
             case FIELD_INDEX_VARIANT_OF_STRING2:
                 if (buffer().getByte(fieldLimit) != DEFAULT_NULL_VALUE)
                 {
                     variantOfString2RO.wrap(buffer, fieldLimit, maxLimit);
                     fieldLimit = variantOfString2RO.limit();
+                    bitmask |= 1 << FIELD_INDEX_VARIANT_OF_STRING2;
                 }
                 else
                 {
@@ -154,6 +123,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 {
                     variantOfUintRO.wrap(buffer, fieldLimit, maxLimit);
                     fieldLimit = variantOfUintRO.limit();
+                    bitmask |= 1 << FIELD_INDEX_VARIANT_OF_UINT;
                 }
                 else
                 {
@@ -165,6 +135,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 {
                     variantOfIntRO.wrap(buffer, fieldLimit, maxLimit);
                     fieldLimit = variantOfIntRO.limit();
+                    bitmask |= 1 << FIELD_INDEX_VARIANT_OF_INT;
                 }
                 else
                 {
@@ -199,6 +170,7 @@ public class ListWithDefaultNullFW extends Flyweight
                     return null;
                 }
                 fieldLimit = variantOfString1RO.limit();
+                bitmask |= 1 << FIELD_INDEX_VARIANT_OF_STRING1;
                 break;
             case FIELD_INDEX_VARIANT_OF_STRING2:
                 if (buffer().getByte(fieldLimit) != DEFAULT_NULL_VALUE)
@@ -208,6 +180,7 @@ public class ListWithDefaultNullFW extends Flyweight
                         return null;
                     }
                     fieldLimit = variantOfString2RO.limit();
+                    bitmask |= 1 << FIELD_INDEX_VARIANT_OF_STRING2;
                 }
                 else
                 {
@@ -222,6 +195,7 @@ public class ListWithDefaultNullFW extends Flyweight
                         return null;
                     }
                     fieldLimit = variantOfUintRO.limit();
+                    bitmask |= 1 << FIELD_INDEX_VARIANT_OF_UINT;
                 }
                 else
                 {
@@ -236,6 +210,7 @@ public class ListWithDefaultNullFW extends Flyweight
                         return null;
                     }
                     fieldLimit = variantOfIntRO.limit();
+                    bitmask |= 1 << FIELD_INDEX_VARIANT_OF_INT;
                 }
                 else
                 {
@@ -325,7 +300,7 @@ public class ListWithDefaultNullFW extends Flyweight
             return this;
         }
 
-        private Builder variantOfString2()
+        private Builder defaultVariantOfString2()
         {
             assert lastFieldSet == FIELD_INDEX_VARIANT_OF_STRING1 : "Prior required field \"variantOfString1\" is not set";
             int newLimit = limit() + SIZE_OF_BYTE;
@@ -342,7 +317,7 @@ public class ListWithDefaultNullFW extends Flyweight
             assert lastFieldSet < FIELD_INDEX_VARIANT_OF_UINT : "Field \"variantOfUint\" cannot be set out of order";
             if (lastFieldSet < FIELD_INDEX_VARIANT_OF_STRING2)
             {
-                variantOfString2();
+                defaultVariantOfString2();
             }
             VariantEnumKindOfUint32FW.Builder variantOfUintRW = this.variantOfUint32RW.wrap(buffer(), limit(), maxLimit());
             variantOfUintRW.set(value);
@@ -351,11 +326,11 @@ public class ListWithDefaultNullFW extends Flyweight
             return this;
         }
 
-        private Builder variantOfUint()
+        private Builder defaultVariantOfUint()
         {
             if (lastFieldSet < FIELD_INDEX_VARIANT_OF_STRING2)
             {
-                variantOfString2();
+                defaultVariantOfString2();
             }
             int newLimit = limit() + SIZE_OF_BYTE;
             checkLimit(limit(), newLimit);
@@ -371,7 +346,7 @@ public class ListWithDefaultNullFW extends Flyweight
             assert lastFieldSet < FIELD_INDEX_VARIANT_OF_INT : "Field \"variantOfInt\" cannot be set out of order";
             if (lastFieldSet < FIELD_INDEX_VARIANT_OF_UINT)
             {
-                variantOfUint();
+                defaultVariantOfUint();
             }
             VariantEnumKindWithInt32FW.Builder variantOfIntRW = this.variantOfInt32RW.wrap(buffer(), limit(), maxLimit());
             variantOfIntRW.set(value);
