@@ -43,19 +43,23 @@ public class ListWithDefaultNullFW extends Flyweight
 
     private static final int INDEX_VARIANT_OF_STRING1 = 0;
 
+    private static final long MASK_VARIANT_OF_STRING1 = 1 << INDEX_VARIANT_OF_STRING1;
+
     private static final int INDEX_VARIANT_OF_STRING2 = 1;
 
-    private static final int MASK_VARIANT_OF_STRING2 = 1 << INDEX_VARIANT_OF_STRING2;
+    private static final long MASK_VARIANT_OF_STRING2 = 1 << INDEX_VARIANT_OF_STRING2;
 
     private static final int INDEX_VARIANT_OF_UINT = 2;
 
-    private static final int MASK_VARIANT_OF_UINT = 1 << INDEX_VARIANT_OF_UINT;
+    private static final long MASK_VARIANT_OF_UINT = 1 << INDEX_VARIANT_OF_UINT;
 
     private static final int INDEX_VARIANT_OF_INT = 3;
 
-    private static final int MASK_VARIANT_OF_INT = 1 << INDEX_VARIANT_OF_INT;
+    private static final long MASK_VARIANT_OF_INT = 1 << INDEX_VARIANT_OF_INT;
 
     private static final long DEFAULT_VARIANT_OF_UINT = 4000000000L;
+
+    private static final int NULL_VALUE_SIZE = BitUtil.SIZE_OF_BYTE;
 
     private VariantEnumKindWithString32FW variantOfString1RO = new VariantEnumKindWithString32FW();
 
@@ -74,23 +78,24 @@ public class ListWithDefaultNullFW extends Flyweight
 
     public String variantOfString1()
     {
+        assert (bitmask & MASK_VARIANT_OF_STRING1) != 0L : "Field \"variantOfString1\" is not set";
         return variantOfString1RO.get();
     }
 
     public String variantOfString2()
     {
-        assert (bitmask & MASK_VARIANT_OF_STRING2) != 0 : "Field \"variantOfString2\" is not set";
+        assert (bitmask & MASK_VARIANT_OF_STRING2) != 0L : "Field \"variantOfString2\" is not set";
         return variantOfString2RO.get();
     }
 
     public long variantOfUint()
     {
-        return (bitmask & MASK_VARIANT_OF_UINT) != 0 ? variantOfUintRO.get() : DEFAULT_VARIANT_OF_UINT;
+        return (bitmask & MASK_VARIANT_OF_UINT) != 0L ? variantOfUintRO.get() : DEFAULT_VARIANT_OF_UINT;
     }
 
     public int variantOfInt()
     {
-        assert (bitmask & MASK_VARIANT_OF_INT) != 0 : "Field \"variantOfInt\" is not set";
+        assert (bitmask & MASK_VARIANT_OF_INT) != 0L : "Field \"variantOfInt\" is not set";
         return variantOfIntRO.get();
     }
 
@@ -122,7 +127,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit++;
+                    fieldLimit += NULL_VALUE_SIZE;
                 }
                 break;
             case INDEX_VARIANT_OF_UINT:
@@ -134,7 +139,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit++;
+                    fieldLimit += NULL_VALUE_SIZE;
                 }
                 break;
             case INDEX_VARIANT_OF_INT:
@@ -146,7 +151,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit++;
+                    fieldLimit += NULL_VALUE_SIZE;
                 }
                 break;
             }
@@ -192,7 +197,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit++;
+                    fieldLimit += NULL_VALUE_SIZE;
                 }
                 break;
             case INDEX_VARIANT_OF_UINT:
@@ -207,7 +212,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit++;
+                    fieldLimit += NULL_VALUE_SIZE;
                 }
                 break;
             case INDEX_VARIANT_OF_INT:
@@ -222,7 +227,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit++;
+                    fieldLimit += NULL_VALUE_SIZE;
                 }
                 break;
             }
@@ -243,27 +248,29 @@ public class ListWithDefaultNullFW extends Flyweight
     @Override
     public String toString()
     {
-        boolean variantOfString2IsSet = (bitmask & MASK_VARIANT_OF_STRING2) != 0;
-        boolean variantOfIntIsSet = (bitmask & MASK_VARIANT_OF_INT) != 0;
+        Object variantOfString2 = null;
+        Object variantOfInt = null;
 
         StringBuilder format = new StringBuilder();
         format.append("LIST_WITH_DEFAULT_NULL [");
         format.append("variantOfString1={0}");
-        if (variantOfString2IsSet)
+        if ((bitmask & MASK_VARIANT_OF_STRING2) != 0L)
         {
             format.append(", variantOfString2={1}");
+            variantOfString2 = variantOfString2();
         }
         format.append(", variantOfUint={2}");
-        if (variantOfIntIsSet)
+        if ((bitmask & MASK_VARIANT_OF_INT) != 0L)
         {
             format.append(", variantOfInt={3}");
+            variantOfInt = variantOfInt();
         }
         format.append("]");
         return MessageFormat.format(format.toString(),
             variantOfString1(),
-            variantOfString2IsSet ? variantOfString2() : null,
+            variantOfString2,
             variantOfUint(),
-            variantOfIntIsSet ? variantOfInt() : null);
+            variantOfInt);
     }
 
     public static final class Builder extends Flyweight.Builder<ListWithDefaultNullFW>
