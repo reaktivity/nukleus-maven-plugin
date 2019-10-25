@@ -364,7 +364,7 @@ scope test
             uint8 field1 = 1;
         }
 
-//        list[uint32, uint32, 0x40] ListWithDefaultNull
+//        list<uint32, uint32, 0x40> ListWithDefaultNull
 //        {
 //            required VariantEnumKindWithString32 variantOfString1;
 //            VariantEnumKindWithString32 variantOfString2;
