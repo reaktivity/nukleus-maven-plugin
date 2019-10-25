@@ -29,11 +29,11 @@ import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithStrin
 
 public class ListWithDefaultNullFW extends Flyweight
 {
-    public static final int PHYSICAL_LENGTH_OFFSET = 0;
+    private static final int PHYSICAL_LENGTH_OFFSET = 0;
 
     private static final int PHYSICAL_LENGTH_SIZE = BitUtil.SIZE_OF_INT;
 
-    public static final int LOGICAL_LENGTH_OFFSET = PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE;
+    private static final int LOGICAL_LENGTH_OFFSET = PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE;
 
     private static final int LOGICAL_LENGTH_SIZE = BitUtil.SIZE_OF_INT;
 
