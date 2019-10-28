@@ -172,6 +172,10 @@ public class ListWithDefaultNullFW extends Flyweight
         }
         int fieldLimit = offset + FIRST_FIELD_OFFSET;
         bitmask = 0;
+        if (fieldLimit > limit())
+        {
+            return null;
+        }
         final int length = length();
         for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
         {
@@ -186,6 +190,10 @@ public class ListWithDefaultNullFW extends Flyweight
                 bitmask |= 1 << INDEX_VARIANT_OF_STRING1;
                 break;
             case INDEX_VARIANT_OF_STRING2:
+                if (fieldLimit + SIZE_OF_BYTE > limit())
+                {
+                    return null;
+                }
                 if (buffer().getByte(fieldLimit) != NULL_VALUE)
                 {
                     if (variantOfString2RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
@@ -201,6 +209,10 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 break;
             case INDEX_VARIANT_OF_UINT:
+                if (fieldLimit + SIZE_OF_BYTE > limit())
+                {
+                    return null;
+                }
                 if (buffer().getByte(fieldLimit) != NULL_VALUE)
                 {
                     if (variantOfUintRO.tryWrap(buffer, fieldLimit, maxLimit) == null)
@@ -216,6 +228,10 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 break;
             case INDEX_VARIANT_OF_INT:
+                if (fieldLimit + SIZE_OF_BYTE > limit())
+                {
+                    return null;
+                }
                 if (buffer().getByte(fieldLimit) != NULL_VALUE)
                 {
                     if (variantOfIntRO.tryWrap(buffer, fieldLimit, maxLimit) == null)
