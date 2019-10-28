@@ -106,11 +106,16 @@ public class ListWithDefaultNullFW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        int fieldLimit = offset + FIRST_FIELD_OFFSET;
+        checkLimit(offset + PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE, maxLimit);
+        final int limit = limit();
+        checkLimit(limit, maxLimit);
+        checkLimit(offset + LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE, limit);
         final int length = length();
         bitmask = 0;
+        int fieldLimit = offset + LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE;
         for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
         {
+            checkLimit(fieldLimit + SIZE_OF_BYTE, limit);
             switch (field)
             {
             case INDEX_VARIANT_OF_STRING1:
@@ -156,7 +161,6 @@ public class ListWithDefaultNullFW extends Flyweight
                 break;
             }
         }
-        checkLimit(limit(), maxLimit);
         return this;
     }
 
@@ -170,16 +174,25 @@ public class ListWithDefaultNullFW extends Flyweight
         {
             return null;
         }
-        int fieldLimit = offset + FIRST_FIELD_OFFSET;
-        if (fieldLimit > limit())
+        if (offset + PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE > maxLimit)
+        {
+            return null;
+        }
+        final int limit = limit();
+        if (limit > maxLimit)
+        {
+            return null;
+        }
+        if (offset + LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE > limit)
         {
             return null;
         }
         final int length = length();
         bitmask = 0;
+        int fieldLimit = offset + LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE;
         for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
         {
-            if (fieldLimit + SIZE_OF_BYTE > limit())
+            if (fieldLimit + SIZE_OF_BYTE > limit)
             {
                 return null;
             }
@@ -239,10 +252,6 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 break;
             }
-        }
-        if (limit() > maxLimit)
-        {
-            return null;
         }
         return this;
     }
