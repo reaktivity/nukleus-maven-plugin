@@ -269,21 +269,22 @@ public class ListWithDefaultNullFW extends Flyweight
         Object variantOfInt = null;
 
         StringBuilder format = new StringBuilder();
-        format.append("LIST_WITH_DEFAULT_NULL [");
-        format.append("variantOfString1={0}");
+        format.append("LIST_WITH_DEFAULT_NULL [bitmask={0}");
+        format.append(", variantOfString1={1}");
         if ((bitmask & MASK_VARIANT_OF_STRING2) != 0L)
         {
-            format.append(", variantOfString2={1}");
+            format.append(", variantOfString2={2}");
             variantOfString2 = variantOfString2();
         }
-        format.append(", variantOfUint={2}");
+        format.append(", variantOfUint={3}");
         if ((bitmask & MASK_VARIANT_OF_INT) != 0L)
         {
-            format.append(", variantOfInt={3}");
+            format.append(", variantOfInt={4}");
             variantOfInt = variantOfInt();
         }
         format.append("]");
         return MessageFormat.format(format.toString(),
+            String.format("0x%16X", bitmask),
             variantOfString1(),
             variantOfString2,
             variantOfUint(),
@@ -305,25 +306,33 @@ public class ListWithDefaultNullFW extends Flyweight
             super(new ListWithDefaultNullFW());
         }
 
+        private VariantEnumKindWithString32FW.Builder variantOfString1()
+        {
+            assert lastFieldSet < INDEX_VARIANT_OF_STRING1 : "Field \"variantOfString1\" cannot be set out of order";
+            return variantOfString32RW.wrap(buffer(), limit(), maxLimit());
+        }
+
         public Builder variantOfString1(
             String value)
         {
-            assert lastFieldSet < INDEX_VARIANT_OF_STRING1 : "Field \"variantOfString1\" cannot be set out of order";
-            VariantEnumKindWithString32FW.Builder variantOfString1RW = this.variantOfString32RW.wrap(buffer(), limit(),
-                maxLimit());
+            VariantEnumKindWithString32FW.Builder variantOfString1RW = variantOfString1();
             variantOfString1RW.set(value);
             lastFieldSet = INDEX_VARIANT_OF_STRING1;
             limit(variantOfString1RW.build().limit());
             return this;
         }
 
-        public Builder variantOfString2(
-            String value)
+        private VariantEnumKindWithString32FW.Builder variantOfString2()
         {
             assert lastFieldSet < INDEX_VARIANT_OF_STRING2 : "Field \"variantOfString2\" cannot be set out of order";
             assert lastFieldSet == INDEX_VARIANT_OF_STRING1 : "Prior required field \"variantOfString1\" is not set";
-            VariantEnumKindWithString32FW.Builder variantOfString2RW = this.variantOfString32RW.wrap(buffer(), limit(),
-                maxLimit());
+            return variantOfString32RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfString2(
+            String value)
+        {
+            VariantEnumKindWithString32FW.Builder variantOfString2RW = variantOfString2();
             variantOfString2RW.set(value);
             lastFieldSet = INDEX_VARIANT_OF_STRING2;
             limit(variantOfString2RW.build().limit());
@@ -341,15 +350,20 @@ public class ListWithDefaultNullFW extends Flyweight
             return this;
         }
 
-        public Builder variantOfUint(
-            long value)
+        private VariantEnumKindOfUint32FW.Builder variantOfUint()
         {
             assert lastFieldSet < INDEX_VARIANT_OF_UINT : "Field \"variantOfUint\" cannot be set out of order";
             if (lastFieldSet < INDEX_VARIANT_OF_STRING2)
             {
                 defaultVariantOfString2();
             }
-            VariantEnumKindOfUint32FW.Builder variantOfUintRW = this.variantOfUint32RW.wrap(buffer(), limit(), maxLimit());
+            return variantOfUint32RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfUint(
+            long value)
+        {
+            VariantEnumKindOfUint32FW.Builder variantOfUintRW = variantOfUint();
             variantOfUintRW.set(value);
             lastFieldSet = INDEX_VARIANT_OF_UINT;
             limit(variantOfUintRW.build().limit());
@@ -370,15 +384,20 @@ public class ListWithDefaultNullFW extends Flyweight
             return this;
         }
 
-        public Builder variantOfInt(
-            int value)
+        private VariantEnumKindWithInt32FW.Builder variantOfInt()
         {
             assert lastFieldSet < INDEX_VARIANT_OF_INT : "Field \"variantOfInt\" cannot be set out of order";
             if (lastFieldSet < INDEX_VARIANT_OF_UINT)
             {
                 defaultVariantOfUint();
             }
-            VariantEnumKindWithInt32FW.Builder variantOfIntRW = this.variantOfInt32RW.wrap(buffer(), limit(), maxLimit());
+            return variantOfInt32RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfInt(
+            int value)
+        {
+            VariantEnumKindWithInt32FW.Builder variantOfIntRW = variantOfInt();
             variantOfIntRW.set(value);
             lastFieldSet = INDEX_VARIANT_OF_INT;
             limit(variantOfIntRW.build().limit());
