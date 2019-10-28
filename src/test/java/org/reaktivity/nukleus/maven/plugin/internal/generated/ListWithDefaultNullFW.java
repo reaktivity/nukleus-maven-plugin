@@ -107,8 +107,8 @@ public class ListWithDefaultNullFW extends Flyweight
     {
         super.wrap(buffer, offset, maxLimit);
         int fieldLimit = offset + FIRST_FIELD_OFFSET;
-        bitmask = 0;
         final int length = length();
+        bitmask = 0;
         for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
         {
             switch (field)
@@ -171,14 +171,18 @@ public class ListWithDefaultNullFW extends Flyweight
             return null;
         }
         int fieldLimit = offset + FIRST_FIELD_OFFSET;
-        bitmask = 0;
         if (fieldLimit > limit())
         {
             return null;
         }
         final int length = length();
+        bitmask = 0;
         for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
         {
+            if (fieldLimit + SIZE_OF_BYTE > limit())
+            {
+                return null;
+            }
             switch (field)
             {
             case INDEX_VARIANT_OF_STRING1:
@@ -190,10 +194,6 @@ public class ListWithDefaultNullFW extends Flyweight
                 bitmask |= 1 << INDEX_VARIANT_OF_STRING1;
                 break;
             case INDEX_VARIANT_OF_STRING2:
-                if (fieldLimit + SIZE_OF_BYTE > limit())
-                {
-                    return null;
-                }
                 if (buffer().getByte(fieldLimit) != NULL_VALUE)
                 {
                     if (variantOfString2RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
@@ -209,10 +209,6 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 break;
             case INDEX_VARIANT_OF_UINT:
-                if (fieldLimit + SIZE_OF_BYTE > limit())
-                {
-                    return null;
-                }
                 if (buffer().getByte(fieldLimit) != NULL_VALUE)
                 {
                     if (variantOfUintRO.tryWrap(buffer, fieldLimit, maxLimit) == null)
@@ -228,10 +224,6 @@ public class ListWithDefaultNullFW extends Flyweight
                 }
                 break;
             case INDEX_VARIANT_OF_INT:
-                if (fieldLimit + SIZE_OF_BYTE > limit())
-                {
-                    return null;
-                }
                 if (buffer().getByte(fieldLimit) != NULL_VALUE)
                 {
                     if (variantOfIntRO.tryWrap(buffer, fieldLimit, maxLimit) == null)
