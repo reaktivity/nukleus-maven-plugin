@@ -395,7 +395,10 @@ public final class ListWithVariantFW extends Flyweight
                 break;
             }
         }
-        checkLimit(fieldLimit, limit);
+        if (fieldLimit > limit)
+        {
+            return null;
+        }
         return this;
     }
 
