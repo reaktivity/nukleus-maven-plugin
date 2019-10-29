@@ -109,7 +109,6 @@ public class ListWithDefaultNullFW extends Flyweight
         checkLimit(offset + PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE, maxLimit);
         final int limit = limit();
         checkLimit(limit, maxLimit);
-        checkLimit(offset + LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE, limit);
         final int length = length();
         bitmask = 0;
         int fieldLimit = offset + LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE;
@@ -161,6 +160,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 break;
             }
         }
+        checkLimit(fieldLimit, limit);
         return this;
     }
 
@@ -180,10 +180,6 @@ public class ListWithDefaultNullFW extends Flyweight
         }
         final int limit = limit();
         if (limit > maxLimit)
-        {
-            return null;
-        }
-        if (offset + LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE > limit)
         {
             return null;
         }
@@ -253,6 +249,7 @@ public class ListWithDefaultNullFW extends Flyweight
                 break;
             }
         }
+        checkLimit(fieldLimit, limit);
         return this;
     }
 
@@ -284,7 +281,7 @@ public class ListWithDefaultNullFW extends Flyweight
         }
         format.append("]");
         return MessageFormat.format(format.toString(),
-            String.format("0x%16X", bitmask),
+            String.format("0x%16x", bitmask),
             variantOfString1(),
             variantOfString2,
             variantOfUint(),

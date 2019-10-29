@@ -190,7 +190,6 @@ public final class ListWithVariantFW extends Flyweight
         checkLimit(offset + PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE, maxLimit);
         final int limit = limit();
         checkLimit(limit, maxLimit);
-        checkLimit(offset + BIT_MASK_OFFSET + BIT_MASK_SIZE, limit);
         final long bitmask = bitmask();
         int fieldLimit = offset + BIT_MASK_OFFSET + BIT_MASK_SIZE;
         for (int field = INDEX_INT_FIELD1; field < INDEX_VARIANT_OF_STRING32 + 1; field++)
@@ -270,6 +269,7 @@ public final class ListWithVariantFW extends Flyweight
                 break;
             }
         }
+        checkLimit(fieldLimit, limit);
         return this;
     }
 
@@ -289,10 +289,6 @@ public final class ListWithVariantFW extends Flyweight
         }
         final int limit = limit();
         if (limit > maxLimit)
-        {
-            return null;
-        }
-        if (offset + BIT_MASK_OFFSET + BIT_MASK_SIZE > limit)
         {
             return null;
         }
@@ -399,6 +395,7 @@ public final class ListWithVariantFW extends Flyweight
                 break;
             }
         }
+        checkLimit(fieldLimit, limit);
         return this;
     }
 
@@ -462,7 +459,7 @@ public final class ListWithVariantFW extends Flyweight
         }
         format.append("]");
         return MessageFormat.format(format.toString(),
-            String.format("0x%16X", bitmask),
+            String.format("0x%16x", bitmask),
             intField1,
             variantOfInt64,
             variantOfInt8,
