@@ -29,7 +29,6 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint8;
-import org.reaktivity.reaktor.internal.test.types.inner.ListWithVariantFW;
 
 public class ListWithVariantFWTest
 {
@@ -328,6 +327,10 @@ public class ListWithVariantFWTest
             .variantOfInt8(100)
             .variantOfInt16(2000)
             .variantOfInt32(-500)
+            .variantOfUint8(200)
+            .variantOfUint16(50000)
+            .variantOfUint32(4000000000L)
+            .variantOfString32("variant")
             .build()
             .limit();
         listWithVariantOfIntRO.wrap(buffer,  0,  limit);
