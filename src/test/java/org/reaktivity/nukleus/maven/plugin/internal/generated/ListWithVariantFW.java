@@ -23,7 +23,11 @@ import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfInt16FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfInt8FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint16FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithInt32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantUint8KindWithInt64TypeFW;
 
 public final class ListWithVariantFW extends Flyweight
@@ -46,27 +50,67 @@ public final class ListWithVariantFW extends Flyweight
 
     private static final int FIELD_SIZE_INTFIELD2 = BitUtil.SIZE_OF_SHORT;
 
-    private static final int FIELD_INDEX_INTFIELD1 = 0;
+    private static final int INDEX_INT_FIELD1 = 0;
 
-    private static final int FIELD_INDEX_VARIANTOFINT64OFUINT8KIND = 1;
+    private static final long MASK_INT_FIELD1 = 1 << INDEX_INT_FIELD1;
 
-    private static final int FIELD_INDEX_VARIANTOFINT8ENUMKIND = 2;
+    private static final int INDEX_VARIANT_OF_INT64 = 1;
 
-    private static final int FIELD_INDEX_INTFIELD2 = 3;
+    private static final long MASK_VARIANT_OF_INT64 = 1 << INDEX_VARIANT_OF_INT64;
 
-    private static final int FIELD_INDEX_VARIANTOFINT16ENUMKIND = 4;
+    private static final int INDEX_VARIANT_OF_INT8 = 2;
 
-    private static final int FIELD_INDEX_VARIANTOFINT32ENUMKIND = 5;
+    private static final long MASK_VARIANT_OF_INT8 = 1 << INDEX_VARIANT_OF_INT8;
 
-    private final VariantUint8KindWithInt64TypeFW variantOfInt64Uint8KindRO = new VariantUint8KindWithInt64TypeFW();
+    private static final int INDEX_INT_FIELD2 = 3;
 
-    private final VariantEnumKindOfInt8FW variantOfInt8EnumKindRO = new VariantEnumKindOfInt8FW();
+    private static final long MASK_INT_FIELD2 = 1 << INDEX_INT_FIELD2;
 
-    private final VariantEnumKindOfInt16FW variantOfInt16EnumKindRO = new VariantEnumKindOfInt16FW();
+    private static final int INDEX_VARIANT_OF_INT16 = 4;
 
-    private final VariantEnumKindWithInt32FW variantOfInt32EnumKindRO = new VariantEnumKindWithInt32FW();
+    private static final long MASK_VARIANT_OF_INT16 = 1 << INDEX_VARIANT_OF_INT16;
 
-    private final int[] optionalOffsets = new int[FIELD_INDEX_VARIANTOFINT32ENUMKIND + 1];
+    private static final int INDEX_VARIANT_OF_INT32 = 5;
+
+    private static final long MASK_VARIANT_OF_INT32 = 1 << INDEX_VARIANT_OF_INT32;
+
+    private static final int INDEX_VARIANT_OF_UINT8 = 6;
+
+    private static final long MASK_VARIANT_OF_UINT8 = 1 << INDEX_VARIANT_OF_UINT8;
+
+    private static final int INDEX_VARIANT_OF_UINT16 = 7;
+
+    private static final long MASK_VARIANT_OF_UINT16 = 1 << INDEX_VARIANT_OF_UINT16;
+
+    private static final int DEFAULT_VALUE_VARIANT_OF_UINT16 = 60000;
+
+    private static final int INDEX_VARIANT_OF_UINT32 = 8;
+
+    private static final long MASK_VARIANT_OF_UINT32 = 1 << INDEX_VARIANT_OF_UINT32;
+
+    private static final long DEFAULT_VALUE_VARIANT_OF_UINT32 = 0;
+
+    private static final int INDEX_VARIANT_OF_STRING32 = 9;
+
+    private static final long MASK_VARIANT_OF_STRING32 = 1 << INDEX_VARIANT_OF_STRING32;
+
+    private VariantUint8KindWithInt64TypeFW variantOfInt64RO = new VariantUint8KindWithInt64TypeFW();
+
+    private VariantEnumKindOfInt8FW variantOfInt8RO = new VariantEnumKindOfInt8FW();
+
+    private VariantEnumKindOfInt16FW variantOfInt16RO = new VariantEnumKindOfInt16FW();
+
+    private VariantEnumKindWithInt32FW variantOfInt32RO = new VariantEnumKindWithInt32FW();
+
+    private VariantEnumKindOfUint8FW variantOfUint8RO = new VariantEnumKindOfUint8FW();
+
+    private VariantEnumKindOfUint16FW variantOfUint16RO = new VariantEnumKindOfUint16FW();
+
+    private VariantEnumKindOfUint32FW variantOfUint32RO = new VariantEnumKindOfUint32FW();
+
+    private VariantEnumKindWithString32FW variantOfString32RO = new VariantEnumKindWithString32FW();
+
+    private final int[] optionalOffsets = new int[INDEX_VARIANT_OF_STRING32 + 1];
 
     public int length()
     {
@@ -80,40 +124,61 @@ public final class ListWithVariantFW extends Flyweight
 
     public int intField1()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_INTFIELD1)) != 0 : "Field \"intField1\" is not set";
-        return buffer().getByte(optionalOffsets[FIELD_INDEX_INTFIELD1]);
+        assert (bitmask() & MASK_INT_FIELD1) != 0L : "Field \"intField1\" is not set";
+        return buffer().getByte(optionalOffsets[INDEX_INT_FIELD1]);
     }
 
-    public long variantOfInt64Uint8Kind()
+    public long variantOfInt64()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT64OFUINT8KIND)) != 0 : "Field \"variantOfInt64Uint8Kind\" is not set";
-        return variantOfInt64Uint8KindRO.get();
+        assert (bitmask() & MASK_VARIANT_OF_INT64) != 0L : "Field \"variantOfInt64Uint8Kind\" is not set";
+        return variantOfInt64RO.get();
     }
 
-    public int variantOfInt8EnumKind()
+    public int variantOfInt8()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT8ENUMKIND)) != 0 : "Field \"variantOfInt8EnumKind\" is not set";
-        return variantOfInt8EnumKindRO.get();
+        assert (bitmask() & MASK_VARIANT_OF_INT8) != 0L : "Field \"variantOfInt8EnumKind\" is not set";
+        return variantOfInt8RO.get();
     }
 
     public int intField2()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_INTFIELD2)) != 0 : "Field \"intField2\" is not set";
-        return buffer().getShort(optionalOffsets[FIELD_INDEX_INTFIELD2]);
+        assert (bitmask() & MASK_INT_FIELD2) != 0L : "Field \"intField2\" is not set";
+        return buffer().getShort(optionalOffsets[INDEX_INT_FIELD2]);
     }
 
-    public int variantOfInt16EnumKind()
+    public int variantOfInt16()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT16ENUMKIND)) != 0 : "Field \"variantOfInt16EnumKind\" is not set";
-        return variantOfInt16EnumKindRO.get();
+        assert (bitmask() & MASK_VARIANT_OF_INT16) != 0L : "Field \"variantOfInt16EnumKind\" is not set";
+        return variantOfInt16RO.get();
     }
 
-    public int variantOfInt32EnumKind()
+    public int variantOfInt32()
     {
-        assert (bitmask() & (1 << FIELD_INDEX_VARIANTOFINT32ENUMKIND)) != 0 : "Field \"variantOfInt32EnumKind\" is not set";
-        return variantOfInt32EnumKindRO.get();
+        assert (bitmask() & MASK_VARIANT_OF_INT32) != 0L : "Field \"variantOfInt32EnumKind\" is not set";
+        return variantOfInt32RO.get();
     }
 
+    public int variantOfUint8()
+    {
+        assert (bitmask() & MASK_VARIANT_OF_UINT8) != 0L : "Field \"variantOfUint8\" is not set";
+        return variantOfUint8RO.get();
+    }
+
+    public int variantOfUint16()
+    {
+        return (bitmask() & MASK_VARIANT_OF_UINT16) == 0 ? DEFAULT_VALUE_VARIANT_OF_UINT16 : variantOfUint16RO.get();
+    }
+
+    public long variantOfUint32()
+    {
+        return (bitmask() & MASK_VARIANT_OF_UINT32) == 0 ? DEFAULT_VALUE_VARIANT_OF_UINT32 : variantOfUint32RO.get();
+    }
+
+    public String variantOfString32()
+    {
+        assert (bitmask() & INDEX_VARIANT_OF_STRING32) != 0 : "Field \"variantOfString32\" is not set";
+        return variantOfString32RO.get();
+    }
 
     @Override
     public ListWithVariantFW wrap(
@@ -122,57 +187,89 @@ public final class ListWithVariantFW extends Flyweight
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        checkLimit(offset + PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE, maxLimit);
+        final int limit = limit();
+        checkLimit(limit, maxLimit);
+        checkLimit(offset + BIT_MASK_OFFSET + BIT_MASK_SIZE, limit);
         final long bitmask = bitmask();
-        int fieldLimit = offset + FIRST_FIELD_OFFSET;
-        for (int field = FIELD_INDEX_INTFIELD1; field < FIELD_INDEX_VARIANTOFINT32ENUMKIND + 1; field++)
+        int fieldLimit = offset + BIT_MASK_OFFSET + BIT_MASK_SIZE;
+        for (int field = INDEX_INT_FIELD1; field < INDEX_VARIANT_OF_STRING32 + 1; field++)
         {
             switch (field)
             {
-            case FIELD_INDEX_INTFIELD1:
-                if ((bitmask & (1 << FIELD_INDEX_INTFIELD1)) != 0)
+            case INDEX_INT_FIELD1:
+                if ((bitmask & MASK_INT_FIELD1) != 0)
                 {
-                    optionalOffsets[FIELD_INDEX_INTFIELD1] = fieldLimit;
+                    optionalOffsets[INDEX_INT_FIELD1] = fieldLimit;
                     fieldLimit += FIELD_SIZE_INTFIELD1;
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT64OFUINT8KIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT64OFUINT8KIND)) != 0)
+            case INDEX_VARIANT_OF_INT64:
+                if ((bitmask & MASK_VARIANT_OF_INT64) != 0)
                 {
-                    variantOfInt64Uint8KindRO.wrap(buffer, fieldLimit, maxLimit);
-                    fieldLimit = variantOfInt64Uint8KindRO.limit();
+                    variantOfInt64RO.wrap(buffer, fieldLimit, maxLimit);
+                    fieldLimit = variantOfInt64RO.limit();
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT8ENUMKIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT8ENUMKIND)) != 0)
+            case INDEX_VARIANT_OF_INT8:
+                if ((bitmask & MASK_VARIANT_OF_INT8) != 0)
                 {
-                    variantOfInt8EnumKindRO.wrap(buffer, fieldLimit, maxLimit);
-                    fieldLimit = variantOfInt8EnumKindRO.limit();
+                    variantOfInt8RO.wrap(buffer, fieldLimit, maxLimit);
+                    fieldLimit = variantOfInt8RO.limit();
                 }
                 break;
-            case FIELD_INDEX_INTFIELD2:
-                if ((bitmask & (1 << FIELD_INDEX_INTFIELD2)) != 0)
+            case INDEX_INT_FIELD2:
+                if ((bitmask & MASK_INT_FIELD2) != 0)
                 {
-                    optionalOffsets[FIELD_INDEX_INTFIELD2] = fieldLimit;
+                    optionalOffsets[INDEX_INT_FIELD2] = fieldLimit;
                     fieldLimit += FIELD_SIZE_INTFIELD2;
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT16ENUMKIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT16ENUMKIND)) != 0)
+            case INDEX_VARIANT_OF_INT16:
+                if ((bitmask & MASK_VARIANT_OF_INT16) != 0)
                 {
-                    variantOfInt16EnumKindRO.wrap(buffer, fieldLimit, maxLimit);
-                    fieldLimit = variantOfInt16EnumKindRO.limit();
+                    variantOfInt16RO.wrap(buffer, fieldLimit, maxLimit);
+                    fieldLimit = variantOfInt16RO.limit();
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT32ENUMKIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT32ENUMKIND)) != 0)
+            case INDEX_VARIANT_OF_INT32:
+                if ((bitmask & MASK_VARIANT_OF_INT32) != 0)
                 {
-                    variantOfInt32EnumKindRO.wrap(buffer, fieldLimit, maxLimit);
-                    fieldLimit = variantOfInt32EnumKindRO.limit();
+                    variantOfInt32RO.wrap(buffer, fieldLimit, maxLimit);
+                    fieldLimit = variantOfInt32RO.limit();
+                }
+                break;
+            case INDEX_VARIANT_OF_UINT8:
+                if ((bitmask & MASK_VARIANT_OF_UINT8) == 0)
+                {
+                    throw new IllegalArgumentException("Field \"variantOfUint8\" is required but not set");
+                }
+                variantOfUint8RO.wrap(buffer, fieldLimit, maxLimit);
+                fieldLimit = variantOfUint8RO.limit();
+                break;
+            case INDEX_VARIANT_OF_UINT16:
+                if ((bitmask & MASK_VARIANT_OF_UINT16) != 0)
+                {
+                    variantOfUint16RO.wrap(buffer, fieldLimit, maxLimit);
+                    fieldLimit = variantOfUint16RO.limit();
+                }
+                break;
+            case INDEX_VARIANT_OF_UINT32:
+                if ((bitmask & MASK_VARIANT_OF_UINT32) != 0)
+                {
+                    variantOfUint32RO.wrap(buffer, fieldLimit, maxLimit);
+                    fieldLimit = variantOfUint32RO.limit();
+                }
+                break;
+            case INDEX_VARIANT_OF_STRING32:
+                if ((bitmask & MASK_VARIANT_OF_STRING32) != 0)
+                {
+                    variantOfString32RO.wrap(buffer, fieldLimit, maxLimit);
+                    fieldLimit = variantOfString32RO.limit();
                 }
                 break;
             }
         }
-        checkLimit(limit(), maxLimit);
         return this;
     }
 
@@ -186,79 +283,121 @@ public final class ListWithVariantFW extends Flyweight
         {
             return null;
         }
+        if (offset + PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE > maxLimit)
+        {
+            return null;
+        }
+        final int limit = limit();
+        if (limit > maxLimit)
+        {
+            return null;
+        }
+        if (offset + BIT_MASK_OFFSET + BIT_MASK_SIZE > limit)
+        {
+            return null;
+        }
         final long bitmask = bitmask();
-        int fieldLimit = offset + FIRST_FIELD_OFFSET;
-        for (int field = FIELD_INDEX_INTFIELD1; field < FIELD_INDEX_VARIANTOFINT32ENUMKIND + 1; field++)
+        int fieldLimit = offset + BIT_MASK_OFFSET + BIT_MASK_SIZE;
+        for (int field = INDEX_INT_FIELD1; field < INDEX_VARIANT_OF_STRING32 + 1; field++)
         {
             switch (field)
             {
-            case FIELD_INDEX_INTFIELD1:
-                if ((bitmask & (1 << FIELD_INDEX_INTFIELD1)) != 0)
+            case INDEX_INT_FIELD1:
+                if ((bitmask & MASK_INT_FIELD1) != 0)
                 {
-                    optionalOffsets[FIELD_INDEX_INTFIELD1] = fieldLimit;
+                    optionalOffsets[INDEX_INT_FIELD1] = fieldLimit;
                     fieldLimit += FIELD_SIZE_INTFIELD1;
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT64OFUINT8KIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT64OFUINT8KIND)) != 0)
+            case INDEX_VARIANT_OF_INT64:
+                if ((bitmask & MASK_VARIANT_OF_INT64) != 0)
                 {
-                    final VariantUint8KindWithInt64TypeFW variantOfInt64Uint8Kind =
-                        variantOfInt64Uint8KindRO.tryWrap(buffer, fieldLimit, maxLimit);
-                    if (variantOfInt64Uint8Kind == null)
+                    if (variantOfInt64RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
-                    fieldLimit = variantOfInt64Uint8Kind.limit();
+                    fieldLimit = variantOfInt64RO.limit();
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT8ENUMKIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT8ENUMKIND)) != 0)
+            case INDEX_VARIANT_OF_INT8:
+                if ((bitmask & MASK_VARIANT_OF_INT8) != 0)
                 {
-                    final VariantEnumKindOfInt8FW variantOfInt8EnumKind =
-                        variantOfInt8EnumKindRO.tryWrap(buffer, fieldLimit, maxLimit);
-                    if (variantOfInt8EnumKind == null)
+                    if (variantOfInt8RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
-                    fieldLimit = variantOfInt8EnumKind.limit();
+                    fieldLimit = variantOfInt8RO.limit();
                 }
                 break;
-            case FIELD_INDEX_INTFIELD2:
-                if ((bitmask & (1 << FIELD_INDEX_INTFIELD2)) != 0)
+            case INDEX_INT_FIELD2:
+                if ((bitmask & MASK_INT_FIELD2) != 0)
                 {
-                    optionalOffsets[FIELD_INDEX_INTFIELD2] = fieldLimit;
+                    optionalOffsets[INDEX_INT_FIELD2] = fieldLimit;
                     fieldLimit += FIELD_SIZE_INTFIELD2;
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT16ENUMKIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT16ENUMKIND)) != 0)
+            case INDEX_VARIANT_OF_INT16:
+                if ((bitmask & MASK_VARIANT_OF_INT16) != 0)
                 {
-                    final VariantEnumKindOfInt16FW variantOfInt16EnumKind =
-                        variantOfInt16EnumKindRO.tryWrap(buffer, fieldLimit, maxLimit);
-                    if (variantOfInt16EnumKind == null)
+                    if (variantOfInt16RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
-                    fieldLimit = variantOfInt16EnumKind.limit();
+                    fieldLimit = variantOfInt16RO.limit();
                 }
                 break;
-            case FIELD_INDEX_VARIANTOFINT32ENUMKIND:
-                if ((bitmask & (1 << FIELD_INDEX_VARIANTOFINT32ENUMKIND)) != 0)
+            case INDEX_VARIANT_OF_INT32:
+                if ((bitmask & MASK_VARIANT_OF_INT32) != 0)
                 {
-                    final VariantEnumKindWithInt32FW variantOfInt32EnumKind =
-                        variantOfInt32EnumKindRO.tryWrap(buffer, fieldLimit, maxLimit);
-                    if (variantOfInt32EnumKind == null)
+                    if (variantOfInt32RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
-                    fieldLimit = variantOfInt32EnumKind.limit();
+                    fieldLimit = variantOfInt32RO.limit();
+                }
+                break;
+            case INDEX_VARIANT_OF_UINT8:
+                if ((bitmask & MASK_VARIANT_OF_UINT8) == 0)
+                {
+                    return null;
+                }
+                if (variantOfUint8RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                {
+                    return null;
+                }
+                fieldLimit = variantOfUint8RO.limit();
+                break;
+            case INDEX_VARIANT_OF_UINT16:
+                if ((bitmask & MASK_VARIANT_OF_UINT16) != 0)
+                {
+                    if (variantOfUint16RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                    {
+                        return null;
+                    }
+                    fieldLimit = variantOfUint16RO.limit();
+                }
+                break;
+            case INDEX_VARIANT_OF_UINT32:
+                if ((bitmask & MASK_VARIANT_OF_UINT32) != 0)
+                {
+                    if (variantOfUint32RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                    {
+                        return null;
+                    }
+                    fieldLimit = variantOfUint32RO.limit();
+                }
+                break;
+            case INDEX_VARIANT_OF_STRING32:
+                if ((bitmask & MASK_VARIANT_OF_STRING32) != 0)
+                {
+                    if (variantOfString32RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                    {
+                        return null;
+                    }
+                    fieldLimit = variantOfString32RO.limit();
                 }
                 break;
             }
-        }
-        if (limit() > maxLimit)
-        {
-            return null;
         }
         return this;
     }
@@ -273,59 +412,87 @@ public final class ListWithVariantFW extends Flyweight
     public String toString()
     {
         final long bitmask = bitmask();
-        boolean intField1IsSet = (bitmask & (1 << FIELD_INDEX_INTFIELD1)) != 0;
-        boolean variantOfInt64Uint8KindIsSet = (bitmask & (1 << FIELD_INDEX_VARIANTOFINT64OFUINT8KIND)) != 0;
-        boolean variantOfInt8EnumKindIsSet = (bitmask & (1 << FIELD_INDEX_VARIANTOFINT8ENUMKIND)) != 0;
-        boolean intField2IsSet = (bitmask & (1 << FIELD_INDEX_INTFIELD2)) != 0;
-        boolean variantOfInt16EnumKindIsSet = (bitmask & (1 << FIELD_INDEX_VARIANTOFINT16ENUMKIND)) != 0;
-        boolean variantOfInt32EnumKindIsSet = (bitmask & (1 << FIELD_INDEX_VARIANTOFINT32ENUMKIND)) != 0;
+        Object intField1 = null;
+        Object variantOfInt64 = null;
+        Object variantOfInt8 = null;
+        Object intField2 = null;
+        Object variantOfInt16 = null;
+        Object variantOfInt32 = null;
+        Object variantOfString32 = null;
+
         StringBuilder format = new StringBuilder();
         format.append("LIST_WITH_VARIANT_OF_INT [bitmask={0}");
-        if (intField1IsSet)
+        if ((bitmask & MASK_INT_FIELD1) != 0L)
         {
             format.append(", intField1={1}");
+            intField1 = intField1();
         }
-        if (variantOfInt64Uint8KindIsSet)
+        if ((bitmask & MASK_VARIANT_OF_INT64) != 0L)
         {
-            format.append(", variantOfInt64Uint8Kind={2}");
+            format.append(", variantOfInt64={2}");
+            variantOfInt64 = variantOfInt64();
         }
-        if (variantOfInt8EnumKindIsSet)
+        if ((bitmask & MASK_VARIANT_OF_INT8) != 0)
         {
-            format.append(", variantOfInt8EnumKind={3}");
+            format.append(", variantOfInt8={3}");
+            variantOfInt8 = variantOfInt8();
         }
-        if (intField2IsSet)
+        if ((bitmask & MASK_INT_FIELD2) != 0)
         {
             format.append(", intField2={4}");
+            intField2 = intField2();
         }
-        if (variantOfInt16EnumKindIsSet)
+        if ((bitmask & MASK_VARIANT_OF_INT16) != 0)
         {
-            format.append(", variantOfInt16EnumKind={5}");
+            format.append(", variantOfInt16={5}");
+            variantOfInt16 = variantOfInt16();
         }
-        if (variantOfInt32EnumKindIsSet)
+        if ((bitmask & MASK_VARIANT_OF_INT32) != 0)
         {
-            format.append(", variantOfInt32EnumKind={6}");
+            format.append(", variantOfInt32={6}");
+            variantOfInt32 = variantOfInt32();
+        }
+        format.append(", variantOfUint8={7}");
+        format.append(", variantOfUint16={8}");
+        format.append(", variantOfUint32={9}");
+        if ((bitmask & MASK_VARIANT_OF_STRING32) != 0)
+        {
+            format.append(", variantOfString32={10}");
+            variantOfString32 = variantOfString32();
         }
         format.append("]");
         return MessageFormat.format(format.toString(),
-            String.format("0x%02X", bitmask),
-            intField1IsSet ? intField1() : null,
-            variantOfInt64Uint8KindIsSet ? variantOfInt64Uint8Kind() : null,
-            variantOfInt8EnumKindIsSet ? variantOfInt8EnumKind() : null,
-            intField2IsSet ? intField2() : null,
-            variantOfInt16EnumKindIsSet ? variantOfInt16EnumKind() : null,
-            variantOfInt32EnumKindIsSet ? variantOfInt32EnumKind() : null);
+            String.format("0x%16X", bitmask),
+            intField1,
+            variantOfInt64,
+            variantOfInt8,
+            intField2,
+            variantOfInt16,
+            variantOfInt32,
+            variantOfUint8(),
+            variantOfUint16(),
+            variantOfUint32(),
+            variantOfString32);
     }
 
     public static final class Builder extends Flyweight.Builder<ListWithVariantFW>
     {
-        private final VariantUint8KindWithInt64TypeFW.Builder variantOfInt64Uint8KindRW =
+        private final VariantUint8KindWithInt64TypeFW.Builder variantOfInt64RW =
             new VariantUint8KindWithInt64TypeFW.Builder();
 
-        private final VariantEnumKindOfInt8FW.Builder variantOfInt8EnumKindRW = new VariantEnumKindOfInt8FW.Builder();
+        private final VariantEnumKindOfInt8FW.Builder variantOfInt8RW = new VariantEnumKindOfInt8FW.Builder();
 
-        private final VariantEnumKindOfInt16FW.Builder variantOfInt16EnumKindRW = new VariantEnumKindOfInt16FW.Builder();
+        private final VariantEnumKindOfInt16FW.Builder variantOfInt16RW = new VariantEnumKindOfInt16FW.Builder();
 
-        private final VariantEnumKindWithInt32FW.Builder variantOfInt32EnumKindRW = new VariantEnumKindWithInt32FW.Builder();
+        private final VariantEnumKindWithInt32FW.Builder variantOfInt32RW = new VariantEnumKindWithInt32FW.Builder();
+
+        private final VariantEnumKindOfUint8FW.Builder variantOfUint8RW = new VariantEnumKindOfUint8FW.Builder();
+
+        private final VariantEnumKindOfUint16FW.Builder variantOfUint16RW = new VariantEnumKindOfUint16FW.Builder();
+
+        private final VariantEnumKindOfUint32FW.Builder variantOfUint32RW = new VariantEnumKindOfUint32FW.Builder();
+
+        private final VariantEnumKindWithString32FW.Builder variantOfString32RW = new VariantEnumKindWithString32FW.Builder();
 
         private long fieldsMask;
 
@@ -341,34 +508,40 @@ public final class ListWithVariantFW extends Flyweight
             int newLimit = limit() + FIELD_SIZE_INTFIELD1;
             checkLimit(newLimit, maxLimit());
             buffer().putByte(limit(), value);
-            fieldsMask |= 1 << FIELD_INDEX_INTFIELD1;
+            fieldsMask |= MASK_INT_FIELD1;
             limit(newLimit);
             return this;
         }
 
-        public Builder variantOfInt64Uint8Kind(
+        private VariantUint8KindWithInt64TypeFW.Builder variantOfInt64()
+        {
+            assert (fieldsMask & ~0x01) == 0 : "Field \"variantOfInt64\" cannot be set out of order";
+            return variantOfInt64RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfInt64(
             long value)
         {
-            assert (fieldsMask & ~0x01) == 0 :
-                "Field \"variantOfInt64Uint8Kind\" cannot be set out of order";
-            VariantUint8KindWithInt64TypeFW.Builder variantOfInt64Uint8KindRW = this.variantOfInt64Uint8KindRW.wrap(buffer(),
-                limit(), maxLimit());
-            variantOfInt64Uint8KindRW.set(value);
-            fieldsMask |= 1 << FIELD_INDEX_VARIANTOFINT64OFUINT8KIND;
-            limit(variantOfInt64Uint8KindRW.build().limit());
+            VariantUint8KindWithInt64TypeFW.Builder variantOfInt64RW = variantOfInt64();
+            variantOfInt64RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_INT64;
+            limit(variantOfInt64RW.build().limit());
             return this;
         }
 
-        public Builder variantOfInt8EnumKind(
+        private VariantEnumKindOfInt8FW.Builder variantOfInt8()
+        {
+            assert (fieldsMask & ~0x03) == 0 : "Field \"variantOfInt8\" cannot be set out of order";
+            return variantOfInt8RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfInt8(
             int value)
         {
-            assert (fieldsMask & ~0x03) == 0 :
-                "Field \"variantOfInt8EnumKind\" cannot be set out of order";
-            VariantEnumKindOfInt8FW.Builder variantOfInt8EnumKindRW = this.variantOfInt8EnumKindRW.wrap(buffer(), limit(),
-                maxLimit());
-            variantOfInt8EnumKindRW.set(value);
-            fieldsMask |= 1 << FIELD_INDEX_VARIANTOFINT8ENUMKIND;
-            limit(variantOfInt8EnumKindRW.build().limit());
+            VariantEnumKindOfInt8FW.Builder variantOfInt8RW = variantOfInt8();
+            variantOfInt8RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_INT8;
+            limit(variantOfInt8RW.build().limit());
             return this;
         }
 
@@ -379,34 +552,107 @@ public final class ListWithVariantFW extends Flyweight
             int newLimit = limit() + FIELD_SIZE_INTFIELD2;
             checkLimit(newLimit, maxLimit());
             buffer().putShort(limit(), value);
-            fieldsMask |= 1 << FIELD_INDEX_INTFIELD2;
+            fieldsMask |= MASK_INT_FIELD2;
             limit(newLimit);
             return this;
         }
 
-        public Builder variantOfInt16EnumKind(
+        private VariantEnumKindOfInt16FW.Builder variantOfInt16()
+        {
+            assert (fieldsMask & ~0x0F) == 0 : "Field \"variantOfInt16\" cannot be set out of order";
+            return variantOfInt16RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfInt16(
             int value)
         {
-            assert (fieldsMask & ~0x0F) == 0 :
-                "Field \"variantOfInt16EnumKind\" cannot be set out of order";
-            VariantEnumKindOfInt16FW.Builder variantOfInt16EnumKindRW = this.variantOfInt16EnumKindRW.wrap(buffer(), limit(),
-                maxLimit());
-            variantOfInt16EnumKindRW.set(value);
-            fieldsMask |= 1 << FIELD_INDEX_VARIANTOFINT16ENUMKIND;
-            limit(variantOfInt16EnumKindRW.build().limit());
+            VariantEnumKindOfInt16FW.Builder variantOfInt16RW = variantOfInt16();
+            variantOfInt16RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_INT16;
+            limit(variantOfInt16RW.build().limit());
             return this;
         }
 
-        public Builder variantOfInt32EnumKind(
+        private VariantEnumKindWithInt32FW.Builder variantOfInt32()
+        {
+            assert (fieldsMask & ~0x1F) == 0 : "Field \"variantOfInt32\" cannot be set out of order";
+            return variantOfInt32RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfInt32(
             int value)
         {
-            assert (fieldsMask & ~0x1F) == 0 :
-                "Field \"variantOfInt32EnumKind\" cannot be set out of order";
-            VariantEnumKindWithInt32FW.Builder variantOfInt32EnumKindRW = this.variantOfInt32EnumKindRW.wrap(buffer(), limit(),
-                maxLimit());
-            variantOfInt32EnumKindRW.set(value);
-            fieldsMask |= 1 << FIELD_INDEX_VARIANTOFINT32ENUMKIND;
-            limit(variantOfInt32EnumKindRW.build().limit());
+            VariantEnumKindWithInt32FW.Builder variantOfInt32RW = variantOfInt32();
+            variantOfInt32RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_INT32;
+            limit(variantOfInt32RW.build().limit());
+            return this;
+        }
+
+        private VariantEnumKindOfUint8FW.Builder variantOfUint8()
+        {
+            assert (fieldsMask & ~0x3F) == 0 : "Field \"variantOfUint8\" cannot be set out of order";
+            return variantOfUint8RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfUint8(
+            int value)
+        {
+            VariantEnumKindOfUint8FW.Builder variantOfUint8RW = variantOfUint8();
+            variantOfUint8RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_UINT8;
+            limit(variantOfUint8RW.build().limit());
+            return this;
+        }
+
+        private VariantEnumKindOfUint16FW.Builder variantOfUint16()
+        {
+            assert (fieldsMask & ~0x7F) == 0 : "Field \"variantOfUint16\" cannot be set out of order";
+            assert (fieldsMask & 0x40) != 0 : "Prior required field \"variantOfUint8\" is not set";
+            return variantOfUint16RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfUint16(
+            int value)
+        {
+            VariantEnumKindOfUint16FW.Builder variantOfUint16RW = variantOfUint16();
+            variantOfUint16RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_UINT16;
+            limit(variantOfUint16RW.build().limit());
+            return this;
+        }
+
+        private VariantEnumKindOfUint32FW.Builder variantOfUint32()
+        {
+            assert (fieldsMask & ~0xFF) == 0 : "Field \"variantOfUint32\" cannot be set out of order";
+            assert (fieldsMask & 0x40) != 0 : "Prior required field \"variantOfUint8\" is not set";
+            return variantOfUint32RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfUint32(
+            long value)
+        {
+            VariantEnumKindOfUint32FW.Builder variantOfUint32RW = variantOfUint32();
+            variantOfUint32RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_UINT32;
+            limit(variantOfUint32RW.build().limit());
+            return this;
+        }
+
+        private VariantEnumKindWithString32FW.Builder variantOfString32()
+        {
+            assert (fieldsMask & ~0x1FF) == 0 : "Field \"variantOfString32\" cannot be set out of order";
+            assert (fieldsMask & 0x40) != 0 : "Prior required field \"variantOfUint8\" is not set";
+            return variantOfString32RW.wrap(buffer(), limit(), maxLimit());
+        }
+
+        public Builder variantOfString32(
+            String value)
+        {
+            VariantEnumKindWithString32FW.Builder variantOfString32RW = variantOfString32();
+            variantOfString32RW.set(value);
+            fieldsMask |= MASK_VARIANT_OF_STRING32;
+            limit(variantOfString32RW.build().limit());
             return this;
         }
 
