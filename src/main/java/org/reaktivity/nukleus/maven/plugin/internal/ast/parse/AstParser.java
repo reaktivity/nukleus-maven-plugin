@@ -753,6 +753,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
                 new ListLogicalLengthTypeVisitor(listBuilder).visitList_length(ctx);
             AstType logicalLengthType = logicalLengthTypeBuilder.build().logicalLengthType();
             listBuilder.logicalLengthType(logicalLengthType);
+
+            if (ctx.uint_literal() != null)
+            {
+                AstListNode.Builder defaultNullByteBuilder =
+                    new ListDefaultNullByteVisitor(listBuilder).visitList_length(ctx);
+                Byte defaultNullByte = defaultNullByteBuilder.build().defaultNullByte();
+                listBuilder.defaultNullByte(defaultNullByte);
+            }
             return listBuilder;
         }
 
@@ -1069,6 +1077,35 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         protected AstListNode.Builder defaultResult()
         {
             return listBuilder;
+        }
+    }
+
+    public final class ListDefaultNullByteVisitor extends NukleusBaseVisitor<AstListNode.Builder>
+    {
+        private final AstListNode.Builder defaultNullByteBuilder;
+
+        public ListDefaultNullByteVisitor(
+            AstListNode.Builder defaultNullByteBuilder)
+        {
+            this.defaultNullByteBuilder = defaultNullByteBuilder;
+        }
+
+        @Override
+        public Builder visitList_length(List_lengthContext ctx)
+        {
+            return visitUint_literal(ctx.uint_literal());
+        }
+
+        @Override
+        public Builder visitUint_literal(Uint_literalContext ctx)
+        {
+            return defaultNullByteBuilder.defaultNullByte(parseByte(ctx));
+        }
+
+        @Override
+        protected Builder defaultResult()
+        {
+            return defaultNullByteBuilder;
         }
     }
 

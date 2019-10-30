@@ -23,11 +23,10 @@ import java.util.Objects;
 
 public final class AstListNode extends AstNamedNode
 {
-    public static final Object NULL_DEFAULT = new Object();
-
     private final List<AstListMemberNode> members;
     private final AstType physicalLengthType;
     private final AstType logicalLengthType;
+    private final Byte defaultNullByte;
 
     public List<AstListMemberNode> members()
     {
@@ -42,6 +41,11 @@ public final class AstListNode extends AstNamedNode
     public AstType logicalLengthType()
     {
         return logicalLengthType;
+    }
+
+    public Byte defaultNullByte()
+    {
+        return defaultNullByte;
     }
 
     @Override
@@ -88,12 +92,14 @@ public final class AstListNode extends AstNamedNode
         String name,
         List<AstListMemberNode> members,
         AstType physicalLengthType,
-        AstType logicalLengthType)
+        AstType logicalLengthType,
+        Byte defaultNullByte)
     {
         super(name);
         this.members = unmodifiableList(members);
         this.physicalLengthType = physicalLengthType;
         this.logicalLengthType = logicalLengthType;
+        this.defaultNullByte = defaultNullByte;
     }
 
     public static final class Builder extends AstNamedNode.Builder<AstListNode>
@@ -101,6 +107,7 @@ public final class AstListNode extends AstNamedNode
         private List<AstListMemberNode> members;
         private AstType physicalLengthType;
         private AstType logicalLengthType;
+        private Byte defaultNullByte;
 
         public Builder()
         {
@@ -135,10 +142,17 @@ public final class AstListNode extends AstNamedNode
             return this;
         }
 
+        public Builder defaultNullByte(
+            Byte defaultNullByte)
+        {
+            this.defaultNullByte = defaultNullByte;
+            return this;
+        }
+
         @Override
         public AstListNode build()
         {
-            return new AstListNode(name, members, physicalLengthType, logicalLengthType);
+            return new AstListNode(name, members, physicalLengthType, logicalLengthType, defaultNullByte);
         }
     }
 }

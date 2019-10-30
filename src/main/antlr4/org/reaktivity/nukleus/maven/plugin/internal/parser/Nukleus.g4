@@ -268,7 +268,7 @@ list_type
    ;
 
 list_length
-   : LEFT_SQUARE_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_SQUARE_BRACKET
+   : LEFT_ANG_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
    ;
 
 list_members
