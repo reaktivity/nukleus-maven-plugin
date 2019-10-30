@@ -26,9 +26,9 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
-import org.reaktivity.reaktor.internal.test.types.inner.ListWithDefaultNullFW;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithMissingFieldByteFW;
 
-public class ListWithDefaultNullFWTest
+public class ListWithMissingFieldByteFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -37,8 +37,8 @@ public class ListWithDefaultNullFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final ListWithDefaultNullFW.Builder listWithDefaultNullRW = new ListWithDefaultNullFW.Builder();
-    private final ListWithDefaultNullFW listWithDefaultNullRO = new ListWithDefaultNullFW();
+    private final ListWithMissingFieldByteFW.Builder listWithMissingFieldByteRW = new ListWithMissingFieldByteFW.Builder();
+    private final ListWithMissingFieldByteFW listWithMissingFieldByteRO = new ListWithMissingFieldByteFW();
     private final int physicalLengthSize = Integer.BYTES;
     private final int logicalLengthSize = Integer.BYTES;
 
@@ -86,7 +86,7 @@ public class ListWithDefaultNullFWTest
         {
             try
             {
-                listWithDefaultNullRO.wrap(buffer,  10, maxLimit);
+                listWithMissingFieldByteRO.wrap(buffer,  10, maxLimit);
                 fail("Exception not thrown");
             }
             catch (Exception e)
@@ -107,7 +107,7 @@ public class ListWithDefaultNullFWTest
         setAllFields(buffer);
         for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
         {
-            assertNull(listWithDefaultNullRO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
+            assertNull(listWithMissingFieldByteRO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
         }
     }
 
@@ -119,14 +119,14 @@ public class ListWithDefaultNullFWTest
         int offsetPhysicalLength = 10;
         setAllFields(buffer);
 
-        assertSame(listWithDefaultNullRO, listWithDefaultNullRO.wrap(buffer, offsetPhysicalLength,
+        assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
-        assertEquals(physicalLength, listWithDefaultNullRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithDefaultNullRO.length());
-        assertEquals("string1", listWithDefaultNullRO.variantOfString1());
-        assertEquals("string2", listWithDefaultNullRO.variantOfString2());
-        assertEquals(4000000000L, listWithDefaultNullRO.variantOfUint());
-        assertEquals(-2000000000, listWithDefaultNullRO.variantOfInt());
+        assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
+        assertEquals(logicalLength, listWithMissingFieldByteRO.length());
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
+        assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
+        assertEquals(-2000000000, listWithMissingFieldByteRO.variantOfInt());
     }
 
     @Test
@@ -137,27 +137,27 @@ public class ListWithDefaultNullFWTest
         int offsetPhysicalLength = 10;
         setAllFields(buffer);
 
-        assertSame(listWithDefaultNullRO, listWithDefaultNullRO.tryWrap(buffer, offsetPhysicalLength,
+        assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.tryWrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
-        assertEquals(physicalLength, listWithDefaultNullRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithDefaultNullRO.length());
-        assertEquals("string1", listWithDefaultNullRO.variantOfString1());
-        assertEquals("string2", listWithDefaultNullRO.variantOfString2());
-        assertEquals(4000000000L, listWithDefaultNullRO.variantOfUint());
-        assertEquals(-2000000000, listWithDefaultNullRO.variantOfInt());
+        assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
+        assertEquals(logicalLength, listWithMissingFieldByteRO.length());
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
+        assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
+        assertEquals(-2000000000, listWithMissingFieldByteRO.variantOfInt());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetString1WithInsufficientSpace() throws Exception
     {
-        listWithDefaultNullRW.wrap(buffer, 10, 17)
+        listWithMissingFieldByteRW.wrap(buffer, 10, 17)
             .variantOfString1("string1");
     }
 
     @Test(expected = AssertionError.class)
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
-        listWithDefaultNullRW.wrap(buffer, 0, buffer.capacity())
+        listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
             .variantOfString1("string1")
             .variantOfUint(4000000000L)
             .variantOfString2("string2")
@@ -167,7 +167,7 @@ public class ListWithDefaultNullFWTest
     @Test(expected = AssertionError.class)
     public void shouldFailWhenSameFieldIsSetMoreThanOnce() throws Exception
     {
-        listWithDefaultNullRW.wrap(buffer, 0, buffer.capacity())
+        listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
             .variantOfString1("string1")
             .variantOfString1("string2")
             .build();
@@ -176,7 +176,7 @@ public class ListWithDefaultNullFWTest
     @Test(expected = AssertionError.class)
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
-        listWithDefaultNullRW.wrap(buffer, 0, buffer.capacity())
+        listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
             .variantOfString2("string2")
             .build();
     }
@@ -184,53 +184,53 @@ public class ListWithDefaultNullFWTest
     @Test(expected = AssertionError.class)
     public void shouldAssertErrorWhenValueNotPresent() throws Exception
     {
-        int limit = listWithDefaultNullRW.wrap(buffer, 0, buffer.capacity())
+        int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
             .variantOfString1("string1")
             .build()
             .limit();
-        listWithDefaultNullRO.wrap(buffer,  0,  limit);
-        assertEquals("string2", listWithDefaultNullRO.variantOfString2());
+        listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
     }
 
     @Test
     public void shouldSetOnlyRequiredFields() throws Exception
     {
-        int limit = listWithDefaultNullRW.wrap(buffer, 0, buffer.capacity())
+        int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
             .variantOfString1("string1")
             .build()
             .limit();
-        listWithDefaultNullRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listWithDefaultNullRO.variantOfString1());
-        assertEquals(4000000000L, listWithDefaultNullRO.variantOfUint());
+        listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
+        assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
     }
 
     @Test
     public void shouldSetSomeFields() throws Exception
     {
-        int limit = listWithDefaultNullRW.wrap(buffer, 0, buffer.capacity())
+        int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
             .variantOfString1("string1")
             .variantOfUint(4000000000L)
             .build()
             .limit();
-        listWithDefaultNullRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listWithDefaultNullRO.variantOfString1());
-        assertEquals(4000000000L, listWithDefaultNullRO.variantOfUint());
+        listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
+        assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
     }
 
     @Test
     public void shouldSetAllFields() throws Exception
     {
-        int limit = listWithDefaultNullRW.wrap(buffer, 0, buffer.capacity())
+        int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
             .variantOfString1("string1")
             .variantOfString2("string2")
             .variantOfUint(4000000000L)
             .variantOfInt(-2000000000)
             .build()
             .limit();
-        listWithDefaultNullRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listWithDefaultNullRO.variantOfString1());
-        assertEquals("string2", listWithDefaultNullRO.variantOfString2());
-        assertEquals(4000000000L, listWithDefaultNullRO.variantOfUint());
-        assertEquals(-2000000000, listWithDefaultNullRO.variantOfInt());
+        listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
+        assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
+        assertEquals(-2000000000, listWithMissingFieldByteRO.variantOfInt());
     }
 }

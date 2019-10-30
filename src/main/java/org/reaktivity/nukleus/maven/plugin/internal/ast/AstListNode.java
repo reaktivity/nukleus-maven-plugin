@@ -26,7 +26,7 @@ public final class AstListNode extends AstNamedNode
     private final List<AstListMemberNode> members;
     private final AstType physicalLengthType;
     private final AstType logicalLengthType;
-    private final Byte defaultNullByte;
+    private final Byte missingFieldByte;
 
     public List<AstListMemberNode> members()
     {
@@ -43,9 +43,9 @@ public final class AstListNode extends AstNamedNode
         return logicalLengthType;
     }
 
-    public Byte defaultNullByte()
+    public Byte missingFieldByte()
     {
-        return defaultNullByte;
+        return missingFieldByte;
     }
 
     @Override
@@ -93,13 +93,13 @@ public final class AstListNode extends AstNamedNode
         List<AstListMemberNode> members,
         AstType physicalLengthType,
         AstType logicalLengthType,
-        Byte defaultNullByte)
+        Byte missingFieldByte)
     {
         super(name);
         this.members = unmodifiableList(members);
         this.physicalLengthType = physicalLengthType;
         this.logicalLengthType = logicalLengthType;
-        this.defaultNullByte = defaultNullByte;
+        this.missingFieldByte = missingFieldByte;
     }
 
     public static final class Builder extends AstNamedNode.Builder<AstListNode>
@@ -107,7 +107,7 @@ public final class AstListNode extends AstNamedNode
         private List<AstListMemberNode> members;
         private AstType physicalLengthType;
         private AstType logicalLengthType;
-        private Byte defaultNullByte;
+        private Byte missingFieldByte;
 
         public Builder()
         {
@@ -142,17 +142,17 @@ public final class AstListNode extends AstNamedNode
             return this;
         }
 
-        public Builder defaultNullByte(
-            Byte defaultNullByte)
+        public Builder missingFieldByte(
+            Byte missingFieldByte)
         {
-            this.defaultNullByte = defaultNullByte;
+            this.missingFieldByte = missingFieldByte;
             return this;
         }
 
         @Override
         public AstListNode build()
         {
-            return new AstListNode(name, members, physicalLengthType, logicalLengthType, defaultNullByte);
+            return new AstListNode(name, members, physicalLengthType, logicalLengthType, missingFieldByte);
         }
     }
 }
