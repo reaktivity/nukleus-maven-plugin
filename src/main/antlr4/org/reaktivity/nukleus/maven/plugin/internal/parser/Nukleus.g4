@@ -264,11 +264,11 @@ default_null
    ;
 
 list_type
-   : KW_LIST (list_length)? ID LEFT_BRACE list_members RIGHT_BRACE
+   : KW_LIST (list_params)? ID LEFT_BRACE list_members RIGHT_BRACE
    ;
 
-list_length
-   : LEFT_SQUARE_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_SQUARE_BRACKET
+list_params
+   : LEFT_ANG_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
    ;
 
 list_members

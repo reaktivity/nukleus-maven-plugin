@@ -327,14 +327,14 @@ scope test
             case 0x50: uint24;
         }
 
-        list[uint32, uint32] ListWithPhysicalAndLogicalLength
+        list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
             required string field0;
             uint32 field1;
             string field2;
         }
 
-        list[uint8, uint8] ListWithVariant
+        list<uint8, uint8> ListWithVariant
         {
             int8 intField1;
             VariantUint8KindWithInt64Type variantOfInt64;
@@ -348,7 +348,7 @@ scope test
             VariantEnumKindWithString32 variantOfString32;
         }
 
-        list[uint8, uint8] ListWithEnum
+        list<uint8, uint8> ListWithEnum
         {
             required Roll roll;
             EnumWithInt8 enumWithInt8;
@@ -358,18 +358,18 @@ scope test
             EnumWithString enumWithString;
         }
 
-        list[uint8, uint8] ListWithUnion
+        list<uint8, uint8> ListWithUnion
         {
             UnionOctets unionOctets;
             uint8 field1 = 1;
         }
 
-//        list<uint32, uint32, 0x40> ListWithDefaultNull
-//        {
-//            required VariantEnumKindWithString32 variantOfString1;
-//            VariantEnumKindWithString32 variantOfString2;
-//            VariantEnumKindOfUint32 variantOfUint = 4000000000;
-//            VariantEnumKindWithInt32 variantOfInt;
-//        }
+        list<uint32, uint32, 0x40> ListWithMissingFieldByte
+        {
+            required VariantEnumKindWithString32 variantOfString1;
+            VariantEnumKindWithString32 variantOfString2;
+            VariantEnumKindOfUint32 variantOfUint = 4000000000L;
+            VariantEnumKindWithInt32 variantOfInt;
+        }
     }
 }

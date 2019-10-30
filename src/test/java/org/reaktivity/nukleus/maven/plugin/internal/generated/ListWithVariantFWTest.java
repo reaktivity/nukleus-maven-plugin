@@ -29,6 +29,7 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint8;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithVariantFW;
 
 public class ListWithVariantFWTest
 {

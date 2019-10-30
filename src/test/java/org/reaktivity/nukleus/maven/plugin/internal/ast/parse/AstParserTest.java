@@ -578,7 +578,7 @@ public class AstParserTest
     @Test
     public void shouldParseList()
     {
-        NukleusParser parser = newParser("list [uint32, uint32] ListWithPhysicalAndLogicalLength " +
+        NukleusParser parser = newParser("list<uint32, uint32> ListWithPhysicalAndLogicalLength " +
             "{ required string field0; uint32 field1; string field2; }");
 
         List_typeContext ctx = parser.list_type();
