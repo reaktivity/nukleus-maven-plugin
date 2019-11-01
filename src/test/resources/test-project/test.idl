@@ -327,6 +327,13 @@ scope test
             case 0x50: uint24;
         }
 
+//        variant VariantOfList switch (EnumWithUint8) of list
+//        {
+//            case ICHI: list<uint32, uint32, 0x40>;
+//            case NI: list<uint8, uint8, 0x40>;
+//            case SAN: list<0, 0>;
+//        }
+
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
             required string field0;
