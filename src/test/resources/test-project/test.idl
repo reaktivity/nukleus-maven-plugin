@@ -378,5 +378,13 @@ scope test
             VariantEnumKindOfUint32 variantOfUint = 4000000000L;
             VariantEnumKindWithInt32 variantOfInt;
         }
+
+//        list<VariantOfList> ListFromVariantOfList
+//        {
+//            required VariantEnumKindWithString32 variantOfString1;
+//            VariantEnumKindWithString32 variantOfString2;
+//            VariantEnumKindOfUint32 variantOfUint = 4000000000L;
+//            VariantEnumKindWithInt32 variantOfInt;
+//        }
     }
 }

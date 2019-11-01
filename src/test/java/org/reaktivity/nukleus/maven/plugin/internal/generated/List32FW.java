@@ -46,6 +46,12 @@ public final class List32FW extends ListFW
         return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET);
     }
 
+    @Override
+    public int lengthSize()
+    {
+        return PHYSICAL_LENGTH_SIZE;
+    }
+
     public static final class Builder extends ListFW.Builder<List32FW>
     {
         public Builder()

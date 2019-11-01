@@ -23,6 +23,8 @@ public abstract class ListFW extends Flyweight
 
     public abstract int logicalLength();
 
+    public abstract int lengthSize();
+
     public abstract static class Builder<T extends ListFW> extends Flyweight.Builder
     {
         public Builder(Flyweight flyweight)

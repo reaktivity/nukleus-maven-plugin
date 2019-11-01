@@ -48,6 +48,12 @@ public final class List8FW extends ListFW
     }
 
     @Override
+    public int lengthSize()
+    {
+        return PHYSICAL_LENGTH_SIZE;
+    }
+
+    @Override
     public List8FW tryWrap(
         DirectBuffer buffer,
         int offset,
