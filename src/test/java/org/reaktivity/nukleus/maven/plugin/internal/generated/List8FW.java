@@ -32,7 +32,7 @@ public final class List8FW extends ListFW
     @Override
     public int limit()
     {
-        return offset() + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE;
+        return offset() + PHYSICAL_LENGTH_SIZE + physicalLength();
     }
 
     @Override
@@ -54,6 +54,12 @@ public final class List8FW extends ListFW
     }
 
     @Override
+    public DirectBuffer fields()
+    {
+        return fieldsRO;
+    }
+
+    @Override
     public List8FW tryWrap(
         DirectBuffer buffer,
         int offset,
@@ -63,6 +69,8 @@ public final class List8FW extends ListFW
         {
             return null;
         }
+        int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
+        fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
         return this;
     }
 
@@ -73,6 +81,8 @@ public final class List8FW extends ListFW
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
+        fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
         return this;
     }
 
@@ -83,22 +93,26 @@ public final class List8FW extends ListFW
             super(new List8FW());
         }
 
-        public Builder physicalLength(
-            int physicalLength)
+        @Override
+        public Builder set(
+            ListFW value)
         {
-            int newLimit = limit() + BitUtil.SIZE_OF_BYTE;
+            int newLimit = offset() + PHYSICAL_LENGTH_SIZE;
             checkLimit(newLimit, maxLimit());
-            buffer().putByte(limit(), (byte) physicalLength);
+            buffer().putByte(offset(), (byte) value.physicalLength());
             limit(newLimit);
-            return this;
-        }
+            fieldsLength(value.physicalLength() - LOGICAL_LENGTH_SIZE);
 
-        public Builder logicalLength(
-            int logicalLength)
-        {
-            int newLimit = limit() + BitUtil.SIZE_OF_BYTE;
+            newLimit = limit() + LOGICAL_LENGTH_SIZE;
             checkLimit(newLimit, maxLimit());
-            buffer().putByte(limit(), (byte) logicalLength);
+            buffer().putByte(limit(), (byte) value.logicalLength());
+            limit(newLimit);
+            fieldsCount(value.logicalLength());
+
+            int fieldsSize = value.physicalLength() - LOGICAL_LENGTH_SIZE;
+            newLimit = limit() + fieldsSize;
+            checkLimit(newLimit, maxLimit());
+            buffer().putBytes(limit(), value.fields(), 0, fieldsSize);
             limit(newLimit);
             return this;
         }
@@ -110,7 +124,18 @@ public final class List8FW extends ListFW
             int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
+            int newLimit = offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE;
+            checkLimit(newLimit, maxLimit);
+            limit(newLimit);
             return this;
+        }
+
+        @Override
+        public List8FW build()
+        {
+            buffer().putByte(offset() + PHYSICAL_LENGTH_OFFSET, (byte) (fieldsLength() + LOGICAL_LENGTH_SIZE));
+            buffer().putByte(offset() + LOGICAL_LENGTH_OFFSET, (byte) fieldsCount());
+            return (List8FW) super.build();
         }
     }
 }

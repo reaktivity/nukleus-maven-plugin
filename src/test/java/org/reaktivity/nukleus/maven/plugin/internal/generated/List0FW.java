@@ -15,15 +15,15 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class List32FW extends ListFW
+public class List0FW extends ListFW
 {
-    private static final int PHYSICAL_LENGTH_SIZE = BitUtil.SIZE_OF_INT;
+    private static final int PHYSICAL_LENGTH_SIZE = 0;
 
-    private static final int LOGICAL_LENGTH_SIZE = BitUtil.SIZE_OF_INT;
+    private static final int LOGICAL_LENGTH_SIZE = 0;
 
     private static final int PHYSICAL_LENGTH_OFFSET = 0;
 
@@ -38,19 +38,19 @@ public final class List32FW extends ListFW
     @Override
     public int physicalLength()
     {
-        return buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET);
+        return 0;
     }
 
     @Override
     public int logicalLength()
     {
-        return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET);
+        return 0;
     }
 
     @Override
     public int lengthSize()
     {
-        return PHYSICAL_LENGTH_SIZE;
+        return 0;
     }
 
     @Override
@@ -60,7 +60,7 @@ public final class List32FW extends ListFW
     }
 
     @Override
-    public List32FW tryWrap(
+    public List0FW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -75,7 +75,7 @@ public final class List32FW extends ListFW
     }
 
     @Override
-    public List32FW wrap(
+    public List0FW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -86,34 +86,32 @@ public final class List32FW extends ListFW
         return this;
     }
 
-    public static final class Builder extends ListFW.Builder<List32FW>
+    public static final class Builder extends ListFW.Builder<List0FW>
     {
         public Builder()
         {
-            super(new List32FW());
+            super(new List0FW());
         }
 
         @Override
         public Builder set(
             ListFW value)
         {
-            int newLimit = offset() + PHYSICAL_LENGTH_SIZE;
-            checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset(), value.physicalLength());
-            limit(newLimit);
-            fieldsLength(value.physicalLength() - LOGICAL_LENGTH_SIZE);
+            return this;
+        }
 
-            newLimit = limit() + LOGICAL_LENGTH_SIZE;
-            checkLimit(newLimit, maxLimit());
-            buffer().putInt(limit(), value.logicalLength());
-            limit(newLimit);
-            fieldsCount(value.logicalLength());
+        @Override
+        public Builder field(
+            Flyweight.Builder.Visitor visitor)
+        {
+            return this;
+        }
 
-            int fieldsSize = value.physicalLength() - LOGICAL_LENGTH_SIZE;
-            newLimit = limit() + fieldsSize;
-            checkLimit(newLimit, maxLimit());
-            buffer().putBytes(limit(), value.fields(), 0, fieldsSize);
-            limit(newLimit);
+        @Override
+        public Builder fields(
+            int fieldCount,
+            Flyweight.Builder.Visitor visitor)
+        {
             return this;
         }
 
@@ -131,11 +129,9 @@ public final class List32FW extends ListFW
         }
 
         @Override
-        public List32FW build()
+        public List0FW build()
         {
-            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, fieldsLength() + LOGICAL_LENGTH_SIZE);
-            buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, fieldsCount());
-            return (List32FW) super.build();
+            return (List0FW) super.build();
         }
     }
 }

@@ -15,25 +15,81 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import org.agrona.DirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public abstract class ListFW extends Flyweight
 {
+    final DirectBuffer fieldsRO = new UnsafeBuffer(0L, 0);
+
     public abstract int physicalLength();
 
     public abstract int logicalLength();
 
     public abstract int lengthSize();
 
+    public abstract DirectBuffer fields();
+
     public abstract static class Builder<T extends ListFW> extends Flyweight.Builder
     {
+        private int fieldsCount;
+
+        private int fieldsLength;
+
         public Builder(Flyweight flyweight)
         {
             super(flyweight);
         }
 
-        public abstract Builder<T> physicalLength(int value);
+        public abstract Builder<T> set(ListFW value);
 
-        public abstract Builder<T> logicalLength(int value);
+        public Builder field(
+            Flyweight.Builder.Visitor visitor)
+        {
+            int length = visitor.visit(buffer(), limit(), maxLimit());
+            fieldsCount++;
+            fieldsLength += length;
+            int newLimit = limit() + length;
+            checkLimit(newLimit, maxLimit());
+            limit(newLimit);
+            return this;
+        }
+
+        public Builder fields(
+            int fieldCount,
+            Flyweight.Builder.Visitor visitor)
+        {
+            int length = visitor.visit(buffer(), limit(), maxLimit());
+            fieldsCount = fieldCount;
+            fieldsLength = length;
+            int newLimit = limit() + length;
+            checkLimit(newLimit, maxLimit());
+            limit(newLimit);
+            return this;
+        }
+
+        public void fieldsCount(
+            int fieldsCount)
+        {
+            this.fieldsCount = fieldsCount;
+        }
+
+        public Builder fieldsLength(
+            int fieldsLength)
+        {
+            this.fieldsLength = fieldsLength;
+            return this;
+        }
+
+        protected int fieldsCount()
+        {
+            return fieldsCount;
+        }
+
+        protected int fieldsLength()
+        {
+            return fieldsLength;
+        }
     }
 }
