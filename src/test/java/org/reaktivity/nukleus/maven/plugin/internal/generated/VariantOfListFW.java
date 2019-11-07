@@ -21,7 +21,7 @@ import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfListFW extends Flyweight
+public final class VariantOfListFW extends ListFW
 {
     public static final EnumWithInt8 KIND_ONE = EnumWithInt8.ONE;
 
@@ -37,6 +37,8 @@ public final class VariantOfListFW extends Flyweight
 
     private final List8FW list8RO = new List8FW();
 
+    private final List0FW list0RO = new List0FW();
+
     public List32FW getAsList32()
     {
         return list32RO;
@@ -47,9 +49,37 @@ public final class VariantOfListFW extends Flyweight
         return list8RO;
     }
 
+    public List0FW getAsList0()
+    {
+        return list0RO;
+    }
+
     public EnumWithInt8 kind()
     {
         return enumWithInt8RO.get();
+    }
+
+    @Override
+    public int physicalLength()
+    {
+        return get().physicalLength();
+    }
+
+    @Override
+    public int logicalLength()
+    {
+        return get().logicalLength();
+    }
+
+    @Override
+    public int lengthSize()
+    {
+        return get().lengthSize();
+    }
+
+    public DirectBuffer fields()
+    {
+        return get().fields();
     }
 
     public ListFW get()
@@ -61,7 +91,7 @@ public final class VariantOfListFW extends Flyweight
         case TWO:
             return getAsList8();
         case THREE:
-            return null; // TODO: not sure what to return
+            return getAsList0();
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
@@ -84,6 +114,7 @@ public final class VariantOfListFW extends Flyweight
             list8RO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
             break;
         case THREE:
+            list0RO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
             break;
         default:
             break;
@@ -121,6 +152,10 @@ public final class VariantOfListFW extends Flyweight
             }
             break;
         case THREE:
+            if (list0RO.tryWrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit) == null)
+            {
+                return null;
+            }
             break;
         default:
             break;
@@ -135,23 +170,17 @@ public final class VariantOfListFW extends Flyweight
     @Override
     public int limit()
     {
-        switch (kind())
-        {
-        case ONE:
-            return getAsList32().limit();
-        case TWO:
-            return getAsList8().limit();
-        case THREE:
-            return enumWithInt8RO.limit();
-        default:
-            return enumWithInt8RO.limit();
-        }
+        return get().limit();
     }
 
     public static final class Builder extends Flyweight.Builder<VariantOfListFW>
     {
-        private final List8FW.Builder list8RW = new List8FW.Builder();
         private final List32FW.Builder list32RW = new List32FW.Builder();
+
+        private final List8FW.Builder list8RW = new List8FW.Builder();
+
+        private final List0FW.Builder list0FW = new List0FW.Builder();
+
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
         public Builder()
@@ -168,61 +197,64 @@ public final class VariantOfListFW extends Flyweight
             return this;
         }
 
-        public byte missingFieldByte()
+        public Builder field(
+            Flyweight.Builder.Visitor mutator)
         {
-            return MISSING_FIELD_PLACEHOLDER;
+            list32RW.field(mutator);
+            limit(list32RW.limit());
+            return this;
         }
 
         public Builder setAsList32(
-            int physicalLength,
-            int logicalLength)
+            ListFW list)
         {
             kind(KIND_ONE);
             List32FW.Builder list32 = list32RW.wrap(buffer(), limit(), maxLimit());
-            list32.physicalLength(physicalLength);
-            list32.logicalLength(logicalLength);
+            list32.set(list);
             limit(list32.build().limit());
             return this;
         }
 
         public Builder setAsList8(
-            int physicalLength,
-            int logicalLength)
+            ListFW list)
         {
             kind(KIND_TWO);
             List8FW.Builder list8 = list8RW.wrap(buffer(), limit(), maxLimit());
-            list8.physicalLength(physicalLength);
-            list8.logicalLength(logicalLength);
+            list8.set(list);
             limit(list8.build().limit());
             return this;
         }
 
-        public Builder setAsList0()
+        public Builder setAsList0(
+            ListFW list)
         {
             kind(KIND_THREE);
+            List0FW.Builder list0 = list0FW.wrap(buffer(), limit(), maxLimit());
+            list0.set(list);
+            limit(list0.build().limit());
             return this;
         }
 
         public Builder set(
-            int physicalLength,
-            int logicalLength)
+            ListFW list)
         {
-            int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(physicalLength)) >> 3;
+            int length = Math.max(list.physicalLength(), list.logicalLength());
+            int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(length)) >> 3;
             switch (highestByteIndex)
             {
             case 0:
-                setAsList8(physicalLength, logicalLength);
+                setAsList8(list);
                 break;
             case 1:
             case 2:
             case 3:
-                setAsList32(physicalLength, logicalLength);
+                setAsList32(list);
                 break;
             case 8:
-                setAsList0();
+                setAsList0(list);
                 break;
             default:
-                throw new IllegalArgumentException("Illegal physicalLength: " + physicalLength);
+                throw new IllegalArgumentException("Illegal length: " + length);
             }
             return this;
         }
@@ -234,7 +266,50 @@ public final class VariantOfListFW extends Flyweight
             int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
+            kind(KIND_ONE);
+            list32RW.wrap(buffer, limit(), maxLimit);
+            list8RW.wrap(buffer, limit(), maxLimit);
+            list0FW.wrap(buffer, limit(), maxLimit);
             return this;
+        }
+
+        @Override
+        public VariantOfListFW build()
+        {
+            EnumWithInt8FW kind = enumWithInt8RW.build();
+            if (kind.get() == KIND_ONE)
+            {
+                List32FW list32 = list32RW.build();
+                long length = Math.max(list32.physicalLength(), list32.logicalLength());
+                int highestByteIndex = Long.numberOfTrailingZeros(Long.highestOneBit(length)) >> 3;
+                switch (highestByteIndex)
+                {
+                case 0:
+                    int logicalLength = list32.logicalLength();
+                    enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
+                    enumWithInt8RW.set(KIND_TWO);
+                    list8RW.fields(logicalLength, (b, o, m) ->
+                    {
+                        b.putBytes(o, list32.fields(), 0, list32.fields().capacity());
+                        return list32.fields().capacity();
+                    });
+                    limit(list8RW.build().limit());
+                    break;
+                case 1:
+                case 2:
+                case 3:
+                    limit(list32.limit());
+                    break;
+                case 8:
+                    enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
+                    enumWithInt8RW.set(KIND_THREE);
+                    limit(list0FW.build().limit());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Illegal length: " + length);
+                }
+            }
+            return super.build();
         }
     }
 }
