@@ -15,9 +15,11 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import static org.agrona.BitUtil.SIZE_OF_BYTE;
+import static org.reaktivity.nukleus.maven.plugin.internal.generated.VariantOfListFW.MISSING_FIELD_PLACEHOLDER;
+
 import java.text.MessageFormat;
 
-import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
@@ -25,7 +27,7 @@ import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32F
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithInt32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
-public final class ListFromVariantOfListFW extends Flyweight
+public final class ListFromVariantOfListFW extends ListFW
 {
     private static final int INDEX_VARIANT_OF_STRING1 = 0;
 
@@ -57,9 +59,28 @@ public final class ListFromVariantOfListFW extends Flyweight
 
     private long bitmask;
 
-    public int length()
+    @Override
+    public int physicalLength()
     {
-        return variantOfListRO.get().logicalLength();
+        return variantOfListRO.physicalLength();
+    }
+
+    @Override
+    public int logicalLength()
+    {
+        return variantOfListRO.logicalLength();
+    }
+
+    @Override
+    public int lengthSize()
+    {
+        return variantOfListRO.lengthSize();
+    }
+
+    @Override
+    public DirectBuffer fields()
+    {
+        return variantOfListRO.fields();
     }
 
     public String variantOfString1()
@@ -95,54 +116,54 @@ public final class ListFromVariantOfListFW extends Flyweight
         variantOfListRO.wrap(buffer, offset, maxLimit);
         final int limit = limit();
         checkLimit(limit, maxLimit);
-        final int length = length();
+        final int length = logicalLength();
         bitmask = 0;
-        ListFW list = variantOfListRO.get();
-        int fieldLimit = offset + list.lengthSize() + list.lengthSize();
+        DirectBuffer fieldsBuffer = variantOfListRO.fields();
+        int fieldLimit = 0;
         for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
         {
-            checkLimit(fieldLimit + BitUtil.SIZE_OF_BYTE, limit);
+            checkLimit(fieldLimit + SIZE_OF_BYTE, limit);
             switch (field)
             {
             case INDEX_VARIANT_OF_STRING1:
-                variantOfString1RO.wrap(buffer, fieldLimit, maxLimit);
+                variantOfString1RO.wrap(fieldsBuffer, fieldLimit, maxLimit);
                 fieldLimit = variantOfString1RO.limit();
                 bitmask |= 1 << INDEX_VARIANT_OF_STRING1;
                 break;
             case INDEX_VARIANT_OF_STRING2:
-                if (buffer().getByte(fieldLimit) != VariantOfListFW.MISSING_FIELD_PLACEHOLDER)
+                if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_PLACEHOLDER)
                 {
-                    variantOfString2RO.wrap(buffer, fieldLimit, maxLimit);
+                    variantOfString2RO.wrap(fieldsBuffer, fieldLimit, maxLimit);
                     fieldLimit = variantOfString2RO.limit();
                     bitmask |= 1 << INDEX_VARIANT_OF_STRING2;
                 }
                 else
                 {
-                    fieldLimit += BitUtil.SIZE_OF_BYTE;
+                    fieldLimit += SIZE_OF_BYTE;
                 }
                 break;
             case INDEX_VARIANT_OF_UINT:
-                if (buffer().getByte(fieldLimit) != VariantOfListFW.MISSING_FIELD_PLACEHOLDER)
+                if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_PLACEHOLDER)
                 {
-                    variantOfUintRO.wrap(buffer, fieldLimit, maxLimit);
+                    variantOfUintRO.wrap(fieldsBuffer, fieldLimit, maxLimit);
                     fieldLimit = variantOfUintRO.limit();
                     bitmask |= 1 << INDEX_VARIANT_OF_UINT;
                 }
                 else
                 {
-                    fieldLimit += BitUtil.SIZE_OF_BYTE;
+                    fieldLimit += SIZE_OF_BYTE;
                 }
                 break;
             case INDEX_VARIANT_OF_INT:
-                if (buffer().getByte(fieldLimit) != VariantOfListFW.MISSING_FIELD_PLACEHOLDER)
+                if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_PLACEHOLDER)
                 {
-                    variantOfIntRO.wrap(buffer, fieldLimit, maxLimit);
+                    variantOfIntRO.wrap(fieldsBuffer, fieldLimit, maxLimit);
                     fieldLimit = variantOfIntRO.limit();
                     bitmask |= 1 << INDEX_VARIANT_OF_INT;
                 }
                 else
                 {
-                    fieldLimit += BitUtil.SIZE_OF_BYTE;
+                    fieldLimit += SIZE_OF_BYTE;
                 }
                 break;
             }
@@ -170,20 +191,20 @@ public final class ListFromVariantOfListFW extends Flyweight
         {
             return null;
         }
-        final int length = length();
+        final int length = logicalLength();
         bitmask = 0;
-        ListFW list = variantOfListRO.get();
-        int fieldLimit = offset + list.lengthSize() + list.lengthSize();
+        DirectBuffer fieldsBuffer = variantOfListRO.fields();
+        int fieldLimit = 0;
         for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
         {
-            if (fieldLimit + BitUtil.SIZE_OF_BYTE > limit)
+            if (fieldLimit + SIZE_OF_BYTE > limit)
             {
                 return null;
             }
             switch (field)
             {
             case INDEX_VARIANT_OF_STRING1:
-                if (variantOfString1RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                if (variantOfString1RO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
                 {
                     return null;
                 }
@@ -191,9 +212,9 @@ public final class ListFromVariantOfListFW extends Flyweight
                 bitmask |= 1 << INDEX_VARIANT_OF_STRING1;
                 break;
             case INDEX_VARIANT_OF_STRING2:
-                if (buffer().getByte(fieldLimit) != VariantOfListFW.MISSING_FIELD_PLACEHOLDER)
+                if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_PLACEHOLDER)
                 {
-                    if (variantOfString2RO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                    if (variantOfString2RO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
@@ -202,13 +223,13 @@ public final class ListFromVariantOfListFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit += BitUtil.SIZE_OF_BYTE;
+                    fieldLimit += SIZE_OF_BYTE;
                 }
                 break;
             case INDEX_VARIANT_OF_UINT:
-                if (buffer().getByte(fieldLimit) != VariantOfListFW.MISSING_FIELD_PLACEHOLDER)
+                if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_PLACEHOLDER)
                 {
-                    if (variantOfUintRO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                    if (variantOfUintRO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
@@ -217,13 +238,13 @@ public final class ListFromVariantOfListFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit += BitUtil.SIZE_OF_BYTE;
+                    fieldLimit += SIZE_OF_BYTE;
                 }
                 break;
             case INDEX_VARIANT_OF_INT:
-                if (buffer().getByte(fieldLimit) != VariantOfListFW.MISSING_FIELD_PLACEHOLDER)
+                if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_PLACEHOLDER)
                 {
-                    if (variantOfIntRO.tryWrap(buffer, fieldLimit, maxLimit) == null)
+                    if (variantOfIntRO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
@@ -232,7 +253,7 @@ public final class ListFromVariantOfListFW extends Flyweight
                 }
                 else
                 {
-                    fieldLimit += BitUtil.SIZE_OF_BYTE;
+                    fieldLimit += SIZE_OF_BYTE;
                 }
                 break;
             }
@@ -247,7 +268,7 @@ public final class ListFromVariantOfListFW extends Flyweight
     @Override
     public int limit()
     {
-        return offset() + variantOfListRO.get().physicalLength();
+        return variantOfListRO.limit();
     }
 
     @Override
@@ -293,68 +314,47 @@ public final class ListFromVariantOfListFW extends Flyweight
             super(new ListFromVariantOfListFW());
         }
 
-        private VariantEnumKindWithString32FW.Builder variantOfString1()
-        {
-            assert lastFieldSet < INDEX_VARIANT_OF_STRING1 : "Field \"variantOfString1\" cannot be set out of order";
-            return variantOfString1RW.wrap(buffer(), limit(), maxLimit());
-        }
-
         public Builder variantOfString1(
             String value)
         {
-            VariantEnumKindWithString32FW.Builder variantOfString1RW = variantOfString1();
-            variantOfString1RW.set(value);
+            assert lastFieldSet < INDEX_VARIANT_OF_STRING1 : "Field \"variantOfString1\" cannot be set out of order";
+            variantOfListRW.field((b, o, m) -> variantOfString1RW.wrap(b, o, m).set(value).build().sizeof());
             lastFieldSet = INDEX_VARIANT_OF_STRING1;
-            limit(variantOfString1RW.build().limit());
             return this;
-        }
-
-        private VariantEnumKindWithString32FW.Builder variantOfString2()
-        {
-            assert lastFieldSet < INDEX_VARIANT_OF_STRING2 : "Field \"variantOfString2\" cannot be set out of order";
-            assert lastFieldSet == INDEX_VARIANT_OF_STRING1 : "Prior required field \"variantOfString1\" is not set";
-            return variantOfString2RW.wrap(buffer(), limit(), maxLimit());
         }
 
         public Builder variantOfString2(
             String value)
         {
-            VariantEnumKindWithString32FW.Builder variantOfString2RW = variantOfString2();
-            variantOfString2RW.set(value);
+            assert lastFieldSet < INDEX_VARIANT_OF_STRING2 : "Field \"variantOfString2\" cannot be set out of order";
+            assert lastFieldSet == INDEX_VARIANT_OF_STRING1 : "Prior required field \"variantOfString1\" is not set";
+            variantOfListRW.field((b, o, m) -> variantOfString2RW.wrap(b, o, m).set(value).build().sizeof());
             lastFieldSet = INDEX_VARIANT_OF_STRING2;
-            limit(variantOfString2RW.build().limit());
             return this;
         }
 
         private Builder defaultVariantOfString2()
         {
             assert lastFieldSet == INDEX_VARIANT_OF_STRING1 : "Prior required field \"variantOfString1\" is not set";
-
-            int newLimit = limit() + BitUtil.SIZE_OF_BYTE;
-            checkLimit(limit(), newLimit);
-            buffer().putByte(limit(), variantOfListRW.missingFieldByte());
+            variantOfListRW.field((b, o, m) ->
+            {
+                b.putByte(o, MISSING_FIELD_PLACEHOLDER);
+                return SIZE_OF_BYTE;
+            });
             lastFieldSet = INDEX_VARIANT_OF_STRING2;
-            limit(newLimit);
             return this;
         }
 
-        private VariantEnumKindOfUint32FW.Builder variantOfUint()
+        public Builder variantOfUint(
+            long value)
         {
             assert lastFieldSet < INDEX_VARIANT_OF_UINT : "Field \"variantOfUint\" cannot be set out of order";
             if (lastFieldSet < INDEX_VARIANT_OF_STRING2)
             {
                 defaultVariantOfString2();
             }
-            return variantOfUintRW.wrap(buffer(), limit(), maxLimit());
-        }
-
-        public Builder variantOfUint(
-            long value)
-        {
-            VariantEnumKindOfUint32FW.Builder variantOfUintRW = variantOfUint();
-            variantOfUintRW.set(value);
+            variantOfListRW.field((b, o, m) -> variantOfUintRW.wrap(b, o, m).set(value).build().sizeof());
             lastFieldSet = INDEX_VARIANT_OF_UINT;
-            limit(variantOfUintRW.build().limit());
             return this;
         }
 
@@ -364,31 +364,25 @@ public final class ListFromVariantOfListFW extends Flyweight
             {
                 defaultVariantOfString2();
             }
-            int newLimit = limit() + BitUtil.SIZE_OF_BYTE;
-            checkLimit(limit(), newLimit);
-            buffer().putByte(limit(), VariantOfListFW.MISSING_FIELD_PLACEHOLDER);
+            variantOfListRW.field((b, o, m) ->
+            {
+                b.putByte(o, MISSING_FIELD_PLACEHOLDER);
+                return SIZE_OF_BYTE;
+            });
             lastFieldSet = INDEX_VARIANT_OF_UINT;
-            limit(newLimit);
             return this;
         }
 
-        private VariantEnumKindWithInt32FW.Builder variantOfInt()
+        public Builder variantOfInt(
+            int value)
         {
             assert lastFieldSet < INDEX_VARIANT_OF_INT : "Field \"variantOfInt\" cannot be set out of order";
             if (lastFieldSet < INDEX_VARIANT_OF_UINT)
             {
                 defaultVariantOfUint();
             }
-            return variantOfIntRW.wrap(buffer(), limit(), maxLimit());
-        }
-
-        public Builder variantOfInt(
-            int value)
-        {
-            VariantEnumKindWithInt32FW.Builder variantOfIntRW = variantOfInt();
-            variantOfIntRW.set(value);
+            variantOfListRW.field((b, o, m) -> variantOfIntRW.wrap(b, o, m).set(value).build().sizeof());
             lastFieldSet = INDEX_VARIANT_OF_INT;
-            limit(variantOfIntRW.build().limit());
             return this;
         }
 
@@ -400,11 +394,7 @@ public final class ListFromVariantOfListFW extends Flyweight
         {
             super.wrap(buffer, offset, maxLimit);
             lastFieldSet = -1;
-            variantOfListRW.wrap(buffer(), offset(), maxLimit());
-            int newLimit = limit(); // TODO: wrong
-            // TODO: Needs to know the size of physical/logical length before setting any field
-            checkLimit(newLimit, maxLimit());
-            limit(newLimit);
+            variantOfListRW.wrap(buffer, offset, maxLimit);
             return this;
         }
 
@@ -412,7 +402,7 @@ public final class ListFromVariantOfListFW extends Flyweight
         public ListFromVariantOfListFW build()
         {
             assert lastFieldSet >= INDEX_VARIANT_OF_STRING1 : "Required field \"variantOfString1\" is not set";
-            variantOfListRW.set(limit() - offset(), lastFieldSet + 1);
+            limit(variantOfListRW.build().limit());
             return super.build();
         }
     }
