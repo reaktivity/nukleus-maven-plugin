@@ -230,7 +230,6 @@ public final class VariantOfListFW extends ListFW
         {
             kind(KIND_THREE);
             List0FW.Builder list0 = list0FW.wrap(buffer(), limit(), maxLimit());
-            list0.set(list);
             limit(list0.build().limit());
             return this;
         }

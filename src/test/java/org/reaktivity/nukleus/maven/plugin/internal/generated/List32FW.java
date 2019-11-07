@@ -71,6 +71,10 @@ public final class List32FW extends ListFW
         }
         int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
         fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
+        if (limit() > maxLimit)
+        {
+            return null;
+        }
         return this;
     }
 
@@ -83,6 +87,7 @@ public final class List32FW extends ListFW
         super.wrap(buffer, offset, maxLimit);
         int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
         fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
+        checkLimit(limit(), maxLimit);
         return this;
     }
 

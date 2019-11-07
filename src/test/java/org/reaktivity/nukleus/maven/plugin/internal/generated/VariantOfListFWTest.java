@@ -163,11 +163,11 @@ public class VariantOfListFWTest
     @Test
     public void shouldSetFieldsUsingSetAsList0Method() throws Exception
     {
-        ListFW.Builder listRW = new List0FW.Builder()
+        List0FW.Builder listRW = new List0FW.Builder()
             .wrap(buffer, 1, buffer.capacity());
 
         int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .setAsList0((ListFW) listRW.build())
+            .setAsList0(listRW.build())
             .build()
             .limit();
         variantOfListRO.wrap(buffer,  0,  limit);

@@ -71,6 +71,10 @@ public class List0FW extends ListFW
         }
         int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
         fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
+        if (limit() > maxLimit)
+        {
+            return null;
+        }
         return this;
     }
 
@@ -83,36 +87,15 @@ public class List0FW extends ListFW
         super.wrap(buffer, offset, maxLimit);
         int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
         fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
+        checkLimit(limit(), maxLimit);
         return this;
     }
 
-    public static final class Builder extends ListFW.Builder<List0FW>
+    public static final class Builder extends Flyweight.Builder<List0FW>
     {
         public Builder()
         {
             super(new List0FW());
-        }
-
-        @Override
-        public Builder set(
-            ListFW value)
-        {
-            return this;
-        }
-
-        @Override
-        public Builder field(
-            Flyweight.Builder.Visitor visitor)
-        {
-            return this;
-        }
-
-        @Override
-        public Builder fields(
-            int fieldCount,
-            Flyweight.Builder.Visitor visitor)
-        {
-            return this;
         }
 
         @Override
@@ -131,7 +114,7 @@ public class List0FW extends ListFW
         @Override
         public List0FW build()
         {
-            return (List0FW) super.build();
+            return super.build();
         }
     }
 }
