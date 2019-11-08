@@ -18,24 +18,23 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public class List0FW extends ListFW
 {
     private static final DirectBuffer FIELDS_EMPTY_VALUE = new UnsafeBuffer(0L, 0);
 
-    private static final int PHYSICAL_LENGTH_SIZE = 0;
+    private static final int LENGTH_SIZE = 0;
 
-    private static final int LOGICAL_LENGTH_SIZE = 0;
+    private static final int FIELD_COUNT_SIZE = 0;
 
-    private static final int PHYSICAL_LENGTH_OFFSET = 0;
+    private static final int LENGTH_OFFSET = 0;
 
-    private static final int LOGICAL_LENGTH_OFFSET = PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE;
+    private static final int FIELD_COUNT_OFFSET = LENGTH_OFFSET + LENGTH_SIZE;
 
     @Override
     public int limit()
     {
-        return offset() + PHYSICAL_LENGTH_SIZE + length();
+        return offset() + LENGTH_SIZE + length();
     }
 
     @Override
@@ -84,7 +83,7 @@ public class List0FW extends ListFW
         return this;
     }
 
-    public static final class Builder extends Flyweight.Builder<List0FW>
+    public static final class Builder extends ListFW.Builder<List0FW>
     {
         public Builder()
         {

@@ -24,34 +24,34 @@ public final class List8FW extends ListFW
 {
     final DirectBuffer fieldsRO = new UnsafeBuffer(0L, 0);
 
-    private static final int PHYSICAL_LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
+    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
-    private static final int LOGICAL_LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
+    private static final int FIELD_COUNT_SIZE = BitUtil.SIZE_OF_BYTE;
 
-    private static final int PHYSICAL_LENGTH_OFFSET = 0;
+    private static final int LENGTH_OFFSET = 0;
 
-    private static final int LOGICAL_LENGTH_OFFSET = PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE;
+    private static final int FIELD_COUNT_OFFSET = LENGTH_OFFSET + LENGTH_SIZE;
 
-    private static final int FIELDS_OFFSET = LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE;
+    private static final int FIELDS_OFFSET = FIELD_COUNT_OFFSET + FIELD_COUNT_SIZE;
 
     private static final int LENGTH_MAX_VALUE = Byte.MAX_VALUE + Byte.MAX_VALUE + 1;
 
     @Override
     public int limit()
     {
-        return offset() + PHYSICAL_LENGTH_SIZE + length();
+        return offset() + LENGTH_SIZE + length();
     }
 
     @Override
     public int length()
     {
-        return buffer().getByte(offset() + PHYSICAL_LENGTH_OFFSET);
+        return buffer().getByte(offset() + LENGTH_OFFSET);
     }
 
     @Override
     public int fieldCount()
     {
-        return buffer().getByte(offset() + LOGICAL_LENGTH_OFFSET);
+        return buffer().getByte(offset() + FIELD_COUNT_OFFSET);
     }
 
     @Override
@@ -70,7 +70,7 @@ public final class List8FW extends ListFW
         {
             return null;
         }
-        final int fieldsSize = length() - LOGICAL_LENGTH_SIZE;
+        final int fieldsSize = length() - FIELD_COUNT_SIZE;
         fieldsRO.wrap(buffer, offset + FIELDS_OFFSET, fieldsSize);
         if (limit() > maxLimit)
         {
@@ -86,7 +86,7 @@ public final class List8FW extends ListFW
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        final int fieldsSize = length() - LOGICAL_LENGTH_SIZE;
+        final int fieldsSize = length() - FIELD_COUNT_SIZE;
         fieldsRO.wrap(buffer, offset + FIELDS_OFFSET, fieldsSize);
         checkLimit(limit(), maxLimit);
         return this;
@@ -97,32 +97,6 @@ public final class List8FW extends ListFW
         public Builder()
         {
             super(new List8FW());
-        }
-
-        @Override
-        public Builder set(
-            ListFW value)
-        {
-            int newLimit = offset() + PHYSICAL_LENGTH_SIZE;
-            checkLimit(newLimit, maxLimit());
-            assert value.length() <= LENGTH_MAX_VALUE : "Value length is too large";
-            buffer().putByte(offset(), (byte) value.length());
-            limit(newLimit);
-
-            newLimit = limit() + LOGICAL_LENGTH_SIZE;
-            checkLimit(newLimit, maxLimit());
-            assert value.fieldCount() <= LENGTH_MAX_VALUE : "Value fieldCount is too large";
-            buffer().putByte(limit(), (byte) value.fieldCount());
-            limit(newLimit);
-
-            int fieldsSize = value.length() - LOGICAL_LENGTH_SIZE;
-            newLimit = limit() + fieldsSize;
-            checkLimit(newLimit, maxLimit());
-            buffer().putBytes(limit(), value.fields(), 0, fieldsSize);
-            limit(newLimit);
-
-            super.set(value);
-            return this;
         }
 
         @Override
@@ -141,12 +115,12 @@ public final class List8FW extends ListFW
         @Override
         public List8FW build()
         {
-            int physicalLength = limit() - offset() - LOGICAL_LENGTH_OFFSET;
-            int logicalLength = fieldsCount();
-            assert physicalLength <= LENGTH_MAX_VALUE : "Physical length is too large";
-            assert logicalLength <= LENGTH_MAX_VALUE : "Logical length is too large";
-            buffer().putByte(offset() + PHYSICAL_LENGTH_OFFSET, (byte) physicalLength);
-            buffer().putByte(offset() + LOGICAL_LENGTH_OFFSET, (byte) logicalLength);
+            int length = limit() - offset() - FIELD_COUNT_OFFSET;
+            int fieldCount = fieldsCount();
+            assert length <= LENGTH_MAX_VALUE : "Physical length is too large";
+            assert fieldCount <= LENGTH_MAX_VALUE : "Logical length is too large";
+            buffer().putByte(offset() + LENGTH_OFFSET, (byte) length);
+            buffer().putByte(offset() + FIELD_COUNT_OFFSET, (byte) fieldCount);
             return super.build();
         }
     }

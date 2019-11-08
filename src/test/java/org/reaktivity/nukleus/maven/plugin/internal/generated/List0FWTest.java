@@ -41,8 +41,8 @@ public class List0FWTest
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 0;
-        for (int maxLimit = 0; maxLimit <= physicalLength; maxLimit++)
+        int length = 0;
+        for (int maxLimit = 0; maxLimit <= length; maxLimit++)
         {
             try
             {
@@ -62,25 +62,25 @@ public class List0FWTest
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 0;
-        int offsetPhysicalLength = 10;
-        for (int maxLimit = 0; maxLimit <= physicalLength; maxLimit++)
+        int length = 0;
+        int offsetLength = 10;
+        for (int maxLimit = 0; maxLimit <= length; maxLimit++)
         {
-            assertNull(list0RO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
+            assertNull(list0RO.tryWrap(buffer,  offsetLength, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 0;
-        int logicalLength = 0;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + physicalLength;
+        int length = 0;
+        int fieldCount = 0;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + length;
 
-        assertSame(list0RO, list0RO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list0RO.length());
-        assertEquals(logicalLength, list0RO.fieldCount());
+        assertSame(list0RO, list0RO.wrap(buffer, offsetLength, maxLimit));
+        assertEquals(length, list0RO.length());
+        assertEquals(fieldCount, list0RO.fieldCount());
         assertEquals(0, list0RO.fields().capacity());
         assertEquals(maxLimit, list0RO.limit());
     }
@@ -88,14 +88,14 @@ public class List0FWTest
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 0;
-        int logicalLength = 0;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + physicalLength;
+        int length = 0;
+        int fieldCount = 0;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + length;
 
-        assertSame(list0RO, list0RO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list0RO.length());
-        assertEquals(logicalLength, list0RO.fieldCount());
+        assertSame(list0RO, list0RO.tryWrap(buffer, offsetLength, maxLimit));
+        assertEquals(length, list0RO.length());
+        assertEquals(fieldCount, list0RO.fieldCount());
         assertEquals(0, list0RO.fields().capacity());
         assertEquals(maxLimit, list0RO.limit());
     }

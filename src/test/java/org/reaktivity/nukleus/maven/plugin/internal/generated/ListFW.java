@@ -36,13 +36,6 @@ public abstract class ListFW extends Flyweight
             super(flyweight);
         }
 
-        public Builder<T> set(
-            ListFW value)
-        {
-            fieldCount += value.fieldCount();
-            return this;
-        }
-
         @Override
         public Builder wrap(
             MutableDirectBuffer buffer,
@@ -70,9 +63,23 @@ public abstract class ListFW extends Flyweight
             Flyweight.Builder.Visitor visitor)
         {
             int length = visitor.visit(buffer(), limit(), maxLimit());
-            this.fieldCount = fieldCount;
+            this.fieldCount += fieldCount;
             int newLimit = limit() + length;
             checkLimit(newLimit, maxLimit());
+            limit(newLimit);
+            return this;
+        }
+
+        public Builder fields(
+            int fieldCount,
+            DirectBuffer buffer,
+            int index,
+            int length)
+        {
+            this.fieldCount += fieldCount;
+            int newLimit = limit() + length;
+            checkLimit(newLimit, maxLimit());
+            buffer().putBytes(limit(), buffer, index, length);
             limit(newLimit);
             return this;
         }
@@ -80,12 +87,6 @@ public abstract class ListFW extends Flyweight
         protected int fieldsCount()
         {
             return fieldCount;
-        }
-
-        @Override
-        public T build()
-        {
-            return super.build();
         }
     }
 }

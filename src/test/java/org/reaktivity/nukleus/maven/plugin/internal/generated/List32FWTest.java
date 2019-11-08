@@ -41,20 +41,20 @@ public class List32FWTest
 
     private final List32FW.Builder list32RW = new List32FW.Builder();
     private final List32FW list32RO = new List32FW();
-    private final int physicalLengthSize = Integer.BYTES;
-    private final int logicalLengthSize = Integer.BYTES;
+    private final int lengthSize = Integer.BYTES;
+    private final int fieldCountSize = Integer.BYTES;
 
     private void setAllFields(
         MutableDirectBuffer buffer)
     {
-        int physicalLength = 44;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        buffer.putInt(offsetPhysicalLength, physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putInt(offsetLogicalLength, logicalLength);
+        int length = 44;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        buffer.putInt(offsetLength, length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putInt(offsetFieldCount, fieldCount);
 
-        int offsetVariantOfString1Kind = offsetLogicalLength + logicalLengthSize;
+        int offsetVariantOfString1Kind = offsetFieldCount + fieldCountSize;
         buffer.putByte(offsetVariantOfString1Kind, EnumWithInt8.ONE.value());
         int offsetVariantOfString1Length = offsetVariantOfString1Kind + Byte.BYTES;
         buffer.putByte(offsetVariantOfString1Length, (byte) "string1".length());
@@ -82,9 +82,9 @@ public class List32FWTest
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 40;
+        int length = 40;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
             try
             {
@@ -104,49 +104,49 @@ public class List32FWTest
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 40;
-        int offsetPhysicalLength = 10;
+        int length = 40;
+        int offsetLength = 10;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
-            assertNull(list32RO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
+            assertNull(list32RO.tryWrap(buffer,  offsetLength, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 44;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + physicalLengthSize + physicalLength;
+        int length = 44;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + lengthSize + length;
         setAllFields(buffer);
 
-        assertSame(list32RO, list32RO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list32RO.length());
-        assertEquals(logicalLength, list32RO.fieldCount());
-        assertEquals(physicalLength - logicalLengthSize, list32RO.fields().capacity());
+        assertSame(list32RO, list32RO.wrap(buffer, offsetLength, maxLimit));
+        assertEquals(length, list32RO.length());
+        assertEquals(fieldCount, list32RO.fieldCount());
+        assertEquals(length - fieldCountSize, list32RO.fields().capacity());
         assertEquals(maxLimit, list32RO.limit());
     }
 
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 44;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + physicalLengthSize + physicalLength;
+        int length = 44;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + lengthSize + length;
         setAllFields(buffer);
 
-        assertSame(list32RO, list32RO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list32RO.length());
-        assertEquals(logicalLength, list32RO.fieldCount());
-        assertEquals(physicalLength - logicalLengthSize, list32RO.fields().capacity());
+        assertSame(list32RO, list32RO.tryWrap(buffer, offsetLength, maxLimit));
+        assertEquals(length, list32RO.length());
+        assertEquals(fieldCount, list32RO.fieldCount());
+        assertEquals(length - fieldCountSize, list32RO.fields().capacity());
         assertEquals(maxLimit, list32RO.limit());
     }
 
     @Test
-    public void shouldSetFieldsUsingSetMethod() throws Exception
+    public void shouldSetFieldsUsingFieldsMethodWithDirectBuffer() throws Exception
     {
         final MutableDirectBuffer listBuffer = new UnsafeBuffer(allocateDirect(100))
         {
@@ -161,9 +161,9 @@ public class List32FWTest
             .wrap(listBuffer, 0, listBuffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
-
+        List32FW list32RO = (List32FW) listRW.build();
         int limit = list32RW.wrap(buffer, 0, buffer.capacity())
-            .set((ListFW) listRW.build())
+            .fields(2, list32RO.buffer(), 0, list32RO.length() - fieldCountSize)
             .build()
             .limit();
         list32RO.wrap(buffer,  0,  limit);
@@ -173,7 +173,7 @@ public class List32FWTest
     }
 
     @Test
-    public void shouldSetFieldsUsingFieldsMethod() throws Exception
+    public void shouldSetFieldsUsingFieldsMethodWithVisitor() throws Exception
     {
         final MutableDirectBuffer listBuffer = new UnsafeBuffer(allocateDirect(100))
         {

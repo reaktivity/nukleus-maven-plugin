@@ -41,20 +41,20 @@ public class List8FWTest
 
     private final List8FW.Builder list8RW = new List8FW.Builder();
     private final List8FW list8RO = new List8FW();
-    private final int physicalLengthSize = Byte.BYTES;
-    private final int logicalLengthSize = Byte.BYTES;
+    private final int lengthSize = Byte.BYTES;
+    private final int fieldCountSize = Byte.BYTES;
 
     private void setAllFields(
         MutableDirectBuffer buffer)
     {
-        int physicalLength = 40;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        buffer.putByte(offsetPhysicalLength, (byte) physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putByte(offsetLogicalLength, (byte) logicalLength);
+        int length = 40;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        buffer.putByte(offsetLength, (byte) length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putByte(offsetFieldCount, (byte) fieldCount);
 
-        int offsetVariantOfString1Kind = offsetLogicalLength + logicalLengthSize;
+        int offsetVariantOfString1Kind = offsetFieldCount + fieldCountSize;
         buffer.putByte(offsetVariantOfString1Kind, EnumWithInt8.ONE.value());
         int offsetVariantOfString1Length = offsetVariantOfString1Kind + Byte.BYTES;
         buffer.putByte(offsetVariantOfString1Length, (byte) "string1".length());
@@ -82,9 +82,9 @@ public class List8FWTest
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 40;
+        int length = 40;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
             try
             {
@@ -104,49 +104,49 @@ public class List8FWTest
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 40;
-        int offsetPhysicalLength = 10;
+        int length = 40;
+        int offsetLength = 10;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
-            assertNull(list8RO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
+            assertNull(list8RO.tryWrap(buffer,  offsetLength, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 40;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + physicalLengthSize + physicalLength;
+        int length = 40;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + lengthSize + length;
         setAllFields(buffer);
 
-        assertSame(list8RO, list8RO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list8RO.length());
-        assertEquals(logicalLength, list8RO.fieldCount());
-        assertEquals(physicalLength - logicalLengthSize, list8RO.fields().capacity());
+        assertSame(list8RO, list8RO.wrap(buffer, offsetLength, maxLimit));
+        assertEquals(length, list8RO.length());
+        assertEquals(fieldCount, list8RO.fieldCount());
+        assertEquals(length - fieldCountSize, list8RO.fields().capacity());
         assertEquals(maxLimit, list8RO.limit());
     }
 
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 40;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + physicalLengthSize + physicalLength;
+        int length = 40;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + lengthSize + length;
         setAllFields(buffer);
 
-        assertSame(list8RO, list8RO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list8RO.length());
-        assertEquals(logicalLength, list8RO.fieldCount());
-        assertEquals(physicalLength - logicalLengthSize, list8RO.fields().capacity());
+        assertSame(list8RO, list8RO.tryWrap(buffer, offsetLength, maxLimit));
+        assertEquals(length, list8RO.length());
+        assertEquals(fieldCount, list8RO.fieldCount());
+        assertEquals(length - fieldCountSize, list8RO.fields().capacity());
         assertEquals(maxLimit, list8RO.limit());
     }
 
     @Test
-    public void shouldSetFieldsUsingSetMethod() throws Exception
+    public void shouldSetFieldsUsingFieldsMethodWithDirectBuffer() throws Exception
     {
         final MutableDirectBuffer listBuffer = new UnsafeBuffer(allocateDirect(100))
         {
@@ -161,9 +161,9 @@ public class List8FWTest
             .wrap(listBuffer, 0, listBuffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
-
+        List8FW list8RO = (List8FW) listRW.build();
         int limit = list8RW.wrap(buffer, 0, buffer.capacity())
-            .set((ListFW) listRW.build())
+            .fields(2, list8RO.buffer(), 0, list8RO.length() - fieldCountSize)
             .build()
             .limit();
         list8RO.wrap(buffer,  0,  limit);
@@ -173,7 +173,7 @@ public class List8FWTest
     }
 
     @Test
-    public void shouldSetFieldsUsingFieldsMethod() throws Exception
+    public void shouldSetFieldsUsingFieldsMethodWithVisitor() throws Exception
     {
         final MutableDirectBuffer listBuffer = new UnsafeBuffer(allocateDirect(100))
         {
