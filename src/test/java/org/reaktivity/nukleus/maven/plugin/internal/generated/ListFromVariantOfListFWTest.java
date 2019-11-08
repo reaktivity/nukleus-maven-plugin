@@ -124,8 +124,8 @@ public class ListFromVariantOfListFWTest
         setAllFields(buffer);
 
         assertSame(listFromVariantOfListRO, listFromVariantOfListRO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, listFromVariantOfListRO.physicalLength());
-        assertEquals(logicalLength, listFromVariantOfListRO.logicalLength());
+        assertEquals(physicalLength, listFromVariantOfListRO.length());
+        assertEquals(logicalLength, listFromVariantOfListRO.fieldCount());
         assertEquals("string1", listFromVariantOfListRO.variantOfString1());
         assertEquals("string2", listFromVariantOfListRO.variantOfString2());
         assertEquals(4000000000L, listFromVariantOfListRO.variantOfUint());
@@ -144,8 +144,8 @@ public class ListFromVariantOfListFWTest
         setAllFields(buffer);
 
         assertSame(listFromVariantOfListRO, listFromVariantOfListRO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, listFromVariantOfListRO.physicalLength());
-        assertEquals(logicalLength, listFromVariantOfListRO.logicalLength());
+        assertEquals(physicalLength, listFromVariantOfListRO.length());
+        assertEquals(logicalLength, listFromVariantOfListRO.fieldCount());
         assertEquals("string1", listFromVariantOfListRO.variantOfString1());
         assertEquals("string2", listFromVariantOfListRO.variantOfString2());
         assertEquals(4000000000L, listFromVariantOfListRO.variantOfUint());

@@ -18,9 +18,12 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 
 public final class List32FW extends ListFW
 {
+    private final DirectBuffer fieldsRO = new UnsafeBuffer(0L, 0);
+
     private static final int PHYSICAL_LENGTH_SIZE = BitUtil.SIZE_OF_INT;
 
     private static final int LOGICAL_LENGTH_SIZE = BitUtil.SIZE_OF_INT;
@@ -29,28 +32,24 @@ public final class List32FW extends ListFW
 
     private static final int LOGICAL_LENGTH_OFFSET = PHYSICAL_LENGTH_OFFSET + PHYSICAL_LENGTH_SIZE;
 
+    private static final int FIELDS_OFFSET = LOGICAL_LENGTH_OFFSET + LOGICAL_LENGTH_SIZE;
+
     @Override
     public int limit()
     {
-        return offset() + PHYSICAL_LENGTH_SIZE + physicalLength();
+        return offset() + PHYSICAL_LENGTH_SIZE + length();
     }
 
     @Override
-    public int physicalLength()
+    public int length()
     {
         return buffer().getInt(offset() + PHYSICAL_LENGTH_OFFSET);
     }
 
     @Override
-    public int logicalLength()
+    public int fieldCount()
     {
         return buffer().getInt(offset() + LOGICAL_LENGTH_OFFSET);
-    }
-
-    @Override
-    public int lengthSize()
-    {
-        return PHYSICAL_LENGTH_SIZE;
     }
 
     @Override
@@ -69,8 +68,8 @@ public final class List32FW extends ListFW
         {
             return null;
         }
-        int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
-        fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
+        int fieldsLength = length() - LOGICAL_LENGTH_SIZE;
+        fieldsRO.wrap(buffer, offset + FIELDS_OFFSET, fieldsLength);
         if (limit() > maxLimit)
         {
             return null;
@@ -85,8 +84,8 @@ public final class List32FW extends ListFW
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
-        fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
+        int fieldsLength = length() - LOGICAL_LENGTH_SIZE;
+        fieldsRO.wrap(buffer, offset + FIELDS_OFFSET, fieldsLength);
         checkLimit(limit(), maxLimit);
         return this;
     }
@@ -104,21 +103,21 @@ public final class List32FW extends ListFW
         {
             int newLimit = offset() + PHYSICAL_LENGTH_SIZE;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset(), value.physicalLength());
+            buffer().putInt(offset(), value.length());
             limit(newLimit);
-            fieldsLength(value.physicalLength() - LOGICAL_LENGTH_SIZE);
 
             newLimit = limit() + LOGICAL_LENGTH_SIZE;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(limit(), value.logicalLength());
+            buffer().putInt(limit(), value.fieldCount());
             limit(newLimit);
-            fieldsCount(value.logicalLength());
 
-            int fieldsSize = value.physicalLength() - LOGICAL_LENGTH_SIZE;
+            int fieldsSize = value.length() - LOGICAL_LENGTH_SIZE;
             newLimit = limit() + fieldsSize;
             checkLimit(newLimit, maxLimit());
             buffer().putBytes(limit(), value.fields(), 0, fieldsSize);
             limit(newLimit);
+
+            super.set(value);
             return this;
         }
 
@@ -129,7 +128,7 @@ public final class List32FW extends ListFW
             int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
-            int newLimit = offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE;
+            int newLimit = offset + FIELDS_OFFSET;
             checkLimit(newLimit, maxLimit);
             limit(newLimit);
             return this;
@@ -138,9 +137,9 @@ public final class List32FW extends ListFW
         @Override
         public List32FW build()
         {
-            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, fieldsLength() + LOGICAL_LENGTH_SIZE);
+            buffer().putInt(offset() + PHYSICAL_LENGTH_OFFSET, limit() - offset() - LOGICAL_LENGTH_OFFSET);
             buffer().putInt(offset() + LOGICAL_LENGTH_OFFSET, fieldsCount());
-            return (List32FW) super.build();
+            return super.build();
         }
     }
 }

@@ -79,8 +79,8 @@ public class List0FWTest
         int maxLimit = offsetPhysicalLength + physicalLength;
 
         assertSame(list0RO, list0RO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list0RO.physicalLength());
-        assertEquals(logicalLength, list0RO.logicalLength());
+        assertEquals(physicalLength, list0RO.length());
+        assertEquals(logicalLength, list0RO.fieldCount());
         assertEquals(0, list0RO.fields().capacity());
         assertEquals(maxLimit, list0RO.limit());
     }
@@ -94,8 +94,8 @@ public class List0FWTest
         int maxLimit = offsetPhysicalLength + physicalLength;
 
         assertSame(list0RO, list0RO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list0RO.physicalLength());
-        assertEquals(logicalLength, list0RO.logicalLength());
+        assertEquals(physicalLength, list0RO.length());
+        assertEquals(logicalLength, list0RO.fieldCount());
         assertEquals(0, list0RO.fields().capacity());
         assertEquals(maxLimit, list0RO.limit());
     }
@@ -107,9 +107,8 @@ public class List0FWTest
             .build()
             .limit();
         list0RO.wrap(buffer,  0,  limit);
-        assertEquals(0, list0RO.physicalLength());
-        assertEquals(0, list0RO.logicalLength());
-        assertEquals(0, list0RO.lengthSize());
+        assertEquals(0, list0RO.length());
+        assertEquals(0, list0RO.fieldCount());
         assertEquals(0, list0RO.limit());
     }
 }

@@ -16,40 +16,49 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
+import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public abstract class ListFW extends Flyweight
 {
-    final DirectBuffer fieldsRO = new UnsafeBuffer(0L, 0);
+    public abstract int length();
 
-    public abstract int physicalLength();
-
-    public abstract int logicalLength();
-
-    public abstract int lengthSize();
+    public abstract int fieldCount();
 
     public abstract DirectBuffer fields();
 
-    public abstract static class Builder<T extends ListFW> extends Flyweight.Builder
+    public abstract static class Builder<T extends ListFW> extends Flyweight.Builder<T>
     {
-        private int fieldsCount;
+        private int fieldCount;
 
-        private int fieldsLength;
-
-        public Builder(Flyweight flyweight)
+        public Builder(T flyweight)
         {
             super(flyweight);
         }
 
-        public abstract Builder<T> set(ListFW value);
+        public Builder<T> set(
+            ListFW value)
+        {
+            fieldCount += value.fieldCount();
+            return this;
+        }
+
+        @Override
+        public Builder wrap(
+            MutableDirectBuffer buffer,
+            int offset,
+            int maxLimit)
+        {
+            super.wrap(buffer, offset, maxLimit);
+            fieldCount = 0;
+            return this;
+        }
 
         public Builder field(
             Flyweight.Builder.Visitor visitor)
         {
             int length = visitor.visit(buffer(), limit(), maxLimit());
-            fieldsCount++;
-            fieldsLength += length;
+            fieldCount++;
             int newLimit = limit() + length;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
@@ -61,35 +70,22 @@ public abstract class ListFW extends Flyweight
             Flyweight.Builder.Visitor visitor)
         {
             int length = visitor.visit(buffer(), limit(), maxLimit());
-            fieldsCount = fieldCount;
-            fieldsLength = length;
+            this.fieldCount = fieldCount;
             int newLimit = limit() + length;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
             return this;
         }
 
-        public void fieldsCount(
-            int fieldsCount)
-        {
-            this.fieldsCount = fieldsCount;
-        }
-
-        public Builder fieldsLength(
-            int fieldsLength)
-        {
-            this.fieldsLength = fieldsLength;
-            return this;
-        }
-
         protected int fieldsCount()
         {
-            return fieldsCount;
+            return fieldCount;
         }
 
-        protected int fieldsLength()
+        @Override
+        public T build()
         {
-            return fieldsLength;
+            return super.build();
         }
     }
 }

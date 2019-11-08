@@ -123,8 +123,8 @@ public class List8FWTest
         setAllFields(buffer);
 
         assertSame(list8RO, list8RO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list8RO.physicalLength());
-        assertEquals(logicalLength, list8RO.logicalLength());
+        assertEquals(physicalLength, list8RO.length());
+        assertEquals(logicalLength, list8RO.fieldCount());
         assertEquals(physicalLength - logicalLengthSize, list8RO.fields().capacity());
         assertEquals(maxLimit, list8RO.limit());
     }
@@ -139,8 +139,8 @@ public class List8FWTest
         setAllFields(buffer);
 
         assertSame(list8RO, list8RO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list8RO.physicalLength());
-        assertEquals(logicalLength, list8RO.logicalLength());
+        assertEquals(physicalLength, list8RO.length());
+        assertEquals(logicalLength, list8RO.fieldCount());
         assertEquals(physicalLength - logicalLengthSize, list8RO.fields().capacity());
         assertEquals(maxLimit, list8RO.limit());
     }
@@ -167,9 +167,8 @@ public class List8FWTest
             .build()
             .limit();
         list8RO.wrap(buffer,  0,  limit);
-        assertEquals(26, list8RO.physicalLength());
-        assertEquals(2, list8RO.logicalLength());
-        assertEquals(1, list8RO.lengthSize());
+        assertEquals(26, list8RO.length());
+        assertEquals(2, list8RO.fieldCount());
         assertEquals(27, list8RO.limit());
     }
 
@@ -200,9 +199,8 @@ public class List8FWTest
             .build()
             .limit();
         list8RO.wrap(buffer,  0,  limit);
-        assertEquals(26, list8RO.physicalLength());
-        assertEquals(2, list8RO.logicalLength());
-        assertEquals(1, list8RO.lengthSize());
+        assertEquals(26, list8RO.length());
+        assertEquals(2, list8RO.fieldCount());
         assertEquals(27, list8RO.limit());
     }
 
@@ -217,9 +215,8 @@ public class List8FWTest
             .build()
             .limit();
         list8RO.wrap(buffer,  0,  limit);
-        assertEquals(26, list8RO.physicalLength());
-        assertEquals(2, list8RO.logicalLength());
-        assertEquals(1, list8RO.lengthSize());
+        assertEquals(26, list8RO.length());
+        assertEquals(2, list8RO.fieldCount());
         assertEquals(27, list8RO.limit());
     }
 }

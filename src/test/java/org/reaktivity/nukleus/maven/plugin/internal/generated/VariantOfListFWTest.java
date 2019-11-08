@@ -138,8 +138,8 @@ public class VariantOfListFWTest
         setAllFields(buffer);
 
         assertSame(variantOfListRO, variantOfListRO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, variantOfListRO.physicalLength());
-        assertEquals(logicalLength, variantOfListRO.logicalLength());
+        assertEquals(physicalLength, variantOfListRO.length());
+        assertEquals(logicalLength, variantOfListRO.fieldCount());
         assertEquals(physicalLength - logicalLength, variantOfListRO.fields().capacity());
     }
 
@@ -155,8 +155,8 @@ public class VariantOfListFWTest
         setAllFields(buffer);
 
         assertSame(variantOfListRO, variantOfListRO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, variantOfListRO.physicalLength());
-        assertEquals(logicalLength, variantOfListRO.logicalLength());
+        assertEquals(physicalLength, variantOfListRO.length());
+        assertEquals(logicalLength, variantOfListRO.fieldCount());
         assertEquals(physicalLength - logicalLength, variantOfListRO.fields().capacity());
     }
 
@@ -172,12 +172,11 @@ public class VariantOfListFWTest
             .limit();
         variantOfListRO.wrap(buffer,  0,  limit);
         assertEquals(EnumWithInt8.THREE, variantOfListRO.kind());
-        assertEquals(0, variantOfListRO.get().physicalLength());
-        assertEquals(0, variantOfListRO.get().logicalLength());
-        assertEquals(0, variantOfListRO.lengthSize());
+        assertEquals(0, variantOfListRO.get().length());
+        assertEquals(0, variantOfListRO.get().fieldCount());
         assertEquals(1, variantOfListRO.limit());
-        assertEquals(0, variantOfListRO.physicalLength());
-        assertEquals(0, variantOfListRO.logicalLength());
+        assertEquals(0, variantOfListRO.length());
+        assertEquals(0, variantOfListRO.fieldCount());
     }
 
     @Test
@@ -196,12 +195,11 @@ public class VariantOfListFWTest
             .limit();
         variantOfListRO.wrap(buffer,  0,  limit);
         assertEquals(EnumWithInt8.TWO, variantOfListRO.kind());
-        assertEquals(26, variantOfListRO.get().physicalLength());
-        assertEquals(2, variantOfListRO.get().logicalLength());
-        assertEquals(1, variantOfListRO.lengthSize());
+        assertEquals(26, variantOfListRO.get().length());
+        assertEquals(2, variantOfListRO.get().fieldCount());
         assertEquals(28, variantOfListRO.limit());
-        assertEquals(26, variantOfListRO.physicalLength());
-        assertEquals(2, variantOfListRO.logicalLength());
+        assertEquals(26, variantOfListRO.length());
+        assertEquals(2, variantOfListRO.fieldCount());
     }
 
     @Test
@@ -227,12 +225,11 @@ public class VariantOfListFWTest
             .limit();
         variantOfListRO.wrap(buffer,  0,  limit);
         assertEquals(EnumWithInt8.ONE, variantOfListRO.kind());
-        assertEquals(272, variantOfListRO.get().physicalLength());
-        assertEquals(2, variantOfListRO.get().logicalLength());
-        assertEquals(4, variantOfListRO.lengthSize());
+        assertEquals(272, variantOfListRO.get().length());
+        assertEquals(2, variantOfListRO.get().fieldCount());
         assertEquals(277, variantOfListRO.limit());
-        assertEquals(272, variantOfListRO.physicalLength());
-        assertEquals(2, variantOfListRO.logicalLength());
+        assertEquals(272, variantOfListRO.length());
+        assertEquals(2, variantOfListRO.fieldCount());
     }
 
     @Test
@@ -251,12 +248,11 @@ public class VariantOfListFWTest
             .limit();
         variantOfListRO.wrap(buffer,  0,  limit);
         assertEquals(EnumWithInt8.TWO, variantOfListRO.kind());
-        assertEquals(26, variantOfListRO.get().physicalLength());
-        assertEquals(2, variantOfListRO.get().logicalLength());
-        assertEquals(1, variantOfListRO.lengthSize());
+        assertEquals(26, variantOfListRO.get().length());
+        assertEquals(2, variantOfListRO.get().fieldCount());
         assertEquals(28, variantOfListRO.limit());
-        assertEquals(26, variantOfListRO.physicalLength());
-        assertEquals(2, variantOfListRO.logicalLength());
+        assertEquals(26, variantOfListRO.length());
+        assertEquals(2, variantOfListRO.fieldCount());
     }
 
     @Test
@@ -271,11 +267,10 @@ public class VariantOfListFWTest
             .limit();
         variantOfListRO.wrap(buffer,  0,  limit);
         assertEquals(EnumWithInt8.TWO, variantOfListRO.kind());
-        assertEquals(26, variantOfListRO.get().physicalLength());
-        assertEquals(2, variantOfListRO.get().logicalLength());
-        assertEquals(1, variantOfListRO.lengthSize());
+        assertEquals(26, variantOfListRO.get().length());
+        assertEquals(2, variantOfListRO.get().fieldCount());
         assertEquals(28, variantOfListRO.limit());
-        assertEquals(26, variantOfListRO.physicalLength());
-        assertEquals(2, variantOfListRO.logicalLength());
+        assertEquals(26, variantOfListRO.length());
+        assertEquals(2, variantOfListRO.fieldCount());
     }
 }

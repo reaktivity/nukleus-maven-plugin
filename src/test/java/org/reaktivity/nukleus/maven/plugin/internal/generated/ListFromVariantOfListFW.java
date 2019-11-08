@@ -60,21 +60,15 @@ public final class ListFromVariantOfListFW extends ListFW
     private long bitmask;
 
     @Override
-    public int physicalLength()
+    public int length()
     {
-        return variantOfListRO.physicalLength();
+        return variantOfListRO.length();
     }
 
     @Override
-    public int logicalLength()
+    public int fieldCount()
     {
-        return variantOfListRO.logicalLength();
-    }
-
-    @Override
-    public int lengthSize()
-    {
-        return variantOfListRO.lengthSize();
+        return variantOfListRO.fieldCount();
     }
 
     @Override
@@ -116,7 +110,7 @@ public final class ListFromVariantOfListFW extends ListFW
         variantOfListRO.wrap(buffer, offset, maxLimit);
         final int limit = limit();
         checkLimit(limit, maxLimit);
-        final int length = logicalLength();
+        final int length = fieldCount();
         bitmask = 0;
         DirectBuffer fieldsBuffer = variantOfListRO.fields();
         int fieldLimit = 0;
@@ -191,7 +185,7 @@ public final class ListFromVariantOfListFW extends ListFW
         {
             return null;
         }
-        final int length = logicalLength();
+        final int length = fieldCount();
         bitmask = 0;
         DirectBuffer fieldsBuffer = variantOfListRO.fields();
         int fieldLimit = 0;

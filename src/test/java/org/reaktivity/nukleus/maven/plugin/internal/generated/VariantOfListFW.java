@@ -39,17 +39,17 @@ public final class VariantOfListFW extends ListFW
 
     private final List0FW list0RO = new List0FW();
 
-    public List32FW getAsList32()
+    private List32FW getAsList32()
     {
         return list32RO;
     }
 
-    public List8FW getAsList8()
+    private List8FW getAsList8()
     {
         return list8RO;
     }
 
-    public List0FW getAsList0()
+    private List0FW getAsList0()
     {
         return list0RO;
     }
@@ -60,21 +60,15 @@ public final class VariantOfListFW extends ListFW
     }
 
     @Override
-    public int physicalLength()
+    public int length()
     {
-        return get().physicalLength();
+        return get().length();
     }
 
     @Override
-    public int logicalLength()
+    public int fieldCount()
     {
-        return get().logicalLength();
-    }
-
-    @Override
-    public int lengthSize()
-    {
-        return get().lengthSize();
+        return get().fieldCount();
     }
 
     public DirectBuffer fields()
@@ -104,17 +98,17 @@ public final class VariantOfListFW extends ListFW
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        enumWithInt8RO.wrap(buffer, offset, maxLimit);
+        Flyweight enumWithInt8 = enumWithInt8RO.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
         case ONE:
-            list32RO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
+            list32RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         case TWO:
-            list8RO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
+            list8RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         case THREE:
-            list0RO.wrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit);
+            list0RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         default:
             break;
@@ -133,26 +127,27 @@ public final class VariantOfListFW extends ListFW
         {
             return null;
         }
-        if (enumWithInt8RO.tryWrap(buffer, offset, maxLimit) == null)
+        Flyweight enumWithInt8 = enumWithInt8RO.tryWrap(buffer, offset, maxLimit);
+        if (enumWithInt8 == null)
         {
             return null;
         }
         switch (kind())
         {
         case ONE:
-            if (list32RO.tryWrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit) == null)
+            if (list32RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
         case TWO:
-            if (list8RO.tryWrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit) == null)
+            if (list8RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
         case THREE:
-            if (list0RO.tryWrap(buffer, offset + enumWithInt8RO.sizeof(), maxLimit) == null)
+            if (list0RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
@@ -237,7 +232,7 @@ public final class VariantOfListFW extends ListFW
         public Builder set(
             ListFW list)
         {
-            int length = Math.max(list.physicalLength(), list.logicalLength());
+            int length = Math.max(list.length(), list.fieldCount());
             int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(length)) >> 3;
             switch (highestByteIndex)
             {
@@ -258,6 +253,17 @@ public final class VariantOfListFW extends ListFW
             return this;
         }
 
+        private int setList32Fields(
+            MutableDirectBuffer buffer,
+            int offset,
+            int maxLimit)
+        {
+            List32FW list32 = list32RW.build();
+            final DirectBuffer fields = list32.fields();
+            buffer.putBytes(offset, fields, 0, fields.capacity());
+            return fields.capacity();
+        }
+
         @Override
         public Builder wrap(
             MutableDirectBuffer buffer,
@@ -267,8 +273,6 @@ public final class VariantOfListFW extends ListFW
             super.wrap(buffer, offset, maxLimit);
             kind(KIND_ONE);
             list32RW.wrap(buffer, limit(), maxLimit);
-            list8RW.wrap(buffer, limit(), maxLimit);
-            list0FW.wrap(buffer, limit(), maxLimit);
             return this;
         }
 
@@ -279,19 +283,15 @@ public final class VariantOfListFW extends ListFW
             if (kind.get() == KIND_ONE)
             {
                 List32FW list32 = list32RW.build();
-                long length = Math.max(list32.physicalLength(), list32.logicalLength());
+                long length = Math.max(list32.length(), list32.fieldCount());
                 int highestByteIndex = Long.numberOfTrailingZeros(Long.highestOneBit(length)) >> 3;
                 switch (highestByteIndex)
                 {
                 case 0:
-                    int logicalLength = list32.logicalLength();
                     enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
                     enumWithInt8RW.set(KIND_TWO);
-                    list8RW.fields(logicalLength, (b, o, m) ->
-                    {
-                        b.putBytes(o, list32.fields(), 0, list32.fields().capacity());
-                        return list32.fields().capacity();
-                    });
+                    list8RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
+                    list8RW.fields(list32.fieldCount(), this::setList32Fields);
                     limit(list8RW.build().limit());
                     break;
                 case 1:
@@ -302,6 +302,7 @@ public final class VariantOfListFW extends ListFW
                 case 8:
                     enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
                     enumWithInt8RW.set(KIND_THREE);
+                    list0FW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
                     limit(list0FW.build().limit());
                     break;
                 default:

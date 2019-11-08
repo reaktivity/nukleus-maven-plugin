@@ -17,10 +17,13 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public class List0FW extends ListFW
 {
+    private static final DirectBuffer FIELDS_EMPTY_VALUE = new UnsafeBuffer(0L, 0);
+
     private static final int PHYSICAL_LENGTH_SIZE = 0;
 
     private static final int LOGICAL_LENGTH_SIZE = 0;
@@ -32,23 +35,17 @@ public class List0FW extends ListFW
     @Override
     public int limit()
     {
-        return offset() + PHYSICAL_LENGTH_SIZE + physicalLength();
+        return offset() + PHYSICAL_LENGTH_SIZE + length();
     }
 
     @Override
-    public int physicalLength()
+    public int length()
     {
         return 0;
     }
 
     @Override
-    public int logicalLength()
-    {
-        return 0;
-    }
-
-    @Override
-    public int lengthSize()
+    public int fieldCount()
     {
         return 0;
     }
@@ -56,7 +53,7 @@ public class List0FW extends ListFW
     @Override
     public DirectBuffer fields()
     {
-        return fieldsRO;
+        return FIELDS_EMPTY_VALUE;
     }
 
     @Override
@@ -69,8 +66,6 @@ public class List0FW extends ListFW
         {
             return null;
         }
-        int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
-        fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
         if (limit() > maxLimit)
         {
             return null;
@@ -85,8 +80,6 @@ public class List0FW extends ListFW
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        int fieldsLength = physicalLength() - LOGICAL_LENGTH_SIZE;
-        fieldsRO.wrap(buffer, offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE, fieldsLength);
         checkLimit(limit(), maxLimit);
         return this;
     }
@@ -105,9 +98,7 @@ public class List0FW extends ListFW
             int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
-            int newLimit = offset + PHYSICAL_LENGTH_SIZE + LOGICAL_LENGTH_SIZE;
-            checkLimit(newLimit, maxLimit);
-            limit(newLimit);
+            checkLimit(limit(), maxLimit);
             return this;
         }
 

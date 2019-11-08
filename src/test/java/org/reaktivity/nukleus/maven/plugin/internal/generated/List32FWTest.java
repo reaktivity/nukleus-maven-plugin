@@ -123,8 +123,8 @@ public class List32FWTest
         setAllFields(buffer);
 
         assertSame(list32RO, list32RO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list32RO.physicalLength());
-        assertEquals(logicalLength, list32RO.logicalLength());
+        assertEquals(physicalLength, list32RO.length());
+        assertEquals(logicalLength, list32RO.fieldCount());
         assertEquals(physicalLength - logicalLengthSize, list32RO.fields().capacity());
         assertEquals(maxLimit, list32RO.limit());
     }
@@ -139,8 +139,8 @@ public class List32FWTest
         setAllFields(buffer);
 
         assertSame(list32RO, list32RO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, list32RO.physicalLength());
-        assertEquals(logicalLength, list32RO.logicalLength());
+        assertEquals(physicalLength, list32RO.length());
+        assertEquals(logicalLength, list32RO.fieldCount());
         assertEquals(physicalLength - logicalLengthSize, list32RO.fields().capacity());
         assertEquals(maxLimit, list32RO.limit());
     }
@@ -167,9 +167,8 @@ public class List32FWTest
             .build()
             .limit();
         list32RO.wrap(buffer,  0,  limit);
-        assertEquals(29, list32RO.physicalLength());
-        assertEquals(2, list32RO.logicalLength());
-        assertEquals(4, list32RO.lengthSize());
+        assertEquals(29, list32RO.length());
+        assertEquals(2, list32RO.fieldCount());
         assertEquals(33, list32RO.limit());
     }
 
@@ -200,9 +199,8 @@ public class List32FWTest
             .build()
             .limit();
         list32RO.wrap(buffer,  0,  limit);
-        assertEquals(29, list32RO.physicalLength());
-        assertEquals(2, list32RO.logicalLength());
-        assertEquals(4, list32RO.lengthSize());
+        assertEquals(29, list32RO.length());
+        assertEquals(2, list32RO.fieldCount());
         assertEquals(33, list32RO.limit());
     }
 
@@ -217,9 +215,8 @@ public class List32FWTest
             .build()
             .limit();
         list32RO.wrap(buffer,  0,  limit);
-        assertEquals(29, list32RO.physicalLength());
-        assertEquals(2, list32RO.logicalLength());
-        assertEquals(4, list32RO.lengthSize());
+        assertEquals(29, list32RO.length());
+        assertEquals(2, list32RO.fieldCount());
         assertEquals(33, list32RO.limit());
     }
 }
