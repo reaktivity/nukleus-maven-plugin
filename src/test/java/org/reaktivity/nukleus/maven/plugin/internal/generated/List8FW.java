@@ -116,7 +116,7 @@ public final class List8FW extends ListFW
         public List8FW build()
         {
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
-            int fieldCount = fieldsCount();
+            int fieldCount = fieldCount();
             assert length <= LENGTH_MAX_VALUE : "Physical length is too large";
             assert fieldCount <= LENGTH_MAX_VALUE : "Logical length is too large";
             buffer().putByte(offset() + LENGTH_OFFSET, (byte) length);

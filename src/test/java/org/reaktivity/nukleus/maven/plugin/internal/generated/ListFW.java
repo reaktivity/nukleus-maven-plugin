@@ -84,7 +84,7 @@ public abstract class ListFW extends Flyweight
             return this;
         }
 
-        protected int fieldsCount()
+        protected int fieldCount()
         {
             return fieldCount;
         }

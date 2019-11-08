@@ -114,7 +114,7 @@ public final class List32FW extends ListFW
         public List32FW build()
         {
             buffer().putInt(offset() + LENGTH_OFFSET, limit() - offset() - FIELD_COUNT_OFFSET);
-            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldsCount());
+            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount());
             return super.build();
         }
     }
