@@ -19,7 +19,6 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -41,22 +40,22 @@ public class VariantOfListFWTest
     private final VariantOfListFW.Builder variantOfListRW = new VariantOfListFW.Builder();
     private final VariantOfListFW variantOfListRO = new VariantOfListFW();
     private final int kindSize = Byte.BYTES;
-    private final int physicalLengthSize = Integer.BYTES;
-    private final int logicalLengthSize = Integer.BYTES;
+    private final int lengthSize = Integer.BYTES;
+    private final int fieldCountSize = Integer.BYTES;
 
     private void setAllFields(
         MutableDirectBuffer buffer)
     {
-        int physicalLength = 43;
-        int logicalLength = 4;
+        int length = 43;
+        int fieldCount = 4;
         int offsetKind = 10;
         buffer.putByte(offsetKind, (byte) 1);
-        int offsetPhysicalLength = offsetKind + Byte.BYTES;
-        buffer.putInt(offsetPhysicalLength, physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putInt(offsetLogicalLength, logicalLength);
+        int offsetLength = offsetKind + Byte.BYTES;
+        buffer.putInt(offsetLength, length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putInt(offsetFieldCount, fieldCount);
 
-        int offsetVariantOfString1Kind = offsetLogicalLength + logicalLengthSize;
+        int offsetVariantOfString1Kind = offsetFieldCount + fieldCountSize;
         buffer.putByte(offsetVariantOfString1Kind, EnumWithInt8.ONE.value());
         int offsetVariantOfString1Length = offsetVariantOfString1Kind + Byte.BYTES;
         buffer.putByte(offsetVariantOfString1Length, (byte) "string1".length());
@@ -92,72 +91,65 @@ public class VariantOfListFWTest
         return builder.toString();
     }
 
-    @Test
+    @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 43;
+        int length = 43;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
-            try
-            {
-                variantOfListRO.wrap(buffer,  10, maxLimit);
-                fail("Exception not thrown");
-            }
-            catch (Exception e)
-            {
-                if (!(e instanceof IndexOutOfBoundsException))
-                {
-                    fail("Unexpected exception " + e);
-                }
-            }
+            variantOfListRO.wrap(buffer,  10, maxLimit);
         }
     }
 
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 43;
-        int offsetPhysicalLength = 10;
+        int length = 43;
+        int offsetLength = 10;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
-            assertNull(variantOfListRO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
+            assertNull(variantOfListRO.tryWrap(buffer,  offsetLength, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 43;
+        int length = 43;
         int kindSize = Byte.BYTES;
-        int physicalLengthSize = Integer.BYTES;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + kindSize + physicalLengthSize + physicalLength;
+        int lengthSize = Integer.BYTES;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + kindSize + lengthSize + length;
         setAllFields(buffer);
 
-        assertSame(variantOfListRO, variantOfListRO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, variantOfListRO.length());
-        assertEquals(logicalLength, variantOfListRO.fieldCount());
-        assertEquals(physicalLength - logicalLength, variantOfListRO.fields().capacity());
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer, offsetLength, maxLimit);
+
+        assertSame(variantOfListRO, variantOfList);
+        assertEquals(length, variantOfList.length());
+        assertEquals(fieldCount, variantOfList.fieldCount());
+        assertEquals(length - fieldCount, variantOfList.fields().capacity());
     }
 
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 43;
+        int length = 43;
         int kindSize = Byte.BYTES;
-        int physicalLengthSize = Integer.BYTES;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        int maxLimit = offsetPhysicalLength + kindSize + physicalLengthSize + physicalLength;
+        int lengthSize = Integer.BYTES;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        int maxLimit = offsetLength + kindSize + lengthSize + length;
         setAllFields(buffer);
 
-        assertSame(variantOfListRO, variantOfListRO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, variantOfListRO.length());
-        assertEquals(logicalLength, variantOfListRO.fieldCount());
-        assertEquals(physicalLength - logicalLength, variantOfListRO.fields().capacity());
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer, offsetLength, maxLimit);
+
+        assertSame(variantOfListRO, variantOfList);
+        assertEquals(length, variantOfList.length());
+        assertEquals(fieldCount, variantOfList.fieldCount());
+        assertEquals(length - fieldCount, variantOfList.fields().capacity());
     }
 
     @Test
@@ -170,13 +162,15 @@ public class VariantOfListFWTest
             .setAsList0(listRW.build())
             .build()
             .limit();
-        variantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals(EnumWithInt8.THREE, variantOfListRO.kind());
-        assertEquals(0, variantOfListRO.get().length());
-        assertEquals(0, variantOfListRO.get().fieldCount());
-        assertEquals(1, variantOfListRO.limit());
-        assertEquals(0, variantOfListRO.length());
-        assertEquals(0, variantOfListRO.fieldCount());
+
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
+
+        assertEquals(EnumWithInt8.THREE, variantOfList.kind());
+        assertEquals(0, variantOfList.get().length());
+        assertEquals(0, variantOfList.get().fieldCount());
+        assertEquals(1, variantOfList.limit());
+        assertEquals(0, variantOfList.length());
+        assertEquals(0, variantOfList.fieldCount());
     }
 
     @Test
@@ -193,13 +187,15 @@ public class VariantOfListFWTest
             .setAsList8((ListFW) listRW.build())
             .build()
             .limit();
-        variantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals(EnumWithInt8.TWO, variantOfListRO.kind());
-        assertEquals(26, variantOfListRO.get().length());
-        assertEquals(2, variantOfListRO.get().fieldCount());
-        assertEquals(28, variantOfListRO.limit());
-        assertEquals(26, variantOfListRO.length());
-        assertEquals(2, variantOfListRO.fieldCount());
+
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
+
+        assertEquals(EnumWithInt8.TWO, variantOfList.kind());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(28, variantOfList.limit());
+        assertEquals(26, variantOfList.length());
+        assertEquals(2, variantOfList.fieldCount());
     }
 
     @Test
@@ -223,13 +219,15 @@ public class VariantOfListFWTest
             .setAsList32((ListFW) listRW.build())
             .build()
             .limit();
-        variantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals(EnumWithInt8.ONE, variantOfListRO.kind());
-        assertEquals(272, variantOfListRO.get().length());
-        assertEquals(2, variantOfListRO.get().fieldCount());
-        assertEquals(277, variantOfListRO.limit());
-        assertEquals(272, variantOfListRO.length());
-        assertEquals(2, variantOfListRO.fieldCount());
+
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
+
+        assertEquals(EnumWithInt8.ONE, variantOfList.kind());
+        assertEquals(272, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(277, variantOfList.limit());
+        assertEquals(272, variantOfList.length());
+        assertEquals(2, variantOfList.fieldCount());
     }
 
     @Test
@@ -246,13 +244,15 @@ public class VariantOfListFWTest
             .set((ListFW) listRW.build())
             .build()
             .limit();
-        variantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals(EnumWithInt8.TWO, variantOfListRO.kind());
-        assertEquals(26, variantOfListRO.get().length());
-        assertEquals(2, variantOfListRO.get().fieldCount());
-        assertEquals(28, variantOfListRO.limit());
-        assertEquals(26, variantOfListRO.length());
-        assertEquals(2, variantOfListRO.fieldCount());
+
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
+
+        assertEquals(EnumWithInt8.TWO, variantOfList.kind());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(28, variantOfList.limit());
+        assertEquals(26, variantOfList.length());
+        assertEquals(2, variantOfList.fieldCount());
     }
 
     @Test
@@ -265,12 +265,14 @@ public class VariantOfListFWTest
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof())
             .build()
             .limit();
-        variantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals(EnumWithInt8.TWO, variantOfListRO.kind());
-        assertEquals(26, variantOfListRO.get().length());
-        assertEquals(2, variantOfListRO.get().fieldCount());
-        assertEquals(28, variantOfListRO.limit());
-        assertEquals(26, variantOfListRO.length());
-        assertEquals(2, variantOfListRO.fieldCount());
+
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
+
+        assertEquals(EnumWithInt8.TWO, variantOfList.kind());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(28, variantOfList.limit());
+        assertEquals(26, variantOfList.length());
+        assertEquals(2, variantOfList.fieldCount());
     }
 }

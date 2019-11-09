@@ -19,7 +19,6 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -78,25 +77,14 @@ public class ListFromVariantOfListFWTest
         buffer.putInt(offsetVariantOfInt, -2000000000);
     }
 
-    @Test
+    @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
         int physicalLength = 43;
         setAllFields(buffer);
         for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
         {
-            try
-            {
-                listFromVariantOfListRO.wrap(buffer,  10, maxLimit);
-                fail("Exception not thrown");
-            }
-            catch (Exception e)
-            {
-                if (!(e instanceof IndexOutOfBoundsException))
-                {
-                    fail("Unexpected exception " + e);
-                }
-            }
+            listFromVariantOfListRO.wrap(buffer,  10, maxLimit);
         }
     }
 
@@ -123,13 +111,16 @@ public class ListFromVariantOfListFWTest
         int maxLimit = offsetPhysicalLength + kindSize + physicalLengthSize + physicalLength;
         setAllFields(buffer);
 
-        assertSame(listFromVariantOfListRO, listFromVariantOfListRO.wrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, listFromVariantOfListRO.length());
-        assertEquals(logicalLength, listFromVariantOfListRO.fieldCount());
-        assertEquals("string1", listFromVariantOfListRO.variantOfString1());
-        assertEquals("string2", listFromVariantOfListRO.variantOfString2());
-        assertEquals(4000000000L, listFromVariantOfListRO.variantOfUint());
-        assertEquals(-2000000000, listFromVariantOfListRO.variantOfInt());
+        final ListFromVariantOfListFW listFromVariantOfList =
+            listFromVariantOfListRO.wrap(buffer, offsetPhysicalLength, maxLimit);
+
+        assertSame(listFromVariantOfListRO, listFromVariantOfList);
+        assertEquals(physicalLength, listFromVariantOfList.length());
+        assertEquals(logicalLength, listFromVariantOfList.fieldCount());
+        assertEquals("string1", listFromVariantOfList.variantOfString1());
+        assertEquals("string2", listFromVariantOfList.variantOfString2());
+        assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
+        assertEquals(-2000000000, listFromVariantOfList.variantOfInt());
     }
 
     @Test
@@ -143,13 +134,16 @@ public class ListFromVariantOfListFWTest
         int maxLimit = offsetPhysicalLength + kindSize + physicalLengthSize + physicalLength;
         setAllFields(buffer);
 
-        assertSame(listFromVariantOfListRO, listFromVariantOfListRO.tryWrap(buffer, offsetPhysicalLength, maxLimit));
-        assertEquals(physicalLength, listFromVariantOfListRO.length());
-        assertEquals(logicalLength, listFromVariantOfListRO.fieldCount());
-        assertEquals("string1", listFromVariantOfListRO.variantOfString1());
-        assertEquals("string2", listFromVariantOfListRO.variantOfString2());
-        assertEquals(4000000000L, listFromVariantOfListRO.variantOfUint());
-        assertEquals(-2000000000, listFromVariantOfListRO.variantOfInt());
+        final ListFromVariantOfListFW listFromVariantOfList =
+            listFromVariantOfListRO.wrap(buffer, offsetPhysicalLength, maxLimit);
+
+        assertSame(listFromVariantOfListRO, listFromVariantOfList);
+        assertEquals(physicalLength, listFromVariantOfList.length());
+        assertEquals(logicalLength, listFromVariantOfList.fieldCount());
+        assertEquals("string1", listFromVariantOfList.variantOfString1());
+        assertEquals("string2", listFromVariantOfList.variantOfString2());
+        assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
+        assertEquals(-2000000000, listFromVariantOfList.variantOfInt());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -193,8 +187,10 @@ public class ListFromVariantOfListFWTest
             .variantOfString1("string1")
             .build()
             .limit();
-        listFromVariantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals("string2", listFromVariantOfListRO.variantOfString2());
+
+        final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
+
+        assertEquals("string2", listFromVariantOfList.variantOfString2());
     }
 
     @Test
@@ -204,9 +200,11 @@ public class ListFromVariantOfListFWTest
             .variantOfString1("string1")
             .build()
             .limit();
-        listFromVariantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listFromVariantOfListRO.variantOfString1());
-        assertEquals(4000000000L, listFromVariantOfListRO.variantOfUint());
+
+        final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
+
+        assertEquals("string1", listFromVariantOfList.variantOfString1());
+        assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
     }
 
     @Test
@@ -217,9 +215,11 @@ public class ListFromVariantOfListFWTest
             .variantOfUint(4000000000L)
             .build()
             .limit();
-        listFromVariantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listFromVariantOfListRO.variantOfString1());
-        assertEquals(4000000000L, listFromVariantOfListRO.variantOfUint());
+
+        final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
+
+        assertEquals("string1", listFromVariantOfList.variantOfString1());
+        assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
     }
 
     @Test
@@ -232,10 +232,12 @@ public class ListFromVariantOfListFWTest
             .variantOfInt(-2000000000)
             .build()
             .limit();
-        listFromVariantOfListRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listFromVariantOfListRO.variantOfString1());
-        assertEquals("string2", listFromVariantOfListRO.variantOfString2());
-        assertEquals(4000000000L, listFromVariantOfListRO.variantOfUint());
-        assertEquals(-2000000000, listFromVariantOfListRO.variantOfInt());
+
+        final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
+
+        assertEquals("string1", listFromVariantOfList.variantOfString1());
+        assertEquals("string2", listFromVariantOfList.variantOfString2());
+        assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
+        assertEquals(-2000000000, listFromVariantOfList.variantOfInt());
     }
 }

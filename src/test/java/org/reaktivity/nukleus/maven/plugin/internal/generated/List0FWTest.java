@@ -19,7 +19,6 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -38,36 +37,16 @@ public class List0FWTest
     private final List0FW.Builder list0RW = new List0FW.Builder();
     private final List0FW list0RO = new List0FW();
 
-    @Test
+    @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int length = 0;
-        for (int maxLimit = 0; maxLimit <= length; maxLimit++)
-        {
-            try
-            {
-                list0RO.wrap(buffer,  10, maxLimit);
-                fail("Exception not thrown");
-            }
-            catch (Exception e)
-            {
-                if (!(e instanceof IndexOutOfBoundsException))
-                {
-                    fail("Unexpected exception " + e);
-                }
-            }
-        }
+        list0RO.wrap(buffer,  1, 0);
     }
 
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int length = 0;
-        int offsetLength = 10;
-        for (int maxLimit = 0; maxLimit <= length; maxLimit++)
-        {
-            assertNull(list0RO.tryWrap(buffer,  offsetLength, maxLimit));
-        }
+        assertNull(list0RO.tryWrap(buffer,  1, 0));
     }
 
     @Test
@@ -78,11 +57,13 @@ public class List0FWTest
         int offsetLength = 10;
         int maxLimit = offsetLength + length;
 
-        assertSame(list0RO, list0RO.wrap(buffer, offsetLength, maxLimit));
-        assertEquals(length, list0RO.length());
-        assertEquals(fieldCount, list0RO.fieldCount());
-        assertEquals(0, list0RO.fields().capacity());
-        assertEquals(maxLimit, list0RO.limit());
+        final List0FW list0 = list0RO.wrap(buffer, offsetLength, maxLimit);
+
+        assertSame(list0RO, list0);
+        assertEquals(length, list0.length());
+        assertEquals(fieldCount, list0.fieldCount());
+        assertEquals(0, list0.fields().capacity());
+        assertEquals(maxLimit, list0.limit());
     }
 
     @Test
@@ -93,22 +74,12 @@ public class List0FWTest
         int offsetLength = 10;
         int maxLimit = offsetLength + length;
 
-        assertSame(list0RO, list0RO.tryWrap(buffer, offsetLength, maxLimit));
-        assertEquals(length, list0RO.length());
-        assertEquals(fieldCount, list0RO.fieldCount());
-        assertEquals(0, list0RO.fields().capacity());
-        assertEquals(maxLimit, list0RO.limit());
-    }
+        final List0FW list0 = list0RO.wrap(buffer, offsetLength, maxLimit);
 
-    @Test
-    public void shouldBuild() throws Exception
-    {
-        int limit = list0RW.wrap(buffer, 0, buffer.capacity())
-            .build()
-            .limit();
-        list0RO.wrap(buffer,  0,  limit);
-        assertEquals(0, list0RO.length());
-        assertEquals(0, list0RO.fieldCount());
-        assertEquals(0, list0RO.limit());
+        assertSame(list0RO, list0);
+        assertEquals(length, list0.length());
+        assertEquals(fieldCount, list0.fieldCount());
+        assertEquals(0, list0.fields().capacity());
+        assertEquals(maxLimit, list0.limit());
     }
 }
