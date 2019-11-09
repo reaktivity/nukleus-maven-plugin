@@ -34,7 +34,7 @@ public final class List8FW extends ListFW
 
     private static final int FIELDS_OFFSET = FIELD_COUNT_OFFSET + FIELD_COUNT_SIZE;
 
-    private static final int LENGTH_MAX_VALUE = Byte.MAX_VALUE + Byte.MAX_VALUE + 1;
+    private static final int LENGTH_MAX_VALUE = 0xFF;
 
     @Override
     public int limit()
@@ -117,8 +117,8 @@ public final class List8FW extends ListFW
         {
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             int fieldCount = fieldCount();
-            assert length <= LENGTH_MAX_VALUE : "Physical length is too large";
-            assert fieldCount <= LENGTH_MAX_VALUE : "Logical length is too large";
+            assert length <= LENGTH_MAX_VALUE : "Length is too large";
+            assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
             buffer().putByte(offset() + LENGTH_OFFSET, (byte) length);
             buffer().putByte(offset() + FIELD_COUNT_OFFSET, (byte) fieldCount);
             return super.build();

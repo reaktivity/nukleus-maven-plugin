@@ -31,6 +31,10 @@ public class List0FW extends ListFW
 
     private static final int FIELD_COUNT_OFFSET = LENGTH_OFFSET + LENGTH_SIZE;
 
+    private static final int LENGTH_VALUE = 0;
+
+    private static final int FIELD_COUNT_VALUE = 0;
+
     @Override
     public int limit()
     {
@@ -40,13 +44,13 @@ public class List0FW extends ListFW
     @Override
     public int length()
     {
-        return 0;
+        return LENGTH_VALUE;
     }
 
     @Override
     public int fieldCount()
     {
-        return 0;
+        return FIELD_COUNT_VALUE;
     }
 
     @Override

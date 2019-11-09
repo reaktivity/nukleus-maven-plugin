@@ -15,7 +15,6 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
@@ -191,7 +190,8 @@ public final class VariantOfListFW extends ListFW
         {
             kind(KIND_ONE);
             List32FW.Builder list32 = list32RW.wrap(buffer(), limit(), maxLimit());
-            list32.fields(list.fieldCount(), list.fields(), 0, list.length() - BitUtil.SIZE_OF_INT);
+            final DirectBuffer fields = list.fields();
+            list32.fields(list.fieldCount(), fields, 0, fields.capacity());
             limit(list32.build().limit());
             return this;
         }
@@ -201,7 +201,8 @@ public final class VariantOfListFW extends ListFW
         {
             kind(KIND_TWO);
             List8FW.Builder list8 = list8RW.wrap(buffer(), limit(), maxLimit());
-            list8.fields(list.fieldCount(), list.fields(), 0, list.length() - BitUtil.SIZE_OF_BYTE);
+            final DirectBuffer fields = list.fields();
+            list8.fields(list.fieldCount(), fields, 0, fields.capacity());
             limit(list8.build().limit());
             return this;
         }
@@ -211,7 +212,8 @@ public final class VariantOfListFW extends ListFW
         {
             kind(KIND_THREE);
             List0FW.Builder list0 = list0FW.wrap(buffer(), limit(), maxLimit());
-            list0.fields(list.fieldCount(), list.fields(), 0, 0);
+            final DirectBuffer fields = list.fields();
+            list0.fields(list.fieldCount(), fields, 0, fields.capacity());
             limit(list0.build().limit());
             return this;
         }
