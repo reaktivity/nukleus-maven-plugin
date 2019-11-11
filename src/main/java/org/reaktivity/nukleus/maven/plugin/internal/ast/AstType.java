@@ -43,6 +43,7 @@ public final class AstType
 
     public static final AstType ARRAY = new AstType("array");
     public static final AstType FLYWEIGHT = new AstType("flyweight");
+    public static final AstType LIST = new AstType("list");
 
     private final String name;
     private final int bits;

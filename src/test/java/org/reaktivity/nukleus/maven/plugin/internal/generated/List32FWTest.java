@@ -23,6 +23,8 @@ import static org.junit.Assert.assertSame;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.List32FW;
+import org.reaktivity.reaktor.internal.test.types.ListFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
