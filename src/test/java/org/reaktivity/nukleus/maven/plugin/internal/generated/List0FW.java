@@ -87,6 +87,12 @@ public class List0FW extends ListFW
         return this;
     }
 
+    @Override
+    public String toString()
+    {
+        return String.format("list0<%d, %d>", length(), fieldCount());
+    }
+
     public static final class Builder extends ListFW.Builder<List0FW>
     {
         public Builder()

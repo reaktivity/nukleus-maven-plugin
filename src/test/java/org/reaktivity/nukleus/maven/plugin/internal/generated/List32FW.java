@@ -90,6 +90,12 @@ public final class List32FW extends ListFW
         return this;
     }
 
+    @Override
+    public String toString()
+    {
+        return String.format("list32<%d, %d>", length(), fieldCount());
+    }
+
     public static final class Builder extends ListFW.Builder<List32FW>
     {
         public Builder()
