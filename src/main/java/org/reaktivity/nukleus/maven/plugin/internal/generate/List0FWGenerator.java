@@ -63,6 +63,7 @@ public final class List0FWGenerator extends ClassSpecGenerator
             .addMethod(fieldsMethod())
             .addMethod(tryWrapMethod())
             .addMethod(wrapMethod())
+            .addMethod(toStringMethod())
             .addType(builderClassBuilder.build())
             .build();
     }
@@ -187,6 +188,16 @@ public final class List0FWGenerator extends ClassSpecGenerator
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("checkLimit(limit(), maxLimit)")
             .addStatement("return this")
+            .build();
+    }
+
+    private MethodSpec toStringMethod()
+    {
+        return methodBuilder("toString")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(String.class)
+            .addStatement("return String.format(\"list0<%d, %d>\", length(), fieldCount())")
             .build();
     }
 

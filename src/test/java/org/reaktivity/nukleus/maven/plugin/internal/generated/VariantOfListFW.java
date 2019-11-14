@@ -23,11 +23,11 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
 public final class VariantOfListFW extends ListFW
 {
-    public static final EnumWithInt8 KIND_ONE = EnumWithInt8.ONE;
+    public static final EnumWithInt8 KIND_LIST32 = EnumWithInt8.ONE;
 
-    public static final EnumWithInt8 KIND_TWO = EnumWithInt8.TWO;
+    public static final EnumWithInt8 KIND_LIST8 = EnumWithInt8.TWO;
 
-    public static final EnumWithInt8 KIND_THREE = EnumWithInt8.THREE;
+    public static final EnumWithInt8 KIND_LIST0 = EnumWithInt8.THREE;
 
     public static final byte MISSING_FIELD_PLACEHOLDER = 0x40;
 
@@ -56,6 +56,7 @@ public final class VariantOfListFW extends ListFW
         return get().fieldCount();
     }
 
+    @Override
     public DirectBuffer fields()
     {
         return get().fields();
@@ -83,7 +84,7 @@ public final class VariantOfListFW extends ListFW
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        Flyweight enumWithInt8 = enumWithInt8RO.wrap(buffer, offset, maxLimit);
+        EnumWithInt8FW enumWithInt8 = enumWithInt8RO.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
         case ONE:
@@ -112,7 +113,7 @@ public final class VariantOfListFW extends ListFW
         {
             return null;
         }
-        Flyweight enumWithInt8 = enumWithInt8RO.tryWrap(buffer, offset, maxLimit);
+        EnumWithInt8FW enumWithInt8 = enumWithInt8RO.tryWrap(buffer, offset, maxLimit);
         if (enumWithInt8 == null)
         {
             return null;
@@ -153,13 +154,19 @@ public final class VariantOfListFW extends ListFW
         return get().limit();
     }
 
+    @Override
+    public String toString()
+    {
+        return get().toString();
+    }
+
     public static final class Builder extends Flyweight.Builder<VariantOfListFW>
     {
         private final List32FW.Builder list32RW = new List32FW.Builder();
 
         private final List8FW.Builder list8RW = new List8FW.Builder();
 
-        private final List0FW.Builder list0FW = new List0FW.Builder();
+        private final List0FW.Builder list0RW = new List0FW.Builder();
 
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
@@ -188,7 +195,7 @@ public final class VariantOfListFW extends ListFW
         public Builder setAsList32(
             ListFW list)
         {
-            kind(KIND_ONE);
+            kind(KIND_LIST32);
             List32FW.Builder list32 = list32RW.wrap(buffer(), limit(), maxLimit());
             final DirectBuffer fields = list.fields();
             list32.fields(list.fieldCount(), fields, 0, fields.capacity());
@@ -199,7 +206,7 @@ public final class VariantOfListFW extends ListFW
         public Builder setAsList8(
             ListFW list)
         {
-            kind(KIND_TWO);
+            kind(KIND_LIST8);
             List8FW.Builder list8 = list8RW.wrap(buffer(), limit(), maxLimit());
             final DirectBuffer fields = list.fields();
             list8.fields(list.fieldCount(), fields, 0, fields.capacity());
@@ -210,8 +217,8 @@ public final class VariantOfListFW extends ListFW
         public Builder setAsList0(
             ListFW list)
         {
-            kind(KIND_THREE);
-            List0FW.Builder list0 = list0FW.wrap(buffer(), limit(), maxLimit());
+            kind(KIND_LIST0);
+            List0FW.Builder list0 = list0RW.wrap(buffer(), limit(), maxLimit());
             final DirectBuffer fields = list.fields();
             list0.fields(list.fieldCount(), fields, 0, fields.capacity());
             limit(list0.build().limit());
@@ -222,7 +229,7 @@ public final class VariantOfListFW extends ListFW
             ListFW list)
         {
             int length = Math.max(list.length(), list.fieldCount());
-            int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(length)) >> 3;
+            int highestByteIndex = Long.numberOfTrailingZeros(Long.highestOneBit(length)) >> 3;
             switch (highestByteIndex)
             {
             case 0:
@@ -249,7 +256,7 @@ public final class VariantOfListFW extends ListFW
             int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
-            kind(KIND_ONE);
+            kind(KIND_LIST32);
             list32RW.wrap(buffer, limit(), maxLimit);
             return this;
         }
@@ -258,7 +265,7 @@ public final class VariantOfListFW extends ListFW
         public VariantOfListFW build()
         {
             EnumWithInt8FW kind = enumWithInt8RW.build();
-            if (kind.get() == KIND_ONE)
+            if (kind.get() == KIND_LIST32)
             {
                 List32FW list32 = list32RW.build();
                 long length = Math.max(list32.length(), list32.fieldCount());
@@ -267,7 +274,7 @@ public final class VariantOfListFW extends ListFW
                 {
                 case 0:
                     enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
-                    enumWithInt8RW.set(KIND_TWO);
+                    enumWithInt8RW.set(KIND_LIST8);
                     list8RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
                     list8RW.fields(list32.fieldCount(), this::setList32Fields);
                     limit(list8RW.build().limit());
@@ -279,9 +286,9 @@ public final class VariantOfListFW extends ListFW
                     break;
                 case 8:
                     enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
-                    enumWithInt8RW.set(KIND_THREE);
-                    list0FW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
-                    limit(list0FW.build().limit());
+                    enumWithInt8RW.set(KIND_LIST0);
+                    list0RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
+                    limit(list0RW.build().limit());
                     break;
                 default:
                     throw new IllegalArgumentException("Illegal length: " + length);

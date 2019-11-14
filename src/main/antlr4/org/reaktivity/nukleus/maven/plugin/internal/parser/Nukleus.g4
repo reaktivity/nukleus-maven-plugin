@@ -329,6 +329,7 @@ variant_of_type
    | string_type
    | string16_type
    | string32_type
+   | list_keyword
    ;
 
 variant_case_list
@@ -336,7 +337,12 @@ variant_case_list
    ;
 
 variant_case_member
-   : KW_CASE (uint_literal | declarator) COLON variant_member SEMICOLON
+   : KW_CASE variant_case_value COLON variant_member SEMICOLON
+   ;
+
+variant_case_value
+   : uint_literal
+   | declarator
    ;
 
 variant_member
@@ -345,6 +351,13 @@ variant_member
    | string16_type
    | string32_type
    | variant_int_literal
+   | variant_list_member
+   ;
+
+variant_list_member
+   : KW_LIST LEFT_ANG_BRACKET uint32_type COMMA uint32_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
+   | KW_LIST LEFT_ANG_BRACKET uint8_type COMMA uint8_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
+   | KW_LIST LEFT_ANG_BRACKET UNSIGNED_INTEGER_LITERAL COMMA UNSIGNED_INTEGER_LITERAL RIGHT_ANG_BRACKET
    ;
 
 array_type
@@ -363,6 +376,10 @@ string16_type
 
 string32_type
    : KW_STRING32
+   ;
+
+list_keyword
+   : KW_LIST
    ;
 
 int_literal

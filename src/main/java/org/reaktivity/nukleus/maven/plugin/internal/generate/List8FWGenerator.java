@@ -64,6 +64,7 @@ public final class List8FWGenerator extends ClassSpecGenerator
             .addMethod(fieldsMethod())
             .addMethod(tryWrapMethod())
             .addMethod(wrapMethod())
+            .addMethod(toStringMethod())
             .addType(builderClassBuilder.build())
             .build();
     }
@@ -192,6 +193,16 @@ public final class List8FWGenerator extends ClassSpecGenerator
             .addStatement("fieldsRO.wrap(buffer, offset + FIELDS_OFFSET, fieldsSize)")
             .addStatement("checkLimit(limit(), maxLimit)")
             .addStatement("return this")
+            .build();
+    }
+
+    private MethodSpec toStringMethod()
+    {
+        return methodBuilder("toString")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(String.class)
+            .addStatement("return String.format(\"list8<%d, %d>\", length(), fieldCount())")
             .build();
     }
 
