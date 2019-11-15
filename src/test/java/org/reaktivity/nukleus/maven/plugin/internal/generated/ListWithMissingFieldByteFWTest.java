@@ -122,7 +122,7 @@ public class ListWithMissingFieldByteFWTest
         assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithMissingFieldByteRO.length());
+        assertEquals(logicalLength, listWithMissingFieldByteRO.fieldCount());
         assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
         assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
@@ -140,7 +140,7 @@ public class ListWithMissingFieldByteFWTest
         assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.tryWrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithMissingFieldByteRO.length());
+        assertEquals(logicalLength, listWithMissingFieldByteRO.fieldCount());
         assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
         assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());

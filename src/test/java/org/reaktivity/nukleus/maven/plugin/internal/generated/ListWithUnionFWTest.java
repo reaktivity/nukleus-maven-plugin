@@ -133,7 +133,7 @@ public class ListWithUnionFWTest
         assertSame(listWithUnionRO, listWithUnionRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithUnionRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithUnionRO.length());
+        assertEquals(logicalLength, listWithUnionRO.fieldCount());
         final String octetsValue = listWithUnionRO.unionOctets().octets4().get(
             (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("1234", octetsValue);
@@ -163,7 +163,7 @@ public class ListWithUnionFWTest
         assertSame(listWithUnionRO, listWithUnionRO.tryWrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithUnionRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithUnionRO.length());
+        assertEquals(logicalLength, listWithUnionRO.fieldCount());
         final String octetsValue = listWithUnionRO.unionOctets().octets4().get(
             (buffer, offset, limit2) ->  buffer.getStringWithoutLengthUtf8(offset,  limit2 - offset));
         assertEquals("1234", octetsValue);

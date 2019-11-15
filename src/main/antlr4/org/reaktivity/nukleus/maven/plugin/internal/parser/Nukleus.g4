@@ -269,7 +269,9 @@ list_type
 
 list_params
    : LEFT_ANG_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
+   | LEFT_ANG_BRACKET declarator RIGHT_ANG_BRACKET
    ;
+
 
 list_members
    : list_member* list_unbounded_member?

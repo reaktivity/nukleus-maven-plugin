@@ -411,7 +411,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             if (hasMissingFieldValue)
             {
                 builder.addField(
-                    FieldSpec.builder(byte.class, "MISSING_FIELD_PLACEHOLDER", PRIVATE, STATIC, FINAL)
+                    FieldSpec.builder(byte.class, "MISSING_FIELD_PLACEHOLDER", PUBLIC, STATIC, FINAL)
                         .initializer(String.valueOf(missingFieldValue))
                         .build());
             }

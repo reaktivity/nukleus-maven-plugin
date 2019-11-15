@@ -192,7 +192,7 @@ public class ListWithEnumFWTest
         assertSame(listWithEnumRO, listWithEnumRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithEnumRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithEnumRO.length());
+        assertEquals(logicalLength, listWithEnumRO.fieldCount());
         assertEquals(Roll.EGG, listWithEnumRO.roll());
         assertEquals(EnumWithInt8.THREE, listWithEnumRO.enumWithInt8());
         assertEquals(EnumWithInt64.ELEVEN, listWithEnumRO.enumWithInt64());
@@ -241,7 +241,7 @@ public class ListWithEnumFWTest
         assertSame(listWithEnumRO, listWithEnumRO.tryWrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithEnumRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithEnumRO.length());
+        assertEquals(logicalLength, listWithEnumRO.fieldCount());
         assertEquals(Roll.EGG, listWithEnumRO.roll());
         assertEquals(EnumWithInt8.THREE, listWithEnumRO.enumWithInt8());
         assertEquals(EnumWithInt64.ELEVEN, listWithEnumRO.enumWithInt64());

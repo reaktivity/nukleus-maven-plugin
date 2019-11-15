@@ -201,7 +201,7 @@ public class ListWithVariantFWTest
         assertSame(listWithVariantOfIntRO, listWithVariantOfIntRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithVariantOfIntRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithVariantOfIntRO.length());
+        assertEquals(logicalLength, listWithVariantOfIntRO.fieldCount());
         assertEquals(1, listWithVariantOfIntRO.intField1());
         assertEquals(100000, listWithVariantOfIntRO.variantOfInt64());
         assertEquals(100, listWithVariantOfIntRO.variantOfInt8());
@@ -277,7 +277,7 @@ public class ListWithVariantFWTest
         assertSame(listWithVariantOfIntRO, listWithVariantOfIntRO.tryWrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithVariantOfIntRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithVariantOfIntRO.length());
+        assertEquals(logicalLength, listWithVariantOfIntRO.fieldCount());
         assertEquals(1, listWithVariantOfIntRO.intField1());
         assertEquals(100000, listWithVariantOfIntRO.variantOfInt64());
         assertEquals(100, listWithVariantOfIntRO.variantOfInt8());

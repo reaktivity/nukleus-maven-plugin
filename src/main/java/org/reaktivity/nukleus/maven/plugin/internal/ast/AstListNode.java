@@ -24,6 +24,7 @@ import java.util.Objects;
 public final class AstListNode extends AstNamedNode
 {
     private final List<AstListMemberNode> members;
+    private final AstType superType;
     private final AstType physicalLengthType;
     private final AstType logicalLengthType;
     private final Byte missingFieldByte;
@@ -31,6 +32,11 @@ public final class AstListNode extends AstNamedNode
     public List<AstListMemberNode> members()
     {
         return members;
+    }
+
+    public AstType superType()
+    {
+        return superType;
     }
 
     public AstType physicalLengthType()
@@ -64,7 +70,7 @@ public final class AstListNode extends AstNamedNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, members, physicalLengthType, logicalLengthType);
+        return Objects.hash(name, members, superType, physicalLengthType, logicalLengthType);
     }
 
     @Override
@@ -84,6 +90,7 @@ public final class AstListNode extends AstNamedNode
         AstListNode that = (AstListNode) o;
         return Objects.equals(this.name, that.name) &&
             Objects.equals(this.members, that.members) &&
+            Objects.equals(this.superType, that.superType) &&
             Objects.equals(this.physicalLengthType, that.physicalLengthType) &&
             Objects.equals(this.logicalLengthType, that.logicalLengthType);
     }
@@ -91,12 +98,14 @@ public final class AstListNode extends AstNamedNode
     private AstListNode(
         String name,
         List<AstListMemberNode> members,
+        AstType superType,
         AstType physicalLengthType,
         AstType logicalLengthType,
         Byte missingFieldByte)
     {
         super(name);
         this.members = unmodifiableList(members);
+        this.superType = superType;
         this.physicalLengthType = physicalLengthType;
         this.logicalLengthType = logicalLengthType;
         this.missingFieldByte = missingFieldByte;
@@ -105,6 +114,7 @@ public final class AstListNode extends AstNamedNode
     public static final class Builder extends AstNamedNode.Builder<AstListNode>
     {
         private List<AstListMemberNode> members;
+        private AstType superType;
         private AstType physicalLengthType;
         private AstType logicalLengthType;
         private Byte missingFieldByte;
@@ -125,6 +135,13 @@ public final class AstListNode extends AstNamedNode
             AstListMemberNode member)
         {
             this.members.add(member);
+            return this;
+        }
+
+        public Builder superType(
+            AstType superType)
+        {
+            this.superType = superType;
             return this;
         }
 
@@ -152,7 +169,7 @@ public final class AstListNode extends AstNamedNode
         @Override
         public AstListNode build()
         {
-            return new AstListNode(name, members, physicalLengthType, logicalLengthType, missingFieldByte);
+            return new AstListNode(name, members, superType, physicalLengthType, logicalLengthType, missingFieldByte);
         }
     }
 }

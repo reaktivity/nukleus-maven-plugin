@@ -180,11 +180,12 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = listNode.name();
         AstType listType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName listName = resolver.resolveClass(listType);
+        AstType superType = listNode.superType();
         TypeName physicalLengthType = resolver.resolveType(listNode.physicalLengthType());
         TypeName logicalLengthType = resolver.resolveType(listNode.logicalLengthType());
         Byte missingFieldByte = listNode.missingFieldByte();
         ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
-            physicalLengthType, logicalLengthType, missingFieldByte, resolver);
+            superType, physicalLengthType, logicalLengthType, missingFieldByte, resolver);
         return new ListVisitor(generator, resolver).visitList(listNode);
     }
 

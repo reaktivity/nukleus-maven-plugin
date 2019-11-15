@@ -20,6 +20,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generated.VariantOfLi
 
 import java.text.MessageFormat;
 
+import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
@@ -29,6 +30,10 @@ import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithStrin
 
 public final class ListFromVariantOfListFW extends ListFW
 {
+    private static final byte MISSING_FIELD_BYTE = VariantOfListFW.MISSING_FIELD_PLACEHOLDER;
+
+    private static final int MISSING_FIELD_BYTE_SIZE = BitUtil.SIZE_OF_BYTE;
+
     private static final int INDEX_VARIANT_OF_STRING1 = 0;
 
     private static final long MASK_VARIANT_OF_STRING1 = 1 << INDEX_VARIANT_OF_STRING1;
@@ -110,11 +115,11 @@ public final class ListFromVariantOfListFW extends ListFW
         variantOfListRO.wrap(buffer, offset, maxLimit);
         final int limit = limit();
         checkLimit(limit, maxLimit);
-        final int length = fieldCount();
+        final int fieldCount = fieldCount();
         bitmask = 0;
         DirectBuffer fieldsBuffer = variantOfListRO.fields();
         int fieldLimit = 0;
-        for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
+        for (int field = INDEX_VARIANT_OF_STRING1; field < fieldCount; field++)
         {
             checkLimit(fieldLimit + SIZE_OF_BYTE, limit);
             switch (field)
@@ -185,11 +190,11 @@ public final class ListFromVariantOfListFW extends ListFW
         {
             return null;
         }
-        final int length = fieldCount();
+        final int fieldCount = fieldCount();
         bitmask = 0;
         DirectBuffer fieldsBuffer = variantOfListRO.fields();
         int fieldLimit = 0;
-        for (int field = INDEX_VARIANT_OF_STRING1; field < length; field++)
+        for (int field = INDEX_VARIANT_OF_STRING1; field < fieldCount; field++)
         {
             if (fieldLimit + SIZE_OF_BYTE > limit)
             {
@@ -332,8 +337,8 @@ public final class ListFromVariantOfListFW extends ListFW
             assert lastFieldSet == INDEX_VARIANT_OF_STRING1 : "Prior required field \"variantOfString1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
-                b.putByte(o, MISSING_FIELD_PLACEHOLDER);
-                return SIZE_OF_BYTE;
+                b.putByte(o, MISSING_FIELD_BYTE);
+                return MISSING_FIELD_BYTE_SIZE;
             });
             lastFieldSet = INDEX_VARIANT_OF_STRING2;
             return this;
@@ -360,8 +365,8 @@ public final class ListFromVariantOfListFW extends ListFW
             }
             variantOfListRW.field((b, o, m) ->
             {
-                b.putByte(o, MISSING_FIELD_PLACEHOLDER);
-                return SIZE_OF_BYTE;
+                b.putByte(o, MISSING_FIELD_BYTE);
+                return MISSING_FIELD_BYTE_SIZE;
             });
             lastFieldSet = INDEX_VARIANT_OF_UINT;
             return this;
