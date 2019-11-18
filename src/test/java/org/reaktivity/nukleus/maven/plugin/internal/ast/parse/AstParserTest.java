@@ -585,8 +585,8 @@ public class AstParserTest
         AstListNode actual = new AstParser().visitList_type(ctx);
         AstListNode expected = new AstListNode.Builder()
             .name("ListWithPhysicalAndLogicalLength")
-            .physicalLengthType(AstType.UINT32)
-            .logicalLengthType(AstType.UINT32)
+            .lengthType(AstType.UINT32)
+            .fieldCountType(AstType.UINT32)
             .member(
                 (AstListMemberNode) new AstListMemberNode.Builder()
                     .isRequired(true)

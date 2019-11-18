@@ -962,8 +962,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint8_type(
                 Uint8_typeContext ctx)
             {
-                listBuilder.physicalLengthType(AstType.UINT8);
-                listBuilder.logicalLengthType(AstType.UINT8);
+                listBuilder.lengthType(AstType.UINT8);
+                listBuilder.fieldCountType(AstType.UINT8);
                 return super.visitUint8_type(ctx);
             }
 
@@ -971,8 +971,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint16_type(
                 Uint16_typeContext ctx)
             {
-                listBuilder.physicalLengthType(AstType.UINT16);
-                listBuilder.logicalLengthType(AstType.UINT16);
+                listBuilder.lengthType(AstType.UINT16);
+                listBuilder.fieldCountType(AstType.UINT16);
                 return super.visitUint16_type(ctx);
             }
 
@@ -980,8 +980,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint32_type(
                 Uint32_typeContext ctx)
             {
-                listBuilder.physicalLengthType(AstType.UINT32);
-                listBuilder.logicalLengthType(AstType.UINT32);
+                listBuilder.lengthType(AstType.UINT32);
+                listBuilder.fieldCountType(AstType.UINT32);
                 return super.visitUint32_type(ctx);
             }
 
@@ -989,8 +989,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public Builder visitUint64_type(
                 Uint64_typeContext ctx)
             {
-                listBuilder.physicalLengthType(AstType.UINT64);
-                listBuilder.logicalLengthType(AstType.UINT64);
+                listBuilder.lengthType(AstType.UINT64);
+                listBuilder.fieldCountType(AstType.UINT64);
                 return super.visitUint64_type(ctx);
             }
 
@@ -1018,7 +1018,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
                         .findFirst()
                         .orElse(AstType.dynamicType(superTypeName));
                 }
-                listBuilder.superType(astTypeName);
+                listBuilder.templateType(astTypeName);
                 return super.visitDeclarator(ctx);
             }
         }

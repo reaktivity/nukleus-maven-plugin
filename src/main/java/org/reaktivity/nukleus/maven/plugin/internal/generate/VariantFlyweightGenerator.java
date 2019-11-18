@@ -381,7 +381,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private static final class MissingFieldPlaceholderConstantGenerator extends ClassSpecMixinGenerator
     {
         private int missingFieldValue;
-        private boolean hasMissingFieldValue;
 
         private MissingFieldPlaceholderConstantGenerator(
             ClassName thisType,
@@ -398,7 +397,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             {
                 if (missingFieldValue != 0)
                 {
-                    hasMissingFieldValue = true;
                     this.missingFieldValue = missingFieldValue;
                 }
             }
@@ -408,7 +406,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public TypeSpec.Builder build()
         {
-            if (hasMissingFieldValue)
+            if (missingFieldValue != 0)
             {
                 builder.addField(
                     FieldSpec.builder(byte.class, "MISSING_FIELD_PLACEHOLDER", PUBLIC, STATIC, FINAL)
