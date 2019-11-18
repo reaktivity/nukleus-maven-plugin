@@ -1592,9 +1592,9 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             {
                 if (templateType != null)
                 {
-                    ClassName superClassName = resolver.resolveClass(templateType);
-                    ClassName builderClassName = superClassName.nestedClass("Builder");
-                    builder.addField(FieldSpec.builder(builderClassName, variantRW(superClassName), PRIVATE,
+                    ClassName templateClassName = resolver.resolveClass(templateType);
+                    ClassName builderClassName = templateClassName.nestedClass("Builder");
+                    builder.addField(FieldSpec.builder(builderClassName, variantRW(templateClassName), PRIVATE,
                         FINAL)
                         .initializer("new $T()", builderClassName)
                         .build());
