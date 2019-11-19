@@ -247,7 +247,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(34, flyweightRO.sizeof());
-        assertEquals(3, flyweightRO.length());
+        assertEquals(3, flyweightRO.fieldCount());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals(100L, flyweightRO.field1());
         assertEquals("value2", flyweightRO.field2().asString());
@@ -263,7 +263,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(30, flyweightRO.sizeof());
-        assertEquals(2, flyweightRO.length());
+        assertEquals(2, flyweightRO.fieldCount());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals("value2", flyweightRO.field2().asString());
         flyweightRO.field1();
@@ -278,7 +278,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(23, flyweightRO.sizeof());
-        assertEquals(1, flyweightRO.length());
+        assertEquals(1, flyweightRO.fieldCount());
         assertEquals("value0", flyweightRO.field0().asString());
         flyweightRO.field1();
         flyweightRO.field2();
@@ -337,7 +337,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(30, flyweightRO.sizeof());
-        assertEquals(2, flyweightRO.length());
+        assertEquals(2, flyweightRO.fieldCount());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals("value2", flyweightRO.field2().asString());
         flyweightRO.field1();
@@ -355,7 +355,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(30, flyweightRO.sizeof());
-        assertEquals(2, flyweightRO.length());
+        assertEquals(2, flyweightRO.fieldCount());
         assertEquals("value0", flyweightRO.field0().asString());
         assertEquals("value2", flyweightRO.field2().asString());
         flyweightRO.field1();

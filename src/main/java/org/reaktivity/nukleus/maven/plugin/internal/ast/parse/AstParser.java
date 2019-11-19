@@ -59,6 +59,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_lit
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Integer_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.KindContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_keywordContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_paramsContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
@@ -87,7 +88,9 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbound
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varbyteuint32_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_int_literalContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_list_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_of_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint32_typeContext;
@@ -744,17 +747,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstListNode.Builder visitList_params(
             List_paramsContext ctx)
         {
-            AstType physicalLengthType = new ListPhysicalLengthTypeVisitor(listBuilder).visitList_params(ctx);
-            listBuilder.physicalLengthType(physicalLengthType);
-
-            AstType logicalLengthType = new ListLogicalLengthTypeVisitor(listBuilder).visitList_params(ctx);
-            listBuilder.logicalLengthType(logicalLengthType);
-
-            if (ctx.uint_literal() != null)
-            {
-                Byte missingFieldByte = new ListMissingFieldByteVisitor(listBuilder).visitList_params(ctx);
-                listBuilder.missingFieldByte(missingFieldByte);
-            }
+            AstListNode.Builder builder = new ListParamsVisitor(listBuilder).visitList_params(ctx);
             return listBuilder;
         }
 
@@ -955,103 +948,78 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             return super.visitScoped_name(ctx);
         }
 
-        public final class ListPhysicalLengthTypeVisitor extends NukleusBaseVisitor<AstType>
+        public final class ListParamsVisitor extends NukleusBaseVisitor<AstListNode.Builder>
         {
-            private final AstListNode.Builder physicalLengthTypeBuilder;
+            private final AstListNode.Builder listBuilder;
 
-            public ListPhysicalLengthTypeVisitor(
-                AstListNode.Builder physicalLengthTypeBuilder)
+            public ListParamsVisitor(
+                AstListNode.Builder listBuilder)
             {
-                this.physicalLengthTypeBuilder = physicalLengthTypeBuilder;
+                this.listBuilder = listBuilder;
             }
 
             @Override
-            public AstType visitList_params(
-                List_paramsContext ctx)
-            {
-                return visitUnsigned_integer_type(ctx.unsigned_integer_type(0));
-            }
-
-            @Override
-            public AstType visitUint8_type(
+            public Builder visitUint8_type(
                 Uint8_typeContext ctx)
             {
-                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT8);
-                return AstType.UINT8;
+                listBuilder.lengthType(AstType.UINT8);
+                listBuilder.fieldCountType(AstType.UINT8);
+                return super.visitUint8_type(ctx);
             }
 
             @Override
-            public AstType visitUint16_type(
+            public Builder visitUint16_type(
                 Uint16_typeContext ctx)
             {
-                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT16);
-                return AstType.UINT16;
+                listBuilder.lengthType(AstType.UINT16);
+                listBuilder.fieldCountType(AstType.UINT16);
+                return super.visitUint16_type(ctx);
             }
 
             @Override
-            public AstType visitUint32_type(
+            public Builder visitUint32_type(
                 Uint32_typeContext ctx)
             {
-                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT32);
-                return AstType.UINT32;
+                listBuilder.lengthType(AstType.UINT32);
+                listBuilder.fieldCountType(AstType.UINT32);
+                return super.visitUint32_type(ctx);
             }
 
             @Override
-            public AstType visitUint64_type(
+            public Builder visitUint64_type(
                 Uint64_typeContext ctx)
             {
-                physicalLengthTypeBuilder.physicalLengthType(AstType.UINT64);
-                return AstType.UINT64;
-            }
-        }
-
-        public final class ListLogicalLengthTypeVisitor extends NukleusBaseVisitor<AstType>
-        {
-            private final AstListNode.Builder logicalLengthTypeBuilder;
-
-            public ListLogicalLengthTypeVisitor(
-                AstListNode.Builder logicalLengthTypeBuilder)
-            {
-                this.logicalLengthTypeBuilder = logicalLengthTypeBuilder;
+                listBuilder.lengthType(AstType.UINT64);
+                listBuilder.fieldCountType(AstType.UINT64);
+                return super.visitUint64_type(ctx);
             }
 
             @Override
-            public AstType visitList_params(
-                List_paramsContext ctx)
+            public Builder visitUint_literal(
+                Uint_literalContext ctx)
             {
-                return visitUnsigned_integer_type(ctx.unsigned_integer_type(1));
+                Byte missingFieldByte = parseByte(ctx);
+                listBuilder.missingFieldByte(missingFieldByte);
+                return super.visitUint_literal(ctx);
             }
 
             @Override
-            public AstType visitUint8_type(
-                Uint8_typeContext ctx)
+            public Builder visitDeclarator(
+                DeclaratorContext ctx)
             {
-                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT8);
-                return AstType.UINT8;
-            }
-
-            @Override
-            public AstType visitUint16_type(
-                Uint16_typeContext ctx)
-            {
-                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT16);
-                return AstType.UINT16;
-            }
-
-            @Override
-            public AstType visitUint32_type(
-                Uint32_typeContext ctx)
-            {
-                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT32);
-                return AstType.UINT32;
-            }
-
-            @Override
-            public AstType visitUint64_type(
-                Uint64_typeContext ctx)
-            {
-                logicalLengthTypeBuilder.logicalLengthType(AstType.UINT64);
-                return AstType.UINT64;
+                String superTypeName = ctx.ID().getText();
+                AstType astTypeName = astTypesByQualifiedName.get(superTypeName);
+                if (astTypeName == null)
+                {
+                    astTypeName = qualifiedPrefixes.stream()
+                        .map(qp -> String.format("%s%s", qp, superTypeName))
+                        .map(astTypesByQualifiedName::get)
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(AstType.dynamicType(superTypeName));
+                }
+                listBuilder.templateType(astTypeName);
+                return super.visitDeclarator(ctx);
             }
         }
 
@@ -1059,31 +1027,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         protected AstListNode.Builder defaultResult()
         {
             return listBuilder;
-        }
-    }
-
-    public final class ListMissingFieldByteVisitor extends NukleusBaseVisitor<Byte>
-    {
-        private final AstListNode.Builder missingFieldByteBuilder;
-
-        public ListMissingFieldByteVisitor(
-            AstListNode.Builder missingFieldByteBuilder)
-        {
-            this.missingFieldByteBuilder = missingFieldByteBuilder;
-        }
-
-        @Override
-        public Byte visitList_params(List_paramsContext ctx)
-        {
-            return visitUint_literal(ctx.uint_literal());
-        }
-
-        @Override
-        public Byte visitUint_literal(Uint_literalContext ctx)
-        {
-            Byte missingFieldByte = parseByte(ctx);
-            missingFieldByteBuilder.missingFieldByte(missingFieldByte);
-            return missingFieldByte;
         }
     }
 
@@ -1175,19 +1118,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             }
 
             @Override
-            public AstVariantCaseNode.Builder visitUint_literal(
-                Uint_literalContext ctx)
+            public AstVariantCaseNode.Builder visitVariant_case_value(
+                Variant_case_valueContext ctx)
             {
-                variantCaseBuilder.value(Integer.decode(ctx.getText()));
-                return super.visitUint_literal(ctx);
-            }
-
-            @Override
-            public AstVariantCaseNode.Builder visitDeclarator(
-                DeclaratorContext ctx)
-            {
-                variantCaseBuilder.value(ctx.ID().getText());
-                return super.visitDeclarator(ctx);
+                variantCaseBuilder.value(new VariantCaseValueVisitor().visitVariant_case_value(ctx));
+                return variantCaseBuilder;
             }
 
             @Override
@@ -1301,6 +1236,75 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
                 variantCaseBuilder.type(AstType.dynamicType(ctx.getText()));
                 return super.visitVariant_int_literal(ctx);
             }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVariant_list_member(
+                Variant_list_memberContext ctx)
+            {
+                AstVariantCaseNode.Builder variantListMemberVisitor = new VariantListMemberVisitor(variantCaseBuilder)
+                    .visitVariant_list_member(ctx);
+                return variantCaseBuilder;
+            }
+        }
+
+        public final class VariantCaseValueVisitor extends NukleusBaseVisitor<Object>
+        {
+            @Override
+            public Object visitUint_literal(
+                Uint_literalContext ctx)
+            {
+                return Integer.decode(ctx.getText());
+            }
+
+            @Override
+            public Object visitDeclarator(
+                DeclaratorContext ctx)
+            {
+                return ctx.ID().getText();
+            }
+        }
+
+        public final class VariantListMemberVisitor extends NukleusBaseVisitor<AstVariantCaseNode.Builder>
+        {
+            private final AstVariantCaseNode.Builder variantCaseBuilder;
+
+            public VariantListMemberVisitor(
+                AstVariantCaseNode.Builder variantCaseBuilder)
+            {
+                this.variantCaseBuilder = variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVariant_list_member(
+                Variant_list_memberContext ctx)
+            {
+                if (ctx.UNSIGNED_INTEGER_LITERAL(0) != null)
+                {
+                    variantCaseBuilder.type(AstType.LIST0);
+                    return variantCaseBuilder;
+                }
+                if (ctx.uint_literal() != null)
+                {
+                    variantCaseBuilder.missingFieldValue(parseInt(ctx.uint_literal()));
+                }
+                return super.visitVariant_list_member(ctx);
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint32_type(
+                Uint32_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.LIST32);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint8_type(
+                Uint8_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.LIST8);
+                return variantCaseBuilder;
+            }
         }
 
         @Override
@@ -1325,6 +1329,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             variantBuilder.of(AstType.STRING32);
             return super.visitString32_type(ctx);
+        }
+
+        @Override
+        public AstVariantNode.Builder visitList_keyword(
+            List_keywordContext ctx)
+        {
+            variantBuilder.of(AstType.LIST);
+            return super.visitList_keyword(ctx);
         }
 
         @Override

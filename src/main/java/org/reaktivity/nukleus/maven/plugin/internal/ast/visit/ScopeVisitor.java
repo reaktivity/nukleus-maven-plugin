@@ -159,10 +159,12 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
         TypeName kindTypeName = variantNode.kindType().equals(AstType.UINT8) ? resolver.resolveType(AstType.UINT8) :
             resolver.resolveClass(variantNode.kindType());
+        AstType ofType = variantNode.of();
+        ClassName flyweightName = resolver.flyweightName();
         TypeName ofTypeName = resolver.resolveType(variantNode.of());
         TypeName unsignedOfTypeName = resolver.resolveUnsignedType(variantNode.of());
-        VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName,
-            kindTypeName, ofTypeName, unsignedOfTypeName);
+        VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, flyweightName, baseName,
+            kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver);
         return new VariantVisitor(generator, resolver).visitVariant(variantNode);
     }
 
@@ -178,11 +180,12 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = listNode.name();
         AstType listType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName listName = resolver.resolveClass(listType);
-        TypeName physicalLengthType = resolver.resolveType(listNode.physicalLengthType());
-        TypeName logicalLengthType = resolver.resolveType(listNode.logicalLengthType());
+        AstType templateType = listNode.templateType();
+        TypeName lengthTypeName = resolver.resolveType(listNode.lengthType());
+        TypeName fieldCountTypeName = resolver.resolveType(listNode.fieldCountType());
         Byte missingFieldByte = listNode.missingFieldByte();
         ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
-            physicalLengthType, logicalLengthType, missingFieldByte, resolver);
+            templateType, lengthTypeName, fieldCountTypeName, missingFieldByte, resolver);
         return new ListVisitor(generator, resolver).visitList(listNode);
     }
 

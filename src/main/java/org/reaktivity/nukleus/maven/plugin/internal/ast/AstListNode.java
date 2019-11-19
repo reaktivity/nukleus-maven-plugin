@@ -24,8 +24,9 @@ import java.util.Objects;
 public final class AstListNode extends AstNamedNode
 {
     private final List<AstListMemberNode> members;
-    private final AstType physicalLengthType;
-    private final AstType logicalLengthType;
+    private final AstType templateType;
+    private final AstType lengthType;
+    private final AstType fieldCountType;
     private final Byte missingFieldByte;
 
     public List<AstListMemberNode> members()
@@ -33,14 +34,19 @@ public final class AstListNode extends AstNamedNode
         return members;
     }
 
-    public AstType physicalLengthType()
+    public AstType templateType()
     {
-        return physicalLengthType;
+        return templateType;
     }
 
-    public AstType logicalLengthType()
+    public AstType lengthType()
     {
-        return logicalLengthType;
+        return lengthType;
+    }
+
+    public AstType fieldCountType()
+    {
+        return fieldCountType;
     }
 
     public Byte missingFieldByte()
@@ -64,7 +70,7 @@ public final class AstListNode extends AstNamedNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, members, physicalLengthType, logicalLengthType);
+        return Objects.hash(name, members, templateType, lengthType, fieldCountType);
     }
 
     @Override
@@ -84,29 +90,33 @@ public final class AstListNode extends AstNamedNode
         AstListNode that = (AstListNode) o;
         return Objects.equals(this.name, that.name) &&
             Objects.equals(this.members, that.members) &&
-            Objects.equals(this.physicalLengthType, that.physicalLengthType) &&
-            Objects.equals(this.logicalLengthType, that.logicalLengthType);
+            Objects.equals(this.templateType, that.templateType) &&
+            Objects.equals(this.lengthType, that.lengthType) &&
+            Objects.equals(this.fieldCountType, that.fieldCountType);
     }
 
     private AstListNode(
         String name,
         List<AstListMemberNode> members,
-        AstType physicalLengthType,
-        AstType logicalLengthType,
+        AstType templateType,
+        AstType lengthType,
+        AstType fieldCountType,
         Byte missingFieldByte)
     {
         super(name);
         this.members = unmodifiableList(members);
-        this.physicalLengthType = physicalLengthType;
-        this.logicalLengthType = logicalLengthType;
+        this.templateType = templateType;
+        this.lengthType = lengthType;
+        this.fieldCountType = fieldCountType;
         this.missingFieldByte = missingFieldByte;
     }
 
     public static final class Builder extends AstNamedNode.Builder<AstListNode>
     {
         private List<AstListMemberNode> members;
-        private AstType physicalLengthType;
-        private AstType logicalLengthType;
+        private AstType templateType;
+        private AstType lengthType;
+        private AstType fieldCountType;
         private Byte missingFieldByte;
 
         public Builder()
@@ -128,17 +138,24 @@ public final class AstListNode extends AstNamedNode
             return this;
         }
 
-        public Builder physicalLengthType(
-            AstType physicalLengthType)
+        public Builder templateType(
+            AstType templateType)
         {
-            this.physicalLengthType = physicalLengthType;
+            this.templateType = templateType;
             return this;
         }
 
-        public Builder logicalLengthType(
-            AstType logicalLengthType)
+        public Builder lengthType(
+            AstType lengthType)
         {
-            this.logicalLengthType = logicalLengthType;
+            this.lengthType = lengthType;
+            return this;
+        }
+
+        public Builder fieldCountType(
+            AstType fieldCountType)
+        {
+            this.fieldCountType = fieldCountType;
             return this;
         }
 
@@ -152,7 +169,7 @@ public final class AstListNode extends AstNamedNode
         @Override
         public AstListNode build()
         {
-            return new AstListNode(name, members, physicalLengthType, logicalLengthType, missingFieldByte);
+            return new AstListNode(name, members, templateType, lengthType, fieldCountType, missingFieldByte);
         }
     }
 }

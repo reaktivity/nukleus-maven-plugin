@@ -327,6 +327,13 @@ scope test
             case 0x50: uint24;
         }
 
+        variant VariantOfList switch (EnumWithInt8) of list
+        {
+            case ONE: list<uint32, uint32, 0x40>;
+            case TWO: list<uint8, uint8, 0x40>;
+            case THREE: list<0, 0>;
+        }
+
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
             required string field0;
@@ -365,6 +372,14 @@ scope test
         }
 
         list<uint32, uint32, 0x40> ListWithMissingFieldByte
+        {
+            required VariantEnumKindWithString32 variantOfString1;
+            VariantEnumKindWithString32 variantOfString2;
+            VariantEnumKindOfUint32 variantOfUint = 4000000000L;
+            VariantEnumKindWithInt32 variantOfInt;
+        }
+
+        list<VariantOfList> ListFromVariantOfList
         {
             required VariantEnumKindWithString32 variantOfString1;
             VariantEnumKindWithString32 variantOfString2;
