@@ -389,6 +389,10 @@ scope test
 
         typedef VariantEnumKindOfUint32 as TypedefUint32;
         typedef TypedefUint32 as TypedefFromTypedef;
+        typedef Flat as TypedefStruct;
+        typedef UnionOctets as TypedefUnion;
+        typedef ListWithVariant as TypedefList;
+        typedef EnumWithInt8 as TypedefEnum;
 
         list<VariantOfList> ListWithTypedef
         {
