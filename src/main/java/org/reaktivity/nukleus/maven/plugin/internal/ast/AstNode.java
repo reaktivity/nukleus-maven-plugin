@@ -42,28 +42,32 @@ public abstract class AstNode
             AstScopeNode scopeNode)
         {
             return Stream.concat(
-                        Stream.concat(
+                       Stream.concat(
                             Stream.concat(
                                 Stream.concat(
                                     Stream.concat(
-                                        scopeNode.scopes()
+                                        Stream.concat(
+                                            scopeNode.scopes()
+                                                .stream()
+                                                .map(this::visitNestedScope),
+                                            scopeNode.structs()
+                                                .stream()
+                                                .map(this::visitStruct)),
+                                        scopeNode.enums()
                                             .stream()
-                                            .map(this::visitNestedScope),
-                                        scopeNode.structs()
-                                            .stream()
-                                            .map(this::visitStruct)),
-                                    scopeNode.enums()
+                                            .map(this::visitEnum)),
+                                    scopeNode.unions()
                                         .stream()
-                                        .map(this::visitEnum)),
-                                scopeNode.unions()
+                                        .map(this::visitUnion)),
+                                scopeNode.variants()
                                     .stream()
-                                    .map(this::visitUnion)),
-                            scopeNode.variants()
+                                    .map(this::visitVariant)),
+                            scopeNode.lists()
                                 .stream()
-                                .map(this::visitVariant)),
-                        scopeNode.lists()
+                                .map(this::visitList)),
+                        scopeNode.typedefs()
                             .stream()
-                            .map(this::visitList))
+                            .map(this::visitTypedef))
                    .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
@@ -104,6 +108,12 @@ public abstract class AstNode
                            .stream()
                            .map(this::visitMember)
                            .collect(reducing(defaultResult(), this::aggregateResult));
+        }
+
+        public R visitTypedef(
+            AstTypedefNode typedefNode)
+        {
+            return defaultResult();
         }
 
         public R visitMember(

@@ -1177,11 +1177,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         lastCaseSet = 1;
                         break;
                     case 32:
-                        hasConstant = addCase32(type, hasConstant, lastCaseSet);
+                        hasConstant = addCase32(type, hasConstant, isParameterTypeLong, lastCaseSet);
                         lastCaseSet = 3;
                         break;
                     case 64:
-                        hasConstant = addCase64(type, hasConstant, lastCaseSet);
+                        hasConstant = addCase64(type, hasConstant, isParameterTypeLong, lastCaseSet);
                         break;
                     }
                 }
@@ -1261,9 +1261,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             {
                 if (hasConstant)
                 {
-                    builder.endControlFlow()
-                        .addStatement("break")
-                        .endControlFlow();
+                    addDefaultCase(type, isParameterTypeLong);
                     hasConstant = false;
                 }
                 builder.beginControlFlow("case 1:")
@@ -1277,13 +1275,12 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private boolean addCase32(
                 TypeWidth type,
                 boolean hasConstant,
+                boolean isParameterTypeLong,
                 int lastCaseSet)
             {
                 if (hasConstant)
                 {
-                    builder.endControlFlow()
-                        .addStatement("break")
-                        .endControlFlow();
+                    addDefaultCase(type, isParameterTypeLong);
                     hasConstant = false;
                 }
                 if (lastCaseSet < 1)
@@ -1305,13 +1302,12 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private boolean addCase64(
                 TypeWidth type,
                 boolean hasConstant,
+                boolean isParameterTypeLong,
                 int lastCaseSet)
             {
                 if (hasConstant)
                 {
-                    builder.endControlFlow()
-                        .addStatement("break")
-                        .endControlFlow();
+                    addDefaultCase(type, isParameterTypeLong);
                     hasConstant = false;
                 }
                 if (lastCaseSet < 3)

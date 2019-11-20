@@ -38,6 +38,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstTypedefNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
@@ -76,6 +77,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Type_idContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Typedef_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint24_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Uint32_typeContext;
@@ -244,6 +246,41 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             scopeBuilder.variant(variant);
         }
         return variant;
+    }
+
+    @Override
+    public AstTypedefNode visitTypedef_type(
+        Typedef_typeContext ctx)
+    {
+        AstTypedefNode.Builder typeDefBuilder = new AstTypedefNode.Builder();
+
+        final String prefix = qualifiedPrefixes.peekFirst();
+        final String typeDefName = ctx.ID(1).getText();
+        final String originalTypeName = ctx.ID(0).getText();
+        final String qualifiedVariantName = String.format("%s%s", prefix, typeDefName);
+        astTypesByQualifiedName.put(qualifiedVariantName, AstType.dynamicType(qualifiedVariantName));
+        typeDefBuilder.name(typeDefName);
+        AstType originalType = astTypesByQualifiedName.get(originalTypeName);
+
+        if (originalType == null)
+        {
+            originalType = qualifiedPrefixes.stream()
+                .map(qp -> String.format("%s%s", qp, originalTypeName))
+                .map(astTypesByQualifiedName::get)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(AstType.dynamicType(originalTypeName));
+        }
+        typeDefBuilder.originalType(originalType);
+
+
+        AstTypedefNode typeDef = typeDefBuilder.build();
+        AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
+        if (scopeBuilder != null)
+        {
+            scopeBuilder.typedef(typeDef);
+        }
+        return typeDef;
     }
 
     @Override

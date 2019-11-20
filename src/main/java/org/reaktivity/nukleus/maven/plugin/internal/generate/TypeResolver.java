@@ -31,6 +31,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstTypedefNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 
@@ -180,6 +181,13 @@ public final class TypeResolver
         }
 
         @Override
+        public Map<String, AstNamedNode> visitTypedef(
+            AstTypedefNode typedefNode)
+        {
+            return visitNamedNode(typedefNode, node -> super.visitTypedef((AstTypedefNode) node));
+        }
+
+        @Override
         public Map<String, AstNamedNode> visitUnion(
             AstUnionNode unionNode)
         {
@@ -279,6 +287,13 @@ public final class TypeResolver
             AstListNode listNode)
         {
             return visitNamedType(listNode, listNode.name(), super::visitList);
+        }
+
+        @Override
+        public Map<AstType, TypeName> visitTypedef(
+            AstTypedefNode typedefNode)
+        {
+            return visitNamedType(typedefNode, typedefNode.name(), super::visitTypedef);
         }
 
         private <N extends AstNode> Map<AstType, TypeName> visitNamedType(

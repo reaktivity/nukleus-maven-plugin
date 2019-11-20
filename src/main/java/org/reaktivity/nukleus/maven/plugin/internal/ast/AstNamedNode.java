@@ -21,7 +21,7 @@ public abstract class AstNamedNode extends AstNode
 {
     public enum Kind
     {
-        SCOPE, STRUCT, UNION, VARIANT, LIST, ENUM, DEFAULT
+        SCOPE, STRUCT, UNION, VARIANT, LIST, ENUM, TYPEDEF, DEFAULT
     }
     protected final String name;
 
@@ -30,6 +30,8 @@ public abstract class AstNamedNode extends AstNode
     {
         this.name = requireNonNull(name);
     }
+
+    public abstract AstNamedNode withName(String name);
 
     public String name()
     {

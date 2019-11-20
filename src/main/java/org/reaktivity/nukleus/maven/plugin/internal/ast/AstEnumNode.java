@@ -44,6 +44,13 @@ public final class AstEnumNode extends AstNamedNode
     }
 
     @Override
+    public AstNamedNode withName(
+        String name)
+    {
+        return new AstEnumNode(name, values, valueType);
+    }
+
+    @Override
     public Kind getKind()
     {
         return Kind.ENUM;

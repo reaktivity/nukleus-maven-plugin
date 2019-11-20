@@ -15,98 +15,93 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
-import static java.util.Collections.unmodifiableList;
-
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Objects;
 
-public final class AstUnionNode extends AstNamedNode
+public final class AstTypedefNode extends AstNamedNode
 {
-    private final List<AstUnionCaseNode> cases;
+    private final AstType originalType;
 
     @Override
     public <R> R accept(
         Visitor<R> visitor)
     {
-        return visitor.visitUnion(this);
+        return visitor.visitTypedef(this);
+    }
+
+    public AstType originalType()
+    {
+        return originalType;
     }
 
     @Override
     public AstNamedNode withName(
         String name)
     {
-        return new AstUnionNode(name, cases);
+        return new AstTypedefNode(name, originalType);
     }
 
     @Override
     public Kind getKind()
     {
-        return Kind.UNION;
-    }
-
-    public List<AstUnionCaseNode> cases()
-    {
-        return cases;
+        return Kind.TYPEDEF;
     }
 
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 7) ^ cases.hashCode();
+        return name.hashCode() << 7 ^ originalType.hashCode() << 3;
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(
+        Object o)
     {
         if (o == this)
         {
             return true;
         }
 
-        if (!(o instanceof AstUnionNode))
+        if (!(o instanceof AstTypedefNode))
         {
             return false;
         }
 
-        AstUnionNode that = (AstUnionNode) o;
+        AstTypedefNode that = (AstTypedefNode) o;
         return Objects.equals(this.name, that.name) &&
-                Objects.equals(this.cases, that.cases);
+            Objects.equals(this.originalType, that.originalType);
     }
 
-    private AstUnionNode(
+    private AstTypedefNode(
         String name,
-        List<AstUnionCaseNode> cases)
+        AstType originalType)
     {
         super(name);
-        this.cases = unmodifiableList(cases);
+        this.originalType = originalType;
     }
 
-    public static final class Builder extends AstNamedNode.Builder<AstUnionNode>
+    public static final class Builder extends AstNamedNode.Builder<AstTypedefNode>
     {
-        private List<AstUnionCaseNode> cases;
+        private AstType originalType;
 
-        public Builder()
+        public Builder originalType(
+            AstType originalType)
         {
-            this.cases = new LinkedList<>();
+            this.originalType = originalType;
+            return this;
         }
 
-        public Builder name(String name)
+        @Override
+        public Builder name(
+            String name)
         {
             this.name = name;
             return this;
         }
 
-        public Builder caseN(AstUnionCaseNode caseN)
-        {
-            this.cases.add(caseN);
-            return this;
-        }
-
         @Override
-        public AstUnionNode build()
+        public AstTypedefNode build()
         {
-            return new AstUnionNode(name, cases);
+            return new AstTypedefNode(name, originalType);
         }
     }
 }

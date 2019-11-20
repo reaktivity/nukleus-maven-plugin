@@ -55,6 +55,13 @@ public final class AstListNode extends AstNamedNode
     }
 
     @Override
+    public AstNamedNode withName(
+        String name)
+    {
+        return new AstListNode(name, members, templateType, lengthType, fieldCountType, missingFieldByte);
+    }
+
+    @Override
     public Kind getKind()
     {
         return Kind.LIST;

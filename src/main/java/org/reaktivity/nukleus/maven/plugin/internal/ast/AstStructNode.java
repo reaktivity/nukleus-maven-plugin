@@ -53,6 +53,13 @@ public final class AstStructNode extends AstNamedNode
     }
 
     @Override
+    public AstNamedNode withName(
+        String name)
+    {
+        return new AstStructNode(name, typeId, supertype, members);
+    }
+
+    @Override
     public Kind getKind()
     {
         return Kind.STRUCT;
