@@ -77,6 +77,7 @@ constr_type_spec
    | list_type
    | union_type
    | variant_type
+   | typedef_type
    ;
 
 declarators
@@ -360,6 +361,10 @@ variant_list_member
    : KW_LIST LEFT_ANG_BRACKET uint32_type COMMA uint32_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
    | KW_LIST LEFT_ANG_BRACKET uint8_type COMMA uint8_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
    | KW_LIST LEFT_ANG_BRACKET UNSIGNED_INTEGER_LITERAL COMMA UNSIGNED_INTEGER_LITERAL RIGHT_ANG_BRACKET
+   ;
+
+typedef_type
+   : KW_TYPEDEF ID KW_AS ID SEMICOLON
    ;
 
 array_type
@@ -657,6 +662,16 @@ KW_UNION
 
 KW_VARIANT
    : 'variant'
+   ;
+
+
+KW_TYPEDEF
+   : 'typedef'
+   ;
+
+
+KW_AS
+   : 'as'
    ;
 
 

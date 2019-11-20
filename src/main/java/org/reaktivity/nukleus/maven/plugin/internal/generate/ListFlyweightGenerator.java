@@ -47,6 +47,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstTypedefNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 
 import com.squareup.javapoet.ClassName;
@@ -423,30 +424,41 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 {
                     defaultValueBuilder.initializer("\"$L\"", defaultValue);
                 }
-                else if (node instanceof AstVariantNode)
+                else
                 {
-                    AstVariantNode variantNode = (AstVariantNode) node;
-                    AstType ofType = variantNode.of();
-                    TypeName typeOfConstant = Objects.requireNonNullElse(resolver.resolveUnsignedType(ofType),
-                        resolver.resolveType(ofType));
-                    defaultValueBuilder = FieldSpec.builder(typeOfConstant, defaultConstant(fieldName), PRIVATE,
-                        STATIC, FINAL);
-                    if (ofType.equals(AstType.STRING) || ofType.equals(AstType.STRING16) || ofType.equals(AstType.STRING32))
+                    if (isTypedefType(node.getKind()))
                     {
-                        defaultValueBuilder.initializer("\"$L\"", defaultValue);
+                        while (isTypedefType(node.getKind()))
+                        {
+                            type = ((AstTypedefNode) node).originalType();
+                            node = resolver.resolve(type.name());
+                        }
                     }
-                    else
+                    if (isVariantType(node.getKind()))
                     {
-                        defaultValueBuilder.initializer("$L", defaultValue);
+                        AstVariantNode variantNode = (AstVariantNode) node;
+                        AstType ofType = variantNode.of();
+                        TypeName typeOfConstant = Objects.requireNonNullElse(resolver.resolveUnsignedType(ofType),
+                            resolver.resolveType(ofType));
+                        defaultValueBuilder = FieldSpec.builder(typeOfConstant, defaultConstant(fieldName), PRIVATE,
+                            STATIC, FINAL);
+                        if (ofType.equals(AstType.STRING) || ofType.equals(AstType.STRING16) || ofType.equals(AstType.STRING32))
+                        {
+                            defaultValueBuilder.initializer("\"$L\"", defaultValue);
+                        }
+                        else
+                        {
+                            defaultValueBuilder.initializer("$L", defaultValue);
+                        }
                     }
-                }
-                else if (node instanceof AstEnumNode)
-                {
-                    AstEnumNode enumNode = (AstEnumNode) node;
-                    ClassName enumFlyweightName = (ClassName) typeName;
-                    ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
-                    defaultValueBuilder = FieldSpec.builder(enumName, defaultConstant(fieldName), PRIVATE, STATIC, FINAL)
-                        .initializer("$T.$L", enumName, defaultValue);
+                    else if (isEnumType(node.getKind()))
+                    {
+                        AstEnumNode enumNode = (AstEnumNode) node;
+                        ClassName enumFlyweightName = (ClassName) typeName;
+                        ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
+                        defaultValueBuilder = FieldSpec.builder(enumName, defaultConstant(fieldName), PRIVATE, STATIC, FINAL)
+                            .initializer("$T.$L", enumName, defaultValue);
+                    }
                 }
                 builder.addField(defaultValueBuilder.build());
             }
@@ -865,18 +877,30 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             {
                 addMember(defaultValue, codeBlock, name, isRequired, "$LRO");
             }
-            else if (Kind.ENUM.equals(namedNode.getKind()))
-            {
-                returnType = addEnumMember(defaultValue, codeBlock, name, type, typeName, isRequired);
-            }
-            else if (Kind.VARIANT.equals(namedNode.getKind()))
-            {
-                returnType = addVariantMember(defaultValue, codeBlock, name, type, typeName, isRequired);
-            }
             else
             {
-                addMember(defaultValue, codeBlock, name, isRequired, "$LRO");
+                if (isTypedefType(namedNode.getKind()))
+                {
+                    while (isTypedefType(namedNode.getKind()))
+                    {
+                        type = ((AstTypedefNode) namedNode).originalType();
+                        namedNode = resolver.resolve(type.name());
+                    }
+                }
+                if (isEnumType(namedNode.getKind()))
+                {
+                    returnType = addEnumMember(defaultValue, codeBlock, name, type, typeName, isRequired);
+                }
+                else if (isVariantType(namedNode.getKind()))
+                {
+                    returnType = addVariantMember(defaultValue, codeBlock, name, type, typeName, isRequired);
+                }
+                else
+                {
+                    addMember(defaultValue, codeBlock, name, isRequired, "$LRO");
+                }
             }
+
 
             builder.addMethod(methodBuilder(methodName(name))
                 .addModifiers(PUBLIC)
@@ -1873,17 +1897,33 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 {
                     addStringType(className, name);
                 }
-                else if (Kind.ENUM.equals(namedNode.getKind()))
-                {
-                    addEnumType(name, type, className);
-                }
-                else if (Kind.VARIANT.equals(namedNode.getKind()))
-                {
-                    addVariantType(name, type, className, isRequired);
-                }
                 else
                 {
-                    addUnionType(name, className);
+                    Kind kind = namedNode.getKind();
+                    if (isTypedefType(kind))
+                    {
+                        AstTypedefNode typedefNode = (AstTypedefNode) namedNode;
+                        type = typedefNode.originalType();
+                        className = resolver.resolveClass(type);
+                        kind = resolver.resolve(type.name()).getKind();
+                        if (isTypedefType(kind))
+                        {
+                            addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired);
+                            return;
+                        }
+                    }
+                    if (isEnumType(kind))
+                    {
+                        addEnumType(name, type, className);
+                    }
+                    else if (isVariantType(kind))
+                    {
+                        addVariantType(name, type, className, isRequired);
+                    }
+                    else
+                    {
+                        addUnionType(name, className);
+                    }
                 }
             }
 
@@ -2400,6 +2440,24 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
     {
         String name = classType.simpleName();
         return "String32FW".equals(name);
+    }
+
+    private static boolean isEnumType(
+        Kind kind)
+    {
+        return Kind.ENUM.equals(kind);
+    }
+
+    private static boolean isVariantType(
+        Kind kind)
+    {
+        return Kind.VARIANT.equals(kind);
+    }
+
+    private static boolean isTypedefType(
+        Kind kind)
+    {
+        return Kind.TYPEDEF.equals(kind);
     }
 
     private static boolean isVarintType(

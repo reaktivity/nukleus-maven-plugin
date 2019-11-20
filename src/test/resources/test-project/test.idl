@@ -386,5 +386,14 @@ scope test
             VariantEnumKindOfUint32 variantOfUint = 4000000000L;
             VariantEnumKindWithInt32 variantOfInt;
         }
+
+        typedef VariantEnumKindOfUint32 as TypedefUint32;
+        typedef TypedefUint32 as TypedefFromTypedef;
+
+        list<VariantOfList> ListWithTypedef
+        {
+            required TypedefUint32 field1;
+            TypedefFromTypedef field2 = 4000000000L;
+        }
     }
 }

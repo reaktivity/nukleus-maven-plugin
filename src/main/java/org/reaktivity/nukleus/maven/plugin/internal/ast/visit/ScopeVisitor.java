@@ -29,6 +29,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstTypedefNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
@@ -102,6 +103,36 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         generator.typeId(findTypeId(structNode));
 
         return new StructVisitor(generator, resolver).visitStruct(structNode);
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitTypedef(
+        AstTypedefNode typedefNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        AstNamedNode originalNode = resolver.resolve(typedefNode.originalType().name());
+        AstNamedNode newNode = originalNode.withName(typedefNode.name());
+        Kind kind = newNode.getKind();
+        switch (kind)
+        {
+        case STRUCT:
+            return visitStruct((AstStructNode) newNode);
+        case UNION:
+            return visitUnion((AstUnionNode) newNode);
+        case VARIANT:
+            return visitVariant((AstVariantNode) newNode);
+        case LIST:
+            return visitList((AstListNode) newNode);
+        case ENUM:
+            return visitEnum((AstEnumNode) newNode);
+        case TYPEDEF:
+            return visitTypedef((AstTypedefNode) newNode);
+        }
+        return defaultResult();
     }
 
     @Override

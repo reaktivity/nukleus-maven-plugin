@@ -56,6 +56,13 @@ public final class AstVariantNode extends AstNamedNode
     }
 
     @Override
+    public AstNamedNode withName(
+        String name)
+    {
+        return new AstVariantNode(name, ofType, kindType, cases);
+    }
+
+    @Override
     public int hashCode()
     {
         return Objects.hash(name, ofType, kindType, cases);

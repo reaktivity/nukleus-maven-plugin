@@ -35,6 +35,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstTypedefNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
@@ -48,6 +49,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberC
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Typedef_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 
@@ -611,6 +613,23 @@ public class AstParserTest
         assertEquals(expected.members().get(0).toString(), actual.members().get(0).toString());
         assertEquals(expected.members().get(1).toString(), actual.members().get(1).toString());
         assertEquals(expected.members().get(2).toString(), actual.members().get(2).toString());
+    }
+
+    @Test
+    public void shouldParseTypedef()
+    {
+        NukleusParser parser = newParser("typedef Original as TypeDef;");
+
+        Typedef_typeContext ctx = parser.typedef_type();
+        AstTypedefNode actual = new AstParser().visitTypedef_type(ctx);
+        AstTypedefNode expected = new AstTypedefNode.Builder()
+            .name("TypeDef")
+            .originalType(AstType.dynamicType("Original"))
+            .build();
+        assertEquals(expected.getKind(), actual.getKind());
+        assertEquals(expected.originalType(), actual.originalType());
+        assertEquals(expected.name(), actual.name());
+        assertEquals(expected, actual);
     }
 
     @Test
