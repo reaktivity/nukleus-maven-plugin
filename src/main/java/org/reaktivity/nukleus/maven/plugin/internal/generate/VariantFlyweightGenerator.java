@@ -690,9 +690,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                if (memberTypeName instanceof ClassName && "StringFW".equals(((ClassName) memberTypeName).simpleName()) ||
-                    memberTypeName instanceof ClassName && "String16FW".equals(((ClassName) memberTypeName).simpleName()) ||
-                    memberTypeName instanceof ClassName && "String32FW".equals(((ClassName) memberTypeName).simpleName()))
+                if (memberTypeName != null && isStringType((ClassName) memberTypeName))
                 {
                     codeBlock.addStatement("return $LRO", name);
                 }
@@ -2005,7 +2003,34 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private static boolean isStringType(
         AstType type)
     {
-        return AstType.STRING.equals(type) || AstType.STRING16.equals(type) || AstType.STRING32.equals(type);
+        return AstType.STRING8.equals(type) || AstType.STRING16.equals(type) || AstType.STRING32.equals(type);
+    }
+
+    private static boolean isStringType(
+        ClassName classType)
+    {
+        return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
+    }
+
+    private static boolean isString8Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String8FW".equals(name);
+    }
+
+    private static boolean isString16Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String16FW".equals(name);
+    }
+
+    private static boolean isString32Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String32FW".equals(name);
     }
 
     private static ClassName enumClassName(

@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatWithArrayFW;
 
 public class FlatWithArrayFWTest
@@ -53,7 +53,7 @@ public class FlatWithArrayFWTest
     };
     private final FlatWithArrayFW.Builder flatRW = new FlatWithArrayFW.Builder();
     private final FlatWithArrayFW flyweightRO = new FlatWithArrayFW();
-    private final StringFW.Builder stringRW = new StringFW.Builder();
+    private final String8FW.Builder stringRW = new String8FW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
 
     static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
@@ -252,11 +252,11 @@ public class FlatWithArrayFWTest
     }
 
     @Test
-    public void shouldSetStringValuesUsingStringFW() throws Exception
+    public void shouldSetStringValuesUsingString8FW() throws Exception
     {
         FlatWithArrayFW.Builder builder = flatRW.wrap(buffer, 0, buffer.capacity());
         builder.fixed1(10);
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
                .set("value1", UTF_8)
                .build();
         FlatWithArrayFW flatWithList = builder.string1(value)

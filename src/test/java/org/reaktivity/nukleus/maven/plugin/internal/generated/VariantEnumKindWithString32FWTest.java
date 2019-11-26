@@ -117,7 +117,7 @@ public class VariantEnumKindWithString32FWTest
         final int offset = 1;
         setAllTestValues(buffer, offset);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertEquals("valueOfString1", flyweightRO.getAsString().asString());
+        assertEquals("valueOfString1", flyweightRO.getAsString8().asString());
         assertEquals("valueOfString1", flyweightRO.get());
         assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
     }
@@ -128,7 +128,7 @@ public class VariantEnumKindWithString32FWTest
         final int offset = 1;
         setAllTestValues(buffer, offset);
         flyweightRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals("valueOfString1", flyweightRO.getAsString().asString());
+        assertEquals("valueOfString1", flyweightRO.getAsString8().asString());
         assertEquals("valueOfString1", flyweightRO.get());
         assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
     }
@@ -165,13 +165,13 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString("value1")
+            .setAsString8("value1")
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweightRO.limit());
         assertEquals("value1", flyweightRO.get());
-        assertEquals("value1", flyweightRO.getAsString().asString());
+        assertEquals("value1", flyweightRO.getAsString8().asString());
         assertEquals(EnumWithInt8.ONE, flyweightRO.kind());
     }
 
@@ -185,7 +185,7 @@ public class VariantEnumKindWithString32FWTest
         flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweightRO.limit());
         assertEquals("value1", flyweightRO.get());
-        assertEquals("value1", flyweightRO.getAsString().asString());
+        assertEquals("value1", flyweightRO.getAsString8().asString());
         assertNull(flyweightRO.getAsString16().asString());
         assertNull(flyweightRO.getAsString32().asString());
     }

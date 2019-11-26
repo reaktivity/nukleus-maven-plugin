@@ -25,7 +25,7 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithPhysicalAndLogicalLengthFW;
 
 public class ListWithPhysicalAndLogicalLengthFWTest
@@ -39,7 +39,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     };
     private final ListWithPhysicalAndLogicalLengthFW.Builder flyweightRW = new ListWithPhysicalAndLogicalLengthFW.Builder();
     private final ListWithPhysicalAndLogicalLengthFW flyweightRO = new ListWithPhysicalAndLogicalLengthFW();
-    private final StringFW.Builder stringRW = new StringFW.Builder();
+    private final String8FW.Builder stringRW = new String8FW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
     private final int physicalLengthSize = Integer.BYTES;
     private final int logicalLengthSize = Integer.BYTES;
@@ -56,7 +56,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
         buffer.putLong(offsetBitMask, 1);
         int offsetField0 = offsetBitMask + bitmaskSize;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("longValue", UTF_8)
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
@@ -78,7 +78,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
         buffer.putLong(offsetBitMask, 1);
         int offsetField0 = offsetBitMask + bitmaskSize;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("longValue", UTF_8)
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
@@ -111,7 +111,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
         buffer.putLong(offsetBitMask, 7L);
         int offsetField0 = offsetBitMask + bitmaskSize;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
@@ -137,7 +137,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
         buffer.putLong(offsetBitMask, 7);
         int offsetField0 = offsetBitMask + bitmaskSize;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
@@ -163,7 +163,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
         buffer.putLong(offsetBitMask, bitMask);
         int offsetField0 = offsetBitMask + bitmaskSize;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
@@ -184,7 +184,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
         buffer.putLong(offsetBitMask, bitMask);
         int offsetField0 = offsetBitMask + bitmaskSize;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
@@ -208,7 +208,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetBitMask = offsetLogicalLength + logicalLengthSize;
         buffer.putLong(offsetBitMask, bitMask);
         int offsetField0 = offsetBitMask + bitmaskSize;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
             .build();
         buffer.putBytes(offsetField0, value.buffer(), 0, value.sizeof());
@@ -229,7 +229,7 @@ public class ListWithPhysicalAndLogicalLengthFWTest
         int offsetField1 = offsetBitMask + bitmaskSize;
         buffer.putInt(offsetField1, 100);
         int offsetField2 = offsetField1 + Integer.BYTES;
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value2", UTF_8)
             .build();
         buffer.putBytes(offsetField2, value.buffer(), 0, value.sizeof());
@@ -322,14 +322,14 @@ public class ListWithPhysicalAndLogicalLengthFWTest
     }
 
     @Test(expected = AssertionError.class)
-    public void shouldSetStringFieldsUsingStringFW()
+    public void shouldSetStringFieldsUsingString8FW()
     {
         ListWithPhysicalAndLogicalLengthFW.Builder builder = flyweightRW.wrap(buffer, 0, buffer.capacity());
-        StringFW value0 = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value0 = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value0", UTF_8)
             .build();
         builder.field0(value0);
-        StringFW value2 = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value2 = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
             .set("value2", UTF_8)
             .build();
         int limit =  builder.field2(value2)

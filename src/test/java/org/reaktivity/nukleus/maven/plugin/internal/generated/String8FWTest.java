@@ -24,9 +24,9 @@ import org.agrona.BitUtil;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 
-public class StringFWTest
+public class String8FWTest
 {
     private static final int LENGTH_SIZE = 1;
 
@@ -37,13 +37,13 @@ public class StringFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final StringFW.Builder stringRW = new StringFW.Builder();
-    private final StringFW stringRO = new StringFW();
+    private final String8FW.Builder stringRW = new String8FW.Builder();
+    private final String8FW stringRO = new String8FW();
 
     @Test
     public void shouldInitWithString() throws Exception
     {
-        StringFW string = new StringFW("test");
+        String8FW string = new String8FW("test");
 
         assertEquals("test", string.asString());
         assertEquals(LENGTH_SIZE + "test".length(), string.sizeof());
@@ -52,7 +52,7 @@ public class StringFWTest
     @Test
     public void shouldInitWithStringAndCharset() throws Exception
     {
-        StringFW string = new StringFW("test", UTF_8);
+        String8FW string = new String8FW("test", UTF_8);
 
         assertEquals("test", string.asString());
         assertEquals(LENGTH_SIZE + "test".length(), string.sizeof());
@@ -66,7 +66,7 @@ public class StringFWTest
                 .build()
                 .limit();
 
-        StringFW string = stringRW.wrap(buffer, 0, limit)
+        String8FW string = stringRW.wrap(buffer, 0, limit)
                 .build();
 
         assertNull(string.asString());
@@ -165,13 +165,13 @@ public class StringFWTest
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void shouldFailToSetUsingStringFWWhenExceedsMaxLimit()
+    public void shouldFailToSetUsingString8FWWhenExceedsMaxLimit()
     {
         buffer.setMemory(0,  buffer.capacity(), (byte) 0x00);
         try
         {
             stringRW.wrap(buffer, 10, 10 + LENGTH_SIZE)
-                .set(asStringFW("1"));
+                .set(asString8FW("1"));
         }
         finally
         {
@@ -270,10 +270,10 @@ public class StringFWTest
     }
 
     @Test
-    public void shouldSetUsingStringFW() throws Exception
+    public void shouldSetUsingString8FW() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, 50)
-                .set(asStringFW("value1"))
+                .set(asString8FW("value1"))
                 .build()
                 .limit();
         stringRO.wrap(buffer,  0,  limit);
@@ -304,10 +304,10 @@ public class StringFWTest
         return buffer;
     }
 
-    private static StringFW asStringFW(String value)
+    private static String8FW asString8FW(String value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
-        return new StringFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 
 }

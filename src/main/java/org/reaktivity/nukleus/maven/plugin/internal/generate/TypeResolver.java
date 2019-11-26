@@ -96,6 +96,7 @@ public final class TypeResolver
         Map<AstType, TypeName> namesByType = new HashMap<>();
         namesByType.put(AstType.FLYWEIGHT, ClassName.get(packageName, "Flyweight"));
         namesByType.put(AstType.STRING, ClassName.get(packageName, "StringFW"));
+        namesByType.put(AstType.STRING8, ClassName.get(packageName, "String8FW"));
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.STRING32, ClassName.get(packageName, "String32FW"));
         namesByType.put(AstType.ARRAY, ClassName.get(packageName, "ArrayFW"));

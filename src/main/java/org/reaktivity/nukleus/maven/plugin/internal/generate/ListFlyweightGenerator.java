@@ -442,7 +442,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                             resolver.resolveType(ofType));
                         defaultValueBuilder = FieldSpec.builder(typeOfConstant, defaultConstant(fieldName), PRIVATE,
                             STATIC, FINAL);
-                        if (ofType.equals(AstType.STRING) || ofType.equals(AstType.STRING16) || ofType.equals(AstType.STRING32))
+                        if (ofType.equals(AstType.STRING8) || ofType.equals(AstType.STRING16) || ofType.equals(AstType.STRING32))
                         {
                             defaultValueBuilder.initializer("\"$L\"", defaultValue);
                         }
@@ -2142,7 +2142,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                         priorRequiredFieldName);
                 }
                 methodBuilder.addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name);
-                if (AstType.STRING.equals(enumNode.valueType()) || AstType.STRING16.equals(enumNode.valueType()) ||
+                if (AstType.STRING8.equals(enumNode.valueType()) || AstType.STRING16.equals(enumNode.valueType()) ||
                     AstType.STRING32.equals(enumNode.valueType()))
                 {
                     methodBuilder.addStatement("$LRW.set(value, $T.UTF_8)", name, StandardCharsets.class);
@@ -2424,8 +2424,14 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
     private static boolean isStringType(
         ClassName classType)
     {
+        return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
+    }
+
+    private static boolean isString8Type(
+        ClassName classType)
+    {
         String name = classType.simpleName();
-        return "StringFW".equals(name) || isString16Type(classType) || isString32Type(classType);
+        return "String8FW".equals(name);
     }
 
     private static boolean isString16Type(

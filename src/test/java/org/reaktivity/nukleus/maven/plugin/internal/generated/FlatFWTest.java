@@ -26,7 +26,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generated.FlyweightTe
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatFW;
 
 public class FlatFWTest
@@ -47,7 +47,7 @@ public class FlatFWTest
     };
     private final FlatFW.Builder flatRW = new FlatFW.Builder();
     private final FlatFW flatRO = new FlatFW();
-    private final StringFW.Builder stringRW = new StringFW.Builder();
+    private final String8FW.Builder stringRW = new String8FW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
 
     @Test
@@ -305,12 +305,12 @@ public class FlatFWTest
     }
 
     @Test
-    public void shouldSetStringValuesUsingStringFW() throws Exception
+    public void shouldSetStringValuesUsingString8FW() throws Exception
     {
         FlatFW.Builder builder = flatRW.wrap(buffer, 0, buffer.capacity());
         builder.fixed1(10)
                .fixed2(20);
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
                .set("value1", UTF_8)
                .build();
         builder.string1(value)
@@ -367,8 +367,8 @@ public class FlatFWTest
         int limit = flatRW.wrap(buffer, offset, buffer.capacity())
             .fixed1(10)
             .string1((String) null)
-            .string2((StringFW) null)
-            .string3((StringFW) null)
+            .string2((String8FW) null)
+            .string3((String8FW) null)
             .build()
             .limit();
         expected.putLong(offset, 10);

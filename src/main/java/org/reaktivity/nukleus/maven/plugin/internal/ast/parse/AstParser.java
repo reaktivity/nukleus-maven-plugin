@@ -136,7 +136,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         valueTypeByName.put(AstType.INT24, AstParser::parseMedium);
         valueTypeByName.put(AstType.INT32, AstParser::parseInt);
         valueTypeByName.put(AstType.INT64, AstParser::parseLong);
-        valueTypeByName.put(AstType.STRING, AstParser::parseString);
+        valueTypeByName.put(AstType.STRING8, AstParser::parseString);
         valueTypeByName.put(AstType.STRING16, AstParser::parseString);
         valueTypeByName.put(AstType.STRING32, AstParser::parseString);
         return valueTypeByName;
@@ -609,7 +609,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     public AstNode visitString_type(
         String_typeContext ctx)
     {
-        memberBuilder.type(AstType.STRING);
+        memberBuilder.type(AstType.STRING8);
         return super.visitString_type(ctx);
     }
 
@@ -938,7 +938,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstListNode.Builder visitString_type(
             String_typeContext ctx)
         {
-            listMemberBuilder.type(AstType.STRING);
+            listMemberBuilder.type(AstType.STRING8);
             return super.visitString_type(ctx);
         }
 
@@ -1246,7 +1246,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitString_type(
                 String_typeContext ctx)
             {
-                variantCaseBuilder.type(AstType.STRING);
+                variantCaseBuilder.type(AstType.STRING8);
                 return super.visitString_type(ctx);
             }
 
@@ -1348,7 +1348,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstVariantNode.Builder visitString_type(
             String_typeContext ctx)
         {
-            variantBuilder.of(AstType.STRING);
+            variantBuilder.of(AstType.STRING8);
             return super.visitString_type(ctx);
         }
 
@@ -1552,7 +1552,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstEnumNode.Builder visitString_type(
             String_typeContext ctx)
         {
-            enumBuilder.valueType(AstType.STRING);
+            enumBuilder.valueType(AstType.STRING8);
             return super.visitString_type(ctx);
         }
 

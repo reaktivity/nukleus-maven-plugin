@@ -334,6 +334,14 @@ scope test
             case THREE: list<0, 0>;
         }
 
+//        variant VariantOfArray switch (EnumWithInt8) of array
+//        {
+//            case ONE: array<uint32, uint32>;
+//            case TWO: array<uint8, uint8>;
+//        }
+
+//        array<uint8, uint8, VariantEnumKindWithString32> ArrayWithLength8;
+
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
             required string field0;
@@ -399,5 +407,11 @@ scope test
             required TypedefUint32 field1;
             TypedefFromTypedef field2 = 4000000000L;
         }
+
+//        list<VariantOfList> ListWithArray
+//        {
+//            VariantOfArray<VariantEnumKindWithString32> arrayOfString;
+//            array<uint8, uint8, VariantEnumKindWithString32> generalArray;
+//        }
     }
 }
