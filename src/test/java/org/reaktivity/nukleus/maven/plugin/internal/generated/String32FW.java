@@ -123,7 +123,7 @@ public final class String32FW extends StringFW
         return maxLimit() == offset() ? "null" : String.format("\"%s\"", asString());
     }
 
-    private int length0()
+    protected int length0()
     {
         int length = buffer().getInt(offset(), byteOrder) & 0xFFFFFFFF;
         return length < 0 ? -1 : length;

@@ -123,7 +123,7 @@ public final class String16FW extends StringFW
         return maxLimit() == offset() ? "null" : String.format("\"%s\"", asString());
     }
 
-    private int length0()
+    protected int length0()
     {
         int length = buffer().getShort(offset(), byteOrder) & 0xFFFF;
         return length == 65535 ? -1 : length;

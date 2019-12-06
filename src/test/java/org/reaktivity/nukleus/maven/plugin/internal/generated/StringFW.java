@@ -26,6 +26,8 @@ public abstract class StringFW extends Flyweight
 {
     public abstract String asString();
 
+    protected abstract int length0();
+
     public abstract static class Builder<T extends StringFW> extends Flyweight.Builder<T>
     {
         private boolean valueSet;

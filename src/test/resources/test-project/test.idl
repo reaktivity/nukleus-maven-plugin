@@ -407,11 +407,5 @@ scope test
             required TypedefUint32 field1;
             TypedefFromTypedef field2 = 4000000000L;
         }
-
-//        list<VariantOfList> ListWithArray
-//        {
-//            VariantOfArray<VariantEnumKindWithString32> arrayOfString;
-//            array<uint8, uint8, VariantEnumKindWithString32> generalArray;
-//        }
     }
 }

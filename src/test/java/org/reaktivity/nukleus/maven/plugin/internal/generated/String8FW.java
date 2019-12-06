@@ -113,7 +113,7 @@ public final class String8FW extends StringFW
         return String.format("\"%s\"", asString());
     }
 
-    private int length0()
+    protected int length0()
     {
         int length = buffer().getByte(offset()) & 0xFF;
         return length == 255 ? -1 : length;

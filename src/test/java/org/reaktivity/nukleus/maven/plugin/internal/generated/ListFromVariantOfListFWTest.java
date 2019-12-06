@@ -136,7 +136,7 @@ public class ListFromVariantOfListFWTest
         setAllFields(buffer);
 
         final ListFromVariantOfListFW listFromVariantOfList =
-            listFromVariantOfListRO.wrap(buffer, offsetPhysicalLength, maxLimit);
+            listFromVariantOfListRO.tryWrap(buffer, offsetPhysicalLength, maxLimit);
 
         assertSame(listFromVariantOfListRO, listFromVariantOfList);
         assertEquals(physicalLength, listFromVariantOfList.length());
