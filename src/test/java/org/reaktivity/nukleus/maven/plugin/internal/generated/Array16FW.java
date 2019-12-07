@@ -23,11 +23,11 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T, Array32FW>
+public final class Array16FW<T extends Flyweight & VariantFW> extends ArrayFW<T, Array16FW>
 {
-    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_INT;
+    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_SHORT;
 
-    private static final int FIELD_COUNT_SIZE = BitUtil.SIZE_OF_INT;
+    private static final int FIELD_COUNT_SIZE = BitUtil.SIZE_OF_SHORT;
 
     private static final int LENGTH_OFFSET = 0;
 
@@ -35,13 +35,13 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
 
     private static final int FIELDS_OFFSET = FIELD_COUNT_OFFSET + FIELD_COUNT_SIZE;
 
-    private static final long LENGTH_MAX_VALUE = 0xFFFFFFFFL;
+    private static final int LENGTH_MAX_VALUE = 0xFFFF;
 
     private final T itemRO;
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
 
-    Array32FW(
+    Array16FW(
         T itemRO)
     {
         this.itemRO = itemRO;
@@ -50,13 +50,13 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
     @Override
     public int length()
     {
-        return buffer().getInt(offset() + LENGTH_OFFSET);
+        return buffer().getShort(offset() + LENGTH_OFFSET);
     }
 
     @Override
     public int fieldCount()
     {
-        return buffer().getInt(offset() + FIELD_COUNT_OFFSET);
+        return buffer().getShort(offset() + FIELD_COUNT_OFFSET);
     }
 
     @Override
@@ -70,7 +70,7 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
         return itemRO;
     }
 
-    public Array32FW forEach(
+    public Array16FW forEach(
         Consumer<T> consumer)
     {
         int offset = offset() + FIELDS_OFFSET;
@@ -85,7 +85,7 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
     }
 
     @Override
-    public Array32FW wrap(
+    public Array16FW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -98,7 +98,7 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
     }
 
     @Override
-    public Array32FW tryWrap(
+    public Array16FW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -123,7 +123,7 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
     }
 
     public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<O, K>,
-        T extends Flyweight & VariantFW<O>, O extends Flyweight, K> extends ArrayFW.Builder<B, O, K, Array32FW>
+        T extends Flyweight & VariantFW<O>, O extends Flyweight, K> extends ArrayFW.Builder<B, O, K, Array16FW>
     {
         private int kindPadding;
 
@@ -131,7 +131,7 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
             B itemRW,
             T itemRO)
         {
-            super(new Array32FW<>(itemRO), itemRW);
+            super(new Array16FW<>(itemRO), itemRW);
         }
 
         public Builder<B, T, O, K> item(
@@ -171,7 +171,7 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
         }
 
         @Override
-        public Array32FW build()
+        public Array16FW build()
         {
             if (maxLength() > 0 && !itemRW().maxKind().equals(itemRW().kindFromLength(maxLength())))
             {
@@ -190,8 +190,8 @@ public final class Array32FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount() <= LENGTH_MAX_VALUE : "Field count is too large";
-            buffer().putInt(offset() + LENGTH_OFFSET, length);
-            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount());
+            buffer().putShort(offset() + LENGTH_OFFSET, (short) length);
+            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount());
             return super.build();
         }
     }
