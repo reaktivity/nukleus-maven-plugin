@@ -200,4 +200,11 @@ public class UnionChildFWTest
             .width8((byte) 8)
             .build();
     }
+
+    @Test(expected = AssertionError.class)
+    public void shouldFailToBuildWhenParentFieldIsNotSet()
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .build();
+    }
 }

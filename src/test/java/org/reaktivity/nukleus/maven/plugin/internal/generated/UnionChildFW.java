@@ -135,7 +135,7 @@ public final class UnionChildFW extends Flyweight
         case KIND_WIDTH32:
             return offset() + FIELD_OFFSET_WIDTH32 + FIELD_SIZE_WIDTH32;
         default:
-            return offset();
+            return offset() + FIELD_OFFSET_FIXED1 + FIELD_SIZE_FIXED1;
         }
     }
 
@@ -151,7 +151,7 @@ public final class UnionChildFW extends Flyweight
         case KIND_WIDTH32:
             return String.format("UNIONCHILD [fixed1=%d, width32=%d]", fixed1(), width32());
         default:
-            return String.format("UNIONCHILD [unknown]");
+            return String.format("UNIONCHILD [fixed1=%d]", fixed1());
         }
     }
 
@@ -225,6 +225,13 @@ public final class UnionChildFW extends Flyweight
             super.wrap(buffer, offset, maxLimit);
             lastFieldSet = -1;
             return this;
+        }
+
+        @Override
+        public UnionChildFW build()
+        {
+            assert lastFieldSet == INDEX_FIXED1 : "Field \"fixed1\" is not set";
+            return super.build();
         }
     }
 }
