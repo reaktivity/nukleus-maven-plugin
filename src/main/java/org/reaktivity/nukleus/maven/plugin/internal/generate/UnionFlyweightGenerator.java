@@ -858,7 +858,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             {
                 super(thisType, builder.addMethod(
                         MethodSpec.methodBuilder("kind")
-                        .addModifiers(PRIVATE)
+                        .addModifiers(PUBLIC)
                         .addParameter(int.class, "value")
                         .returns(thisType)
                         .addStatement("buffer().putByte(offset() + $L, (byte)(value & 0xFF))", offset("kind"))
