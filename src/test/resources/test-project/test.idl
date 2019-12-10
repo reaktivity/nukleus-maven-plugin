@@ -79,6 +79,13 @@ scope test
             case 3: string string1;
         }
 
+//        union UnionChild switch (uint8) extends FlatParent
+//        {
+//            case 8: int8 width8;
+//            case 16: int16 width16;
+//            case 32: int32 width32;
+//        }
+
         struct Integers
         {
             uint8  unsigned8  = 0xFF;
