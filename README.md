@@ -28,7 +28,7 @@ The Nukleus Maven plugin is used to generate flyweight classes from IDL files de
 - a non-null default value can be specified on int, uint and varint fields, for example: uint8 field1 = 10;
 - a null default value can be specified on octets and array fields
 - the following types of fields are implicitly defaulted:
-  - fields of type list (default to empty)
+  - fields of type array (default to empty)
   - fields of type octets with no specified size (must appear last in their structure, default to empty)
   - fixed width integer fields used to hold the size of a subsequent octets field (automatically set to the correct value when the corresponding octets field is set)
 

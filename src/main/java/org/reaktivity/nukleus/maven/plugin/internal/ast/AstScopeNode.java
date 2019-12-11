@@ -31,6 +31,8 @@ public final class AstScopeNode extends AstNode
     private final List<AstStructNode> structs;
     private final List<AstUnionNode> unions;
     private final List<AstVariantNode> variants;
+    private final List<AstListNode> lists;
+    private final List<AstTypedefNode> typedefs;
 
     private AstScopeNode(
         int depth,
@@ -39,7 +41,9 @@ public final class AstScopeNode extends AstNode
         List<AstStructNode> structs,
         List<AstUnionNode> unions,
         List<AstScopeNode> scopes,
-        List<AstVariantNode> variants)
+        List<AstVariantNode> variants,
+        List<AstListNode> lists,
+        List<AstTypedefNode> typedefs)
     {
         this.depth = depth;
         this.name = requireNonNull(name);
@@ -48,6 +52,8 @@ public final class AstScopeNode extends AstNode
         this.unions = unmodifiableList(unions);
         this.scopes = unmodifiableList(scopes);
         this.variants = unmodifiableList(variants);
+        this.lists = unmodifiableList(lists);
+        this.typedefs = typedefs;
     }
 
     @Override
@@ -92,12 +98,23 @@ public final class AstScopeNode extends AstNode
         return variants;
     }
 
+    public List<AstListNode> lists()
+    {
+        return lists;
+    }
+
+    public List<AstTypedefNode> typedefs()
+    {
+        return typedefs;
+    }
+
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 13) ^ (scopes.hashCode() << 11) ^
-                (enums.hashCode() << 7) ^ (structs.hashCode() << 5) ^
-                (unions.hashCode() << 3) ^ variants.hashCode();
+        return (name.hashCode() << 19) ^ (scopes.hashCode() << 17) ^
+            (enums.hashCode() << 13) ^ (structs.hashCode() << 11) ^
+            (unions.hashCode() << 7) ^ (variants.hashCode() << 5) ^
+            (lists.hashCode() << 3) ^ typedefs.hashCode();
     }
 
     @Override
@@ -120,7 +137,9 @@ public final class AstScopeNode extends AstNode
                 Objects.equals(this.structs, that.structs) &&
                 Objects.equals(this.unions, that.unions) &&
                 Objects.equals(this.scopes, that.scopes) &&
-                Objects.equals(this.variants, that.variants);
+                Objects.equals(this.variants, that.variants) &&
+                Objects.equals(this.lists, that.lists) &&
+                Objects.equals(this.typedefs, that.typedefs);
     }
 
     public static final class Builder extends AstNode.Builder<AstScopeNode>
@@ -132,6 +151,8 @@ public final class AstScopeNode extends AstNode
         private List<AstStructNode> structs;
         private List<AstUnionNode> unions;
         private List<AstVariantNode> variants;
+        private List<AstListNode> lists;
+        private List<AstTypedefNode> typedefs;
 
         public Builder()
         {
@@ -140,6 +161,8 @@ public final class AstScopeNode extends AstNode
             this.structs = new LinkedList<>();
             this.unions = new LinkedList<>();
             this.variants = new LinkedList<>();
+            this.lists = new LinkedList<>();
+            this.typedefs = new LinkedList<>();
         }
 
         public Builder depth(int depth)
@@ -194,10 +217,24 @@ public final class AstScopeNode extends AstNode
             return this;
         }
 
+        public Builder list(
+            AstListNode list)
+        {
+            this.lists.add(list);
+            return this;
+        }
+
+        public Builder typedef(
+            AstTypedefNode typedef)
+        {
+            this.typedefs.add(typedef);
+            return this;
+        }
+
         @Override
         public AstScopeNode build()
         {
-            return new AstScopeNode(depth, name, enums, structs, unions, scopes, variants);
+            return new AstScopeNode(depth, name, enums, structs, unions, scopes, variants, lists, typedefs);
         }
     }
 }

@@ -16,15 +16,13 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-public final class AstVariantNode extends AstNode
+public final class AstVariantNode extends AstNamedNode
 {
-    private final String name;
     private final AstType ofType;
     private final AstType kindType;
     private final List<AstVariantCaseNode> cases;
@@ -36,9 +34,10 @@ public final class AstVariantNode extends AstNode
         return visitor.visitVariant(this);
     }
 
-    public String name()
+    @Override
+    public Kind getKind()
     {
-        return name;
+        return Kind.VARIANT;
     }
 
     public AstType of()
@@ -54,6 +53,13 @@ public final class AstVariantNode extends AstNode
     public List<AstVariantCaseNode> cases()
     {
         return cases;
+    }
+
+    @Override
+    public AstNamedNode withName(
+        String name)
+    {
+        return new AstVariantNode(name, ofType, kindType, cases);
     }
 
     @Override
@@ -89,15 +95,14 @@ public final class AstVariantNode extends AstNode
         AstType kindType,
         List<AstVariantCaseNode> cases)
     {
-        this.name = requireNonNull(name);
+        super(name);
         this.ofType = ofType;
         this.kindType = kindType;
         this.cases = unmodifiableList(cases);
     }
 
-    public static final class Builder extends AstNode.Builder<AstVariantNode>
+    public static final class Builder extends AstNamedNode.Builder<AstVariantNode>
     {
-        private String name;
         private AstType ofType;
         private List<AstVariantCaseNode> cases;
         private AstType kindType;

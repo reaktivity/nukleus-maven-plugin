@@ -20,27 +20,30 @@ import static java.util.Collections.singleton;
 import java.util.Collection;
 import java.util.Set;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFlyweightGenerator;
 
 import com.squareup.javapoet.TypeName;
 
-public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
+public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
 {
-    private final VariantFlyweightGenerator generator;
+    private final ListFlyweightGenerator generator;
     private final TypeResolver resolver;
     private final Set<TypeSpecGenerator<?>> defaultResult;
 
-    public VariantVisitor(
-        VariantFlyweightGenerator generator,
+    public ListVisitor(
+        ListFlyweightGenerator generator,
         TypeResolver resolver)
     {
         this.generator = generator;
@@ -49,9 +52,43 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
     }
 
     @Override
+    public Collection<TypeSpecGenerator<?>> visitList(
+        AstListNode listNode)
+    {
+        super.visitList(listNode);
+        return defaultResult();
+    }
+
+    @Override
     public Collection<TypeSpecGenerator<?>> visitStruct(
         AstStructNode structNode)
     {
+        return defaultResult();
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitMember(
+        AstAbstractMemberNode memberNode)
+    {
+        AstListMemberNode listMemberNode = (AstListMemberNode) memberNode;
+        String memberName = listMemberNode.name();
+        AstType memberType = listMemberNode.type();
+        int size = listMemberNode.size();
+        TypeName sizeTypeName = listMemberNode.sizeType() == null ? null : listMemberNode.sizeType().isUnsignedInt() ?
+            resolver.resolveUnsignedType(listMemberNode.sizeType()) : resolver.resolveType(listMemberNode.sizeType());
+        boolean usedAsSize = listMemberNode.usedAsSize();
+        Object defaultValue = listMemberNode.defaultValue();
+        AstByteOrder byteOrder = listMemberNode.byteOrder();
+
+        TypeName memberTypeName = resolver.resolveType(memberType);
+        if (memberTypeName == null)
+        {
+            throw new IllegalArgumentException(String.format(
+                " Unable to resolve type %s for field %s", memberType, memberName));
+        }
+        TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
+        generator.addMember(memberName, memberType, memberTypeName, memberUnsignedTypeName, size, sizeTypeName,
+            usedAsSize, defaultValue, byteOrder, listMemberNode.isRequired());
         return defaultResult();
     }
 
@@ -73,19 +110,6 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
     public Collection<TypeSpecGenerator<?>> visitVariant(
         AstVariantNode variantNode)
     {
-        return super.visitVariant(variantNode);
-    }
-
-    @Override
-    public Collection<TypeSpecGenerator<?>> visitVariantCase(
-        AstVariantCaseNode variantCaseNode)
-    {
-        Object value = variantCaseNode.value();
-        AstType memberType = variantCaseNode.type();
-        int missingFieldValue = variantCaseNode.missingFieldValue();
-        TypeName typeName = resolver.resolveType(memberType);
-        TypeName unsignedTypeName = resolver.resolveUnsignedType(memberType);
-        generator.addMember(value, memberType.name(), memberType, typeName, unsignedTypeName, missingFieldValue);
         return defaultResult();
     }
 

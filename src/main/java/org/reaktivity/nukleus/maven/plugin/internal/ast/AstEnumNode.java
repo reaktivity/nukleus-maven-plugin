@@ -16,15 +16,13 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.Collections.unmodifiableList;
-import static java.util.Objects.requireNonNull;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-public final class AstEnumNode extends AstNode
+public final class AstEnumNode extends AstNamedNode
 {
-    private final String name;
     private final List<AstValueNode> values;
     private final AstType valueType;
 
@@ -35,11 +33,6 @@ public final class AstEnumNode extends AstNode
         return visitor.visitEnum(this);
     }
 
-    public String name()
-    {
-        return name;
-    }
-
     public List<AstValueNode> values()
     {
         return values;
@@ -48,6 +41,19 @@ public final class AstEnumNode extends AstNode
     public AstType valueType()
     {
         return valueType;
+    }
+
+    @Override
+    public AstNamedNode withName(
+        String name)
+    {
+        return new AstEnumNode(name, values, valueType);
+    }
+
+    @Override
+    public Kind getKind()
+    {
+        return Kind.ENUM;
     }
 
     @Override
@@ -86,14 +92,13 @@ public final class AstEnumNode extends AstNode
         List<AstValueNode> values,
         AstType valueType)
     {
-        this.name = requireNonNull(name);
+        super(name);
         this.values = unmodifiableList(values);
         this.valueType = valueType;
     }
 
-    public static final class Builder extends AstNode.Builder<AstEnumNode>
+    public static final class Builder extends AstNamedNode.Builder<AstEnumNode>
     {
-        private String name;
         private List<AstValueNode> values;
         private AstType valueType;
 

@@ -74,8 +74,10 @@ base_type_spec
 constr_type_spec
    : enum_type
    | struct_type
+   | list_type
    | union_type
    | variant_type
+   | typedef_type
    ;
 
 declarators
@@ -261,7 +263,40 @@ array_member
 default_null
    : '= null'
    ;
-   
+
+list_type
+   : KW_LIST (list_params)? ID LEFT_BRACE list_members RIGHT_BRACE
+   ;
+
+list_params
+   : LEFT_ANG_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
+   | LEFT_ANG_BRACKET declarator RIGHT_ANG_BRACKET
+   ;
+
+
+list_members
+   : list_member* list_unbounded_member?
+   ;
+
+list_member
+   : KW_REQUIRED? type_spec declarators SEMICOLON
+   | uint_member_with_default SEMICOLON
+   | int_member_with_default SEMICOLON
+   | octets_member_with_default SEMICOLON
+   | non_primitive_member_with_default SEMICOLON
+   | KW_REQUIRED? integer_array_member SEMICOLON
+   | KW_REQUIRED? varint_array_member SEMICOLON
+   | KW_REQUIRED? array_member SEMICOLON
+   ;
+
+non_primitive_member_with_default
+   : type_spec declarator EQUALS (ID | int_literal)
+   ;
+
+list_unbounded_member
+   : KW_REQUIRED? unbounded_octets_member
+   ;
+
 unbounded_member
    : unbounded_octets_member
    ;
@@ -271,7 +306,7 @@ unbounded_octets_member
    ;
 
 union_type
-   : KW_UNION ID KW_SWITCH LEFT_BRACKET KW_UINT8 RIGHT_BRACKET LEFT_BRACE case_list RIGHT_BRACE
+   : KW_UNION ID KW_SWITCH LEFT_BRACKET KW_UINT8 RIGHT_BRACKET (KW_EXTENDS scoped_name)? LEFT_BRACE case_list RIGHT_BRACE
    ;
 
 case_list
@@ -297,6 +332,7 @@ variant_of_type
    | string_type
    | string16_type
    | string32_type
+   | list_keyword
    ;
 
 variant_case_list
@@ -304,7 +340,12 @@ variant_case_list
    ;
 
 variant_case_member
-   : KW_CASE (uint_literal | declarator) COLON variant_member SEMICOLON
+   : KW_CASE variant_case_value COLON variant_member SEMICOLON
+   ;
+
+variant_case_value
+   : uint_literal
+   | declarator
    ;
 
 variant_member
@@ -313,6 +354,17 @@ variant_member
    | string16_type
    | string32_type
    | variant_int_literal
+   | variant_list_member
+   ;
+
+variant_list_member
+   : KW_LIST LEFT_ANG_BRACKET uint32_type COMMA uint32_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
+   | KW_LIST LEFT_ANG_BRACKET uint8_type COMMA uint8_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
+   | KW_LIST LEFT_ANG_BRACKET UNSIGNED_INTEGER_LITERAL COMMA UNSIGNED_INTEGER_LITERAL RIGHT_ANG_BRACKET
+   ;
+
+typedef_type
+   : KW_TYPEDEF ID KW_AS ID SEMICOLON
    ;
 
 array_type
@@ -331,6 +383,10 @@ string16_type
 
 string32_type
    : KW_STRING32
+   ;
+
+list_keyword
+   : KW_LIST
    ;
 
 int_literal
@@ -504,6 +560,11 @@ KW_LIST
    ;
 
 
+KW_REQUIRED
+   : 'required'
+   ;
+
+
 KW_OCTETS
    : 'octets'
    ;
@@ -601,6 +662,16 @@ KW_UNION
 
 KW_VARIANT
    : 'variant'
+   ;
+
+
+KW_TYPEDEF
+   : 'typedef'
+   ;
+
+
+KW_AS
+   : 'as'
    ;
 
 

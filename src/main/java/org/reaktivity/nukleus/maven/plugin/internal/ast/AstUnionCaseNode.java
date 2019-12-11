@@ -20,7 +20,7 @@ import java.util.Objects;
 public final class AstUnionCaseNode extends AstNode
 {
     private final int value;
-    private final AstMemberNode member;
+    private final AstStructMemberNode member;
 
     @Override
     public <R> R accept(
@@ -34,7 +34,7 @@ public final class AstUnionCaseNode extends AstNode
         return value;
     }
 
-    public AstMemberNode member()
+    public AstStructMemberNode member()
     {
         return member;
     }
@@ -65,7 +65,7 @@ public final class AstUnionCaseNode extends AstNode
 
     private AstUnionCaseNode(
         int value,
-        AstMemberNode member)
+        AstStructMemberNode member)
     {
         this.value = value;
         this.member = member;
@@ -80,7 +80,7 @@ public final class AstUnionCaseNode extends AstNode
     public static final class Builder extends AstNode.Builder<AstUnionCaseNode>
     {
         private int value;
-        private AstMemberNode member;
+        private AstStructMemberNode member;
 
         public Builder value(int value)
         {
@@ -88,7 +88,7 @@ public final class AstUnionCaseNode extends AstNode
             return this;
         }
 
-        public Builder member(AstMemberNode member)
+        public Builder member(AstStructMemberNode member)
         {
             this.member = member;
             return this;

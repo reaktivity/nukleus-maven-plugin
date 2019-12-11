@@ -21,6 +21,7 @@ public final class AstVariantCaseNode extends AstNode
 {
     private final Object value;
     private final AstType type;
+    private final int missingFieldValue;
 
     @Override
     public <R> R accept(
@@ -39,10 +40,15 @@ public final class AstVariantCaseNode extends AstNode
         return type;
     }
 
+    public int missingFieldValue()
+    {
+        return missingFieldValue;
+    }
+
     @Override
     public int hashCode()
     {
-        return Objects.hash(value, type);
+        return Objects.hash(value, type, missingFieldValue);
     }
 
     @Override
@@ -61,15 +67,18 @@ public final class AstVariantCaseNode extends AstNode
 
         AstVariantCaseNode that = (AstVariantCaseNode) o;
         return Objects.equals(this.value, that.value) &&
-            Objects.equals(this.type, that.type);
+            Objects.equals(this.type, that.type) &&
+            this.missingFieldValue == that.missingFieldValue;
     }
 
     private AstVariantCaseNode(
         Object value,
-        AstType type)
+        AstType type,
+        int missingFieldValue)
     {
         this.value = value;
         this.type = type;
+        this.missingFieldValue = missingFieldValue;
     }
 
     @Override
@@ -82,6 +91,7 @@ public final class AstVariantCaseNode extends AstNode
     {
         private Object value;
         private AstType type;
+        private int missingFieldValue;
 
         public Builder value(
             Object value)
@@ -97,10 +107,17 @@ public final class AstVariantCaseNode extends AstNode
             return this;
         }
 
+        public Builder missingFieldValue(
+            int missingFieldValue)
+        {
+            this.missingFieldValue = missingFieldValue;
+            return this;
+        }
+
         @Override
         public AstVariantCaseNode build()
         {
-            return new AstVariantCaseNode(value, type);
+            return new AstVariantCaseNode(value, type, missingFieldValue);
         }
     }
 }

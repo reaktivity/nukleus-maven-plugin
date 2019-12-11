@@ -24,8 +24,8 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode.NULL_DEFAULT;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstMemberNode.NULL_DEFAULT;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BUFFER_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BYTE_ARRAY;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
@@ -138,7 +138,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         int size,
         String sizeName,
         TypeName sizeTypeName,
-        boolean usedAsSize, Object defaultValue, AstByteOrder byteOrder)
+        boolean usedAsSize,
+        Object defaultValue,
+        AstByteOrder byteOrder)
     {
         memberOffsetConstant.addMember(name, typeName, unsignedTypeName, size, sizeName);
         memberSizeConstant.addMember(name, type, typeName, unsignedType, unsignedTypeName, size);

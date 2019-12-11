@@ -22,14 +22,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstTypedefNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -101,6 +106,36 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     }
 
     @Override
+    public Collection<TypeSpecGenerator<?>> visitTypedef(
+        AstTypedefNode typedefNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        AstNamedNode originalNode = resolver.resolve(typedefNode.originalType().name());
+        AstNamedNode newNode = originalNode.withName(typedefNode.name());
+        Kind kind = newNode.getKind();
+        switch (kind)
+        {
+        case STRUCT:
+            return visitStruct((AstStructNode) newNode);
+        case UNION:
+            return visitUnion((AstUnionNode) newNode);
+        case VARIANT:
+            return visitVariant((AstVariantNode) newNode);
+        case LIST:
+            return visitList((AstListNode) newNode);
+        case ENUM:
+            return visitEnum((AstEnumNode) newNode);
+        case TYPEDEF:
+            return visitTypedef((AstTypedefNode) newNode);
+        }
+        return defaultResult();
+    }
+
+    @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
         AstUnionNode unionNode)
     {
@@ -112,7 +147,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = unionNode.name();
         AstType unionType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName unionName = resolver.resolveClass(unionType);
-        UnionFlyweightGenerator generator = new UnionFlyweightGenerator(unionName, resolver.flyweightName(), baseName);
+        AstType unionSuperType = unionNode.superType();
+        UnionFlyweightGenerator generator = new UnionFlyweightGenerator(unionName, resolver.flyweightName(), baseName,
+            unionSuperType);
 
         return new UnionVisitor(generator, resolver).visitUnion(unionNode);
     }
@@ -155,11 +192,34 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
         TypeName kindTypeName = variantNode.kindType().equals(AstType.UINT8) ? resolver.resolveType(AstType.UINT8) :
             resolver.resolveClass(variantNode.kindType());
+        AstType ofType = variantNode.of();
+        ClassName flyweightName = resolver.flyweightName();
         TypeName ofTypeName = resolver.resolveType(variantNode.of());
         TypeName unsignedOfTypeName = resolver.resolveUnsignedType(variantNode.of());
-        VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, resolver.flyweightName(), baseName,
-            kindTypeName, ofTypeName, unsignedOfTypeName);
+        VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, flyweightName, baseName,
+            kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver);
         return new VariantVisitor(generator, resolver).visitVariant(variantNode);
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitList(
+        AstListNode listNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        String baseName = listNode.name();
+        AstType listType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+        ClassName listName = resolver.resolveClass(listType);
+        AstType templateType = listNode.templateType();
+        TypeName lengthTypeName = resolver.resolveType(listNode.lengthType());
+        TypeName fieldCountTypeName = resolver.resolveType(listNode.fieldCountType());
+        Byte missingFieldByte = listNode.missingFieldByte();
+        ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
+            templateType, lengthTypeName, fieldCountTypeName, missingFieldByte, resolver);
+        return new ListVisitor(generator, resolver).visitList(listNode);
     }
 
     @Override
@@ -192,7 +252,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         AstStructNode currentNode = structNode;
         while (currentNode != null && currentNode.typeId() == 0 && currentNode.supertype() != null)
         {
-            currentNode = resolver.resolve(currentNode.supertype());
+            AstNamedNode namedNode = resolver.resolve(currentNode.supertype().name());
+
+            currentNode = namedNode.getKind() == Kind.STRUCT ? (AstStructNode) namedNode : null;
         }
 
         return (currentNode != null) ? currentNode.typeId() : 0;

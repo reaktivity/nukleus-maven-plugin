@@ -42,24 +42,32 @@ public abstract class AstNode
             AstScopeNode scopeNode)
         {
             return Stream.concat(
-                        Stream.concat(
-                              Stream.concat(
-                                  Stream.concat(
-                                      scopeNode.scopes()
-                                               .stream()
-                                               .map(this::visitNestedScope),
-                                      scopeNode.structs()
-                                               .stream()
-                                               .map(this::visitStruct)),
-                                scopeNode.enums()
-                                         .stream()
-                                         .map(this::visitEnum)),
-                              scopeNode.unions()
-                                       .stream()
-                                       .map(this::visitUnion)),
-                          scopeNode.variants()
-                                   .stream()
-                                   .map(this::visitVariant))
+                       Stream.concat(
+                            Stream.concat(
+                                Stream.concat(
+                                    Stream.concat(
+                                        Stream.concat(
+                                            scopeNode.scopes()
+                                                .stream()
+                                                .map(this::visitNestedScope),
+                                            scopeNode.structs()
+                                                .stream()
+                                                .map(this::visitStruct)),
+                                        scopeNode.enums()
+                                            .stream()
+                                            .map(this::visitEnum)),
+                                    scopeNode.unions()
+                                        .stream()
+                                        .map(this::visitUnion)),
+                                scopeNode.variants()
+                                    .stream()
+                                    .map(this::visitVariant)),
+                            scopeNode.lists()
+                                .stream()
+                                .map(this::visitList)),
+                        scopeNode.typedefs()
+                            .stream()
+                            .map(this::visitTypedef))
                    .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
@@ -93,8 +101,23 @@ public abstract class AstNode
                              .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
+        public R visitList(
+            AstListNode listNode)
+        {
+            return listNode.members()
+                           .stream()
+                           .map(this::visitMember)
+                           .collect(reducing(defaultResult(), this::aggregateResult));
+        }
+
+        public R visitTypedef(
+            AstTypedefNode typedefNode)
+        {
+            return defaultResult();
+        }
+
         public R visitMember(
-            AstMemberNode memberNode)
+            AstAbstractMemberNode memberNode)
         {
             return defaultResult();
         }
@@ -103,9 +126,9 @@ public abstract class AstNode
             AstUnionNode unionNode)
         {
             return unionNode.cases()
-                    .stream()
-                    .map(this::visitCase)
-                    .collect(reducing(defaultResult(), this::aggregateResult));
+                            .stream()
+                            .map(this::visitCase)
+                            .collect(reducing(defaultResult(), this::aggregateResult));
         }
 
         public R visitVariant(
