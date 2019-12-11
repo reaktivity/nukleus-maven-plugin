@@ -451,6 +451,23 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         astTypesByQualifiedName.put(qualifiedUnionName, AstType.dynamicType(qualifiedUnionName));
         unionBuilder.name(unionName);
 
+        Scoped_nameContext scopedName = ctx.scoped_name();
+        if (scopedName != null)
+        {
+            final String superTypeName = scopedName.getText();
+            AstType astTypeName = astTypesByQualifiedName.get(superTypeName);
+            if (astTypeName == null)
+            {
+                astTypeName = qualifiedPrefixes.stream()
+                    .map(qp -> String.format("%s%s", qp, superTypeName))
+                    .map(astTypesByQualifiedName::get)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(AstType.dynamicType(superTypeName));
+            }
+            unionBuilder.superType(astTypeName);
+        }
+
         super.visitUnion_type(ctx);
 
         AstUnionNode union = unionBuilder.build();
