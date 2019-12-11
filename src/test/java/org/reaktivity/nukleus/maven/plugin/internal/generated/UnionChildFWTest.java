@@ -24,6 +24,7 @@ import static org.junit.Assert.assertSame;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.inner.UnionChildFW;
 
 public class UnionChildFWTest
 {

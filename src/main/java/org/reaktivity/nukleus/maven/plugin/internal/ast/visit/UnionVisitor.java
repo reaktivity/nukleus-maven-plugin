@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -58,6 +59,33 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     public Collection<TypeSpecGenerator<?>> visitStruct(
         AstStructNode structNode)
     {
+        super.visitStruct(structNode);
+        return defaultResult();
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitMember(
+        AstAbstractMemberNode memberNode)
+    {
+        String memberName = memberNode.name();
+        AstType memberType = memberNode.type();
+        TypeName memberTypeName = resolver.resolveType(memberType);
+        int size = memberNode.size();
+        String sizeName = memberNode.sizeName();
+        TypeName sizeTypeName = memberNode.sizeType() == null ? null : memberNode.sizeType().isUnsignedInt() ?
+            resolver.resolveUnsignedType(memberNode.sizeType()) : resolver.resolveType(memberNode.sizeType());
+        boolean usedAsSize = memberNode.usedAsSize();
+        Object defaultValue = memberNode.defaultValue();
+        AstByteOrder byteOrder = memberNode.byteOrder();
+        if (memberTypeName == null)
+        {
+            throw new IllegalArgumentException(String.format(
+                " Unable to resolve type %s for field %s", memberType, memberName));
+        }
+        AstType memberUnsignedType = memberType.isUnsignedInt() ? memberType : null;
+        TypeName memberUnsignedTypeName = resolver.resolveUnsignedType(memberUnsignedType);
+        generator.addParentMember(memberName, memberType, memberTypeName, memberUnsignedType, memberUnsignedTypeName, size,
+            sizeName, sizeTypeName, usedAsSize, defaultValue, byteOrder);
         return defaultResult();
     }
 
@@ -72,7 +100,15 @@ public final class UnionVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     public Collection<TypeSpecGenerator<?>> visitUnion(
         AstUnionNode unionNode)
     {
-        return super.visitUnion(unionNode);
+        AstType superType = unionNode.superType();
+        if (superType != null)
+        {
+            AstStructNode superNode = (AstStructNode) resolver.resolve(superType.name());
+            visitStruct(superNode);
+            generator.addMemberAfterParentMember();
+        }
+        super.visitUnion(unionNode);
+        return defaultResult();
     }
 
     @Override

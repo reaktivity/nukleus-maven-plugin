@@ -138,7 +138,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         int size,
         String sizeName,
         TypeName sizeTypeName,
-        boolean usedAsSize, Object defaultValue, AstByteOrder byteOrder)
+        boolean usedAsSize,
+        Object defaultValue,
+        AstByteOrder byteOrder)
     {
         memberOffsetConstant.addMember(name, typeName, unsignedTypeName, size, sizeName);
         memberSizeConstant.addMember(name, type, typeName, unsignedType, unsignedTypeName, size);

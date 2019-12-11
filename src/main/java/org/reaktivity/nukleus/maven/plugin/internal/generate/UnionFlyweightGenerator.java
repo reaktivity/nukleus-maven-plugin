@@ -18,13 +18,16 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
+import static java.lang.String.format;
 import static java.util.Collections.unmodifiableMap;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode.NULL_DEFAULT;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
+import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BUFFER_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BYTE_ARRAY;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
@@ -32,12 +35,16 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UN
 
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -51,6 +58,11 @@ import com.squareup.javapoet.TypeVariableName;
 
 public final class UnionFlyweightGenerator extends ClassSpecGenerator
 {
+    private static final Set<String> RESERVED_METHOD_NAMES = new HashSet<>(Arrays.asList(new String[]
+    {
+        "offset", "buffer", "limit", "sizeof", "maxLimit", "wrap", "checkLimit", "build", "rewrap"
+    }));
+
     private final String baseName;
     private final TypeSpec.Builder builder;
     private final MemberFieldGenerator memberField;
@@ -68,23 +80,24 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
     public UnionFlyweightGenerator(
         ClassName unionName,
         ClassName flyweightName,
-        String baseName)
+        String baseName,
+        AstType superType)
     {
         super(unionName);
 
         this.baseName = baseName;
         this.builder = classBuilder(unionName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
         this.memberKindConstant = new KindConstantGenerator(unionName, builder);
-        this.memberSizeConstant = new MemberSizeConstantGenerator(unionName, builder);
-        this.memberOffsetConstant = new MemberOffsetConstantGenerator(unionName, builder);
+        this.memberSizeConstant = new MemberSizeConstantGenerator(unionName, superType, builder);
+        this.memberOffsetConstant = new MemberOffsetConstantGenerator(unionName, superType, builder);
         this.memberField = new MemberFieldGenerator(unionName, builder);
         this.kindAccessor = new KindAccessorGenerator(unionName, builder);
         this.memberAccessor = new MemberAccessorGenerator(unionName, flyweightName.nestedClass("Visitor"), builder);
         this.tryWrapMethod = new TryWrapMethodGenerator();
         this.wrapMethod = new WrapMethodGenerator();
-        this.limitMethod = new LimitMethodGenerator();
-        this.toStringMethod = new ToStringMethodGenerator();
-        this.builderClass = new BuilderClassGenerator(unionName, flyweightName);
+        this.limitMethod = new LimitMethodGenerator(superType);
+        this.toStringMethod = new ToStringMethodGenerator(superType);
+        this.builderClass = new BuilderClassGenerator(unionName, flyweightName, superType);
     }
 
     public UnionFlyweightGenerator addMember(
@@ -106,6 +119,37 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         limitMethod.addMember(name, type);
         toStringMethod.addMember(name, type);
         builderClass.addMember(name, type, size, sizeName);
+        return this;
+    }
+
+    public UnionFlyweightGenerator addParentMember(
+        String name,
+        AstType type,
+        TypeName typeName,
+        AstType unsignedType,
+        TypeName unsignedTypeName,
+        int size,
+        String sizeName,
+        TypeName sizeTypeName,
+        boolean usedAsSize,
+        Object defaultValue,
+        AstByteOrder byteOrder)
+    {
+        memberSizeConstant.addParentMember(name, type, typeName);
+        memberOffsetConstant.addParentMember(name, type, typeName);
+        memberAccessor.addMember(name, typeName, unsignedTypeName);
+        limitMethod.addParentMember(name);
+        toStringMethod.addParentMember(name, typeName);
+        builderClass.addParentMember(name, type, typeName, unsignedType, unsignedTypeName, size, sizeName, sizeTypeName,
+            usedAsSize, defaultValue, byteOrder);
+        return this;
+    }
+
+    public UnionFlyweightGenerator addMemberAfterParentMember()
+    {
+        memberSizeConstant.addKindSizeAfterParentMember();
+        memberOffsetConstant.addKindOffsetAfterParentMember();
+        builderClass.addMemberAfterParentMember();
         return this;
     }
 
@@ -155,24 +199,52 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
         private MemberSizeConstantGenerator(
             ClassName thisType,
+            AstType superType,
             TypeSpec.Builder builder)
         {
-            super(thisType, builder.addField(
+            super(thisType, builder);
+            if (superType == null)
+            {
+                builder.addField(
                     FieldSpec.builder(int.class, size("kind"), PRIVATE, STATIC, FINAL)
-                    .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
-                    .build()));
+                        .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
+                        .build());
+            }
+        }
+
+        public MemberSizeConstantGenerator addParentMember(
+            String name,
+            AstType type,
+            TypeName typeName)
+        {
+            if (typeName.isPrimitive())
+            {
+                builder.addField(
+                    FieldSpec.builder(int.class, size(name), PRIVATE, STATIC, FINAL)
+                        .initializer("$T.SIZE_OF_$L", BIT_UTIL_TYPE, SIZEOF_BY_NAME.get(typeName))
+                        .build());
+            }
+            return this;
+        }
+
+        public MemberSizeConstantGenerator addKindSizeAfterParentMember()
+        {
+            builder.addField(FieldSpec.builder(int.class, size("kind"), PRIVATE, STATIC, FINAL)
+                .initializer("$T.SIZE_OF_BYTE", BIT_UTIL_TYPE)
+                .build());
+            return this;
         }
 
         public MemberSizeConstantGenerator addMember(
             String name,
-            TypeName type,
+            TypeName typeName,
             int size)
         {
-            if (type.isPrimitive())
+            if (typeName.isPrimitive())
             {
                 builder.addField(
                         FieldSpec.builder(int.class, size(name), PRIVATE, STATIC, FINAL)
-                                 .initializer("$T.SIZE_OF_$L", BIT_UTIL_TYPE, SIZEOF_BY_NAME.get(type))
+                                 .initializer("$T.SIZE_OF_$L", BIT_UTIL_TYPE, SIZEOF_BY_NAME.get(typeName))
                                  .build());
             }
             else if (size > 0)
@@ -202,23 +274,63 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
     private static final class MemberOffsetConstantGenerator extends ClassSpecMixinGenerator
     {
+        private String previousName;
+
         private MemberOffsetConstantGenerator(
             ClassName thisType,
+            AstType superType,
             TypeSpec.Builder builder)
         {
-            super(thisType, builder.addField(
+            super(thisType, builder);
+            if (superType == null)
+            {
+                builder.addField(
                     FieldSpec.builder(int.class, offset("kind"), PRIVATE, STATIC, FINAL)
-                    .initializer("0")
-                    .build()));
+                        .initializer("0")
+                        .build());
+            }
+        }
+
+        public MemberOffsetConstantGenerator addParentMember(
+            String name,
+            AstType type,
+            TypeName typeName)
+        {
+            String initializer;
+            if (previousName == null)
+            {
+                initializer = "0";
+            }
+            else
+            {
+                initializer = String.format("%s + %s", offset(previousName), size(previousName));
+            }
+            builder.addField(
+                FieldSpec.builder(int.class, offset(name), PUBLIC, STATIC, FINAL)
+                    .initializer(initializer)
+                    .build());
+
+            boolean isFixedSize = typeName.isPrimitive();
+            previousName = isFixedSize ? name : null;
+            return this;
+        }
+
+        public MemberOffsetConstantGenerator addKindOffsetAfterParentMember()
+        {
+            builder.addField(
+                FieldSpec.builder(int.class, offset("kind"), PRIVATE, STATIC, FINAL)
+                    .initializer(String.format("%s + %s", offset(previousName), size(previousName)))
+                    .build());
+            return this;
         }
 
         public MemberOffsetConstantGenerator addMember(
             String name)
         {
             builder.addField(
-                    FieldSpec.builder(int.class, offset(name), PRIVATE, STATIC, FINAL)
-                             .initializer(String.format("%s + %s", offset("kind"), size("kind")))
-                             .build());
+                FieldSpec.builder(int.class, offset(name), PRIVATE, STATIC, FINAL)
+                    .initializer(String.format("%s + %s", offset("kind"), size("kind")))
+                    .build());
             return this;
         }
     }
@@ -401,13 +513,18 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
     private final class LimitMethodGenerator extends MethodSpecGenerator
     {
-        private LimitMethodGenerator()
+        private final AstType superType;
+        private String lastParentMemberName;
+
+        private LimitMethodGenerator(
+            AstType superType)
         {
             super(methodBuilder("limit")
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(int.class)
                     .beginControlFlow("switch (kind())"));
+            this.superType = superType;
         }
 
         public LimitMethodGenerator addMember(
@@ -430,14 +547,28 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             return this;
         }
 
+        public LimitMethodGenerator addParentMember(
+            String name)
+        {
+            lastParentMemberName = name;
+            return this;
+        }
+
         @Override
         public MethodSpec generate()
         {
-            return builder.beginControlFlow("default:")
-                          .addStatement("return offset()")
-                          .endControlFlow()
-                          .endControlFlow()
-                          .build();
+            builder.beginControlFlow("default:");
+            if (superType == null)
+            {
+                builder.addStatement("return offset()");
+            }
+            else
+            {
+                builder.addStatement("return offset() + $L + $L", offset(lastParentMemberName), size(lastParentMemberName));
+            }
+            return builder.endControlFlow()
+                .endControlFlow()
+                .build();
         }
 
     }
@@ -583,81 +714,131 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
     private final class ToStringMethodGenerator extends MethodSpecGenerator
     {
-        private ToStringMethodGenerator()
+        private final AstType superType;
+        private final StringBuilder fieldStringBuilder = new StringBuilder();
+        private final StringBuilder fieldMethodBuilder = new StringBuilder();
+        private String lastParentMemberName;
+
+        private ToStringMethodGenerator(
+            AstType superType)
         {
             super(methodBuilder("toString")
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .returns(String.class)
                     .beginControlFlow("switch (kind())"));
+            this.superType = superType;
         }
 
         public ToStringMethodGenerator addMember(
             String name,
-            TypeName type)
+            TypeName typeName)
         {
+            String fieldString = fieldStringBuilder.toString();
+            String fieldMethod = fieldMethodBuilder.toString();
             builder.beginControlFlow("case $L:", kind(name));
-            if (type instanceof ClassName && "StringFW".equals(((ClassName) type).simpleName()) ||
-                type instanceof ClassName && "String16FW".equals(((ClassName) type).simpleName()) ||
-                type instanceof ClassName && "String32FW".equals(((ClassName) type).simpleName()))
+            if (typeName instanceof ClassName && isStringType((ClassName) typeName))
             {
-                builder.addStatement("return String.format(\"$L [$L=%s]\", $LRO.asString())", baseName.toUpperCase(), name, name);
+                builder.addStatement("return String.format(\"$L [$L$L=%s]\", $L$LRO.asString())", baseName.toUpperCase(),
+                    fieldString, name, fieldMethod, name);
             }
-            else if (type.isPrimitive())
+            else if (typeName.isPrimitive())
             {
-                builder.addStatement("return String.format(\"$L [$L=%d]\", $L())", baseName.toUpperCase(), name, name);
+                builder.addStatement("return String.format(\"$L [$L$L=%d]\", $L$L())", baseName.toUpperCase(), fieldString,
+                    name, fieldMethod, name);
             }
             else
             {
-                builder.addStatement("return String.format(\"$L [$L=%s]\", $L())", baseName.toUpperCase(), name, name);
+                builder.addStatement("return String.format(\"$L [$L$L=%s]\", $L$L())", baseName.toUpperCase(), fieldString,
+                    name, fieldMethod, name);
             }
             builder.endControlFlow();
+            return this;
+        }
+
+        public ToStringMethodGenerator addParentMember(
+            String name,
+            TypeName typeName)
+        {
+            if (typeName.isPrimitive())
+            {
+                fieldStringBuilder.append(String.format("%s=%%d, ", name));
+                fieldMethodBuilder.append(String.format("%s(), ", name));
+            }
+            else if (typeName instanceof ClassName && isStringType((ClassName) typeName))
+            {
+                fieldMethodBuilder.append(String.format("%sRO.asString(), ", name));
+            }
+            else
+            {
+                fieldStringBuilder.append(String.format("%s=%%s, ", name));
+                fieldMethodBuilder.append(String.format("%s(), ", name));
+            }
+            lastParentMemberName = name;
+
             return this;
         }
 
         @Override
         public MethodSpec generate()
         {
-            builder.beginControlFlow("default:")
-                .addStatement("return String.format(\"$L [unknown]\")", baseName.toUpperCase())
-                .endControlFlow();
-
+            builder.beginControlFlow("default:");
+            if (superType == null)
+            {
+                builder.addStatement("return String.format(\"$L [unknown]\")", baseName.toUpperCase());
+            }
+            else
+            {
+                builder.addStatement("return String.format(\"$L [$L=%d]\", $L())", baseName.toUpperCase(), lastParentMemberName,
+                    lastParentMemberName);
+            }
             return builder.endControlFlow()
+                .endControlFlow()
                 .build();
         }
-
     }
 
     private static final class BuilderClassGenerator extends ClassSpecGenerator
     {
         private final TypeSpec.Builder builder;
         private final ClassName structType;
+        private final MemberConstantGenerator memberConstant;
         private final MemberFieldGenerator memberField;
         private final MemberAccessorGenerator memberAccessor;
         private final MemberMutatorGenerator memberMutator;
         private final WrapMethodGenerator wrapMethod;
+        private final BuildMethodGenerator buildMethod;
+        private String priorFieldIfDefaulted;
+        private boolean priorDefaultedIsPrimitive;
+        private Object priorDefaultValue;
+        private String priorSizeName;
+        private TypeName priorSizeType;
 
         private BuilderClassGenerator(
             ClassName structType,
-            ClassName flyweightType)
+            ClassName flyweightType,
+            AstType superType)
         {
-            this(structType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), structType);
+            this(structType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), structType, superType);
         }
 
         private BuilderClassGenerator(
             ClassName thisType,
             ClassName builderRawType,
-            ClassName structType)
+            ClassName unionType,
+            AstType superType)
         {
             super(thisType);
             this.builder = classBuilder(thisType.simpleName())
                     .addModifiers(PUBLIC, STATIC, FINAL)
-                    .superclass(ParameterizedTypeName.get(builderRawType, structType));
-            this.structType = structType;
-            this.wrapMethod = new WrapMethodGenerator();
+                    .superclass(ParameterizedTypeName.get(builderRawType, unionType));
+            this.structType = unionType;
+            this.wrapMethod = new WrapMethodGenerator(superType);
+            this.memberConstant = new MemberConstantGenerator(thisType, superType, builder);
             this.memberField = new MemberFieldGenerator(thisType, builder);
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder);
-            this.memberMutator = new MemberMutatorGenerator(thisType, builder);
+            this.memberMutator = new MemberMutatorGenerator(thisType, superType, builder);
+            this.buildMethod = new BuildMethodGenerator(unionType, superType, builder);
         }
 
         private void addMember(
@@ -676,12 +857,51 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             //   setMethod
         }
 
+        private void addParentMember(
+            String name,
+            AstType type,
+            TypeName typeName,
+            AstType unsignedType,
+            TypeName unsignedTypeName,
+            int size,
+            String sizeName,
+            TypeName sizeTypeName,
+            boolean usedAsSize,
+            Object defaultValue,
+            AstByteOrder byteOrder)
+        {
+            Consumer<CodeBlock.Builder> defaultPriorField = priorFieldIfDefaulted == null ? null : this::defaultPriorField;
+            memberConstant.addParentMember(name);
+            memberMutator.addParentMember(name, type, typeName, unsignedType, unsignedTypeName,
+                usedAsSize, byteOrder, priorFieldIfDefaulted, defaultPriorField);
+            buildMethod.addParentMember(name);
+            if (defaultValue != null)
+            {
+                priorFieldIfDefaulted = name;
+                priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVarbyteuintType(typeName);
+                priorDefaultValue = defaultValue;
+                priorSizeName = sizeName;
+                priorSizeType = sizeTypeName;
+            }
+            else
+            {
+                priorFieldIfDefaulted = null;
+            }
+        }
+
+        private void addMemberAfterParentMember()
+        {
+            memberMutator.addKindAfterParentMember();
+        }
+
         @Override
         public TypeSpec generate()
         {
             memberField.build();
             memberAccessor.build();
             memberMutator.build();
+            memberConstant.build();
+            buildMethod.build();
             return builder.addMethod(constructor())
                           .addMethod(wrapMethod.generate())
                           .build();
@@ -693,6 +913,44 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .addStatement("super(new $T())", structType)
                     .build();
+        }
+
+        private static final class MemberConstantGenerator extends ClassSpecMixinGenerator
+        {
+            private final AstType superType;
+            private int nextIndex;
+
+            private MemberConstantGenerator(
+                ClassName thisType,
+                AstType superType,
+                TypeSpec.Builder builder)
+            {
+                super(thisType, builder);
+                this.superType = superType;
+            }
+
+            public MemberConstantGenerator addParentMember(
+                String name)
+            {
+                builder.addField(
+                    FieldSpec.builder(int.class, index(name), PRIVATE, STATIC, FINAL)
+                        .initializer(Integer.toString(nextIndex++))
+                        .build());
+                return this;
+            }
+
+            @Override
+            public TypeSpec.Builder build()
+            {
+                if (superType != null)
+                {
+                    builder.addField(
+                        FieldSpec.builder(int.class, "lastFieldSet", PRIVATE)
+                            .initializer("-1")
+                            .build());
+                }
+                return super.build();
+            }
         }
 
         private static final class MemberFieldGenerator extends ClassSpecMixinGenerator
@@ -831,6 +1089,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         private static final class MemberMutatorGenerator extends ClassSpecMixinGenerator
         {
             private static final Map<TypeName, String> PUTTER_NAMES;
+            private static final Map<TypeName, String[]> UNSIGNED_INT_RANGES;
 
             static
             {
@@ -843,8 +1102,16 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 putterNames.put(TypeName.DOUBLE, "putDouble");
                 putterNames.put(TypeName.LONG, "putLong");
                 PUTTER_NAMES = unmodifiableMap(putterNames);
+
+                Map<TypeName, String[]> unsigned = new HashMap<>();
+                unsigned.put(TypeName.BYTE, new String[]{"0", "0XFF"});
+                unsigned.put(TypeName.SHORT, new String[]{"0", "0xFFFF"});
+                unsigned.put(TypeName.INT, new String[]{"0", "0xFFFFFFFFL"});
+                unsigned.put(TypeName.LONG, new String[]{"0L", null});
+                UNSIGNED_INT_RANGES = unmodifiableMap(unsigned);
             }
 
+            private boolean priorFieldIsAutomaticallySet;
             private String nextName;
             private TypeName nextType;
 
@@ -852,18 +1119,25 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             private TypeName deferredType;
             private String deferredSizeName;
 
+            private String lastParentMemberName;
+
             private MemberMutatorGenerator(
                 ClassName thisType,
+                AstType superType,
                 TypeSpec.Builder builder)
             {
-                super(thisType, builder.addMethod(
+                super(thisType, builder);
+                if (superType == null)
+                {
+                    builder.addMethod(
                         MethodSpec.methodBuilder("kind")
-                        .addModifiers(PUBLIC)
-                        .addParameter(int.class, "value")
-                        .returns(thisType)
-                        .addStatement("buffer().putByte(offset() + $L, (byte)(value & 0xFF))", offset("kind"))
-                        .addStatement("return this")
-                        .build()));
+                            .addModifiers(PUBLIC)
+                            .addParameter(int.class, "value")
+                            .returns(thisType)
+                            .addStatement("buffer().putByte(offset() + $L, (byte)(value & 0xFF))", offset("kind"))
+                            .addStatement("return this")
+                            .build());
+                }
             }
 
             public void lookaheadMember(
@@ -884,6 +1158,200 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 deferredType = type;
                 deferredSizeName = sizeName;
                 return this;
+            }
+
+            public MemberMutatorGenerator addParentMember(
+                String name,
+                AstType type,
+                TypeName typeName,
+                AstType unsignedType,
+                TypeName unsignedTypeName,
+                boolean usedAsSize,
+                AstByteOrder byteOrder,
+                String priorFieldIfDefaulted,
+                Consumer<CodeBlock.Builder> defaultPriorField)
+            {
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
+                if (typeName.isPrimitive())
+                {
+                    addPrimitiveParentMember(name, type, typeName, unsignedType, unsignedTypeName, usedAsSize, byteOrder,
+                        priorFieldIfDefaulted, defaultPriorField);
+                }
+                priorFieldIsAutomaticallySet = automaticallySet;
+                lastParentMemberName = name;
+                return this;
+            }
+
+            private MemberMutatorGenerator addKindAfterParentMember()
+            {
+                builder.addMethod(MethodSpec.methodBuilder("kind")
+                    .addModifiers(PUBLIC)
+                    .addParameter(int.class, "value")
+                    .returns(thisType)
+                    .addStatement("assert lastFieldSet == $L : \"Field \\\"$L\\\" is not set\"", index(lastParentMemberName),
+                        lastParentMemberName)
+                    .addStatement("buffer().putByte(offset() + $L, (byte)(value & 0xFF))", offset("kind"))
+                    .addStatement("return this")
+                    .build());
+                return this;
+            }
+
+            private void addPrimitiveParentMember(
+                String name,
+                AstType type,
+                TypeName typeName,
+                AstType unsignedType,
+                TypeName unsignedTypeName,
+                boolean usedAsSize,
+                AstByteOrder byteOrder,
+                String priorFieldIfDefaulted,
+                Consumer<CodeBlock.Builder> defaultPriorField)
+            {
+
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
+                String putterName = PUTTER_NAMES.get(typeName);
+                if (putterName == null)
+                {
+                    throw new IllegalStateException("member type not supported: " + typeName);
+                }
+
+                TypeName generateTypeName = (unsignedTypeName != null) ? unsignedTypeName : typeName;
+                CodeBlock.Builder code = CodeBlock.builder();
+                if (unsignedTypeName != null)
+                {
+                    generateUnsignedIntRangeCheck(name, typeName, code);
+                }
+
+                if (priorFieldIfDefaulted != null)
+                {
+                    generateDefaultPriorField(priorFieldIfDefaulted, defaultPriorField, code);
+                }
+                if (!automaticallySet)
+                {
+                    code.addStatement("assert lastFieldSet == $L - 1", index(name));
+                }
+                code.addStatement("int newLimit = limit() + $L", size(name))
+                    .addStatement("checkLimit(newLimit, maxLimit())");
+
+                if (type.bits() == 24)
+                {
+                    if (byteOrder == NETWORK)
+                    {
+                        code.addStatement("buffer().putByte(limit(), (byte) (value >> 16))");
+                        code.addStatement("buffer().putByte(limit() + 1, (byte) (value >> 8))");
+                        code.addStatement("buffer().putByte(limit() + 2, (byte) value)");
+                    }
+                    else
+                    {
+                        code.beginControlFlow("if ($T.NATIVE_BYTE_ORDER == $T.BIG_ENDIAN)", BUFFER_UTIL_TYPE, ByteOrder.class);
+                        code.addStatement("buffer().putByte(limit(), (byte) (value >> 16))");
+                        code.addStatement("buffer().putByte(limit() + 1, (byte) (value >> 8))");
+                        code.addStatement("buffer().putByte(limit() + 2, (byte) value)");
+                        code.nextControlFlow("else");
+                        code.addStatement("buffer().putByte(limit(), (byte) value)");
+                        code.addStatement("buffer().putByte(limit() + 1, (byte) (value >> 8))");
+                        code.addStatement("buffer().putByte(limit() + 2, (byte) (value >> 16))");
+                        code.endControlFlow();
+                    }
+                }
+                else
+                {
+                    code.add("$[")
+                        .add("buffer().$L(limit(), ", putterName);
+                    if (generateTypeName != typeName)
+                    {
+                        code.add("($T)", typeName);
+
+                        switch (type.bits())
+                        {
+                        case 8:
+                            code.add("(value & 0xFF)");
+                            break;
+                        case 16:
+                            code.add("(value & 0xFFFF)");
+                            break;
+                        case 24:
+                            code.add("(value & 0x00FF_FFFF)");
+                            break;
+                        case 32:
+                            code.add("(value & 0xFFFF_FFFFL)");
+                            break;
+                        default:
+                            code.add("value");
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        code.add("value");
+                    }
+                    if (byteOrder == NETWORK)
+                    {
+                        if (typeName == TypeName.SHORT || typeName == TypeName.INT || typeName == TypeName.LONG)
+                        {
+                            code.add(", $T.BIG_ENDIAN", ByteOrder.class);
+                        }
+                    }
+                    code.add(");\n$]");
+                }
+
+                if (usedAsSize)
+                {
+                    code.addStatement("$L = limit()", dynamicOffset(name));
+                }
+                if (!automaticallySet)
+                {
+                    code.addStatement("lastFieldSet = $L", index(name));
+                }
+                code.addStatement("limit(newLimit)")
+                    .addStatement("return this");
+
+                builder.addMethod(methodBuilder(methodName(name))
+                    .addModifiers(usedAsSize ? PRIVATE : PUBLIC)
+                    .addParameter(generateTypeName, "value")
+                    .returns(thisType)
+                    .addCode(code.build())
+                    .build());
+            }
+
+            private void generateUnsignedIntRangeCheck(String name, TypeName typeName, CodeBlock.Builder code)
+            {
+                String[] range = UNSIGNED_INT_RANGES.get(typeName);
+                code.beginControlFlow("if (value < $L)", range[0])
+                    .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                        format("Value %%d too low for field \"%s\"", name))
+                    .endControlFlow();
+                if (range[1] != null)
+                {
+                    code.beginControlFlow("if (value > $L)", range[1])
+                        .addStatement("throw new IllegalArgumentException(String.format($S, value))",
+                            format("Value %%d too high for field \"%s\"", name))
+                        .endControlFlow();
+                }
+            }
+
+            private void generateDefaultPriorField(
+                String priorFieldIfDefaulted,
+                Consumer<CodeBlock.Builder> defaultPriorField,
+                CodeBlock.Builder code)
+            {
+                if (priorFieldIsAutomaticallySet)
+                {
+                    code.beginControlFlow("if ($L == -1)", dynamicOffset(priorFieldIfDefaulted));
+                }
+                else
+                {
+                    code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                }
+                defaultPriorField.accept(code);
+                code.endControlFlow();
+            }
+
+
+            private static String dynamicOffset(
+                String fieldName)
+            {
+                return String.format("dynamicOffset%s", initCap(fieldName));
             }
 
             @Override
@@ -1148,7 +1616,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
         private final class WrapMethodGenerator extends MethodSpecGenerator
         {
-            private WrapMethodGenerator()
+            private WrapMethodGenerator(
+                AstType superType)
             {
                 super(methodBuilder("wrap")
                         .addModifiers(PUBLIC)
@@ -1156,8 +1625,12 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                         .addParameter(int.class, "offset")
                         .addParameter(int.class, "maxLimit")
-                        .addStatement("super.wrap(buffer, offset, maxLimit)")
-                        .addStatement("return this"));
+                        .addStatement("super.wrap(buffer, offset, maxLimit)"));
+                if (superType != null)
+                {
+                    builder.addStatement("lastFieldSet = -1");
+                }
+                builder.addStatement("return this");
             }
 
             @Override
@@ -1167,6 +1640,102 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             }
 
         }
+
+        private final class BuildMethodGenerator extends ClassSpecMixinGenerator
+        {
+            private String lastParentMemberName;
+            private final AstType superType;
+
+            private BuildMethodGenerator(
+                ClassName thisType,
+                AstType superType,
+                TypeSpec.Builder builder)
+            {
+                super(thisType, builder);
+                this.superType = superType;
+            }
+
+            public BuildMethodGenerator addParentMember(
+                String name)
+            {
+                lastParentMemberName = name;
+                return this;
+            }
+
+            @Override
+            public TypeSpec.Builder build()
+            {
+                if (superType != null)
+                {
+                    builder.addMethod(methodBuilder("build")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addStatement("assert lastFieldSet == $L : \"Field \\\"$L\\\" is not set\"", index(lastParentMemberName),
+                            lastParentMemberName)
+                        .addStatement("return super.build()")
+                        .build());
+                }
+                return super.build();
+            }
+        }
+
+        private static String defaultName(
+            String fieldName)
+        {
+            return String.format("DEFAULT_%s", constant(fieldName));
+        }
+
+        private static String dynamicOffset(
+            String fieldName)
+        {
+            return String.format("dynamicOffset%s", initCap(fieldName));
+        }
+
+        private void defaultPriorField(
+            CodeBlock.Builder code)
+        {
+            if (priorDefaultValue != null && priorDefaultedIsPrimitive)
+            {
+                code.addStatement("$L($L)", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+            }
+            else
+            {
+                //  Attempt to default the entire object. This will fail if it has any required fields.
+                if (priorDefaultValue == NULL_DEFAULT)
+                {
+                    if (isVarintType(priorSizeType))
+                    {
+                        code.addStatement("$L(-1)", methodName(priorSizeName))
+                            .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
+                    }
+                    else if (isVarbyteuintType(priorSizeType))
+                    {
+                        code.addStatement("$L(0)", methodName(priorSizeName))
+                            .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
+                    }
+                    else
+                    {
+                        code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
+                        code.addStatement("int limit = limit()");
+                        code.addStatement("limit($L)", dynamicOffset(priorSizeName));
+                        code.addStatement("$L(-1)", methodName(priorSizeName));
+                        code.addStatement("limit(limit)");
+                    }
+                }
+                else
+                {
+                    code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
+                }
+            }
+        }
+    }
+
+    private static boolean isStringType(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "StringFW".equals(name) || isString16Type(classType) || isString32Type(classType);
     }
 
     private static boolean isString16Type(
@@ -1181,6 +1750,31 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
     {
         String name = classType.simpleName();
         return "String32FW".equals(name);
+    }
+
+    private static boolean isVarintType(
+        TypeName type)
+    {
+        return type instanceof ClassName && "Varint32FW".equals(((ClassName) type).simpleName()) ||
+            type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static boolean isVarbyteuintType(
+        TypeName type)
+    {
+        return type instanceof ClassName && "Varbyteuint32FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static String index(
+        String fieldName)
+    {
+        return String.format("INDEX_%s", constant(fieldName));
+    }
+
+    private static String initCap(
+        String value)
+    {
+        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
 
     private static String kind(
@@ -1205,5 +1799,10 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         String fieldName)
     {
         return fieldName.replaceAll("([^_A-Z])([A-Z])", "$1_$2").toUpperCase();
+    }
+
+    private static String methodName(String name)
+    {
+        return RESERVED_METHOD_NAMES.contains(name) ? name + "$" : name;
     }
 }
