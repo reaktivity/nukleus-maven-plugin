@@ -328,7 +328,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             String name)
         {
             builder.addField(
-                FieldSpec.builder(int.class, offset(name), PRIVATE, STATIC, FINAL)
+                FieldSpec.builder(int.class, offset(name), PUBLIC, STATIC, FINAL)
                     .initializer(String.format("%s + %s", offset("kind"), size("kind")))
                     .build());
             return this;
