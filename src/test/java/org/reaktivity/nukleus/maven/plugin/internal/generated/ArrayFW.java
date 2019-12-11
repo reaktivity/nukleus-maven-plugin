@@ -30,7 +30,8 @@ public abstract class ArrayFW<T extends Flyweight & VariantFW, A extends ArrayFW
 
     public abstract DirectBuffer items();
 
-    public abstract static class Builder<B extends Flyweight.Builder & VariantFW.Builder<O, K>,
+    public abstract static class Builder<T extends Flyweight & VariantFW<O, K>,
+        B extends Flyweight.Builder & VariantFW.Builder<T, O, K>,
         O extends Flyweight, K, A extends ArrayFW> extends Flyweight.Builder<A>
     {
         private final B itemRW;
@@ -50,7 +51,6 @@ public abstract class ArrayFW<T extends Flyweight & VariantFW, A extends ArrayFW
         public Builder item(
             O item)
         {
-            itemRW.setAs(itemRW.maxKind(), item);
             maxLength = Math.max(maxLength, item.sizeof());
             checkLimit(itemRW.limit(), maxLimit());
             limit(itemRW.limit());

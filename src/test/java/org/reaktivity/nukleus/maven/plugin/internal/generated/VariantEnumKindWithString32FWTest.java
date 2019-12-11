@@ -124,7 +124,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString32()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString32(asStringFW("value1"))
+            .setAsString32(asStringFW("value1"), 0)
             .build()
             .limit();
         VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
@@ -137,7 +137,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString16()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString16(asStringFW("value1"))
+            .setAsString16(asStringFW("value1"), 0)
             .build()
             .limit();
         VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
@@ -150,7 +150,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString8(asStringFW("value1"))
+            .setAsString8(asStringFW("value1"), 0)
             .build()
             .limit();
         VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
@@ -175,7 +175,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString8Kind()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.ONE, asStringFW("value1"))
+            .setAs(EnumWithInt8.ONE, asStringFW("value1"), 0)
             .build()
             .limit();
         VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
@@ -188,7 +188,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString16Kind()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.TWO, asStringFW("value1"))
+            .setAs(EnumWithInt8.TWO, asStringFW("value1"), 0)
             .build()
             .limit();
         VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
@@ -201,7 +201,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString32Kind()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.THREE, asStringFW("value1"))
+            .setAs(EnumWithInt8.THREE, asStringFW("value1"), 0)
             .build()
             .limit();
         VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
@@ -214,7 +214,7 @@ public class VariantEnumKindWithString32FWTest
     public void shouldFailToSetAsString8KindWithLargeString()
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.ONE, asStringFW(String.format("%65535s", "0")))
+            .setAs(EnumWithInt8.ONE, asStringFW(String.format("%65535s", "0")), 0)
             .build();
     }
 

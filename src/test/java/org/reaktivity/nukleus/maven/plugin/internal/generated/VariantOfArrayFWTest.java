@@ -169,7 +169,7 @@ public class VariantOfArrayFWTest
     }
 
     @Test
-    public void shouldSetItemsUsingFieldMethod() throws Exception
+    public void shouldSetItemsUsingItemMethod() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .item(asStringFW("symbolA"))

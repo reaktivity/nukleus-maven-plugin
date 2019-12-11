@@ -21,6 +21,7 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 
 public final class ArrayWithLength8FW extends ArrayFW<VariantEnumKindWithString32FW, ArrayWithLength8FW>
 {
@@ -122,13 +123,13 @@ public final class ArrayWithLength8FW extends ArrayFW<VariantEnumKindWithString3
         public Builder item(
             StringFW item)
         {
-            itemRW.wrapArrayElement(buffer(), offset() + FIELDS_OFFSET, maxLimit(), kindPadding);
-            itemRW.setAs(itemRW.maxKind(), item);
-            maxLength = Math.max(maxLength, item.length0());
-            kindPadding = itemRW.kindPadding();
+            itemRW.wrap(buffer(), offset() + FIELDS_OFFSET, maxLimit());
+            itemRW.setAs(itemRW.maxKind(), item, kindPadding);
+            maxLength = Math.max(maxLength, item.sizeof());
             checkLimit(itemRW.limit(), maxLimit());
             limit(itemRW.limit());
             fieldCount++;
+            kindPadding += itemRW.size();
             return this;
         }
 
@@ -150,15 +151,19 @@ public final class ArrayWithLength8FW extends ArrayFW<VariantEnumKindWithString3
         {
             if (maxLength > 0 && !itemRW.maxKind().equals(itemRW.kindFromLength(maxLength)))
             {
-                int currentPadding = 0;
+                EnumWithInt8 kind = itemRW.kindFromLength(maxLength);
+                int originalPadding = 0;
+                int rearrangePadding = 0;
+                int originalLimit = itemRW.limit();
                 for (int i = 0; i < fieldCount; i++)
                 {
-                    itemRW.kindPadding(currentPadding);
-                    VariantEnumKindWithString32FW itemRO = itemRW.build();
-                    currentPadding += itemRO.get().sizeof();
-                    itemRW.setAsWithoutKind(itemRW.kindFromLength(maxLength), itemRO.get());
+                    VariantEnumKindWithString32FW itemRO = itemRW.build(originalLimit);
+                    StringFW originalItem = itemRO.getAs(itemRW.maxKind(), originalPadding);
+                    originalPadding += originalItem.sizeof();
+                    itemRW.setAs(kind, originalItem, rearrangePadding);
+                    StringFW rearrangedItem = itemRO.getAs(kind, rearrangePadding);
+                    rearrangePadding += rearrangedItem.sizeof();
                 }
-                itemRW.kind(itemRW.kindFromLength(maxLength));
                 limit(itemRW.limit());
             }
             int length = limit() - offset() - FIELD_COUNT_OFFSET;

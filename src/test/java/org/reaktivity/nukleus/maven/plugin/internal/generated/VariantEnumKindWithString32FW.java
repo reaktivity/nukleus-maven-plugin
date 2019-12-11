@@ -23,7 +23,7 @@ import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantEnumKindWithString32FW extends Flyweight implements VariantFW<StringFW>
+public final class VariantEnumKindWithString32FW extends Flyweight implements VariantFW<StringFW, EnumWithInt8>
 {
     public static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
 
@@ -54,6 +54,23 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
             return string16RO;
         case THREE:
             return string32RO;
+        default:
+            throw new IllegalStateException("Unrecognized kind: " + kind());
+        }
+    }
+
+    public StringFW getAs(
+        EnumWithInt8 kind,
+        int kindPadding)
+    {
+        switch (kind)
+        {
+        case ONE:
+            return string8RO.wrap(buffer(), enumWithInt8RO.limit() + kindPadding, maxLimit());
+        case TWO:
+            return string16RO.wrap(buffer(), enumWithInt8RO.limit() + kindPadding, maxLimit());
+        case THREE:
+            return string32RO.wrap(buffer(), enumWithInt8RO.limit() + kindPadding, maxLimit());
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
@@ -130,6 +147,7 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
         return this;
     }
 
+    @Override
     public VariantEnumKindWithString32FW wrapArrayElement(
         DirectBuffer buffer,
         int elementsOffset,
@@ -150,9 +168,8 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
             string32RO.wrap(buffer, enumWithInt8.limit() + kindPadding, maxLimit);
             break;
         default:
-            break;
+            throw new IllegalStateException("Unrecognized kind: " + kind());
         }
-        checkLimit(limit(), maxLimit);
         return this;
     }
 
@@ -189,7 +206,7 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
     }
 
     public static final class Builder extends Flyweight.Builder<VariantEnumKindWithString32FW>
-        implements VariantFW.Builder<StringFW, EnumWithInt8>
+        implements VariantFW.Builder<VariantEnumKindWithString32FW, StringFW, EnumWithInt8>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
@@ -199,11 +216,7 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
 
         private final String32FW.Builder string32RW = new String32FW.Builder();
 
-        private int kindPadding;
-
-        private int relayoutPadding;
-
-        private boolean isArray;
+        private int size;
 
         public Builder()
         {
@@ -211,107 +224,59 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
         }
 
         public Builder setAsString8(
-            StringFW value)
+            StringFW value,
+            int kindPadding)
         {
             kind(KIND_STRING8);
-            String8FW.Builder string8 = string8RW.wrap(buffer(), limit(), maxLimit());
+            String8FW.Builder string8 = string8RW.wrap(buffer(), limit() + kindPadding, maxLimit());
             string8.set(value.asString(), StandardCharsets.UTF_8);
             String8FW string8RO = string8.build();
+            size = string8RO.sizeof();
             limit(string8RO.limit());
-            kindPadding += string8RO.sizeof();
             return this;
         }
 
         public Builder setAsString16(
-            StringFW value)
+            StringFW value,
+            int kindPadding)
         {
             kind(KIND_STRING16);
-            String16FW.Builder string16 = string16RW.wrap(buffer(), limit(), maxLimit());
+            String16FW.Builder string16 = string16RW.wrap(buffer(), limit() + kindPadding, maxLimit());
             string16.set(value.asString(), StandardCharsets.UTF_8);
             String16FW string16RO = string16.build();
+            size = string16RO.sizeof();
             limit(string16RO.limit());
-            kindPadding += string16RO.sizeof();
             return this;
         }
 
         public Builder setAsString32(
-            StringFW value)
+            StringFW value,
+            int kindPadding)
         {
             kind(KIND_STRING32);
-            String32FW.Builder string32 = string32RW.wrap(buffer(), limit(), maxLimit());
+            String32FW.Builder string32 = string32RW.wrap(buffer(), limit() + kindPadding, maxLimit());
             string32.set(value.asString(), StandardCharsets.UTF_8);
             String32FW string32RO = string32.build();
+            size = string32RO.sizeof();
             limit(string32RO.limit());
-            kindPadding += string32RO.sizeof();
-            return this;
-        }
-
-        private Builder setAsString8WithoutSettingKind(
-            StringFW value)
-        {
-            String8FW.Builder string8 = string8RW.wrap(buffer(), enumWithInt8RW.build().limit() +
-                relayoutPadding, maxLimit());
-            string8.set(value.asString(), StandardCharsets.UTF_8);
-            String8FW string8RO = string8.build();
-            relayoutPadding += string8RO.sizeof();
-            return this;
-        }
-
-        private Builder setAsString16WithoutSettingKind(
-            StringFW value)
-        {
-            String16FW.Builder string16 = string16RW.wrap(buffer(), enumWithInt8RW.build().limit() +
-                relayoutPadding, maxLimit());
-            string16.set(value.asString(), StandardCharsets.UTF_8);
-            String16FW string16RO = string16.build();
-            relayoutPadding += string16RO.sizeof();
-            return this;
-        }
-
-        private Builder setAsString32WithoutSettingKind(
-            StringFW value)
-        {
-            String32FW.Builder string32 = string32RW.wrap(buffer(), enumWithInt8RW.build().limit() +
-                relayoutPadding, maxLimit());
-            string32.set((String32FW) value);
-            String32FW string32RO = string32.build();
-            relayoutPadding += string32RO.sizeof();
-            return this;
-        }
-
-        public Builder setAsWithoutKind(
-            EnumWithInt8 kind,
-            StringFW value)
-        {
-            switch (kind)
-            {
-            case ONE:
-                setAsString8WithoutSettingKind(value);
-                break;
-            case TWO:
-                setAsString16WithoutSettingKind(value);
-                break;
-            case THREE:
-                setAsString32WithoutSettingKind(value);
-                break;
-            }
             return this;
         }
 
         public Builder setAs(
             EnumWithInt8 kind,
-            StringFW value)
+            StringFW value,
+            int kindPadding)
         {
             switch (kind)
             {
             case ONE:
-                setAsString8(value);
+                setAsString8(value, kindPadding);
                 break;
             case TWO:
-                setAsString16(value);
+                setAsString16(value, kindPadding);
                 break;
             case THREE:
-                setAsString32(value);
+                setAsString32(value, kindPadding);
                 break;
             }
             return this;
@@ -325,14 +290,14 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
             switch (highestByteIndex)
             {
             case 0:
-                setAsString8(value);
+                setAsString8(value, 0);
                 break;
             case 1:
-                setAsString16(value);
+                setAsString16(value, 0);
                 break;
             case 2:
             case 3:
-                setAsString32(value);
+                setAsString32(value, 0);
                 break;
             default:
                 throw new IllegalArgumentException("Illegal value: " + value);
@@ -349,25 +314,12 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
             return this;
         }
 
-        public Builder wrapArrayElement(
-            MutableDirectBuffer buffer,
-            int elementsOffset,
-            int maxLimit,
-            int kindPadding)
-        {
-            super.wrap(buffer, elementsOffset, maxLimit);
-            this.kindPadding = kindPadding;
-            this.isArray = true;
-            return this;
-        }
-
         public Builder kind(
             EnumWithInt8 value)
         {
             enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
             enumWithInt8RW.set(value);
-            int limit = enumWithInt8RW.build().limit();
-            limit(!isArray ? limit : relayoutPadding > 0 ? limit + relayoutPadding : limit + kindPadding);
+            limit(enumWithInt8RW.build().limit());
             return this;
         }
 
@@ -376,16 +328,9 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
             return KIND_STRING32;
         }
 
-        public int kindPadding()
+        public int size()
         {
-            return kindPadding;
-        }
-
-        public Builder kindPadding(
-            int kindPadding)
-        {
-            this.kindPadding = kindPadding;
-            return this;
+            return size;
         }
 
         public EnumWithInt8 kindFromLength(
@@ -406,17 +351,10 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
             }
         }
 
-        @Override
-        public VariantEnumKindWithString32FW build()
+        public VariantEnumKindWithString32FW build(
+            int maxLimit)
         {
-            if (!isArray)
-            {
-                flyweight().wrap(buffer(), offset(), limit());
-            }
-            else
-            {
-                flyweight().wrapArrayElement(buffer(), offset(), limit(), kindPadding);
-            }
+            flyweight().wrap(buffer(), offset(), maxLimit);
             return flyweight();
         }
     }

@@ -152,9 +152,9 @@ public final class VariantOfArrayFW<T extends Flyweight & VariantFW> extends Arr
         return get().limit();
     }
 
-    public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<O, EnumWithInt8>,
-        T extends Flyweight & VariantFW<O>, O extends Flyweight>
-        extends Flyweight.Builder<VariantOfArrayFW> implements VariantFW.Builder<O, EnumWithInt8>
+    public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<T, O, EnumWithInt8>,
+        T extends Flyweight & VariantFW<O, EnumWithInt8>, O extends Flyweight>
+        extends Flyweight.Builder<VariantOfArrayFW> implements VariantFW.Builder<T, O, EnumWithInt8>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
@@ -196,6 +196,7 @@ public final class VariantOfArrayFW<T extends Flyweight & VariantFW> extends Arr
             O item)
         {
             array32RW.item(item);
+            limit(array32RW.limit());
             return this;
         }
 

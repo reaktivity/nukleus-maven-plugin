@@ -122,8 +122,8 @@ public final class Array16FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
         return offset() + LENGTH_SIZE + length();
     }
 
-    public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<O, K>,
-        T extends Flyweight & VariantFW<O>, O extends Flyweight, K> extends ArrayFW.Builder<B, O, K, Array16FW>
+    public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<T, O, K>,
+        T extends Flyweight & VariantFW<O, K>, O extends Flyweight, K> extends ArrayFW.Builder<T, B, O, K, Array16FW>
     {
         private int kindPadding;
 
@@ -137,9 +137,10 @@ public final class Array16FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
         public Builder<B, T, O, K> item(
             O item)
         {
-            itemRW().wrapArrayElement(buffer(), offset() + FIELDS_OFFSET, maxLimit(), kindPadding);
+            itemRW().wrap(buffer(), offset() + FIELDS_OFFSET, maxLimit());
+            itemRW().setAs(itemRW().maxKind(), item, kindPadding);
             super.item(item);
-            kindPadding = itemRW().kindPadding();
+            kindPadding += itemRW().size();
             return this;
         }
 
@@ -176,15 +177,18 @@ public final class Array16FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
             if (maxLength() > 0 && !itemRW().maxKind().equals(itemRW().kindFromLength(maxLength())))
             {
                 K kind = itemRW().kindFromLength(maxLength());
-                int currentPadding = 0;
+                int originalPadding = 0;
+                int rearrangePadding = 0;
+                int originalLimit = itemRW().limit();
                 for (int i = 0; i < fieldCount(); i++)
                 {
-                    itemRW().kindPadding(currentPadding);
-                    T itemRO = (T) itemRW().build();
-                    currentPadding += itemRO.get().sizeof();
-                    itemRW().setAsWithoutKind(kind, itemRO.get());
+                    T itemRO = itemRW().build(originalLimit);
+                    O originalItem = itemRO.getAs(itemRW().maxKind(), originalPadding);
+                    originalPadding += originalItem.sizeof();
+                    itemRW().setAs(kind, originalItem, rearrangePadding);
+                    O rearrangedItem = itemRO.getAs(kind, rearrangePadding);
+                    rearrangePadding += rearrangedItem.sizeof();
                 }
-                itemRW().kind(kind);
                 limit(itemRW().limit());
             }
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
