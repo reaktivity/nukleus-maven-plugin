@@ -306,7 +306,7 @@ unbounded_octets_member
    ;
 
 union_type
-   : KW_UNION ID KW_SWITCH LEFT_BRACKET KW_UINT8 RIGHT_BRACKET LEFT_BRACE case_list RIGHT_BRACE
+   : KW_UNION ID KW_SWITCH LEFT_BRACKET KW_UINT8 RIGHT_BRACKET (KW_EXTENDS scoped_name)? LEFT_BRACE case_list RIGHT_BRACE
    ;
 
 case_list
