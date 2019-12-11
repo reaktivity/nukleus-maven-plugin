@@ -801,7 +801,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
     private static final class BuilderClassGenerator extends ClassSpecGenerator
     {
         private final TypeSpec.Builder builder;
-        private final ClassName structType;
+        private final ClassName unionType;
         private final MemberConstantGenerator memberConstant;
         private final MemberFieldGenerator memberField;
         private final MemberAccessorGenerator memberAccessor;
@@ -815,11 +815,11 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         private TypeName priorSizeType;
 
         private BuilderClassGenerator(
-            ClassName structType,
+            ClassName unionType,
             ClassName flyweightType,
             AstType superType)
         {
-            this(structType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), structType, superType);
+            this(unionType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), unionType, superType);
         }
 
         private BuilderClassGenerator(
@@ -832,7 +832,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             this.builder = classBuilder(thisType.simpleName())
                     .addModifiers(PUBLIC, STATIC, FINAL)
                     .superclass(ParameterizedTypeName.get(builderRawType, unionType));
-            this.structType = unionType;
+            this.unionType = unionType;
             this.wrapMethod = new WrapMethodGenerator(superType);
             this.memberConstant = new MemberConstantGenerator(thisType, superType, builder);
             this.memberField = new MemberFieldGenerator(thisType, builder);
@@ -911,7 +911,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         {
             return constructorBuilder()
                     .addModifiers(PUBLIC)
-                    .addStatement("super(new $T())", structType)
+                    .addStatement("super(new $T())", unionType)
                     .build();
         }
 
