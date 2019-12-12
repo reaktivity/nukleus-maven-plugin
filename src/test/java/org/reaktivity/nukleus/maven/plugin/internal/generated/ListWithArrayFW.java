@@ -1,12 +1,12 @@
 /**
  * Copyright 2016-2019 The Reaktivity Project
- * <p>
+ *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at:
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -108,7 +108,8 @@ public final class ListWithArrayFW extends ListFW
                     arrayOfStringRO.wrap(fieldsBuffer, fieldLimit, maxLimit);
                     fieldLimit = arrayOfStringRO.limit();
                     bitmask |= 1 << INDEX_ARRAY_OF_STRING;
-                } else
+                }
+                else
                 {
                     fieldLimit += MISSING_FIELD_BYTE_SIZE;
                 }
@@ -167,7 +168,8 @@ public final class ListWithArrayFW extends ListFW
                     }
                     fieldLimit = arrayOfStringRO.limit();
                     bitmask |= 1 << INDEX_ARRAY_OF_STRING;
-                } else
+                }
+                else
                 {
                     fieldLimit += MISSING_FIELD_BYTE_SIZE;
                 }
