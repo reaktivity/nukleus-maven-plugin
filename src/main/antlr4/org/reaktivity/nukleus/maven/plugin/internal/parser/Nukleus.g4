@@ -521,7 +521,7 @@ DOUBLE_COLON
 
 
 KW_STRING
-   : 'string'
+   : 'string8'
    ;
 
 

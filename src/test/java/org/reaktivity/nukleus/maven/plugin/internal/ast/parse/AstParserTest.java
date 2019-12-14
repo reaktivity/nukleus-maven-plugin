@@ -370,7 +370,7 @@ public class AstParserTest
     @Test
     public void shouldParseStructWithMembers()
     {
-        NukleusParser parser = newParser("struct Person { string firstName; string lastName; }");
+        NukleusParser parser = newParser("struct Person { string8 firstName; string8 lastName; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
@@ -386,7 +386,7 @@ public class AstParserTest
     @Test
     public void shouldParseStructWithArrayMember()
     {
-        NukleusParser parser = newParser("struct Person { string lastName; string[] foreNames; }");
+        NukleusParser parser = newParser("struct Person { string8 lastName; string8[] foreNames; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
@@ -403,7 +403,7 @@ public class AstParserTest
     @Test
     public void shouldParseStructWithUnboundedOctetsMember()
     {
-        NukleusParser parser = newParser("struct Frame { string source; octets extension; }");
+        NukleusParser parser = newParser("struct Frame { string8 source; octets extension; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
@@ -581,7 +581,7 @@ public class AstParserTest
     public void shouldParseList()
     {
         NukleusParser parser = newParser("list<uint32, uint32> ListWithPhysicalAndLogicalLength " +
-            "{ required string field0; uint32 field1; string field2; }");
+            "{ required string8 field0; uint32 field1; string8 field2; }");
 
         List_typeContext ctx = parser.list_type();
         AstListNode actual = new AstParser().visitList_type(ctx);
@@ -960,7 +960,7 @@ public class AstParserTest
     @Test
     public void shouldParseStringMember()
     {
-        NukleusParser parser = newParser("string field;");
+        NukleusParser parser = newParser("string8 field;");
         MemberContext ctx = parser.member();
         AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
@@ -975,7 +975,7 @@ public class AstParserTest
     // @Test TODO: not yet supported
     public void shouldParseStringMemberWithLength()
     {
-        NukleusParser parser = newParser("string<10> field;");
+        NukleusParser parser = newParser("string8<10> field;");
         MemberContext ctx = parser.member();
         AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
@@ -1005,7 +1005,7 @@ public class AstParserTest
     @Test
     public void shouldParseArrayMember()
     {
-        NukleusParser parser = newParser("string[] field;");
+        NukleusParser parser = newParser("string8[] field;");
 
         MemberContext ctx = parser.member();
         AstNode actual = new AstParser().visitMember(ctx);
