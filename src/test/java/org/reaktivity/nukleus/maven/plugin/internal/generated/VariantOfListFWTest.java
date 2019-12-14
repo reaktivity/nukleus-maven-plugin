@@ -31,7 +31,6 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
 
 public class VariantOfListFWTest
 {
@@ -133,9 +132,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer, offsetLength, maxLimit);
 
         assertSame(variantOfListRO, variantOfList);
-        assertEquals(length, variantOfList.length());
-        assertEquals(fieldCount, variantOfList.fieldCount());
-        assertEquals(length - fieldCount, variantOfList.fields().capacity());
+        assertEquals(length, variantOfList.get().length());
+        assertEquals(fieldCount, variantOfList.get().fieldCount());
+        assertEquals(length - fieldCount, variantOfList.get().fields().capacity());
     }
 
     @Test
@@ -152,9 +151,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer, offsetLength, maxLimit);
 
         assertSame(variantOfListRO, variantOfList);
-        assertEquals(length, variantOfList.length());
-        assertEquals(fieldCount, variantOfList.fieldCount());
-        assertEquals(length - fieldCount, variantOfList.fields().capacity());
+        assertEquals(length, variantOfList.get().length());
+        assertEquals(fieldCount, variantOfList.get().fieldCount());
+        assertEquals(length - fieldCount, variantOfList.get().fields().capacity());
     }
 
     @Test
@@ -174,8 +173,8 @@ public class VariantOfListFWTest
         assertEquals(0, variantOfList.get().length());
         assertEquals(0, variantOfList.get().fieldCount());
         assertEquals(1, variantOfList.limit());
-        assertEquals(0, variantOfList.length());
-        assertEquals(0, variantOfList.fieldCount());
+        assertEquals(0, variantOfList.get().length());
+        assertEquals(0, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -199,8 +198,8 @@ public class VariantOfListFWTest
         assertEquals(26, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -231,8 +230,8 @@ public class VariantOfListFWTest
         assertEquals(272, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(277, variantOfList.limit());
-        assertEquals(272, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(272, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -256,8 +255,8 @@ public class VariantOfListFWTest
         assertEquals(26, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -277,7 +276,7 @@ public class VariantOfListFWTest
         assertEquals(26, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
     }
 }
