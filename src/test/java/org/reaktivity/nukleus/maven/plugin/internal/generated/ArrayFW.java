@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 import org.agrona.DirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public abstract class ArrayFW<T extends Flyweight & VariantFW, A extends ArrayFW> extends Flyweight
+public abstract class ArrayFW<T extends VariantFW, A extends ArrayFW> extends Flyweight
 {
     public abstract int length();
 
@@ -30,9 +30,8 @@ public abstract class ArrayFW<T extends Flyweight & VariantFW, A extends ArrayFW
 
     public abstract DirectBuffer items();
 
-    public abstract static class Builder<T extends Flyweight & VariantFW<O, K>,
-        B extends Flyweight.Builder & VariantFW.Builder<T, O, K>,
-        O extends Flyweight, K, A extends ArrayFW> extends Flyweight.Builder<A>
+    public abstract static class Builder<B extends VariantFW.Builder,
+        O extends Flyweight, A extends ArrayFW> extends Flyweight.Builder<A>
     {
         private final B itemRW;
 

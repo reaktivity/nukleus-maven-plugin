@@ -89,8 +89,6 @@ public class VariantOfArrayFWTest
         assertEquals(18, flyweight.get().length());
         assertEquals(2, flyweight.get().fieldCount());
         assertEquals(offset + 20, flyweight.limit());
-        assertEquals(2, flyweight.fieldCount());
-        assertEquals(18, flyweight.length());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

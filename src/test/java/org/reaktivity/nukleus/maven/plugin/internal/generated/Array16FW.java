@@ -23,7 +23,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class Array16FW<T extends Flyweight & VariantFW> extends ArrayFW<T, Array16FW>
+public final class Array16FW<T extends VariantFW> extends ArrayFW<T, Array16FW>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_SHORT;
 
@@ -122,8 +122,8 @@ public final class Array16FW<T extends Flyweight & VariantFW> extends ArrayFW<T,
         return offset() + LENGTH_SIZE + length();
     }
 
-    public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<T, O, K>,
-        T extends Flyweight & VariantFW<O, K>, O extends Flyweight, K> extends ArrayFW.Builder<T, B, O, K, Array16FW>
+    public static final class Builder<B extends VariantFW.Builder<O, K, T>, T extends VariantFW<O, K>, O extends Flyweight, K>
+        extends ArrayFW.Builder<B, O, Array16FW>
     {
         private int kindPadding;
 

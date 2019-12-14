@@ -15,15 +15,13 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import java.util.function.Consumer;
-
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfArrayFW<T extends Flyweight & VariantFW> extends ArrayFW<T, VariantOfArrayFW> implements VariantFW
+public final class VariantOfArrayFW<T extends VariantFW> extends VariantFW<ArrayFW, EnumWithInt8>
 {
     public static final EnumWithInt8 KIND_ARRAY32 = EnumWithInt8.ONE;
 
@@ -45,30 +43,6 @@ public final class VariantOfArrayFW<T extends Flyweight & VariantFW> extends Arr
     {
         array32RO = new Array32FW<>(type);
         array8RO = new Array8FW<>(type);
-    }
-
-    @Override
-    public int length()
-    {
-        return get().length();
-    }
-
-    @Override
-    public int fieldCount()
-    {
-        return get().fieldCount();
-    }
-
-    @Override
-    public VariantOfArrayFW forEach(Consumer<T> consumer)
-    {
-        return null;
-    }
-
-    @Override
-    public DirectBuffer items()
-    {
-        return get().items();
     }
 
     public ArrayFW<T, ? extends ArrayFW> get()
@@ -152,9 +126,8 @@ public final class VariantOfArrayFW<T extends Flyweight & VariantFW> extends Arr
         return get().limit();
     }
 
-    public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<T, O, EnumWithInt8>,
-        T extends Flyweight & VariantFW<O, EnumWithInt8>, O extends Flyweight>
-        extends Flyweight.Builder<VariantOfArrayFW> implements VariantFW.Builder<T, O, EnumWithInt8>
+    public static final class Builder<B extends VariantFW.Builder<O, EnumWithInt8, T>, T extends VariantFW<O, EnumWithInt8>,
+        O extends Flyweight> extends VariantFW.Builder<O, EnumWithInt8, VariantOfArrayFW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
@@ -225,7 +198,7 @@ public final class VariantOfArrayFW<T extends Flyweight & VariantFW> extends Arr
             default:
                 throw new IllegalArgumentException("Illegal length: " + length);
             }
-            return super.build();
+            return (VariantOfArrayFW) super.build();
         }
     }
 }

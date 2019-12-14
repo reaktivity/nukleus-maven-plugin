@@ -19,11 +19,10 @@ import java.nio.charset.StandardCharsets;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantEnumKindWithString32FW extends Flyweight implements VariantFW<StringFW, EnumWithInt8>
+public final class VariantEnumKindWithString32FW extends VariantFW<StringFW, EnumWithInt8>
 {
     public static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
 
@@ -205,8 +204,7 @@ public final class VariantEnumKindWithString32FW extends Flyweight implements Va
         }
     }
 
-    public static final class Builder extends Flyweight.Builder<VariantEnumKindWithString32FW>
-        implements VariantFW.Builder<VariantEnumKindWithString32FW, StringFW, EnumWithInt8>
+    public static final class Builder extends VariantFW.Builder<StringFW, EnumWithInt8, VariantEnumKindWithString32FW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 

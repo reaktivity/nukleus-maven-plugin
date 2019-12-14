@@ -18,20 +18,20 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import org.agrona.DirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public interface VariantFW<O extends Flyweight, K>
+public abstract class VariantFW<O extends Flyweight, K> extends Flyweight
 {
-    K kind();
+    public abstract K kind();
 
-    O get();
+    public abstract O get();
 
-    default O getAs(
+    public O getAs(
         K kind,
         int kindPadding)
     {
         return null;
     }
 
-    default VariantFW wrapArrayElement(
+    public VariantFW wrapArrayElement(
         DirectBuffer buffer,
         int elementsOffset,
         int maxLimit,
@@ -40,9 +40,16 @@ public interface VariantFW<O extends Flyweight, K>
         return this;
     }
 
-    interface Builder<T extends VariantFW<O, K>, O extends Flyweight, K>
+    public abstract static class Builder<O extends Flyweight, K, V extends VariantFW>
+        extends Flyweight.Builder<V>
     {
-        default Builder setAs(
+        protected Builder(
+            V flyweight)
+        {
+            super(flyweight);
+        }
+
+        public Builder setAs(
             K kind,
             O value,
             int kindPadding)
@@ -50,25 +57,25 @@ public interface VariantFW<O extends Flyweight, K>
             return this;
         }
 
-        default K maxKind()
+        public K maxKind()
         {
             return null;
         }
 
-        default int size()
+        public int size()
         {
             return 0;
         }
 
-        default K kindFromLength(
+        public K kindFromLength(
             int length)
         {
             return null;
         }
 
-        Builder kind(K value);
+        public abstract Builder kind(K value);
 
-        default T build(
+        public V build(
             int maxLimit)
         {
             return null;

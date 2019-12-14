@@ -23,7 +23,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class Array8FW<T extends Flyweight & VariantFW> extends ArrayFW<T, Array8FW>
+public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
@@ -117,8 +117,8 @@ public final class Array8FW<T extends Flyweight & VariantFW> extends ArrayFW<T, 
         return offset() + LENGTH_SIZE + length();
     }
 
-    public static final class Builder<B extends Flyweight.Builder & VariantFW.Builder<T, O, K>,
-        T extends Flyweight & VariantFW<O, K>, O extends Flyweight, K> extends ArrayFW.Builder<T, B, O, K, Array8FW>
+    public static final class Builder<B extends VariantFW.Builder<O, K, T>, T extends VariantFW<O, K>, O extends Flyweight, K>
+        extends ArrayFW.Builder<B, O, Array8FW>
     {
         private int kindPadding;
 
@@ -129,7 +129,7 @@ public final class Array8FW<T extends Flyweight & VariantFW> extends ArrayFW<T, 
             super(new Array8FW<>(itemRO), itemRW);
         }
 
-        public Builder<B, T, O, K> item(
+        public Builder item(
             O item)
         {
             itemRW().wrap(buffer(), offset() + FIELDS_OFFSET, maxLimit());
