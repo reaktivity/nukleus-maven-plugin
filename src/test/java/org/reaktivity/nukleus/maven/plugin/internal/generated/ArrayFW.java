@@ -33,7 +33,7 @@ public abstract class ArrayFW<T extends VariantFW> extends Flyweight
     public abstract static class Builder<B extends VariantFW.Builder<O, ?, V>,
         O extends Flyweight, V extends VariantFW<O, ?>, T extends ArrayFW<V>> extends Flyweight.Builder<T>
     {
-        private final B itemRW;
+        protected final B itemRW;
 
         private int maxLength;
 
@@ -65,11 +65,6 @@ public abstract class ArrayFW<T extends VariantFW> extends Flyweight
         {
             this.fieldCount = fieldCount;
             return this;
-        }
-
-        public B itemRW()
-        {
-            return itemRW;
         }
 
         public int fieldCount()

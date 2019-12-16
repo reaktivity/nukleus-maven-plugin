@@ -131,10 +131,10 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T>
         public Builder item(
             O item)
         {
-            itemRW().wrap(buffer(), offset() + FIELDS_OFFSET, maxLimit());
-            itemRW().setAs(itemRW().maxKind(), item, kindPadding);
+            itemRW.wrap(buffer(), offset() + FIELDS_OFFSET, maxLimit());
+            itemRW.setAs(itemRW.maxKind(), item, kindPadding);
             super.item(item);
-            kindPadding += itemRW().size();
+            kindPadding += itemRW.size();
             return this;
         }
 
@@ -168,22 +168,22 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T>
         @Override
         public Array8FW build()
         {
-            if (maxLength() > 0 && !itemRW().maxKind().equals(itemRW().kindFromLength(maxLength())))
+            if (maxLength() > 0 && !itemRW.maxKind().equals(itemRW.kindFromLength(maxLength())))
             {
-                K kind = itemRW().kindFromLength(maxLength());
+                K kind = itemRW.kindFromLength(maxLength());
                 int originalPadding = 0;
                 int rearrangePadding = 0;
-                int originalLimit = itemRW().limit();
+                int originalLimit = itemRW.limit();
                 for (int i = 0; i < fieldCount(); i++)
                 {
-                    V itemRO = itemRW().build(originalLimit);
-                    O originalItem = itemRO.getAs(itemRW().maxKind(), originalPadding);
+                    V itemRO = itemRW.build(originalLimit);
+                    O originalItem = itemRO.getAs(itemRW.maxKind(), originalPadding);
                     originalPadding += originalItem.sizeof();
-                    itemRW().setAs(kind, originalItem, rearrangePadding);
+                    itemRW.setAs(kind, originalItem, rearrangePadding);
                     O rearrangedItem = itemRO.getAs(kind, rearrangePadding);
                     rearrangePadding += rearrangedItem.sizeof();
                 }
-                limit(itemRW().limit());
+                limit(itemRW.limit());
             }
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
