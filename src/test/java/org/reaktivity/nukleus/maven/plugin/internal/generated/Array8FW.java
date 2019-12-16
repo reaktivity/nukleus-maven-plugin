@@ -23,7 +23,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class Array8FW<T extends VariantFW> extends ArrayFW<T>
+public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends ArrayFW<T>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 

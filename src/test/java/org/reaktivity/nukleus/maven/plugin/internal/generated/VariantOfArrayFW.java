@@ -21,7 +21,7 @@ import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfArrayFW<T extends VariantFW> extends VariantFW<ArrayFW, EnumWithInt8>
+public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>> extends VariantFW<ArrayFW<T>, EnumWithInt8>
 {
     public static final EnumWithInt8 KIND_ARRAY32 = EnumWithInt8.ONE;
 
@@ -127,7 +127,7 @@ public final class VariantOfArrayFW<T extends VariantFW> extends VariantFW<Array
     }
 
     public static final class Builder<B extends VariantFW.Builder<O, EnumWithInt8, T>, T extends VariantFW<O, EnumWithInt8>,
-        O extends Flyweight> extends VariantFW.Builder<O, EnumWithInt8, VariantOfArrayFW>
+        O extends Flyweight> extends VariantFW.Builder<O, EnumWithInt8, VariantOfArrayFW<T>>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 

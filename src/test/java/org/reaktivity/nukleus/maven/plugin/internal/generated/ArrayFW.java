@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 import org.agrona.DirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public abstract class ArrayFW<T extends VariantFW> extends Flyweight
+public abstract class ArrayFW<T extends VariantFW<? extends Flyweight, ?>> extends Flyweight
 {
     public abstract int length();
 
