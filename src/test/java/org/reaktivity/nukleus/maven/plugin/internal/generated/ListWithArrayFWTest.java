@@ -49,7 +49,7 @@ public class ListWithArrayFWTest
     private final byte kindString8 = EnumWithInt8.ONE.value();
 
     static void assertAllTestValuesRead(
-        ArrayFW<VariantEnumKindWithString32FW, ?> flyweight)
+        ArrayFW<VariantEnumKindWithString32FW> flyweight)
     {
         List<String> arrayItems = new ArrayList<>();
         flyweight.forEach(v -> arrayItems.add(v.get().asString()));

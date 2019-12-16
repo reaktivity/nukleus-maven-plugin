@@ -23,7 +23,7 @@ import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 
-public final class ArrayWithLength8FW extends ArrayFW<VariantEnumKindWithString32FW, ArrayWithLength8FW>
+public final class ArrayWithLength8FW extends ArrayFW<VariantEnumKindWithString32FW>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
@@ -57,7 +57,7 @@ public final class ArrayWithLength8FW extends ArrayFW<VariantEnumKindWithString3
         return null;
     }
 
-    public ArrayWithLength8FW forEach(
+    public void forEach(
         Consumer<VariantEnumKindWithString32FW> consumer)
     {
         int offset = offset() + FIELDS_OFFSET;
@@ -68,7 +68,6 @@ public final class ArrayWithLength8FW extends ArrayFW<VariantEnumKindWithString3
             consumer.accept(itemRO);
             currentPudding += itemRO.get().sizeof();
         }
-        return this;
     }
 
     @Override

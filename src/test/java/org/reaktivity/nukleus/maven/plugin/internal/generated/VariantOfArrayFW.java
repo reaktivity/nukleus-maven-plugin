@@ -45,7 +45,7 @@ public final class VariantOfArrayFW<T extends VariantFW> extends VariantFW<Array
         array8RO = new Array8FW<>(type);
     }
 
-    public ArrayFW<T, ? extends ArrayFW> get()
+    public ArrayFW<T> get()
     {
         switch (kind())
         {
@@ -131,9 +131,9 @@ public final class VariantOfArrayFW<T extends VariantFW> extends VariantFW<Array
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
-        private final Array32FW.Builder<B, T, O, EnumWithInt8> array32RW;
+        private final Array32FW.Builder<B, O, T, EnumWithInt8> array32RW;
 
-        private final Array8FW.Builder<B, T, O, EnumWithInt8> array8RW;
+        private final Array8FW.Builder<B, O, T, EnumWithInt8> array8RW;
 
         protected Builder(
             B itemRW,

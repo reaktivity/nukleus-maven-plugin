@@ -23,7 +23,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
+public final class Array8FW<T extends VariantFW> extends ArrayFW<T>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
@@ -65,7 +65,7 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
         return itemsRO;
     }
 
-    public Array8FW forEach(
+    public void forEach(
         Consumer<T> consumer)
     {
         int offset = offset() + FIELDS_OFFSET;
@@ -76,7 +76,6 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
             consumer.accept(itemRO);
             currentPudding += itemRO.get().sizeof();
         }
-        return this;
     }
 
     @Override
@@ -117,14 +116,14 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
         return offset() + LENGTH_SIZE + length();
     }
 
-    public static final class Builder<B extends VariantFW.Builder<O, K, T>, T extends VariantFW<O, K>, O extends Flyweight, K>
-        extends ArrayFW.Builder<B, O, Array8FW>
+    public static final class Builder<B extends VariantFW.Builder<O, K, V>, O extends Flyweight, V extends VariantFW<O, K>, K>
+        extends ArrayFW.Builder<B, O, V, Array8FW<V>>
     {
         private int kindPadding;
 
         public Builder(
             B itemRW,
-            T itemRO)
+            V itemRO)
         {
             super(new Array8FW<>(itemRO), itemRW);
         }
@@ -139,7 +138,7 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
             return this;
         }
 
-        public Builder<B, T, O, K> items(
+        public Builder<B, O, V, K> items(
             DirectBuffer buffer,
             int srcOffset,
             int length,
@@ -154,7 +153,7 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
         }
 
         @Override
-        public Builder<B, T, O, K> wrap(
+        public Builder<B, O, V, K> wrap(
             MutableDirectBuffer buffer,
             int offset,
             int maxLimit)
@@ -177,7 +176,7 @@ public final class Array8FW<T extends VariantFW> extends ArrayFW<T, Array8FW>
                 int originalLimit = itemRW().limit();
                 for (int i = 0; i < fieldCount(); i++)
                 {
-                    T itemRO = itemRW().build(originalLimit);
+                    V itemRO = itemRW().build(originalLimit);
                     O originalItem = itemRO.getAs(itemRW().maxKind(), originalPadding);
                     originalPadding += originalItem.sizeof();
                     itemRW().setAs(kind, originalItem, rearrangePadding);
