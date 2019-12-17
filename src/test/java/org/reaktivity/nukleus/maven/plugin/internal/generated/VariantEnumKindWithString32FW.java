@@ -22,7 +22,7 @@ import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantEnumKindWithString32FW extends VariantFW<StringFW, EnumWithInt8>
+public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8, StringFW>
 {
     public static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
 
@@ -204,7 +204,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<StringFW, Enu
         }
     }
 
-    public static final class Builder extends VariantFW.Builder<StringFW, EnumWithInt8, VariantEnumKindWithString32FW>
+    public static final class Builder extends VariantFW.Builder<VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 

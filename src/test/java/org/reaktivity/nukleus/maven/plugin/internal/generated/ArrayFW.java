@@ -20,18 +20,18 @@ import java.util.function.Consumer;
 import org.agrona.DirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public abstract class ArrayFW<T extends VariantFW<? extends Flyweight, ?>> extends Flyweight
+public abstract class ArrayFW<V extends VariantFW<?, ? extends Flyweight>> extends Flyweight
 {
     public abstract int length();
 
     public abstract int fieldCount();
 
-    public abstract void forEach(Consumer<T> consumer);
+    public abstract void forEach(Consumer<V> consumer);
 
     public abstract DirectBuffer items();
 
-    public abstract static class Builder<B extends VariantFW.Builder<O, ?, V>,
-        O extends Flyweight, V extends VariantFW<O, ?>, T extends ArrayFW<V>> extends Flyweight.Builder<T>
+    public abstract static class Builder<T extends ArrayFW<V>, B extends VariantFW.Builder<V, K, O>, V extends VariantFW<K, O>,
+        K, O extends Flyweight> extends Flyweight.Builder<T>
     {
         protected final B itemRW;
 
@@ -47,7 +47,7 @@ public abstract class ArrayFW<T extends VariantFW<? extends Flyweight, ?>> exten
             this.itemRW = itemRW;
         }
 
-        public Builder item(
+        public Builder<T, B, V, K, O> item(
             O item)
         {
             maxLength = Math.max(maxLength, item.sizeof());
@@ -57,7 +57,7 @@ public abstract class ArrayFW<T extends VariantFW<? extends Flyweight, ?>> exten
             return this;
         }
 
-        public Builder items(
+        public Builder<T, B, V, K, O> items(
             DirectBuffer buffer,
             int srcOffset,
             int length,
@@ -72,9 +72,25 @@ public abstract class ArrayFW<T extends VariantFW<? extends Flyweight, ?>> exten
             return fieldCount;
         }
 
-        public int maxLength()
+        protected void relayout()
         {
-            return maxLength;
+            if (maxLength > 0 && !itemRW.maxKind().equals(itemRW.kindFromLength(maxLength)))
+            {
+                K kind = itemRW.kindFromLength(maxLength);
+                int originalPadding = 0;
+                int rearrangePadding = 0;
+                int originalLimit = itemRW.limit();
+                for (int i = 0; i < fieldCount; i++)
+                {
+                    V itemRO = itemRW.build(originalLimit);
+                    O originalItem = itemRO.getAs(itemRW.maxKind(), originalPadding);
+                    originalPadding += originalItem.sizeof();
+                    itemRW.setAs(kind, originalItem, rearrangePadding);
+                    O rearrangedItem = itemRO.getAs(kind, rearrangePadding);
+                    rearrangePadding += rearrangedItem.sizeof();
+                }
+                limit(itemRW.limit());
+            }
         }
     }
 }

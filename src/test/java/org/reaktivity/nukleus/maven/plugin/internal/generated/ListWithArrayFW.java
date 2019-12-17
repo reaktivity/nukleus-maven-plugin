@@ -23,6 +23,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
 
 public final class ListWithArrayFW extends ListFW
@@ -41,7 +42,7 @@ public final class ListWithArrayFW extends ListFW
 
     private VariantEnumKindWithString32FW field1RO = new VariantEnumKindWithString32FW();
 
-    private VariantOfArrayFW<VariantEnumKindWithString32FW> arrayOfStringRO =
+    private VariantOfArrayFW<VariantEnumKindWithString32FW, StringFW> arrayOfStringRO =
         new VariantOfArrayFW<>(new VariantEnumKindWithString32FW());
 
     private VariantOfListFW variantOfListRO = new VariantOfListFW();
@@ -54,7 +55,7 @@ public final class ListWithArrayFW extends ListFW
         return field1RO.get();
     }
 
-    public ArrayFW arrayOfString()
+    public ArrayFW<VariantEnumKindWithString32FW> arrayOfString()
     {
         assert (bitmask & MASK_ARRAY_OF_STRING) != 0L : "Field \"arrayOfString\" is not set";
         return arrayOfStringRO.get();
@@ -209,7 +210,8 @@ public final class ListWithArrayFW extends ListFW
     {
         private final VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
 
-        private final VariantOfArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, StringFW>
+        private final VariantOfArrayFW.Builder
+            <VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
             arrayOfStringRW = new VariantOfArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
             new VariantEnumKindWithString32FW());
 

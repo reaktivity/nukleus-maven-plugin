@@ -23,7 +23,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends ArrayFW<T>
+public final class Array8FW<V extends VariantFW<?, ? extends Flyweight>> extends ArrayFW<V>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
@@ -37,12 +37,12 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
 
     private static final int LENGTH_MAX_VALUE = 0xFF;
 
-    private final T itemRO;
+    private final V itemRO;
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
 
     Array8FW(
-        T itemRO)
+        V itemRO)
     {
         this.itemRO = itemRO;
     }
@@ -66,7 +66,7 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
     }
 
     public void forEach(
-        Consumer<T> consumer)
+        Consumer<V> consumer)
     {
         int offset = offset() + FIELDS_OFFSET;
         int currentPudding = 0;
@@ -79,7 +79,7 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
     }
 
     @Override
-    public Array8FW wrap(
+    public Array8FW<V> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -92,7 +92,7 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
     }
 
     @Override
-    public Array8FW tryWrap(
+    public Array8FW<V> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -116,8 +116,8 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
         return offset() + LENGTH_SIZE + length();
     }
 
-    public static final class Builder<B extends VariantFW.Builder<O, K, V>, O extends Flyweight, V extends VariantFW<O, K>, K>
-        extends ArrayFW.Builder<B, O, V, Array8FW<V>>
+    public static final class Builder<B extends VariantFW.Builder<V, K, O>, V extends VariantFW<K, O>, K, O extends Flyweight>
+        extends ArrayFW.Builder<Array8FW<V>, B, V, K, O>
     {
         private int kindPadding;
 
@@ -128,7 +128,7 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
             super(new Array8FW<>(itemRO), itemRW);
         }
 
-        public Builder item(
+        public Builder<B, V, K, O> item(
             O item)
         {
             itemRW.wrap(buffer(), offset() + FIELDS_OFFSET, maxLimit());
@@ -138,7 +138,7 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
             return this;
         }
 
-        public Builder<B, O, V, K> items(
+        public Builder<B, V, K, O> items(
             DirectBuffer buffer,
             int srcOffset,
             int length,
@@ -153,7 +153,7 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
         }
 
         @Override
-        public Builder<B, O, V, K> wrap(
+        public Builder<B, V, K, O> wrap(
             MutableDirectBuffer buffer,
             int offset,
             int maxLimit)
@@ -166,25 +166,9 @@ public final class Array8FW<T extends VariantFW<? extends Flyweight, ?>> extends
         }
 
         @Override
-        public Array8FW build()
+        public Array8FW<V> build()
         {
-            if (maxLength() > 0 && !itemRW.maxKind().equals(itemRW.kindFromLength(maxLength())))
-            {
-                K kind = itemRW.kindFromLength(maxLength());
-                int originalPadding = 0;
-                int rearrangePadding = 0;
-                int originalLimit = itemRW.limit();
-                for (int i = 0; i < fieldCount(); i++)
-                {
-                    V itemRO = itemRW.build(originalLimit);
-                    O originalItem = itemRO.getAs(itemRW.maxKind(), originalPadding);
-                    originalPadding += originalItem.sizeof();
-                    itemRW.setAs(kind, originalItem, rearrangePadding);
-                    O rearrangedItem = itemRO.getAs(kind, rearrangePadding);
-                    rearrangePadding += rearrangedItem.sizeof();
-                }
-                limit(itemRW.limit());
-            }
+            relayout();
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount() <= LENGTH_MAX_VALUE : "Field count is too large";

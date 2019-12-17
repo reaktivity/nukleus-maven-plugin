@@ -21,7 +21,8 @@ import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>> extends VariantFW<ArrayFW<T>, EnumWithInt8>
+public final class VariantOfArrayFW<V extends VariantFW<?, O>, O extends Flyweight>
+    extends VariantFW<EnumWithInt8, ArrayFW<V>>
 {
     public static final EnumWithInt8 KIND_ARRAY32 = EnumWithInt8.ONE;
 
@@ -29,9 +30,9 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
-    private final Array32FW<T> array32RO;
+    private final Array32FW<V> array32RO;
 
-    private final Array8FW<T> array8RO;
+    private final Array8FW<V> array8RO;
 
     public EnumWithInt8 kind()
     {
@@ -39,13 +40,13 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
     }
 
     public VariantOfArrayFW(
-        T type)
+        V type)
     {
         array32RO = new Array32FW<>(type);
         array8RO = new Array8FW<>(type);
     }
 
-    public ArrayFW<T> get()
+    public ArrayFW<V> get()
     {
         switch (kind())
         {
@@ -59,7 +60,7 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
     }
 
     @Override
-    public VariantOfArrayFW<T> tryWrap(
+    public VariantOfArrayFW<V, O> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -98,7 +99,7 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
     }
 
     @Override
-    public VariantOfArrayFW<T> wrap(
+    public VariantOfArrayFW<V, O> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -126,18 +127,18 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
         return get().limit();
     }
 
-    public static final class Builder<B extends VariantFW.Builder<O, EnumWithInt8, T>, T extends VariantFW<O, EnumWithInt8>,
-        O extends Flyweight> extends VariantFW.Builder<O, EnumWithInt8, VariantOfArrayFW<T>>
+    public static final class Builder<B extends VariantFW.Builder<V, K, O>, V extends VariantFW<K, O>,
+        K, O extends Flyweight> extends VariantFW.Builder<VariantOfArrayFW<V, O>, EnumWithInt8, ArrayFW<V>>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
-        private final Array32FW.Builder<B, O, T, EnumWithInt8> array32RW;
+        private final Array32FW.Builder<B, V, K, O> array32RW;
 
-        private final Array8FW.Builder<B, O, T, EnumWithInt8> array8RW;
+        private final Array8FW.Builder<B, V, K, O> array8RW;
 
         protected Builder(
             B itemRW,
-            T itemRO)
+            V itemRO)
         {
             super(new VariantOfArrayFW<>(itemRO));
             array32RW = new Array32FW.Builder<>(itemRW, itemRO);
@@ -145,7 +146,7 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
         }
 
         @Override
-        public Builder<B, T, O> wrap(
+        public Builder<B, V, K, O> wrap(
             MutableDirectBuffer buffer,
             int offset,
             int maxLimit)
@@ -156,7 +157,7 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
             return this;
         }
 
-        public Builder kind(
+        public Builder<B, V, K, O> kind(
             EnumWithInt8 value)
         {
             enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
@@ -165,7 +166,7 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
             return this;
         }
 
-        public Builder<B, T, O> item(
+        public Builder<B, V, K, O> item(
             O item)
         {
             array32RW.item(item);
@@ -174,7 +175,7 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
         }
 
         @Override
-        public VariantOfArrayFW build()
+        public VariantOfArrayFW<V, O> build()
         {
             Array32FW array32 = array32RW.build();
             long length = Math.max(array32.length(), array32.fieldCount());
@@ -198,7 +199,7 @@ public final class VariantOfArrayFW<T extends VariantFW<? extends Flyweight, ?>>
             default:
                 throw new IllegalArgumentException("Illegal length: " + length);
             }
-            return (VariantOfArrayFW) super.build();
+            return super.build();
         }
     }
 }

@@ -25,15 +25,13 @@ import org.reaktivity.reaktor.internal.test.types.ListFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfListFW extends VariantFW<ListFW, EnumWithInt8>
+public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
 {
     public static final EnumWithInt8 KIND_LIST32 = EnumWithInt8.ONE;
 
     public static final EnumWithInt8 KIND_LIST8 = EnumWithInt8.TWO;
 
     public static final EnumWithInt8 KIND_LIST0 = EnumWithInt8.THREE;
-
-    public static final byte MISSING_FIELD_PLACEHOLDER = 64;
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
@@ -146,7 +144,7 @@ public final class VariantOfListFW extends VariantFW<ListFW, EnumWithInt8>
         return get().limit();
     }
 
-    public static final class Builder extends VariantFW.Builder<ListFW, EnumWithInt8, VariantOfListFW>
+    public static final class Builder extends VariantFW.Builder<VariantOfListFW, EnumWithInt8, ListFW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
