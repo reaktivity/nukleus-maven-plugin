@@ -30,58 +30,71 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 
-public class ArrayWithLength8FWTest
+public class VariantArray32FWTest
 {
-    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
+    private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(150000))
     {
         {
             // Make sure the code is not secretly relying upon memory being initialized to 0
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-    private final ArrayWithLength8FW.Builder flyweightRW = new ArrayWithLength8FW.Builder();
-    private final ArrayWithLength8FW flyweightRO = new ArrayWithLength8FW();
-    private final int lengthSize = Byte.BYTES;
-    private final int fieldCountSize = Byte.BYTES;
+
+    private final VariantArray32FW.Builder
+        <VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
+        flyweightRW = new VariantArray32FW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
+        new VariantEnumKindWithString32FW());
+    private final VariantArray32FW<VariantEnumKindWithString32FW> flyweightRO =
+        new VariantArray32FW<>(new VariantEnumKindWithString32FW());
+
+    private final int lengthSize = Integer.BYTES;
+    private final int fieldCountSize = Integer.BYTES;
+    private final int arrayItemKindSize = Byte.BYTES;
 
     private int setAllItems(
         MutableDirectBuffer buffer,
         int offset)
     {
-        int physicalLength = 18;
+        String item1 = String.format("%65535s", "0");
+        String item2 = String.format("%65535s", "1");
+        int itemLengthSize = Integer.BYTES;
+        int physicalLength = fieldCountSize + arrayItemKindSize + itemLengthSize + item1.length() + itemLengthSize +
+            item2.length();
         int logicalLength = 2;
-        buffer.putByte(offset, (byte) physicalLength);
+        buffer.putInt(offset, physicalLength);
         int offsetFieldCount = offset + lengthSize;
-        buffer.putByte(offsetFieldCount, (byte) logicalLength);
+        buffer.putInt(offsetFieldCount, logicalLength);
 
         int offsetArrayItemKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetArrayItemKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetArrayItemKind, EnumWithInt8.THREE.value());
 
         int offsetItem1Length = offsetArrayItemKind + Byte.BYTES;
-        buffer.putByte(offsetItem1Length, (byte) "symbolA".length());
-        int offsetItem1 = offsetItem1Length + Byte.BYTES;
-        buffer.putBytes(offsetItem1, "symbolA".getBytes());
+        buffer.putInt(offsetItem1Length, item1.length());
+        int offsetItem1 = offsetItem1Length + itemLengthSize;
+        buffer.putBytes(offsetItem1, item1.getBytes());
 
-        int offsetItem2Length = offsetItem1 + "symbolA".length();
-        buffer.putByte(offsetItem2Length, (byte) "symbolB".length());
-        int offsetItem2 = offsetItem2Length + Byte.BYTES;
-        buffer.putBytes(offsetItem2, "symbolB".getBytes());
+        int offsetItem2Length = offsetItem1 + item1.length();
+        buffer.putInt(offsetItem2Length, item2.length());
+        int offsetItem2 = offsetItem2Length + itemLengthSize;
+        buffer.putBytes(offsetItem2, item2.getBytes());
 
         return physicalLength + lengthSize;
     }
 
     static void assertAllTestValuesRead(
-        ArrayWithLength8FW flyweight,
+        VariantArray32FW<VariantEnumKindWithString32FW> flyweight,
         int offset)
     {
+        String item1 = String.format("%65535s", "0");
+        String item2 = String.format("%65535s", "1");
         List<String> arrayItems = new ArrayList<>();
         flyweight.forEach(v -> arrayItems.add(v.get().asString()));
         assertEquals(2, arrayItems.size());
-        assertEquals("symbolA", arrayItems.get(0));
-        assertEquals("symbolB", arrayItems.get(1));
-        assertEquals(18, flyweight.length());
+        assertEquals(item1, arrayItems.get(0));
+        assertEquals(item2, arrayItems.get(1));
+        assertEquals(131083, flyweight.length());
         assertEquals(2, flyweight.fieldCount());
-        assertEquals(offset + 19, flyweight.limit());
+        assertEquals(offset + 131087, flyweight.limit());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -113,7 +126,7 @@ public class ArrayWithLength8FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final ArrayWithLength8FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        final VariantArray32FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
 
         assertSame(flyweightRO, array);
         assertAllTestValuesRead(array, offset);
@@ -124,7 +137,7 @@ public class ArrayWithLength8FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final ArrayWithLength8FW array = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+        final VariantArray32FW array = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
 
         assertNotNull(array);
         assertSame(flyweightRO, array);
@@ -136,7 +149,7 @@ public class ArrayWithLength8FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final ArrayWithLength8FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        final VariantArray32FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals(offset + size, array.limit());
 
         assertAllTestValuesRead(array, offset);
@@ -149,25 +162,27 @@ public class ArrayWithLength8FWTest
             .build()
             .limit();
 
-        final ArrayWithLength8FW array = flyweightRO.wrap(buffer,  0,  limit);
+        final VariantArray32FW<VariantEnumKindWithString32FW> array = flyweightRO.wrap(buffer,  0,  limit);
 
         List<String> arrayItems = new ArrayList<>();
         array.forEach(v -> arrayItems.add(v.get().asString()));
 
-        assertEquals(2, array.limit());
+        assertEquals(lengthSize + fieldCountSize, array.limit());
         assertEquals(0, arrayItems.size());
     }
 
     @Test
     public void shouldSetItemsUsingItemMethod() throws Exception
     {
+        String item1 = String.format("%65535s", "0");
+        String item2 = String.format("%65535s", "1");
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .item(asStringFW("symbolA"))
-            .item(asStringFW("symbolB"))
+            .item(asStringFW(item1))
+            .item(asStringFW(item2))
             .build()
             .limit();
 
-        final ArrayWithLength8FW array = flyweightRO.wrap(buffer,  0,  limit);
+        final VariantArray32FW array = flyweightRO.wrap(buffer,  0,  limit);
 
         assertAllTestValuesRead(array, 0);
     }
@@ -175,7 +190,7 @@ public class ArrayWithLength8FWTest
     private static StringFW asStringFW(
         String value)
     {
-        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
-        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Integer.SIZE + value.length()));
+        return new String32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

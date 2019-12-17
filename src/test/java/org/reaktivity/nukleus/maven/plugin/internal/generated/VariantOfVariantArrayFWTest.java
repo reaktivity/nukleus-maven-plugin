@@ -30,7 +30,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 
-public class Array8FWTest
+public class VariantOfVariantArrayFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -39,11 +39,13 @@ public class Array8FWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-
-    private final Array8FW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
-        flyweightRW = new Array8FW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW());
-    private final Array8FW<VariantEnumKindWithString32FW> flyweightRO = new Array8FW<>(new VariantEnumKindWithString32FW());
-
+    private final VariantOfVariantArrayFW.Builder
+        <VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
+        flyweightRW = new VariantOfVariantArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
+        new VariantEnumKindWithString32FW());
+    private final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> flyweightRO =
+        new VariantOfVariantArrayFW<>(new VariantEnumKindWithString32FW());
+    private final int kindSize = Byte.BYTES;
     private final int lengthSize = Byte.BYTES;
     private final int fieldCountSize = Byte.BYTES;
 
@@ -53,8 +55,10 @@ public class Array8FWTest
     {
         int physicalLength = 18;
         int logicalLength = 2;
-        buffer.putByte(offset, (byte) physicalLength);
-        int offsetFieldCount = offset + lengthSize;
+        buffer.putByte(offset, EnumWithInt8.TWO.value());
+        int offsetLength = offset + kindSize;
+        buffer.putByte(offsetLength, (byte) physicalLength);
+        int offsetFieldCount = offsetLength + lengthSize;
         buffer.putByte(offsetFieldCount, (byte) logicalLength);
 
         int offsetArrayItemKind = offsetFieldCount + fieldCountSize;
@@ -70,21 +74,22 @@ public class Array8FWTest
         int offsetItem2 = offsetItem2Length + Byte.BYTES;
         buffer.putBytes(offsetItem2, "symbolB".getBytes());
 
-        return physicalLength + lengthSize;
+        return physicalLength + kindSize + lengthSize;
     }
 
     static void assertAllTestValuesRead(
-        Array8FW<VariantEnumKindWithString32FW> flyweight,
+        VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> flyweight,
         int offset)
     {
         List<String> arrayItems = new ArrayList<>();
-        flyweight.forEach(v -> arrayItems.add(v.get().asString()));
+        flyweight.get().forEach(v -> arrayItems.add(v.get().asString()));
         assertEquals(2, arrayItems.size());
         assertEquals("symbolA", arrayItems.get(0));
         assertEquals("symbolB", arrayItems.get(1));
-        assertEquals(18, flyweight.length());
-        assertEquals(2, flyweight.fieldCount());
-        assertEquals(offset + 19, flyweight.limit());
+        assertEquals(EnumWithInt8.TWO, flyweight.kind());
+        assertEquals(18, flyweight.get().length());
+        assertEquals(2, flyweight.get().fieldCount());
+        assertEquals(offset + 20, flyweight.limit());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -116,10 +121,11 @@ public class Array8FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final Array8FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList = flyweightRO.wrap(buffer, offset,
+            buffer.capacity());
 
-        assertSame(flyweightRO, array);
-        assertAllTestValuesRead(array, offset);
+        assertSame(flyweightRO, variantOfList);
+        assertAllTestValuesRead(variantOfList, offset);
     }
 
     @Test
@@ -127,11 +133,12 @@ public class Array8FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final Array8FW array = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList =
+            flyweightRO.tryWrap(buffer, offset, buffer.capacity());
 
-        assertNotNull(array);
-        assertSame(flyweightRO, array);
-        assertAllTestValuesRead(array, offset);
+        assertNotNull(variantOfList);
+        assertSame(flyweightRO, variantOfList);
+        assertAllTestValuesRead(variantOfList, offset);
     }
 
     @Test
@@ -139,10 +146,11 @@ public class Array8FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final Array8FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals(offset + size, array.limit());
+        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList = flyweightRO.wrap(buffer, offset,
+            buffer.capacity());
+        assertEquals(offset + size, variantOfList.limit());
 
-        assertAllTestValuesRead(array, offset);
+        assertAllTestValuesRead(variantOfList, offset);
     }
 
     @Test
@@ -152,12 +160,12 @@ public class Array8FWTest
             .build()
             .limit();
 
-        final Array8FW<VariantEnumKindWithString32FW> array = flyweightRO.wrap(buffer,  0,  limit);
+        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList = flyweightRO.wrap(buffer, 0, limit);
 
         List<String> arrayItems = new ArrayList<>();
-        array.forEach(v -> arrayItems.add(v.get().asString()));
+        variantOfList.get().forEach(v -> arrayItems.add(v.get().asString()));
 
-        assertEquals(lengthSize + fieldCountSize, array.limit());
+        assertEquals(3, variantOfList.limit());
         assertEquals(0, arrayItems.size());
     }
 
@@ -170,9 +178,9 @@ public class Array8FWTest
             .build()
             .limit();
 
-        final Array8FW array = flyweightRO.wrap(buffer,  0,  limit);
+        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList = flyweightRO.wrap(buffer, 0, limit);
 
-        assertAllTestValuesRead(array, 0);
+        assertAllTestValuesRead(variantOfList, 0);
     }
 
     private static StringFW asStringFW(

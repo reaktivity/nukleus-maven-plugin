@@ -42,8 +42,8 @@ public final class ListWithArrayFW extends ListFW
 
     private VariantEnumKindWithString32FW field1RO = new VariantEnumKindWithString32FW();
 
-    private VariantOfArrayFW<VariantEnumKindWithString32FW, StringFW> arrayOfStringRO =
-        new VariantOfArrayFW<>(new VariantEnumKindWithString32FW());
+    private VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> arrayOfStringRO =
+        new VariantOfVariantArrayFW<>(new VariantEnumKindWithString32FW());
 
     private VariantOfListFW variantOfListRO = new VariantOfListFW();
 
@@ -55,7 +55,7 @@ public final class ListWithArrayFW extends ListFW
         return field1RO.get();
     }
 
-    public ArrayFW<VariantEnumKindWithString32FW> arrayOfString()
+    public VariantArrayFW<VariantEnumKindWithString32FW> arrayOfString()
     {
         assert (bitmask & MASK_ARRAY_OF_STRING) != 0L : "Field \"arrayOfString\" is not set";
         return arrayOfStringRO.get();
@@ -210,9 +210,9 @@ public final class ListWithArrayFW extends ListFW
     {
         private final VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
 
-        private final VariantOfArrayFW.Builder
+        private final VariantOfVariantArrayFW.Builder
             <VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
-            arrayOfStringRW = new VariantOfArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
+            arrayOfStringRW = new VariantOfVariantArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
             new VariantEnumKindWithString32FW());
 
         private int lastFieldSet = -1;

@@ -20,14 +20,14 @@ import java.util.function.Consumer;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 
-public final class Array32FW<V extends VariantFW<?, ? extends Flyweight>> extends ArrayFW<V>
+public final class VariantArrayWithLength8FW extends VariantArrayFW<VariantEnumKindWithString32FW>
 {
-    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_INT;
+    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
-    private static final int FIELD_COUNT_SIZE = BitUtil.SIZE_OF_INT;
+    private static final int FIELD_COUNT_SIZE = BitUtil.SIZE_OF_BYTE;
 
     private static final int LENGTH_OFFSET = 0;
 
@@ -35,43 +35,30 @@ public final class Array32FW<V extends VariantFW<?, ? extends Flyweight>> extend
 
     private static final int FIELDS_OFFSET = FIELD_COUNT_OFFSET + FIELD_COUNT_SIZE;
 
-    private static final long LENGTH_MAX_VALUE = 0xFFFFFFFFL;
+    private static final int LENGTH_MAX_VALUE = 0xFF;
 
-    private final V itemRO;
-
-    private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
-
-    Array32FW(
-        V itemRO)
-    {
-        this.itemRO = itemRO;
-    }
+    private final VariantEnumKindWithString32FW itemRO = new VariantEnumKindWithString32FW();
 
     @Override
     public int length()
     {
-        return buffer().getInt(offset() + LENGTH_OFFSET);
+        return buffer().getByte(offset() + LENGTH_OFFSET);
     }
 
     @Override
     public int fieldCount()
     {
-        return buffer().getInt(offset() + FIELD_COUNT_OFFSET);
+        return buffer().getByte(offset() + FIELD_COUNT_OFFSET);
     }
 
     @Override
     public DirectBuffer items()
     {
-        return itemsRO;
-    }
-
-    public V itemRO()
-    {
-        return itemRO;
+        return null;
     }
 
     public void forEach(
-        Consumer<V> consumer)
+        Consumer<VariantEnumKindWithString32FW> consumer)
     {
         int offset = offset() + FIELDS_OFFSET;
         int currentPudding = 0;
@@ -84,20 +71,18 @@ public final class Array32FW<V extends VariantFW<?, ? extends Flyweight>> extend
     }
 
     @Override
-    public Array32FW<V> wrap(
+    public VariantArrayWithLength8FW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
-        final int itemsSize = length() - FIELD_COUNT_SIZE;
-        itemsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
         checkLimit(limit(), maxLimit);
         return this;
     }
 
     @Override
-    public Array32FW<V> tryWrap(
+    public VariantArrayWithLength8FW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -106,8 +91,6 @@ public final class Array32FW<V extends VariantFW<?, ? extends Flyweight>> extend
         {
             return null;
         }
-        final int itemsSize = length() - FIELD_COUNT_SIZE;
-        itemsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
         if (limit() > maxLimit)
         {
             return null;
@@ -121,44 +104,36 @@ public final class Array32FW<V extends VariantFW<?, ? extends Flyweight>> extend
         return offset() + LENGTH_SIZE + length();
     }
 
-    public static final class Builder<B extends VariantFW.Builder<V, K, O>, V extends VariantFW<K, O>, K, O extends Flyweight>
-        extends ArrayFW.Builder<Array32FW<V>, B, V, K, O>
+    public static final class Builder extends Flyweight.Builder<VariantArrayWithLength8FW>
     {
+        private final VariantEnumKindWithString32FW.Builder itemRW = new VariantEnumKindWithString32FW.Builder();
+
         private int kindPadding;
 
-        public Builder(
-            B itemRW,
-            V itemRO)
+        private int maxLength;
+
+        private int fieldCount;
+
+        protected Builder()
         {
-            super(new Array32FW<>(itemRO), itemRW);
+            super(new VariantArrayWithLength8FW());
         }
 
-        public Builder<B, V, K, O> item(
-            O item)
+        public Builder item(
+            StringFW item)
         {
             itemRW.wrap(buffer(), offset() + FIELDS_OFFSET, maxLimit());
             itemRW.setAs(itemRW.maxKind(), item, kindPadding);
-            super.item(item);
+            maxLength = Math.max(maxLength, item.sizeof());
+            checkLimit(itemRW.limit(), maxLimit());
+            limit(itemRW.limit());
+            fieldCount++;
             kindPadding += itemRW.size();
             return this;
         }
 
-        public Builder<B, V, K, O> items(
-            DirectBuffer buffer,
-            int srcOffset,
-            int length,
-            int fieldCount)
-        {
-            buffer().putBytes(offset() + FIELDS_OFFSET, buffer, srcOffset, length);
-            int newLimit = offset() + FIELDS_OFFSET + length;
-            checkLimit(newLimit, maxLimit());
-            limit(newLimit);
-            super.items(buffer, srcOffset, length, fieldCount);
-            return this;
-        }
-
         @Override
-        public Builder<B, V, K, O> wrap(
+        public Builder wrap(
             MutableDirectBuffer buffer,
             int offset,
             int maxLimit)
@@ -171,14 +146,30 @@ public final class Array32FW<V extends VariantFW<?, ? extends Flyweight>> extend
         }
 
         @Override
-        public Array32FW<V> build()
+        public VariantArrayWithLength8FW build()
         {
-            relayout();
+            if (maxLength > 0 && !itemRW.maxKind().equals(itemRW.kindFromLength(maxLength)))
+            {
+                EnumWithInt8 kind = itemRW.kindFromLength(maxLength);
+                int originalPadding = 0;
+                int rearrangePadding = 0;
+                int originalLimit = itemRW.limit();
+                for (int i = 0; i < fieldCount; i++)
+                {
+                    VariantEnumKindWithString32FW itemRO = itemRW.build(originalLimit);
+                    StringFW originalItem = itemRO.getAs(itemRW.maxKind(), originalPadding);
+                    originalPadding += originalItem.sizeof();
+                    itemRW.setAs(kind, originalItem, rearrangePadding);
+                    StringFW rearrangedItem = itemRO.getAs(kind, rearrangePadding);
+                    rearrangePadding += rearrangedItem.sizeof();
+                }
+                limit(itemRW.limit());
+            }
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
-            assert fieldCount() <= LENGTH_MAX_VALUE : "Field count is too large";
-            buffer().putInt(offset() + LENGTH_OFFSET, length);
-            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount());
+            assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
+            buffer().putByte(offset() + LENGTH_OFFSET, (byte) length);
+            buffer().putByte(offset() + FIELD_COUNT_OFFSET, (byte) fieldCount);
             return super.build();
         }
     }

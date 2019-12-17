@@ -30,7 +30,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 
-public class Array32FWTest
+public class VariantArray16FWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(150000))
     {
@@ -40,38 +40,41 @@ public class Array32FWTest
         }
     };
 
-    private final Array32FW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
-        flyweightRW = new Array32FW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW());
-    private final Array32FW<VariantEnumKindWithString32FW> flyweightRO = new Array32FW<>(new VariantEnumKindWithString32FW());
+    private final VariantArray16FW.Builder
+        <VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
+        flyweightRW = new VariantArray16FW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
+        new VariantEnumKindWithString32FW());
+    private final VariantArray16FW<VariantEnumKindWithString32FW> flyweightRO =
+        new VariantArray16FW<>(new VariantEnumKindWithString32FW());
 
-    private final int lengthSize = Integer.BYTES;
-    private final int fieldCountSize = Integer.BYTES;
+    private final int lengthSize = Short.BYTES;
+    private final int fieldCountSize = Short.BYTES;
     private final int arrayItemKindSize = Byte.BYTES;
 
     private int setAllItems(
         MutableDirectBuffer buffer,
         int offset)
     {
-        String item1 = String.format("%65535s", "0");
-        String item2 = String.format("%65535s", "1");
-        int itemLengthSize = Integer.BYTES;
+        String item1 = String.format("%1000s", "0");
+        String item2 = String.format("%1000s", "1");
+        int itemLengthSize = Short.BYTES;
         int physicalLength = fieldCountSize + arrayItemKindSize + itemLengthSize + item1.length() + itemLengthSize +
             item2.length();
         int logicalLength = 2;
-        buffer.putInt(offset, physicalLength);
+        buffer.putShort(offset, (short) physicalLength);
         int offsetFieldCount = offset + lengthSize;
-        buffer.putInt(offsetFieldCount, logicalLength);
+        buffer.putShort(offsetFieldCount, (short) logicalLength);
 
         int offsetArrayItemKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetArrayItemKind, EnumWithInt8.THREE.value());
+        buffer.putByte(offsetArrayItemKind, EnumWithInt8.TWO.value());
 
         int offsetItem1Length = offsetArrayItemKind + Byte.BYTES;
-        buffer.putInt(offsetItem1Length, item1.length());
+        buffer.putShort(offsetItem1Length, (short) item1.length());
         int offsetItem1 = offsetItem1Length + itemLengthSize;
         buffer.putBytes(offsetItem1, item1.getBytes());
 
         int offsetItem2Length = offsetItem1 + item1.length();
-        buffer.putInt(offsetItem2Length, item2.length());
+        buffer.putShort(offsetItem2Length, (short) item2.length());
         int offsetItem2 = offsetItem2Length + itemLengthSize;
         buffer.putBytes(offsetItem2, item2.getBytes());
 
@@ -79,19 +82,19 @@ public class Array32FWTest
     }
 
     static void assertAllTestValuesRead(
-        Array32FW<VariantEnumKindWithString32FW> flyweight,
+        VariantArray16FW<VariantEnumKindWithString32FW> flyweight,
         int offset)
     {
-        String item1 = String.format("%65535s", "0");
-        String item2 = String.format("%65535s", "1");
+        String item1 = String.format("%1000s", "0");
+        String item2 = String.format("%1000s", "1");
         List<String> arrayItems = new ArrayList<>();
         flyweight.forEach(v -> arrayItems.add(v.get().asString()));
         assertEquals(2, arrayItems.size());
         assertEquals(item1, arrayItems.get(0));
         assertEquals(item2, arrayItems.get(1));
-        assertEquals(131083, flyweight.length());
+        assertEquals(2007, flyweight.length());
         assertEquals(2, flyweight.fieldCount());
-        assertEquals(offset + 131087, flyweight.limit());
+        assertEquals(offset + 2009, flyweight.limit());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -123,7 +126,7 @@ public class Array32FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final Array32FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        final VariantArray16FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
 
         assertSame(flyweightRO, array);
         assertAllTestValuesRead(array, offset);
@@ -134,7 +137,7 @@ public class Array32FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final Array32FW array = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+        final VariantArray16FW array = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
 
         assertNotNull(array);
         assertSame(flyweightRO, array);
@@ -146,7 +149,7 @@ public class Array32FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        final Array32FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        final VariantArray16FW array = flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals(offset + size, array.limit());
 
         assertAllTestValuesRead(array, offset);
@@ -159,7 +162,7 @@ public class Array32FWTest
             .build()
             .limit();
 
-        final Array32FW<VariantEnumKindWithString32FW> array = flyweightRO.wrap(buffer,  0,  limit);
+        final VariantArray16FW<VariantEnumKindWithString32FW> array = flyweightRO.wrap(buffer,  0,  limit);
 
         List<String> arrayItems = new ArrayList<>();
         array.forEach(v -> arrayItems.add(v.get().asString()));
@@ -171,15 +174,15 @@ public class Array32FWTest
     @Test
     public void shouldSetItemsUsingItemMethod() throws Exception
     {
-        String item1 = String.format("%65535s", "0");
-        String item2 = String.format("%65535s", "1");
+        String item1 = String.format("%1000s", "0");
+        String item2 = String.format("%1000s", "1");
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .item(asStringFW(item1))
             .item(asStringFW(item2))
             .build()
             .limit();
 
-        final Array32FW array = flyweightRO.wrap(buffer,  0,  limit);
+        final VariantArray16FW array = flyweightRO.wrap(buffer,  0,  limit);
 
         assertAllTestValuesRead(array, 0);
     }
@@ -188,6 +191,6 @@ public class Array32FWTest
         String value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Integer.SIZE + value.length()));
-        return new String32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        return new String16FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }
