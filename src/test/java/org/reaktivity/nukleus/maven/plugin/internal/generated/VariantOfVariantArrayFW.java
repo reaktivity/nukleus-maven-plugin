@@ -201,5 +201,12 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
             }
             return super.build();
         }
+
+        public VariantOfVariantArrayFW<V, O> build(
+            int maxLimit)
+        {
+            flyweight().wrap(buffer(), offset(), maxLimit);
+            return flyweight();
+        }
     }
 }

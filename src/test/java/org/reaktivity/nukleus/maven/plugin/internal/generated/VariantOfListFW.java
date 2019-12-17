@@ -290,5 +290,12 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
             limit(enumWithInt8RW.build().limit());
             return this;
         }
+
+        public VariantOfListFW build(
+            int maxLimit)
+        {
+            flyweight().wrap(buffer(), offset(), maxLimit);
+            return flyweight();
+        }
     }
 }

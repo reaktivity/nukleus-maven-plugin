@@ -75,10 +75,6 @@ public abstract class VariantFW<K, O extends Flyweight> extends Flyweight
 
         public abstract Builder<V, K, O> kind(K value);
 
-        public V build(
-            int maxLimit)
-        {
-            return null;
-        }
+        public abstract V build(int maxLimit);
     }
 }
