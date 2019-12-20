@@ -41,7 +41,7 @@ public final class VariantArray8FW<V extends VariantFW<?, ?>> extends VariantArr
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
 
-    VariantArray8FW(
+    public VariantArray8FW(
         V itemRO)
     {
         this.itemRO = itemRO;
@@ -60,11 +60,6 @@ public final class VariantArray8FW<V extends VariantFW<?, ?>> extends VariantArr
     }
 
     @Override
-    public DirectBuffer items()
-    {
-        return itemsRO;
-    }
-
     public void forEach(
         Consumer<V> consumer)
     {
@@ -72,11 +67,18 @@ public final class VariantArray8FW<V extends VariantFW<?, ?>> extends VariantArr
         int currentPudding = 0;
         for (int i = 0; i < fieldCount(); i++)
         {
-            itemRO.wrapArrayElement(buffer(), offset, limit(), currentPudding);
+            itemRO.wrapWithKindPadding(buffer(), offset, limit(), currentPudding);
             consumer.accept(itemRO);
             currentPudding += itemRO.get().sizeof();
         }
     }
+
+    @Override
+    public DirectBuffer items()
+    {
+        return itemsRO;
+    }
+
 
     @Override
     public VariantArray8FW<V> wrap(
@@ -116,6 +118,12 @@ public final class VariantArray8FW<V extends VariantFW<?, ?>> extends VariantArr
         return offset() + LENGTH_SIZE + length();
     }
 
+    @Override
+    public String toString()
+    {
+        return String.format("variantarray8<%d, %d>", length(), fieldCount());
+    }
+
     public static final class Builder<B extends VariantFW.Builder<V, K, O>, V extends VariantFW<K, O>, K, O extends Flyweight>
         extends VariantArrayFW.Builder<VariantArray8FW<V>, B, V, K, O>
     {
@@ -128,6 +136,7 @@ public final class VariantArray8FW<V extends VariantFW<?, ?>> extends VariantArr
             super(new VariantArray8FW<>(itemRO), itemRW);
         }
 
+        @Override
         public Builder<B, V, K, O> item(
             O item)
         {
@@ -138,6 +147,7 @@ public final class VariantArray8FW<V extends VariantFW<?, ?>> extends VariantArr
             return this;
         }
 
+        @Override
         public Builder<B, V, K, O> items(
             DirectBuffer buffer,
             int srcOffset,

@@ -55,6 +55,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     {
         return classBuilder
             .addMethod(asStringMethod())
+            .addMethod(length0Method())
             .addType(builderClassBuilder.build())
             .build();
     }
@@ -64,6 +65,14 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("asString")
             .addModifiers(PUBLIC, ABSTRACT)
             .returns(String.class)
+            .build();
+    }
+
+    private MethodSpec length0Method()
+    {
+        return methodBuilder("length0")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(int.class)
             .build();
     }
 

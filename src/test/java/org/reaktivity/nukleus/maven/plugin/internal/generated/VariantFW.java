@@ -31,7 +31,7 @@ public abstract class VariantFW<K, O extends Flyweight> extends Flyweight
         return null;
     }
 
-    public VariantFW<K, O> wrapArrayElement(
+    public VariantFW<K, O> wrapWithKindPadding(
         DirectBuffer buffer,
         int elementsOffset,
         int maxLimit,
@@ -53,6 +53,12 @@ public abstract class VariantFW<K, O extends Flyweight> extends Flyweight
             K kind,
             O value,
             int kindPadding)
+        {
+            return this;
+        }
+
+        public Builder<V, K, O> set(
+            O value)
         {
             return this;
         }

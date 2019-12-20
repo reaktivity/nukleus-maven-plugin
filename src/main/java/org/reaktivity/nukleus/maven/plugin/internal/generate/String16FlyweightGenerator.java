@@ -222,7 +222,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
     private MethodSpec length0Method()
     {
         return methodBuilder("length0")
-                .addModifiers(PRIVATE)
+                .addModifiers(PUBLIC)
                 .returns(int.class)
                 .addStatement("int length = buffer().getShort(offset(), byteOrder) & 0xFFFF")
                 .addStatement("return length == 65535 ? -1 : length")

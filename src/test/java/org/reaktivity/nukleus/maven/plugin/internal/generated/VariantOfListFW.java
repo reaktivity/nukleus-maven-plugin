@@ -33,6 +33,8 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
 
     public static final EnumWithInt8 KIND_LIST0 = EnumWithInt8.THREE;
 
+    public static final byte MISSING_FIELD_PLACEHOLDER = 64;
+
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
     private final List32FW list32RO = new List32FW();
@@ -41,11 +43,13 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
 
     private final List0FW list0RO = new List0FW();
 
+    @Override
     public EnumWithInt8 kind()
     {
         return enumWithInt8RO.get();
     }
 
+    @Override
     public ListFW get()
     {
         switch (kind())
@@ -59,6 +63,24 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
+    }
+
+    @Override
+    public ListFW getAs(
+        EnumWithInt8 kind,
+        int kindPadding)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public VariantOfListFW wrapWithKindPadding(
+        DirectBuffer buffer,
+        int elementsOffset,
+        int maxLimit,
+        int kindPadding)
+    {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -192,6 +214,15 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
             return this;
         }
 
+        @Override
+        public Builder setAs(
+            EnumWithInt8 kind,
+            ListFW value,
+            int kindPadding)
+        {
+            throw new UnsupportedOperationException();
+        }
+
         public Builder field(
             Flyweight.Builder.Visitor mutator)
         {
@@ -200,6 +231,7 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
             return this;
         }
 
+        @Override
         public Builder set(
             ListFW list)
         {
@@ -224,6 +256,26 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
             return this;
         }
 
+        @Override
+        public EnumWithInt8 maxKind()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int size()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public EnumWithInt8 kindFromLength(
+            int length)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public Builder wrap(
             MutableDirectBuffer buffer,
             int offset,
@@ -282,6 +334,7 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
             return fields.capacity();
         }
 
+        @Override
         public Builder kind(
             EnumWithInt8 value)
         {
@@ -291,11 +344,11 @@ public final class VariantOfListFW extends VariantFW<EnumWithInt8, ListFW>
             return this;
         }
 
+        @Override
         public VariantOfListFW build(
             int maxLimit)
         {
-            flyweight().wrap(buffer(), offset(), maxLimit);
-            return flyweight();
+            throw new UnsupportedOperationException();
         }
     }
 }

@@ -43,7 +43,6 @@ public final class AstType
     public static final AstType STRING32 = new AstType("string32");
 
     public static final AstType ARRAY = new AstType("array");
-    public static final AstType ARRAY_OF_VARIANT = new AstType("arrayOfVariant");
     public static final AstType FLYWEIGHT = new AstType("flyweight");
     public static final AstType LIST = new AstType("list");
     public static final AstType LIST0 = new AstType("list0");
@@ -51,6 +50,7 @@ public final class AstType
     public static final AstType LIST32 = new AstType("list32");
 
     public static final AstType VARIANT = new AstType("variant");
+    public static final AstType VARIANT_ARRAY = new AstType("variantArray");
 
     private final String name;
     private final int bits;

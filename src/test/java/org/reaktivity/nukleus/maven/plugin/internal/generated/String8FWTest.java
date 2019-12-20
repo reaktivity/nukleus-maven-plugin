@@ -297,14 +297,16 @@ public class String8FWTest
         assertEquals("value1", stringRO.value().getStringWithoutLengthUtf8(0, stringRO.value().capacity()));
     }
 
-    private static MutableDirectBuffer asBuffer(String value)
+    private static MutableDirectBuffer asBuffer(
+        String value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(value.length()));
         buffer.putStringWithoutLengthUtf8(0, value);
         return buffer;
     }
 
-    private static String8FW asString8FW(String value)
+    private static String8FW asString8FW(
+        String value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
         return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();

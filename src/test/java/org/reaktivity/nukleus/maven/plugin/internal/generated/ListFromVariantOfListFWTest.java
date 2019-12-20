@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -23,6 +24,8 @@ import static org.junit.Assert.assertSame;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.ListFromVariantOfListFW;
@@ -118,8 +121,8 @@ public class ListFromVariantOfListFWTest
         assertSame(listFromVariantOfListRO, listFromVariantOfList);
         assertEquals(physicalLength, listFromVariantOfList.length());
         assertEquals(logicalLength, listFromVariantOfList.fieldCount());
-        assertEquals("string1", listFromVariantOfList.variantOfString1());
-        assertEquals("string2", listFromVariantOfList.variantOfString2());
+        assertEquals("string1", listFromVariantOfList.variantOfString1().asString());
+        assertEquals("string2", listFromVariantOfList.variantOfString2().asString());
         assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
         assertEquals(-2000000000, listFromVariantOfList.variantOfInt());
     }
@@ -141,8 +144,8 @@ public class ListFromVariantOfListFWTest
         assertSame(listFromVariantOfListRO, listFromVariantOfList);
         assertEquals(physicalLength, listFromVariantOfList.length());
         assertEquals(logicalLength, listFromVariantOfList.fieldCount());
-        assertEquals("string1", listFromVariantOfList.variantOfString1());
-        assertEquals("string2", listFromVariantOfList.variantOfString2());
+        assertEquals("string1", listFromVariantOfList.variantOfString1().asString());
+        assertEquals("string2", listFromVariantOfList.variantOfString2().asString());
         assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
         assertEquals(-2000000000, listFromVariantOfList.variantOfInt());
     }
@@ -151,16 +154,16 @@ public class ListFromVariantOfListFWTest
     public void shouldFailToSetString1WithInsufficientSpace() throws Exception
     {
         listFromVariantOfListRW.wrap(buffer, 10, 17)
-            .variantOfString1("string1");
+            .variantOfString1(asStringFW("string1"));
     }
 
     @Test(expected = AssertionError.class)
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         listFromVariantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .variantOfUint(4000000000L)
-            .variantOfString2("string2")
+            .variantOfString2(asStringFW("string2"))
             .build();
     }
 
@@ -168,8 +171,8 @@ public class ListFromVariantOfListFWTest
     public void shouldFailWhenSameFieldIsSetMoreThanOnce() throws Exception
     {
         listFromVariantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
-            .variantOfString1("string2")
+            .variantOfString1(asStringFW("string1"))
+            .variantOfString1(asStringFW("string2"))
             .build();
     }
 
@@ -177,7 +180,7 @@ public class ListFromVariantOfListFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         listFromVariantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString2("string2")
+            .variantOfString2(asStringFW("string2"))
             .build();
     }
 
@@ -185,26 +188,26 @@ public class ListFromVariantOfListFWTest
     public void shouldAssertErrorWhenValueNotPresent() throws Exception
     {
         int limit = listFromVariantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .build()
             .limit();
 
         final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
 
-        assertEquals("string2", listFromVariantOfList.variantOfString2());
+        assertEquals("string2", listFromVariantOfList.variantOfString2().asString());
     }
 
     @Test
     public void shouldSetOnlyRequiredFields() throws Exception
     {
         int limit = listFromVariantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .build()
             .limit();
 
         final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
 
-        assertEquals("string1", listFromVariantOfList.variantOfString1());
+        assertEquals("string1", listFromVariantOfList.variantOfString1().asString());
         assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
     }
 
@@ -212,14 +215,14 @@ public class ListFromVariantOfListFWTest
     public void shouldSetSomeFields() throws Exception
     {
         int limit = listFromVariantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .variantOfUint(4000000000L)
             .build()
             .limit();
 
         final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
 
-        assertEquals("string1", listFromVariantOfList.variantOfString1());
+        assertEquals("string1", listFromVariantOfList.variantOfString1().asString());
         assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
     }
 
@@ -227,8 +230,8 @@ public class ListFromVariantOfListFWTest
     public void shouldSetAllFields() throws Exception
     {
         int limit = listFromVariantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
-            .variantOfString2("string2")
+            .variantOfString1(asStringFW("string1"))
+            .variantOfString2(asStringFW("string2"))
             .variantOfUint(4000000000L)
             .variantOfInt(-2000000000)
             .build()
@@ -236,9 +239,16 @@ public class ListFromVariantOfListFWTest
 
         final ListFromVariantOfListFW listFromVariantOfList = listFromVariantOfListRO.wrap(buffer, 0, limit);
 
-        assertEquals("string1", listFromVariantOfList.variantOfString1());
-        assertEquals("string2", listFromVariantOfList.variantOfString2());
+        assertEquals("string1", listFromVariantOfList.variantOfString1().asString());
+        assertEquals("string2", listFromVariantOfList.variantOfString2().asString());
         assertEquals(4000000000L, listFromVariantOfList.variantOfUint());
         assertEquals(-2000000000, listFromVariantOfList.variantOfInt());
+    }
+
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

@@ -222,7 +222,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
     private MethodSpec length0Method()
     {
         return methodBuilder("length0")
-            .addModifiers(PRIVATE)
+            .addModifiers(PUBLIC)
             .returns(int.class)
             .addStatement("int length = buffer().getInt(offset(), byteOrder) & 0xFFFFFFFF")
             .addStatement("return length < 0 ? -1 : length")

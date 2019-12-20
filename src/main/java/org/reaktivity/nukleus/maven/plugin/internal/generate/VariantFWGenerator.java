@@ -15,10 +15,11 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
+import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static com.squareup.javapoet.TypeSpec.interfaceBuilder;
+import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.DEFAULT;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
@@ -26,39 +27,43 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DI
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 public final class VariantFWGenerator extends ClassSpecGenerator
 {
-    private final TypeSpec.Builder interfaceBuilder;
-    private final TypeVariableName typeVarO;
+    private final TypeSpec.Builder classBuilder;
     private final TypeVariableName typeVarK;
-    private final BuilderInterfaceBuilder builderInterfaceBuilder;
+    private final TypeVariableName typeVarO;
+    private final BuilderClassBuilder builderClassBuilder;
+    private final TypeName className;
 
     public VariantFWGenerator(
         ClassName flyweightType)
     {
         super(flyweightType.peerClass("VariantFW"));
-        typeVarO = TypeVariableName.get("O", flyweightType);
         typeVarK = TypeVariableName.get("K");
+        typeVarO = TypeVariableName.get("O", flyweightType);
 
-        this.interfaceBuilder = interfaceBuilder(thisName)
-            .addModifiers(PUBLIC)
-            .addTypeVariable(typeVarO)
-            .addTypeVariable(typeVarK);
-        this.builderInterfaceBuilder = new BuilderInterfaceBuilder(thisName, flyweightType);
+        this.classBuilder = classBuilder(thisName)
+            .addModifiers(PUBLIC, ABSTRACT)
+            .superclass(flyweightType)
+            .addTypeVariable(typeVarK)
+            .addTypeVariable(typeVarO);
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
+        this.className = ParameterizedTypeName.get(thisName, typeVarK, typeVarO);
     }
 
     @Override
     public TypeSpec generate()
     {
-        return interfaceBuilder
+        return classBuilder
             .addMethod(kindMethod())
             .addMethod(getMethod())
             .addMethod(getAsMethod())
-            .addMethod(wrapArrayElementMethod())
-            .addType(builderInterfaceBuilder.build())
+            .addMethod(wrapWithKindPaddingMethod())
+            .addType(builderClassBuilder.build())
             .build();
     }
 
@@ -81,7 +86,7 @@ public final class VariantFWGenerator extends ClassSpecGenerator
     private MethodSpec getAsMethod()
     {
         return methodBuilder("getAs")
-            .addModifiers(PUBLIC, DEFAULT)
+            .addModifiers(PUBLIC)
             .addParameter(typeVarK, "kind")
             .addParameter(int.class, "kindPadding")
             .addStatement("return null")
@@ -89,47 +94,51 @@ public final class VariantFWGenerator extends ClassSpecGenerator
             .build();
     }
 
-    private MethodSpec wrapArrayElementMethod()
+    private MethodSpec wrapWithKindPaddingMethod()
     {
-        return methodBuilder("wrapArrayElement")
-            .addModifiers(PUBLIC, DEFAULT)
+        return methodBuilder("wrapWithKindPadding")
+            .addModifiers(PUBLIC)
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "elementsOffset")
             .addParameter(int.class, "maxLimit")
             .addParameter(int.class, "kindPadding")
             .addStatement("return this")
-            .returns(thisName)
+            .returns(className)
             .build();
     }
 
-    private static final class BuilderInterfaceBuilder
+    private static final class BuilderClassBuilder
     {
-        private final TypeSpec.Builder interfaceBuilder;
-        private final ClassName builderType;
-        private final TypeVariableName typeVarT;
+        private final TypeSpec.Builder classBuilder;
+        private final TypeVariableName typeVarV;
         private final TypeVariableName typeVarO;
         private final TypeVariableName typeVarK;
+        private final TypeName variantBuilderType;
 
-        private BuilderInterfaceBuilder(
+        private BuilderClassBuilder(
             ClassName variantType,
             ClassName flyweightType)
         {
-            this.typeVarO = TypeVariableName.get("O", flyweightType);
+            ClassName variantBuilderRawType = variantType.nestedClass("Builder");
             this.typeVarK = TypeVariableName.get("K");
-            this.typeVarT = TypeVariableName.get("T", ParameterizedTypeName.get(variantType, typeVarO, typeVarK));
-
-            this.builderType = variantType.nestedClass("Builder");
-            this.interfaceBuilder = interfaceBuilder(builderType.simpleName())
-                .addModifiers(PUBLIC, STATIC)
-                .addTypeVariable(typeVarT)
-                .addTypeVariable(typeVarO)
-                .addTypeVariable(typeVarK);
+            this.typeVarO = TypeVariableName.get("O", flyweightType);
+            this.typeVarV = TypeVariableName.get("V", ParameterizedTypeName.get(variantType, typeVarK, typeVarO));
+            TypeName flyweightBuilderType = ParameterizedTypeName.get(flyweightType.nestedClass("Builder"), typeVarV);
+            this.variantBuilderType =  ParameterizedTypeName.get(variantBuilderRawType, typeVarV, typeVarK, typeVarO);
+            this.classBuilder = classBuilder(variantBuilderRawType.simpleName())
+                .addModifiers(PUBLIC, ABSTRACT, STATIC)
+                .superclass(flyweightBuilderType)
+                .addTypeVariable(typeVarV)
+                .addTypeVariable(typeVarK)
+                .addTypeVariable(typeVarO);
         }
 
         public TypeSpec build()
         {
-            return interfaceBuilder
+            return classBuilder
+                .addMethod(constructor())
                 .addMethod(setAsMethod())
+                .addMethod(setMethod())
                 .addMethod(maxKindMethod())
                 .addMethod(sizeMethod())
                 .addMethod(kindFromLengthMethod())
@@ -138,14 +147,33 @@ public final class VariantFWGenerator extends ClassSpecGenerator
                 .build();
         }
 
+        private MethodSpec constructor()
+        {
+            return constructorBuilder()
+                .addModifiers(PROTECTED)
+                .addParameter(typeVarV, "flyweight")
+                .addStatement("super(flyweight)")
+                .build();
+        }
+
         private MethodSpec setAsMethod()
         {
             return methodBuilder("setAs")
-                .addModifiers(PUBLIC, DEFAULT)
+                .addModifiers(PUBLIC)
                 .addParameter(typeVarK, "kind")
                 .addParameter(typeVarO, "value")
                 .addParameter(int.class, "kindPadding")
-                .returns(builderType)
+                .returns(variantBuilderType)
+                .addStatement("return this")
+                .build();
+        }
+
+        private MethodSpec setMethod()
+        {
+            return methodBuilder("set")
+                .addModifiers(PUBLIC)
+                .addParameter(typeVarO, "value")
+                .returns(variantBuilderType)
                 .addStatement("return this")
                 .build();
         }
@@ -153,7 +181,7 @@ public final class VariantFWGenerator extends ClassSpecGenerator
         private MethodSpec maxKindMethod()
         {
             return methodBuilder("maxKind")
-                .addModifiers(PUBLIC, DEFAULT)
+                .addModifiers(PUBLIC)
                 .returns(typeVarK)
                 .addStatement("return null")
                 .build();
@@ -162,7 +190,7 @@ public final class VariantFWGenerator extends ClassSpecGenerator
         private MethodSpec sizeMethod()
         {
             return methodBuilder("size")
-                .addModifiers(PUBLIC, DEFAULT)
+                .addModifiers(PUBLIC)
                 .returns(int.class)
                 .addStatement("return 0")
                 .build();
@@ -171,7 +199,7 @@ public final class VariantFWGenerator extends ClassSpecGenerator
         private MethodSpec kindFromLengthMethod()
         {
             return methodBuilder("kindFromLength")
-                .addModifiers(PUBLIC, DEFAULT)
+                .addModifiers(PUBLIC)
                 .addParameter(int.class, "length")
                 .returns(typeVarK)
                 .addStatement("return null")
@@ -182,18 +210,17 @@ public final class VariantFWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("kind")
                 .addModifiers(PUBLIC, ABSTRACT)
-                .addParameter(typeVarK, "kind")
-                .returns(builderType)
+                .addParameter(typeVarK, "value")
+                .returns(variantBuilderType)
                 .build();
         }
 
         private MethodSpec buildMethod()
         {
             return methodBuilder("build")
-                .addModifiers(PUBLIC, DEFAULT)
+                .addModifiers(PUBLIC, ABSTRACT)
                 .addParameter(int.class, "maxLimit")
-                .returns(typeVarT)
-                .addStatement("return null")
+                .returns(typeVarV)
                 .build();
         }
     }

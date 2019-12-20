@@ -17,6 +17,7 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.reaktivity.nukleus.maven.plugin.internal.generated.VariantFW.Builder;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
@@ -34,6 +35,7 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
 
     private final VariantArray8FW<V> array8RO;
 
+    @Override
     public EnumWithInt8 kind()
     {
         return enumWithInt8RO.get();
@@ -46,6 +48,7 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
         array8RO = new VariantArray8FW<>(type);
     }
 
+    @Override
     public VariantArrayFW<V> get()
     {
         switch (kind())
@@ -57,6 +60,14 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
+    }
+
+    @Override
+    public VariantArrayFW<V> getAs(
+        EnumWithInt8 kind,
+        int kindPadding)
+    {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -122,6 +133,16 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
     }
 
     @Override
+    public VariantOfVariantArrayFW<V, O> wrapWithKindPadding(
+        DirectBuffer buffer,
+        int elementsOffset,
+        int maxLimit,
+        int kindPadding)
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public int limit()
     {
         return get().limit();
@@ -157,6 +178,23 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
             return this;
         }
 
+        @Override
+        public Builder<B, V, K, O> setAs(
+            EnumWithInt8 kind,
+            VariantArrayFW<V> value,
+            int kindPadding)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Builder<B, V, K, O> set(
+            VariantArrayFW<V> value)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public Builder<B, V, K, O> kind(
             EnumWithInt8 value)
         {
@@ -164,6 +202,25 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
             enumWithInt8RW.set(value);
             limit(enumWithInt8RW.build().limit());
             return this;
+        }
+
+        @Override
+        public EnumWithInt8 maxKind()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public int size()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public EnumWithInt8 kindFromLength(
+            int length)
+        {
+            throw new UnsupportedOperationException();
         }
 
         public Builder<B, V, K, O> item(
@@ -202,11 +259,11 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
             return super.build();
         }
 
+        @Override
         public VariantOfVariantArrayFW<V, O> build(
             int maxLimit)
         {
-            flyweight().wrap(buffer(), offset(), maxLimit);
-            return flyweight();
+            throw new UnsupportedOperationException();
         }
     }
 }

@@ -41,7 +41,7 @@ public final class VariantArray32FW<V extends VariantFW<?, ?>> extends VariantAr
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
 
-    VariantArray32FW(
+    public VariantArray32FW(
         V itemRO)
     {
         this.itemRO = itemRO;
@@ -60,16 +60,6 @@ public final class VariantArray32FW<V extends VariantFW<?, ?>> extends VariantAr
     }
 
     @Override
-    public DirectBuffer items()
-    {
-        return itemsRO;
-    }
-
-    public V itemRO()
-    {
-        return itemRO;
-    }
-
     public void forEach(
         Consumer<V> consumer)
     {
@@ -77,10 +67,16 @@ public final class VariantArray32FW<V extends VariantFW<?, ?>> extends VariantAr
         int currentPudding = 0;
         for (int i = 0; i < fieldCount(); i++)
         {
-            itemRO.wrapArrayElement(buffer(), offset, limit(), currentPudding);
+            itemRO.wrapWithKindPadding(buffer(), offset, limit(), currentPudding);
             consumer.accept(itemRO);
             currentPudding += itemRO.get().sizeof();
         }
+    }
+
+    @Override
+    public DirectBuffer items()
+    {
+        return itemsRO;
     }
 
     @Override
@@ -119,6 +115,12 @@ public final class VariantArray32FW<V extends VariantFW<?, ?>> extends VariantAr
     public int limit()
     {
         return offset() + LENGTH_SIZE + length();
+    }
+
+    @Override
+    public String toString()
+    {
+        return String.format("variantarray32<%d, %d>", length(), fieldCount());
     }
 
     public static final class Builder<B extends VariantFW.Builder<V, K, O>, V extends VariantFW<K, O>, K, O extends Flyweight>
@@ -175,8 +177,6 @@ public final class VariantArray32FW<V extends VariantFW<?, ?>> extends VariantAr
         {
             relayout();
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
-            assert length <= LENGTH_MAX_VALUE : "Length is too large";
-            assert fieldCount() <= LENGTH_MAX_VALUE : "Field count is too large";
             buffer().putInt(offset() + LENGTH_OFFSET, length);
             buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount());
             return super.build();

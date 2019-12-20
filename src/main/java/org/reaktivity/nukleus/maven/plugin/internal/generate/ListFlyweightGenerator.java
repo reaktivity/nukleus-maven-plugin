@@ -644,7 +644,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(int.class)
                     .addAnnotation(Override.class)
-                    .addStatement("return $L.length()", variantRO(resolver.resolveClass(templateType)))
+                    .addStatement("return $L.get().length()", variantRO(resolver.resolveClass(templateType)))
                     .build());
             }
             return super.build();
@@ -688,7 +688,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(int.class)
                     .addAnnotation(Override.class)
-                    .addStatement("return $L.fieldCount()", variantRO(resolver.resolveClass(templateType)))
+                    .addStatement("return $L.get().fieldCount()", variantRO(resolver.resolveClass(templateType)))
                     .build());
             }
             return super.build();
@@ -720,7 +720,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(DIRECT_BUFFER_TYPE)
                     .addAnnotation(Override.class)
-                    .addStatement("return $L.fields()", variantRO(templateClassName))
+                    .addStatement("return $L.get().fields()", variantRO(templateClassName))
                     .build());
             }
             return super.build();
@@ -923,7 +923,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             TypeName primitiveReturnType = ofTypeName.equals(TypeName.BYTE) || ofTypeName.equals(TypeName.SHORT) ||
                 ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
             TypeName returnType = Objects.requireNonNullElse(resolver.resolveUnsignedType(ofType),
-                ofTypeName.isPrimitive() ? primitiveReturnType : ClassName.get(String.class));
+                ofTypeName.isPrimitive() ? primitiveReturnType : resolver.resolveClass(AstType.STRING));
             addMember(defaultValue, codeBlock, name, isRequired, "$LRO.get()");
             return returnType;
         }
@@ -1004,7 +1004,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                builder.addStatement("DirectBuffer fieldsBuffer = $L.fields()", variantRO(templateTypeName))
+                builder.addStatement("DirectBuffer fieldsBuffer = fields()")
                     .addStatement("int fieldLimit = 0");
             }
 
@@ -1207,7 +1207,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                builder.addStatement("DirectBuffer fieldsBuffer = $L.fields()", variantRO(templateTypeName))
+                builder.addStatement("DirectBuffer fieldsBuffer = fields()")
                     .addStatement("int fieldLimit = 0");
             }
             builder.beginControlFlow("for (int field = $L; field < fieldCount; field++)",
@@ -1989,12 +1989,12 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 TypeName ofTypeName = resolver.resolveType(ofType);
                 TypeName primitiveReturnType = ofTypeName.equals(TypeName.BYTE) || ofTypeName.equals(TypeName.SHORT) ||
                     ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
-                TypeName returnType = Objects.requireNonNullElse(resolver.resolveUnsignedType(variantNode.of()),
-                    ofTypeName.isPrimitive() ? primitiveReturnType : ClassName.get(String.class));
+                TypeName parameterType = Objects.requireNonNullElse(resolver.resolveUnsignedType(variantNode.of()),
+                    ofTypeName.isPrimitive() ? primitiveReturnType : resolver.resolveClass(AstType.STRING));
                 MethodSpec.Builder methodBuilder = methodBuilder(methodName(name))
                     .addModifiers(PUBLIC)
                     .returns(thisType)
-                    .addParameter(returnType, "value");
+                    .addParameter(parameterType, "value");
 
                 if (templateType == null)
                 {

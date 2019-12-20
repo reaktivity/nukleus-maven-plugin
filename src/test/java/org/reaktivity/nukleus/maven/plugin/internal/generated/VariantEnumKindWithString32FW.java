@@ -38,11 +38,13 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
 
     private final String32FW string32RO = new String32FW();
 
+    @Override
     public EnumWithInt8 kind()
     {
         return enumWithInt8RO.get();
     }
 
+    @Override
     public StringFW get()
     {
         switch (kind())
@@ -58,6 +60,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
         }
     }
 
+    @Override
     public StringFW getAs(
         EnumWithInt8 kind,
         int kindPadding)
@@ -71,7 +74,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
         case THREE:
             return string32RO.wrap(buffer(), enumWithInt8RO.limit() + kindPadding, maxLimit());
         default:
-            throw new IllegalStateException("Unrecognized kind: " + kind());
+            throw new IllegalStateException("Unrecognized kind: " + kind);
         }
     }
 
@@ -147,7 +150,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
     }
 
     @Override
-    public VariantEnumKindWithString32FW wrapArrayElement(
+    public VariantEnumKindWithString32FW wrapWithKindPadding(
         DirectBuffer buffer,
         int elementsOffset,
         int maxLimit,
@@ -167,7 +170,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
             string32RO.wrap(buffer, enumWithInt8.limit() + kindPadding, maxLimit);
             break;
         default:
-            throw new IllegalStateException("Unrecognized kind: " + kind());
+            break;
         }
         return this;
     }
@@ -191,17 +194,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
     @Override
     public int limit()
     {
-        switch (kind())
-        {
-        case ONE:
-            return string8RO.limit();
-        case TWO:
-            return string16RO.limit();
-        case THREE:
-            return string32RO.limit();
-        default:
-            return enumWithInt8RO.limit();
-        }
+        return get().limit();
     }
 
     public static final class Builder extends VariantFW.Builder<VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
@@ -260,6 +253,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
             return this;
         }
 
+        @Override
         public Builder setAs(
             EnumWithInt8 kind,
             StringFW value,
@@ -280,6 +274,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
             return this;
         }
 
+        @Override
         public Builder set(
             StringFW value)
         {
@@ -303,6 +298,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
             return this;
         }
 
+        @Override
         public Builder wrap(
             MutableDirectBuffer buffer,
             int offset,
@@ -312,6 +308,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
             return this;
         }
 
+        @Override
         public Builder kind(
             EnumWithInt8 value)
         {
@@ -321,16 +318,19 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
             return this;
         }
 
+        @Override
         public EnumWithInt8 maxKind()
         {
             return KIND_STRING32;
         }
 
+        @Override
         public int size()
         {
             return size;
         }
 
+        @Override
         public EnumWithInt8 kindFromLength(
             int length)
         {
@@ -349,6 +349,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
             }
         }
 
+        @Override
         public VariantEnumKindWithString32FW build(
             int maxLimit)
         {

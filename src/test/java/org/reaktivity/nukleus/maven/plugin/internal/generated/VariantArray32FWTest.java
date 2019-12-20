@@ -28,7 +28,11 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String32FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.VariantArray32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class VariantArray32FWTest
 {

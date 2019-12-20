@@ -41,7 +41,7 @@ public final class VariantArray16FW<V extends VariantFW<?, ?>> extends VariantAr
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
 
-    VariantArray16FW(
+    public VariantArray16FW(
         V itemRO)
     {
         this.itemRO = itemRO;
@@ -60,16 +60,6 @@ public final class VariantArray16FW<V extends VariantFW<?, ?>> extends VariantAr
     }
 
     @Override
-    public DirectBuffer items()
-    {
-        return itemsRO;
-    }
-
-    public V itemRO()
-    {
-        return itemRO;
-    }
-
     public void forEach(
         Consumer<V> consumer)
     {
@@ -77,10 +67,16 @@ public final class VariantArray16FW<V extends VariantFW<?, ?>> extends VariantAr
         int currentPudding = 0;
         for (int i = 0; i < fieldCount(); i++)
         {
-            itemRO.wrapArrayElement(buffer(), offset, limit(), currentPudding);
+            itemRO.wrapWithKindPadding(buffer(), offset, limit(), currentPudding);
             consumer.accept(itemRO);
             currentPudding += itemRO.get().sizeof();
         }
+    }
+
+    @Override
+    public DirectBuffer items()
+    {
+        return itemsRO;
     }
 
     @Override

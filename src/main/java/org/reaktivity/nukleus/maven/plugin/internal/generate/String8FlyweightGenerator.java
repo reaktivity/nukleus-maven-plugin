@@ -202,7 +202,7 @@ public final class String8FlyweightGenerator extends ClassSpecGenerator
     private MethodSpec length0Method()
     {
         return methodBuilder("length0")
-                .addModifiers(PRIVATE)
+                .addModifiers(PUBLIC)
                 .returns(int.class)
                 .addStatement("int length = buffer().getByte(offset()) & 0xFF")
                 .addStatement("return length == 255 ? -1 : length")

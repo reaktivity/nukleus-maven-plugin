@@ -100,7 +100,7 @@ public final class TypeResolver
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.STRING32, ClassName.get(packageName, "String32FW"));
         namesByType.put(AstType.ARRAY, ClassName.get(packageName, "ArrayFW"));
-        namesByType.put(AstType.ARRAY_OF_VARIANT, ClassName.get(packageName, "ArrayOfVariantFW"));
+        namesByType.put(AstType.VARIANT_ARRAY, ClassName.get(packageName, "VariantArrayFW"));
         namesByType.put(AstType.LIST, ClassName.get(packageName, "ListFW"));
         namesByType.put(AstType.LIST0, ClassName.get(packageName, "List0FW"));
         namesByType.put(AstType.LIST8, ClassName.get(packageName, "List8FW"));

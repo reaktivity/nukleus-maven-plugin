@@ -64,7 +64,7 @@ public final class VariantArrayWithLength8FW extends VariantArrayFW<VariantEnumK
         int currentPudding = 0;
         for (int i = 0; i < fieldCount(); i++)
         {
-            itemRO.wrapArrayElement(buffer(), offset, limit(), currentPudding);
+            itemRO.wrapWithKindPadding(buffer(), offset, limit(), currentPudding);
             consumer.accept(itemRO);
             currentPudding += itemRO.get().sizeof();
         }

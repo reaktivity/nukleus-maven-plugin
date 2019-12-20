@@ -64,19 +64,19 @@ public final class ListWithArrayFW extends ListFW
     @Override
     public int length()
     {
-        return variantOfListRO.length();
+        return variantOfListRO.get().length();
     }
 
     @Override
     public int fieldCount()
     {
-        return variantOfListRO.fieldCount();
+        return variantOfListRO.get().fieldCount();
     }
 
     @Override
     public DirectBuffer fields()
     {
-        return variantOfListRO.fields();
+        return variantOfListRO.get().fields();
     }
 
     @Override
@@ -91,7 +91,7 @@ public final class ListWithArrayFW extends ListFW
         checkLimit(limit, maxLimit);
         final int fieldCount = fieldCount();
         bitmask = 0;
-        DirectBuffer fieldsBuffer = variantOfListRO.fields();
+        DirectBuffer fieldsBuffer = fields();
         int fieldLimit = 0;
         for (int field = INDEX_FIELD1; field < fieldCount; field++)
         {
@@ -142,7 +142,7 @@ public final class ListWithArrayFW extends ListFW
         }
         final int fieldCount = fieldCount();
         bitmask = 0;
-        DirectBuffer fieldsBuffer = variantOfListRO.fields();
+        DirectBuffer fieldsBuffer = fields();
         int fieldLimit = 0;
         for (int field = INDEX_FIELD1; field < fieldCount; field++)
         {
