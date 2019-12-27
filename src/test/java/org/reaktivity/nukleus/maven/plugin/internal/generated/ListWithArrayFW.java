@@ -195,7 +195,7 @@ public final class ListWithArrayFW extends ListFW
     {
         Object arrayOfString = null;
         StringBuilder format = new StringBuilder();
-        format.append("LIST_FROM_VARIANT_OF_LIST [bitmask={0}");
+        format.append("LIST_WITH_ARRAY [bitmask={0}");
         format.append(", field1={1}");
         if ((bitmask & MASK_ARRAY_OF_STRING) != 0L)
         {

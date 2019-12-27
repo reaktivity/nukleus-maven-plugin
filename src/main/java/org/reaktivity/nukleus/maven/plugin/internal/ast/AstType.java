@@ -51,6 +51,9 @@ public final class AstType
 
     public static final AstType VARIANT = new AstType("variant");
     public static final AstType VARIANT_ARRAY = new AstType("variantArray");
+    public static final AstType VARIANT_ARRAY8 = new AstType("variantArray8");
+    public static final AstType VARIANT_ARRAY16 = new AstType("variantArray16");
+    public static final AstType VARIANT_ARRAY32 = new AstType("variantArray32");
 
     private final String name;
     private final int bits;

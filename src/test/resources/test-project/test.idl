@@ -250,7 +250,7 @@ scope test
             int8[length4] array4 = null;
         }
 
-        variant VariantUint8KindWithString32Type switch (uint8) of string32
+        variant VariantUint8KindWithString32Type switch (uint8) of string
         {
            case 0xa1: string8;
            case 0x16: string16;
@@ -274,7 +274,7 @@ scope test
             case 0x61: int16;
         }
 
-        variant VariantEnumKindWithString32 switch (EnumWithInt8) of string32
+        variant VariantEnumKindWithString32 switch (EnumWithInt8) of string
         {
             case ONE: string8;
             case TWO: string16;
@@ -341,13 +341,11 @@ scope test
             case THREE: list<0, 0>;
         }
 
-//        variant VariantOfVariantArray switch (EnumWithInt8) of array
-//        {
-//            case ONE: array<uint32, uint32>;
-//            case TWO: array<uint8, uint8>;
-//        }
-
-//        array<uint8, uint8, VariantEnumKindWithString32> ArrayWithLength8;
+        variant VariantOfVariantArray switch (EnumWithInt8) of array
+        {
+            case ONE: array<uint32, uint32>;
+            case TWO: array<uint8, uint8>;
+        }
 
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
@@ -415,10 +413,10 @@ scope test
             TypedefFromTypedef field2 = 4000000000L;
         }
 
-//        list<VariantOfList> ListWithArray
-//        {
-//            required VariantEnumKindWithString32 field1;
-//            VariantOfArray<VariantEnumKindWithString32> arrayOfString;
-//        }
+        list<VariantOfList> ListWithArray
+        {
+            required VariantEnumKindWithString32 field1;
+            VariantOfVariantArray<VariantEnumKindWithString32> arrayOfString;
+        }
     }
 }

@@ -21,6 +21,8 @@ import java.util.Objects;
 public final class AstListMemberNode extends AstAbstractMemberNode
 {
     private final boolean required;
+    private final AstType arrayType;
+    private final AstType arrayTypeName;
 
     private AstListMemberNode(
         String name,
@@ -29,10 +31,14 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         String sizeName,
         Object defaultValue,
         AstByteOrder byteOrder,
-        boolean required)
+        boolean required,
+        AstType arrayType,
+        AstType arrayTypeName)
     {
         super(name, types, size, sizeName, defaultValue, byteOrder);
         this.required = required;
+        this.arrayType = arrayType;
+        this.arrayTypeName = arrayTypeName;
     }
 
     public boolean isRequired()
@@ -40,10 +46,20 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         return required;
     }
 
+    public AstType arrayType()
+    {
+        return arrayType;
+    }
+
+    public AstType arrayTypeName()
+    {
+        return arrayTypeName;
+    }
+
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, defaultValue, byteOrder, required);
+        return Objects.hash(name, types, defaultValue, byteOrder, required, arrayType, arrayTypeName);
     }
 
     @Override
@@ -65,19 +81,23 @@ public final class AstListMemberNode extends AstAbstractMemberNode
             Objects.equals(this.name, that.name) &&
             Objects.deepEquals(this.types, that.types) &&
             Objects.equals(this.defaultValue, that.defaultValue) &&
-            Objects.equals(this.byteOrder, that.byteOrder);
+            Objects.equals(this.byteOrder, that.byteOrder) &&
+            Objects.equals(this.arrayType, that.arrayType) &&
+            Objects.equals(this.arrayTypeName, that.arrayTypeName);
     }
 
     @Override
     public String toString()
     {
-        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, required=%s]",
-            name, types, defaultValue, byteOrder, required);
+        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, required=%s, arrayType=%s]",
+            name, types, defaultValue, byteOrder, required, arrayType, arrayTypeName);
     }
 
     public static final class Builder extends AstAbstractMemberNode.Builder<AstListMemberNode>
     {
         private boolean required;
+        private AstType arrayType;
+        private AstType arrayTypeName;
 
         public Builder isRequired(
             boolean required)
@@ -86,10 +106,25 @@ public final class AstListMemberNode extends AstAbstractMemberNode
             return this;
         }
 
+        public Builder arrayType(
+            AstType arrayType)
+        {
+            this.arrayType = arrayType;
+            return this;
+        }
+
+        public Builder arrayTypeName(
+            AstType arrayTypeName)
+        {
+            this.arrayTypeName = arrayTypeName;
+            return this;
+        }
+
         @Override
         public AstListMemberNode build()
         {
-            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, required);
+            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, required, arrayType,
+                arrayTypeName);
         }
     }
 }

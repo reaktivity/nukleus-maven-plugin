@@ -148,6 +148,12 @@ public final class VariantOfVariantArrayFW<V extends VariantFW<?, O>, O extends 
         return get().limit();
     }
 
+    @Override
+    public String toString()
+    {
+        return get().toString();
+    }
+
     public static final class Builder<B extends VariantFW.Builder<V, K, O>, V extends VariantFW<K, O>,
         K, O extends Flyweight> extends VariantFW.Builder<VariantOfVariantArrayFW<V, O>, EnumWithInt8, VariantArrayFW<V>>
     {

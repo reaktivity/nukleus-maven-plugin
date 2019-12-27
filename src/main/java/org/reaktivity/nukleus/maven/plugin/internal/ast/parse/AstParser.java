@@ -45,6 +45,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Array_keywordContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.DeclaratorContext;
@@ -73,6 +74,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Scoped_
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.SpecificationContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String16_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String32_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
@@ -89,6 +91,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbound
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varbyteuint32_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_arrayContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_int_literalContext;
@@ -623,11 +627,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitString_type(
-        String_typeContext ctx)
+    public AstNode visitString8_type(
+        String8_typeContext ctx)
     {
         memberBuilder.type(AstType.STRING8);
-        return super.visitString_type(ctx);
+        return super.visitString8_type(ctx);
     }
 
     @Override
@@ -864,6 +868,35 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
+        public Builder visitVariant_array(
+            Variant_arrayContext ctx)
+        {
+            listMemberBuilder.name(ctx.declarator(2).getText());
+            String variantArrayTypeName = ctx.declarator(0).getText();
+            AstType astVariantArrayTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(variantArrayTypeName),
+                lookUpAstType(variantArrayTypeName));
+            listMemberBuilder.type(astVariantArrayTypeName);
+
+            String arrayItemTypeName = ctx.declarator(1).getText();
+            AstType astArrayItemTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(arrayItemTypeName),
+                lookUpAstType(arrayItemTypeName));
+            listMemberBuilder.arrayTypeName(astArrayItemTypeName);
+            listMemberBuilder.arrayType(AstType.VARIANT);
+            return super.visitVariant_array(ctx);
+        }
+
+        private AstType lookUpAstType(
+            String name)
+        {
+            return qualifiedPrefixes.stream()
+                .map(qp -> String.format("%s%s", qp, name))
+                .map(astTypesByQualifiedName::get)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(AstType.dynamicType(name));
+        }
+
+        @Override
         public AstListNode.Builder visitVarint_array_member(
             Varint_array_memberContext ctx)
         {
@@ -952,11 +985,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstListNode.Builder visitString_type(
-            String_typeContext ctx)
+        public Builder visitString8_type(
+            String8_typeContext ctx)
         {
             listMemberBuilder.type(AstType.STRING8);
-            return super.visitString_type(ctx);
+            return super.visitString8_type(ctx);
         }
 
         @Override
@@ -1260,11 +1293,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             }
 
             @Override
-            public AstVariantCaseNode.Builder visitString_type(
-                String_typeContext ctx)
+            public AstVariantCaseNode.Builder visitString8_type(
+                String8_typeContext ctx)
             {
                 variantCaseBuilder.type(AstType.STRING8);
-                return super.visitString_type(ctx);
+                return super.visitString8_type(ctx);
             }
 
             @Override
@@ -1297,6 +1330,15 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             {
                 AstVariantCaseNode.Builder variantListMemberVisitor = new VariantListMemberVisitor(variantCaseBuilder)
                     .visitVariant_list_member(ctx);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVariant_array_member(
+                Variant_array_memberContext ctx)
+            {
+                AstVariantCaseNode.Builder variantArrayMemberVisitor = new VariantArrayMemberVisitor(variantCaseBuilder)
+                    .visitVariant_array_member(ctx);
                 return variantCaseBuilder;
             }
         }
@@ -1361,28 +1403,47 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             }
         }
 
+        public final class VariantArrayMemberVisitor extends NukleusBaseVisitor<AstVariantCaseNode.Builder>
+        {
+            private final AstVariantCaseNode.Builder variantCaseBuilder;
+
+            public VariantArrayMemberVisitor(
+                AstVariantCaseNode.Builder variantCaseBuilder)
+            {
+                this.variantCaseBuilder = variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint32_type(
+                Uint32_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.VARIANT_ARRAY32);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint16_type(
+                Uint16_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.VARIANT_ARRAY16);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint8_type(
+                Uint8_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.VARIANT_ARRAY8);
+                return variantCaseBuilder;
+            }
+        }
+
         @Override
         public AstVariantNode.Builder visitString_type(
             String_typeContext ctx)
         {
-            variantBuilder.of(AstType.STRING8);
+            variantBuilder.of(AstType.STRING);
             return super.visitString_type(ctx);
-        }
-
-        @Override
-        public AstVariantNode.Builder visitString16_type(
-            String16_typeContext ctx)
-        {
-            variantBuilder.of(AstType.STRING16);
-            return super.visitString16_type(ctx);
-        }
-
-        @Override
-        public AstVariantNode.Builder visitString32_type(
-            String32_typeContext ctx)
-        {
-            variantBuilder.of(AstType.STRING32);
-            return super.visitString32_type(ctx);
         }
 
         @Override
@@ -1391,6 +1452,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             variantBuilder.of(AstType.LIST);
             return super.visitList_keyword(ctx);
+        }
+
+        @Override
+        public AstVariantNode.Builder visitArray_keyword(
+            Array_keywordContext ctx)
+        {
+            variantBuilder.of(AstType.VARIANT_ARRAY);
+            return super.visitArray_keyword(ctx);
         }
 
         @Override
@@ -1566,11 +1635,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstEnumNode.Builder visitString_type(
-            String_typeContext ctx)
+        public AstEnumNode.Builder visitString8_type(
+            String8_typeContext ctx)
         {
             enumBuilder.valueType(AstType.STRING8);
-            return super.visitString_type(ctx);
+            return super.visitString8_type(ctx);
         }
 
         @Override

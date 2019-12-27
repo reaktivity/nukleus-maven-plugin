@@ -148,7 +148,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         this.nullValueConstant = new MissingFieldByteConstantGenerator(listName, builder, missingFieldByte, templateType,
             resolver);
         this.templateTypeField = new TemplateTypeFieldGenerator(listName, builder, templateType, resolver);
-        this.memberField = new MemberFieldGenerator(listName, builder);
+        this.memberField = new MemberFieldGenerator(listName, builder, resolver);
         this.optionalOffsets = new OptionalOffsetsFieldGenerator(listName, builder, templateType, missingFieldByte);
         this.lengthMethod = new LengthMethodGenerator(listName, builder, templateType, resolver);
         this.fieldCountMethod = new FieldCountMethodGenerator(listName, builder, templateType, fieldCountTypeName, resolver);
@@ -172,20 +172,25 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         boolean usedAsSize,
         Object defaultValue,
         AstByteOrder byteOrder,
-        boolean isRequired)
+        boolean isRequired,
+        AstType arrayItemType,
+        AstType arrayItemTypeName,
+        AstType arrayItemOfType,
+        AstType arrayItemKindType)
     {
         memberSizeConstant.addMember(name, typeName);
         fieldIndexConstant.addMember(name);
         maskConstant.addMember(name);
         defaultValueConstant.addMember(name, type, typeName, unsignedTypeName, defaultValue);
-        memberField.addMember(name, typeName, byteOrder);
+        memberField.addMember(name, type, typeName, byteOrder, arrayItemType, arrayItemTypeName, arrayItemOfType);
         optionalOffsets.addMember(name);
-        memberAccessor.addMember(name, type, typeName, unsignedTypeName, byteOrder, isRequired, defaultValue);
+        memberAccessor.addMember(name, type, typeName, unsignedTypeName, byteOrder, isRequired, defaultValue, arrayItemType,
+            arrayItemTypeName);
         wrapMethod.addMember(name, typeName, defaultValue, isRequired);
         tryWrapMethod.addMember(name, typeName, defaultValue, isRequired);
         toStringMethod.addMember(name, typeName, defaultValue, isRequired);
         builderClass.addMember(name, type, typeName, unsignedTypeName, size, sizeType, usedAsSize, defaultValue,
-            byteOrder, isRequired);
+            byteOrder, isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType, arrayItemKindType);
         return this;
     }
 
@@ -541,40 +546,60 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
     private static final class MemberFieldGenerator extends ClassSpecMixinGenerator
     {
+        private final TypeResolver resolver;
+
         private MemberFieldGenerator(
             ClassName thisType,
-            TypeSpec.Builder builder)
+            TypeSpec.Builder builder,
+            TypeResolver resolver)
         {
             super(thisType, builder);
+            this.resolver = resolver;
         }
 
         public MemberFieldGenerator addMember(
             String name,
-            TypeName type,
-            AstByteOrder byteOrder)
+            AstType type,
+            TypeName typeName,
+            AstByteOrder byteOrder,
+            AstType arrayItemType,
+            AstType arrayItemTypeName,
+            AstType arrayItemOfType)
         {
-            if (!type.isPrimitive())
+            if (!typeName.isPrimitive())
             {
-                addNonPrimitiveMember(name, type, byteOrder);
+                addNonPrimitiveMember(name, type, typeName, byteOrder, arrayItemType, arrayItemTypeName, arrayItemOfType);
             }
             return this;
         }
 
         private MemberFieldGenerator addNonPrimitiveMember(
             String name,
-            TypeName type,
-            AstByteOrder byteOrder)
+            AstType type,
+            TypeName typeName,
+            AstByteOrder byteOrder,
+            AstType arrayItemType,
+            AstType arrayItemTypeName,
+            AstType arrayItemOfType)
         {
             String fieldRO = String.format("%sRO", name);
-            FieldSpec.Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE);
-            if (type instanceof ClassName && (isString16Type((ClassName) type) ||
-                isString32Type((ClassName) type)) && byteOrder == NETWORK)
+            FieldSpec.Builder fieldBuilder = FieldSpec.builder(typeName, fieldRO, PRIVATE);
+            if (typeName instanceof ClassName && (isString16Type((ClassName) typeName) ||
+                isString32Type((ClassName) typeName)) && byteOrder == NETWORK)
             {
-                fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", type, ByteOrder.class);
+                fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", typeName, ByteOrder.class);
+            }
+            else if (arrayItemType != null)
+            {
+                TypeName parameterizedArrayName = ParameterizedTypeName.get(resolver.resolveClass(type),
+                    resolver.resolveClass(arrayItemTypeName),
+                    resolver.resolveClass(arrayItemOfType));
+                fieldBuilder = FieldSpec.builder(parameterizedArrayName, fieldRO, PRIVATE)
+                    .initializer("new $T<>(new $T())", typeName, resolver.resolveClass(arrayItemTypeName));
             }
             else
             {
-                fieldBuilder.initializer("new $T()", type);
+                fieldBuilder.initializer("new $T()", typeName);
             }
 
             builder.addField(fieldBuilder.build());
@@ -753,7 +778,9 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             TypeName unsignedType,
             AstByteOrder byteOrder,
             boolean isRequired,
-            Object defaultValue)
+            Object defaultValue,
+            AstType arrayItemType,
+            AstType arrayItemTypeName)
         {
             if (typeName.isPrimitive())
             {
@@ -761,7 +788,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
-                addNonPrimitiveMember(name, type, typeName, isRequired, defaultValue);
+                addNonPrimitiveMember(name, type, typeName, isRequired, defaultValue, arrayItemType, arrayItemTypeName);
             }
             return this;
         }
@@ -868,7 +895,9 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             AstType type,
             TypeName typeName,
             boolean isRequired,
-            Object defaultValue)
+            Object defaultValue,
+            AstType arrayItemType,
+            AstType arrayItemTypeName)
         {
             CodeBlock.Builder codeBlock = CodeBlock.builder();
             TypeName returnType = typeName;
@@ -893,7 +922,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (isVariantType(namedNode.getKind()))
                 {
-                    returnType = addVariantMember(defaultValue, codeBlock, name, type, typeName, isRequired);
+                    returnType = addVariantMember(defaultValue, codeBlock, name, type, typeName, isRequired, arrayItemType,
+                        arrayItemTypeName);
                 }
                 else
                 {
@@ -915,7 +945,9 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             String name,
             AstType type,
             TypeName typeName,
-            boolean isRequired)
+            boolean isRequired,
+            AstType arrayItemType,
+            AstType arrayItemTypeName)
         {
             AstVariantNode variantNode = (AstVariantNode) resolver.resolve(type.name());
             AstType ofType = variantNode.of();
@@ -923,7 +955,9 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             TypeName primitiveReturnType = ofTypeName.equals(TypeName.BYTE) || ofTypeName.equals(TypeName.SHORT) ||
                 ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
             TypeName returnType = Objects.requireNonNullElse(resolver.resolveUnsignedType(ofType),
-                ofTypeName.isPrimitive() ? primitiveReturnType : resolver.resolveClass(AstType.STRING));
+                ofTypeName.isPrimitive() ? primitiveReturnType : arrayItemType != null ?
+                    ParameterizedTypeName.get(resolver.resolveClass(AstType.VARIANT_ARRAY),
+                        resolver.resolveType(arrayItemTypeName)) : resolver.resolveClass(AstType.STRING));
             addMember(defaultValue, codeBlock, name, isRequired, "$LRO.get()");
             return returnType;
         }
@@ -1463,7 +1497,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 .superclass(ParameterizedTypeName.get(builderRawType, listType));
             this.listType = listType;
             this.fieldsMask = new FieldsMaskGenerator(thisType, builder, nullValue, templateType);
-            this.memberField = new MemberFieldGenerator(thisType, builder);
+            this.memberField = new MemberFieldGenerator(thisType, builder, resolver);
             this.templateTypeRW = new TemplateTypeRWGenerator(thisType, builder, templateType, resolver);
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder, templateType, resolver, nullValue);
             this.memberMutator = new MemberMutatorGenerator(thisType, builder, templateType, resolver, nullValue);
@@ -1481,13 +1515,17 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             boolean usedAsSize,
             Object defaultValue,
             AstByteOrder byteOrder,
-            boolean isRequired)
+            boolean isRequired,
+            AstType arrayItemType,
+            AstType arrayItemTypeName,
+            AstType arrayItemOfType,
+            AstType arrayItemKindType)
         {
-            memberField.addMember(name, typeName, byteOrder);
+            memberField.addMember(name, typeName, byteOrder, arrayItemType, arrayItemTypeName, arrayItemOfType,
+                arrayItemKindType);
             memberAccessor.addMember(name, type, typeName, isRequired);
-            memberMutator.addMember(name, type, typeName, unsignedType, usedAsSize, size, sizeType, byteOrder,
-                defaultValue,
-                isRequired);
+            memberMutator.addMember(name, type, typeName, unsignedType, usedAsSize, size, sizeType, byteOrder, defaultValue,
+                isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType, arrayItemKindType);
             buildMethod.addMember(name, isRequired);
         }
 
@@ -1551,17 +1589,25 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private static final class MemberFieldGenerator extends ClassSpecMixinGenerator
         {
+            private final TypeResolver resolver;
+
             private MemberFieldGenerator(
                 ClassName thisType,
-                TypeSpec.Builder builder)
+                TypeSpec.Builder builder,
+                TypeResolver resolver)
             {
                 super(thisType, builder);
+                this.resolver = resolver;
             }
 
             public MemberFieldGenerator addMember(
                 String name,
                 TypeName type,
-                AstByteOrder byteOrder)
+                AstByteOrder byteOrder,
+                AstType arrayItemType,
+                AstType arrayItemTypeName,
+                AstType arrayItemOfType,
+                AstType arrayItemKindType)
             {
                 if (!type.isPrimitive())
                 {
@@ -1570,12 +1616,25 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     if (type instanceof ClassName)
                     {
                         ClassName classType = (ClassName) type;
-                        TypeName builderType = classType.nestedClass("Builder");
+                        ClassName builderType = classType.nestedClass("Builder");
 
                         if ((isString16Type(classType) || isString32Type(classType)) && byteOrder == NETWORK)
                         {
                             builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
                                 .initializer("new $T($T.BIG_ENDIAN)", builderType, ByteOrder.class)
+                                .build());
+                        }
+                        else if (arrayItemType != null)
+                        {
+                            ClassName arrayItemTypeClass = resolver.resolveClass(arrayItemTypeName);
+                            ClassName arrayItemTypeBuilderClass = arrayItemTypeClass.nestedClass("Builder");
+                            ClassName kindTypeClass = resolver.resolveClass(arrayItemKindType);
+                            TypeName parameterizedArrayName = ParameterizedTypeName.get(builderType,
+                                arrayItemTypeBuilderClass, arrayItemTypeClass, enumClassName(kindTypeClass),
+                                resolver.resolveClass(arrayItemOfType));
+                            builder.addField(FieldSpec.builder(parameterizedArrayName, fieldRW, PRIVATE, FINAL)
+                                .initializer("new $T<>(new $T(), new $T())", builderType, arrayItemTypeBuilderClass,
+                                    arrayItemTypeClass)
                                 .build());
                         }
                         else
@@ -1783,7 +1842,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 TypeName sizeType,
                 AstByteOrder byteOrder,
                 Object defaultValue,
-                boolean isRequired)
+                boolean isRequired,
+                AstType arrayItemType,
+                AstType arrayItemTypeName,
+                AstType arrayItemOfType,
+                AstType arrayItemKindType)
             {
                 if (typeName.isPrimitive())
                 {
@@ -1791,7 +1854,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
-                    addNonPrimitiveMember(name, type, typeName, isRequired);
+                    addNonPrimitiveMember(name, type, typeName, isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType,
+                        arrayItemKindType);
                 }
                 bitsOfOnes = (bitsOfOnes << 1) | 1;
                 if (isRequired)
@@ -1889,7 +1953,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 AstType type,
                 TypeName typeName,
-                boolean isRequired)
+                boolean isRequired,
+                AstType arrayItemType,
+                AstType arrayItemTypeName,
+                AstType arrayItemOfType,
+                AstType arrayItemKindType)
             {
                 ClassName className = (ClassName) typeName;
                 AstNamedNode namedNode = resolver.resolve(type.name());
@@ -1908,7 +1976,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                         kind = resolver.resolve(type.name()).getKind();
                         if (isTypedefType(kind))
                         {
-                            addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired);
+                            addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired, arrayItemType,
+                                arrayItemTypeName, arrayItemOfType, arrayItemKindType);
                             return;
                         }
                     }
@@ -1918,7 +1987,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (isVariantType(kind))
                     {
-                        addVariantType(name, type, className, isRequired);
+                        addVariantType(name, type, className, isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType,
+                            arrayItemKindType);
                     }
                     else
                     {
@@ -1981,7 +2051,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 AstType type,
                 ClassName variantFlyweightName,
-                boolean isRequired)
+                boolean isRequired,
+                AstType arrayItemType,
+                AstType arrayItemTypeName,
+                AstType arrayItemOfType,
+                AstType arrayItemKindType)
             {
                 AstVariantNode variantNode = (AstVariantNode) resolver.resolve(type.name());
                 ClassName builderType = variantFlyweightName.nestedClass("Builder");
@@ -1990,7 +2064,9 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 TypeName primitiveReturnType = ofTypeName.equals(TypeName.BYTE) || ofTypeName.equals(TypeName.SHORT) ||
                     ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
                 TypeName parameterType = Objects.requireNonNullElse(resolver.resolveUnsignedType(variantNode.of()),
-                    ofTypeName.isPrimitive() ? primitiveReturnType : resolver.resolveClass(AstType.STRING));
+                    ofTypeName.isPrimitive() ? primitiveReturnType : arrayItemType != null ?
+                        ParameterizedTypeName.get(ClassName.get(List.class), resolver.resolveType(arrayItemOfType))
+                        : resolver.resolveClass(AstType.STRING));
                 MethodSpec.Builder methodBuilder = methodBuilder(methodName(name))
                     .addModifiers(PUBLIC)
                     .returns(thisType)
@@ -2003,6 +2079,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 }
                 else
                 {
+                    ClassName templateClassName = resolver.resolveClass(templateType);
                     String outOfOrderCheck = "assert lastFieldSet < $L : \"Field \\\"$L\\\" cannot be set out of order\"";
                     methodBuilder.addStatement(outOfOrderCheck, fieldIndex(name), name);
 
@@ -2029,8 +2106,17 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                             .endControlFlow();
                     }
 
-                    methodBuilder.addStatement("$L.field((b, o, m) -> $LRW.wrap(b, o, m).set(value).build().sizeof())",
-                            variantRW(resolver.resolveClass(templateType)), name);
+                    if (arrayItemType != null)
+                    {
+                        methodBuilder.addStatement("$L.field((b, o, m) -> { $LRW.wrap(b, o, m); for ($T v : value) " +
+                                "{$LRW.item(v);} return $LRW.build().sizeof(); })",
+                            variantRW(templateClassName), name, resolver.resolveClass(arrayItemOfType), name, name);
+                    }
+                    else
+                    {
+                        methodBuilder.addStatement("$L.field((b, o, m) -> $LRW.wrap(b, o, m).set(value).build().sizeof())",
+                            variantRW(templateClassName), name);
+                    }
                 }
 
                 if (nullValue == null && templateType == null)
@@ -2427,6 +2513,13 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
     }
 
+    private static boolean isArrayType(
+        AstType type)
+    {
+        return AstType.VARIANT_ARRAY.equals(type) || AstType.VARIANT_ARRAY8.equals(type) ||
+            AstType.VARIANT_ARRAY16.equals(type) || AstType.VARIANT_ARRAY32.equals(type);
+    }
+
     private static boolean isString8Type(
         ClassName classType)
     {
@@ -2483,6 +2576,13 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         TypeName type)
     {
         return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static ClassName enumClassName(
+        TypeName enumFWTypeName)
+    {
+        String enumFWName = ((ClassName) enumFWTypeName).simpleName();
+        return ClassName.bestGuess(enumFWName.substring(0, enumFWName.length() - 2));
     }
 
     private static String variantRW(
