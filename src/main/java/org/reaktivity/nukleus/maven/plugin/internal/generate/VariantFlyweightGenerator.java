@@ -1721,7 +1721,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (!ofTypeName.isPrimitive())
                 {
-                    builder.addStatement("int length = value.length0()")
+                    builder.addStatement("int length = value.length()")
                         .addStatement("int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(length)) >> 3");
                 }
                 else

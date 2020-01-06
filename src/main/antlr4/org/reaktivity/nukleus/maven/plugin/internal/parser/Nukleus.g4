@@ -287,7 +287,7 @@ list_member
    | KW_REQUIRED? integer_array_member SEMICOLON
    | KW_REQUIRED? varint_array_member SEMICOLON
    | KW_REQUIRED? array_member SEMICOLON
-   | variant_array SEMICOLON
+   | KW_REQUIRED? variant_array SEMICOLON
    ;
 
 non_primitive_member_with_default
@@ -307,7 +307,7 @@ unbounded_octets_member
    ;
 
 variant_array
-   : declarator LEFT_ANG_BRACKET declarator RIGHT_ANG_BRACKET declarator
+   : arraytype=declarator LEFT_ANG_BRACKET itemtype=declarator RIGHT_ANG_BRACKET name=declarator
    ;
 
 union_type
