@@ -68,7 +68,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                            .addMethod(tryWrapMethod())
                            .addMethod(wrapMethod())
                            .addMethod(toStringMethod())
-                           .addMethod(length0Method())
+                           .addMethod(lengthMethod())
                            .addType(builderClassBuilder.build())
                            .build();
     }
@@ -141,7 +141,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return offset() + FIELD_SIZE_LENGTH + Math.max(length0(), 0)")
+            .addStatement("return offset() + FIELD_SIZE_LENGTH + Math.max(length(), 0)")
             .build();
     }
 
@@ -151,10 +151,10 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
             .addModifiers(PUBLIC)
             .addAnnotation(Override.class)
             .returns(String.class)
-            .beginControlFlow("if (maxLimit() == offset() || length0() == -1)")
+            .beginControlFlow("if (maxLimit() == offset() || length() == -1)")
             .addStatement("return null")
             .endControlFlow()
-            .addStatement("return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length0())")
+            .addStatement("return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length())")
             .build();
     }
 
@@ -172,9 +172,9 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                 "limit() > maxLimit)")
             .addStatement("return null")
             .endControlFlow()
-            .addStatement("int length0 = length0()")
-            .beginControlFlow("if (length0 != -1)")
-            .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0)")
+            .addStatement("int length = length()")
+            .beginControlFlow("if (length != -1)")
+            .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length)")
             .endControlFlow()
             .addStatement("return this")
             .build();
@@ -192,9 +192,9 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit)")
             .addStatement("checkLimit(limit(), maxLimit)")
-            .addStatement("int length0 = length0()")
-            .beginControlFlow("if (length0 != -1)")
-            .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0)")
+            .addStatement("int length = length()")
+            .beginControlFlow("if (length != -1)")
+            .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length)")
             .endControlFlow()
             .addStatement("return this")
             .build();
@@ -205,7 +205,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("value")
             .addModifiers(PUBLIC)
             .returns(DIRECT_BUFFER_TYPE)
-            .addStatement("return length0() == -1 ? null : valueRO")
+            .addStatement("return length() == -1 ? null : valueRO")
             .build();
     }
 
@@ -219,9 +219,9 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
             .build();
     }
 
-    private MethodSpec length0Method()
+    private MethodSpec lengthMethod()
     {
-        return methodBuilder("length0")
+        return methodBuilder("length")
             .addModifiers(PUBLIC)
             .returns(int.class)
             .addStatement("int length = buffer().getInt(offset(), byteOrder) & 0xFFFFFFFF")
@@ -317,8 +317,8 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                 .nextControlFlow("else")
                 .addStatement("int newLimit = offset() + value.sizeof()")
                 .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("buffer().putInt(offset(), value.length0(), byteOrder)")
-                .addStatement("buffer().putBytes(offset() + 4, value.buffer(), value.offset() + 4, value.length0())")
+                .addStatement("buffer().putInt(offset(), value.length(), byteOrder)")
+                .addStatement("buffer().putBytes(offset() + 4, value.buffer(), value.offset() + 4, value.length())")
                 .addStatement("limit(newLimit)")
                 .endControlFlow()
                 .addStatement("super.set(value)")

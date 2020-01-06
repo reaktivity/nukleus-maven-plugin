@@ -55,7 +55,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     {
         return classBuilder
             .addMethod(asStringMethod())
-            .addMethod(length0Method())
+            .addMethod(lengthMethod())
             .addType(builderClassBuilder.build())
             .build();
     }
@@ -68,9 +68,9 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
             .build();
     }
 
-    private MethodSpec length0Method()
+    private MethodSpec lengthMethod()
     {
-        return methodBuilder("length0")
+        return methodBuilder("length")
             .addModifiers(PUBLIC, ABSTRACT)
             .returns(int.class)
             .build();
@@ -81,21 +81,21 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final ClassName classType;
         private final ClassName stringType;
-        private final TypeName genericType;
+        private final TypeVariableName parameterType;
 
         private BuilderClassBuilder(
             ClassName stringType,
             ClassName builderRawType)
         {
-            genericType = TypeVariableName.get("T", stringType);
-            TypeName builderType = ParameterizedTypeName.get(builderRawType, genericType);
+            parameterType = TypeVariableName.get("T", stringType);
+            TypeName builderType = ParameterizedTypeName.get(builderRawType, parameterType);
 
             this.stringType = stringType;
             this.classType = stringType.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
                 .addModifiers(PUBLIC, ABSTRACT, STATIC)
                 .superclass(builderType)
-                .addTypeVariable(TypeVariableName.get("T", stringType));
+                .addTypeVariable(parameterType);
         }
 
         public TypeSpec build()
@@ -121,7 +121,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return constructorBuilder()
                 .addModifiers(PUBLIC)
-                .addParameter(genericType, "flyweight")
+                .addParameter(parameterType, "flyweight")
                 .addStatement("super(flyweight)")
                 .build();
         }
@@ -131,7 +131,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("wrap")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(ParameterizedTypeName.get(classType, genericType))
+                .returns(ParameterizedTypeName.get(classType, parameterType))
                 .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
@@ -146,7 +146,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("set")
                 .addModifiers(PUBLIC)
                 .returns(classType)
-                .addParameter(genericType, "value")
+                .addParameter(parameterType, "value")
                 .addStatement("valueSet = true")
                 .addStatement("return this")
                 .build();
@@ -186,7 +186,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .addStatement("set(null, $T.UTF_8)", StandardCharsets.class)
                 .endControlFlow()
                 .addStatement("return super.build()")
-                .returns(genericType)
+                .returns(parameterType)
                 .build();
         }
     }

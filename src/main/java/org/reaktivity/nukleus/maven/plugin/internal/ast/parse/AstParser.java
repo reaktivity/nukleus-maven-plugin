@@ -871,13 +871,13 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public Builder visitVariant_array(
             Variant_arrayContext ctx)
         {
-            listMemberBuilder.name(ctx.declarator(2).getText());
-            String variantArrayTypeName = ctx.declarator(0).getText();
+            listMemberBuilder.name(ctx.name.getText());
+            String variantArrayTypeName = ctx.arraytype.getText();
             AstType astVariantArrayTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(variantArrayTypeName),
                 lookUpAstType(variantArrayTypeName));
             listMemberBuilder.type(astVariantArrayTypeName);
 
-            String arrayItemTypeName = ctx.declarator(1).getText();
+            String arrayItemTypeName = ctx.itemtype.getText();
             AstType astArrayItemTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(arrayItemTypeName),
                 lookUpAstType(arrayItemTypeName));
             listMemberBuilder.arrayTypeName(astArrayItemTypeName);
