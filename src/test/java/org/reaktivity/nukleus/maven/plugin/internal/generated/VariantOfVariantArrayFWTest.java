@@ -164,7 +164,8 @@ public class VariantOfVariantArrayFWTest
             .build()
             .limit();
 
-        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList = flyweightRO.wrap(buffer, 0, limit);
+        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList =
+            flyweightRO.wrap(buffer, 0, limit);
 
         List<String> arrayItems = new ArrayList<>();
         variantOfList.get().forEach(v -> arrayItems.add(v.get().asString()));
@@ -182,7 +183,8 @@ public class VariantOfVariantArrayFWTest
             .build()
             .limit();
 
-        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList = flyweightRO.wrap(buffer, 0, limit);
+        final VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfList =
+            flyweightRO.wrap(buffer, 0, limit);
 
         assertAllTestValuesRead(variantOfList, 0);
     }

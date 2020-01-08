@@ -21,9 +21,11 @@ import java.util.function.Function;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.VariantFW;
 
-public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?>> extends MapFW
+public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?>> extends MapFW<KV, VV>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_INT;
 
@@ -40,6 +42,8 @@ public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
     private final KV keyRO;
 
     private final VV valueRO;
+
+    private final DirectBuffer pairsRO = new UnsafeBuffer(0L, 0);
 
     public Map32FW(
         KV keyRO,
@@ -61,6 +65,13 @@ public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
         return buffer().getInt(offset() + FIELD_COUNT_OFFSET);
     }
 
+    @Override
+    public DirectBuffer pairs()
+    {
+        return pairsRO;
+    }
+
+    @Override
     public void forEach(
         Function<KV, Consumer<VV>> consumer)
     {
@@ -81,6 +92,8 @@ public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
         int maxLimit)
     {
         super.wrap(buffer, offset, maxLimit);
+        final int itemsSize = length() - FIELD_COUNT_SIZE;
+        pairsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
         checkLimit(limit(), maxLimit);
         return this;
     }
@@ -95,7 +108,8 @@ public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
         {
             return null;
         }
-
+        final int itemsSize = length() - FIELD_COUNT_SIZE;
+        pairsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
         if (limit() > maxLimit)
         {
             return null;
@@ -137,9 +151,23 @@ public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
         }
 
         @Override
+        public Builder<KB, KV, KK, KO, VB, VV, VK, VO> pairs(
+            DirectBuffer buffer,
+            int srcOffset,
+            int length,
+            int fieldCount)
+        {
+            buffer().putBytes(offset() + FIELDS_OFFSET, buffer, srcOffset, length);
+            int newLimit = offset() + FIELDS_OFFSET + length;
+            checkLimit(newLimit, maxLimit());
+            limit(newLimit);
+            super.pairs(buffer, srcOffset, length, fieldCount);
+            return this;
+        }
+
+        @Override
         public Map32FW build()
         {
-            assert !iskeySet() : "Key is set but value is not set";
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             buffer().putInt(offset() + LENGTH_OFFSET, length);
             buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount());

@@ -28,7 +28,11 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class Map16FWTest
 {
@@ -175,33 +179,6 @@ public class Map16FWTest
         assertAllTestValuesRead(map, offset);
     }
 
-    @Test(expected = AssertionError.class)
-    public void shouldFailToSetKeyTwiceWithoutSettingValue() throws Exception
-    {
-        flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .key(asStringFW("pair1Key"))
-            .key(asStringFW("pair2Key"))
-            .build();
-    }
-
-    @Test(expected = AssertionError.class)
-    public void shouldFailToSetWithOutKeyValuePair() throws Exception
-    {
-        flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .key(asStringFW("pair2Key"))
-            .build();
-    }
-
-    @Test(expected = AssertionError.class)
-    public void shouldFailToSetPairsInWrongOrder() throws Exception
-    {
-        flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .value(asStringFW("pair1Value"))
-            .key(asStringFW("pair2Key"))
-            .value(asStringFW("pair2Value"))
-            .build();
-    }
-
     @Test
     public void shouldReadEmptyMap() throws Exception
     {
@@ -226,10 +203,8 @@ public class Map16FWTest
     public void shouldSetKeyValuePairs() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .key(asStringFW("pair1Key"))
-            .value(asStringFW("pair1Value"))
-            .key(asStringFW("pair2Key"))
-            .value(asStringFW("pair2Value"))
+            .pair(asStringFW("pair1Key"), asStringFW("pair1Value"))
+            .pair(asStringFW("pair2Key"), asStringFW("pair2Value"))
             .build()
             .limit();
 

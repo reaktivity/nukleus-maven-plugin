@@ -15,13 +15,22 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public abstract class MapFW extends Flyweight
+import org.agrona.DirectBuffer;
+import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.VariantFW;
+
+public abstract class MapFW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?>> extends Flyweight
 {
     public abstract int length();
 
     public abstract int fieldCount();
+
+    public abstract void forEach(Function<KV, Consumer<VV>> consumer);
+
+    public abstract DirectBuffer pairs();
 
     public abstract static class Builder<T extends MapFW,
         KB extends VariantFW.Builder<KV, KK, KO>, KV extends VariantFW<KK, KO>, KK, KO extends Flyweight,
@@ -29,7 +38,6 @@ public abstract class MapFW extends Flyweight
         extends Flyweight.Builder<T>
     {
         private int fieldCount;
-        private boolean keyIsSet;
         protected final KB keyRW;
         protected final VB valueRW;
 
@@ -43,40 +51,36 @@ public abstract class MapFW extends Flyweight
             this.valueRW = valueRW;
         }
 
-        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> key(
-            KO key)
+        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> pair(
+            KO key,
+            VO value)
         {
-            assert !keyIsSet : "Key is already set";
             keyRW.wrap(buffer(), limit(), maxLimit());
             keyRW.set(key);
             checkLimit(keyRW.limit(), maxLimit());
             limit(keyRW.limit());
             fieldCount++;
-            keyIsSet = true;
-            return this;
-        }
-
-        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> value(
-            VO value)
-        {
-            assert keyIsSet : "Key needs to be set first";
             valueRW.wrap(buffer(), limit(), maxLimit());
             valueRW.set(value);
             checkLimit(valueRW.limit(), maxLimit());
             limit(valueRW.limit());
             fieldCount++;
-            keyIsSet = false;
+            return this;
+        }
+
+        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> pairs(
+            DirectBuffer buffer,
+            int srcOffset,
+            int length,
+            int fieldCount)
+        {
+            this.fieldCount = fieldCount;
             return this;
         }
 
         public int fieldCount()
         {
             return fieldCount;
-        }
-
-        public boolean iskeySet()
-        {
-            return keyIsSet;
         }
     }
 }
