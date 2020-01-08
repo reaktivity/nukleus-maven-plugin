@@ -280,7 +280,8 @@ public class ListWithArrayFWTest
         }
     }
 
-    private static List<StringFW> asStringFWArray(StringFW... values)
+    private static List<StringFW> asStringFWArray(
+        StringFW... values)
     {
         return new ArrayList<>(Arrays.asList(values));
     }
