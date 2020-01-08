@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -24,6 +25,8 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt16;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16;
@@ -211,7 +214,7 @@ public class ListWithVariantFWTest
         assertEquals(200, listWithVariantOfIntRO.variantOfUint8());
         assertEquals(50000, listWithVariantOfIntRO.variantOfUint16());
         assertEquals(4000000000L, listWithVariantOfIntRO.variantOfUint32());
-        assertEquals("variant", listWithVariantOfIntRO.variantOfString32());
+        assertEquals("variant", listWithVariantOfIntRO.variantOfString32().asString());
     }
 
     @Test
@@ -331,7 +334,7 @@ public class ListWithVariantFWTest
             .variantOfUint8(200)
             .variantOfUint16(50000)
             .variantOfUint32(4000000000L)
-            .variantOfString32("variant")
+            .variantOfString32(asStringFW("variant"))
             .build()
             .limit();
         listWithVariantOfIntRO.wrap(buffer,  0,  limit);
@@ -372,7 +375,7 @@ public class ListWithVariantFWTest
             .variantOfUint8(200)
             .variantOfUint16(50000)
             .variantOfUint32(4000000000L)
-            .variantOfString32("variant")
+            .variantOfString32(asStringFW("variant"))
             .build()
             .limit();
         listWithVariantOfIntRO.wrap(buffer,  0,  limit);
@@ -385,6 +388,13 @@ public class ListWithVariantFWTest
         assertEquals(200, listWithVariantOfIntRO.variantOfUint8());
         assertEquals(50000, listWithVariantOfIntRO.variantOfUint16());
         assertEquals(4000000000L, listWithVariantOfIntRO.variantOfUint32());
-        assertEquals("variant", listWithVariantOfIntRO.variantOfString32());
+        assertEquals("variant", listWithVariantOfIntRO.variantOfString32().asString());
+    }
+
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

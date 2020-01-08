@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -27,6 +28,8 @@ import org.reaktivity.reaktor.internal.test.types.List0FW;
 import org.reaktivity.reaktor.internal.test.types.List32FW;
 import org.reaktivity.reaktor.internal.test.types.List8FW;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
@@ -85,7 +88,7 @@ public class VariantOfListFWTest
         buffer.putInt(offsetVariantOfInt, -2000000000);
     }
 
-    private String createStringWithSpecifiedSize(
+    private StringFW createStringWithSpecifiedSize(
         int size)
     {
         StringBuilder builder = new StringBuilder(size);
@@ -93,7 +96,7 @@ public class VariantOfListFWTest
         {
             builder.append('a');
         }
-        return builder.toString();
+        return asStringFW(builder.toString());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -133,9 +136,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer, offsetLength, maxLimit);
 
         assertSame(variantOfListRO, variantOfList);
-        assertEquals(length, variantOfList.length());
-        assertEquals(fieldCount, variantOfList.fieldCount());
-        assertEquals(length - fieldCount, variantOfList.fields().capacity());
+        assertEquals(length, variantOfList.get().length());
+        assertEquals(fieldCount, variantOfList.get().fieldCount());
+        assertEquals(length - fieldCount, variantOfList.get().fields().capacity());
     }
 
     @Test
@@ -152,9 +155,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer, offsetLength, maxLimit);
 
         assertSame(variantOfListRO, variantOfList);
-        assertEquals(length, variantOfList.length());
-        assertEquals(fieldCount, variantOfList.fieldCount());
-        assertEquals(length - fieldCount, variantOfList.fields().capacity());
+        assertEquals(length, variantOfList.get().length());
+        assertEquals(fieldCount, variantOfList.get().fieldCount());
+        assertEquals(length - fieldCount, variantOfList.get().fields().capacity());
     }
 
     @Test
@@ -174,8 +177,8 @@ public class VariantOfListFWTest
         assertEquals(0, variantOfList.get().length());
         assertEquals(0, variantOfList.get().fieldCount());
         assertEquals(1, variantOfList.limit());
-        assertEquals(0, variantOfList.length());
-        assertEquals(0, variantOfList.fieldCount());
+        assertEquals(0, variantOfList.get().length());
+        assertEquals(0, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -185,7 +188,7 @@ public class VariantOfListFWTest
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List8FW.Builder()
             .wrap(buffer, 1, buffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
 
         int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
@@ -199,8 +202,8 @@ public class VariantOfListFWTest
         assertEquals(26, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -231,8 +234,8 @@ public class VariantOfListFWTest
         assertEquals(272, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(277, variantOfList.limit());
-        assertEquals(272, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(272, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -242,7 +245,7 @@ public class VariantOfListFWTest
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List8FW.Builder()
             .wrap(buffer, 1, buffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
 
         int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
@@ -256,8 +259,8 @@ public class VariantOfListFWTest
         assertEquals(26, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
     }
 
     @Test
@@ -266,7 +269,7 @@ public class VariantOfListFWTest
         VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof())
             .build()
             .limit();
@@ -277,7 +280,14 @@ public class VariantOfListFWTest
         assertEquals(26, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
         assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.length());
-        assertEquals(2, variantOfList.fieldCount());
+        assertEquals(26, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
+    }
+
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

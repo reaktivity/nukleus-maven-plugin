@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -25,6 +26,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.List32FW;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
@@ -153,7 +156,7 @@ public class List32FWTest
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List32FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
         List32FW list32RO = (List32FW) listRW.build();
         int limit = list32RW.wrap(buffer, 0, buffer.capacity())
@@ -182,7 +185,7 @@ public class List32FWTest
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List32FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
         List32FW list32RO = (List32FW) listRW.build();
 
@@ -208,7 +211,7 @@ public class List32FWTest
         VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         int limit = list32RW.wrap(buffer, 0, buffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set("string1").build().sizeof())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof())
             .build()
             .limit();
@@ -218,5 +221,12 @@ public class List32FWTest
         assertEquals(29, list32.length());
         assertEquals(2, list32.fieldCount());
         assertEquals(33, list32.limit());
+    }
+
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

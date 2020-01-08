@@ -66,7 +66,7 @@ simple_type_spec
 base_type_spec
    : integer_type
    | octets_type
-   | string_type
+   | string8_type
    | string16_type
    | string32_type
    ;
@@ -183,7 +183,7 @@ enum_explicit_type
    | int32_type
    | int64_type
    | unsigned_integer_type
-   | string_type
+   | string8_type
    | string16_type
    | string32_type
    ;
@@ -287,6 +287,7 @@ list_member
    | KW_REQUIRED? integer_array_member SEMICOLON
    | KW_REQUIRED? varint_array_member SEMICOLON
    | KW_REQUIRED? array_member SEMICOLON
+   | KW_REQUIRED? variant_array SEMICOLON
    ;
 
 non_primitive_member_with_default
@@ -303,6 +304,10 @@ unbounded_member
    
 unbounded_octets_member
    : unbounded_octets_type declarators SEMICOLON
+   ;
+
+variant_array
+   : arraytype=declarator LEFT_ANG_BRACKET itemtype=declarator RIGHT_ANG_BRACKET name=declarator
    ;
 
 union_type
@@ -330,9 +335,8 @@ kind
 variant_of_type
    : integer_type
    | string_type
-   | string16_type
-   | string32_type
    | list_keyword
+   | array_keyword
    ;
 
 variant_case_list
@@ -350,17 +354,24 @@ variant_case_value
 
 variant_member
    : integer_type
-   | string_type
+   | string8_type
    | string16_type
    | string32_type
    | variant_int_literal
    | variant_list_member
+   | variant_array_member
    ;
 
 variant_list_member
    : KW_LIST LEFT_ANG_BRACKET uint32_type COMMA uint32_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
    | KW_LIST LEFT_ANG_BRACKET uint8_type COMMA uint8_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
    | KW_LIST LEFT_ANG_BRACKET UNSIGNED_INTEGER_LITERAL COMMA UNSIGNED_INTEGER_LITERAL RIGHT_ANG_BRACKET
+   ;
+
+variant_array_member
+   : KW_ARRAY LEFT_ANG_BRACKET uint32_type COMMA uint32_type RIGHT_ANG_BRACKET
+   | KW_ARRAY LEFT_ANG_BRACKET uint16_type COMMA uint16_type RIGHT_ANG_BRACKET
+   | KW_ARRAY LEFT_ANG_BRACKET uint8_type COMMA uint8_type RIGHT_ANG_BRACKET
    ;
 
 typedef_type
@@ -372,8 +383,12 @@ array_type
    ;
 
 string_type
+   : KW_STRING
+   ;
+
+string8_type
    : /* KW_STRING LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
-   | */ KW_STRING
+   | */ KW_STRING8
    ;
 
 string16_type
@@ -387,6 +402,10 @@ string32_type
 
 list_keyword
    : KW_LIST
+   ;
+
+array_keyword
+   : KW_ARRAY
    ;
 
 int_literal
@@ -525,6 +544,11 @@ KW_STRING
    ;
 
 
+KW_STRING8
+   : 'string8'
+   ;
+
+
 KW_STRING16
    : 'string16'
    ;
@@ -557,6 +581,11 @@ KW_DEFAULT
 
 KW_LIST
    : 'list'
+   ;
+
+
+KW_ARRAY
+   : 'array'
    ;
 
 

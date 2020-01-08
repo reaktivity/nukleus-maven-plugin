@@ -27,11 +27,11 @@ scope test
         struct Flat extends FlatParent [0x10000001]
         {
             uint16 fixed2 = 222;
-            string string1;
+            string8 string1;
             uint24 fixed3 = 333;
-            string string2;
+            string8 string2;
             int32 fixed4 = 444;
-            string string3;
+            string8 string3;
         }
 
         struct Nested
@@ -44,8 +44,8 @@ scope test
         struct FlatWithArray
         {
             uint64 fixed1 = 111;
-            string string1;
-            string[] array1;
+            string8 string1;
+            string8[] array1;
             int32 fixed2 = 5;
         }
 
@@ -54,7 +54,7 @@ scope test
             uint32 fixed1 = 11;
             octets[10] octets1;
             uint16 lengthOctets2;
-            string string1;
+            string8 string1;
             octets[lengthOctets2] octets2;
             varint32 lengthOctets3;
             octets[lengthOctets3] octets3 = null;
@@ -76,7 +76,7 @@ scope test
         {
             case 1: octets[4] octets4;
             case 2: octets[16] octets16;
-            case 3: string string1;
+            case 3: string8 string1;
         }
 
         union UnionChild switch (uint8) extends FlatParent
@@ -110,7 +110,7 @@ scope test
             uint24[3] uint24Array;
             uint32[4] uint32Array;
             uint64[8] uint64Array;
-            string anchor;
+            string8 anchor;
             int8[1]  int8Array;
             int16[2] int16Array;
             int24[3] int24Array;
@@ -207,7 +207,7 @@ scope test
             SAN (4000000003L)
         }
 
-        enum EnumWithString (string)
+        enum EnumWithString (string8)
         {
             BLUE ("blue"),
             RED ("red"),
@@ -230,11 +230,11 @@ scope test
 
         struct PotentialNameConflicts
         {
-           string value;
+           string8 value;
            int32 newLimit;
-           string buffer;
+           string8 buffer;
            octets[10] offset;
-           string limit;
+           string8 limit;
         }
 
         struct ContiguousSizeFields
@@ -243,16 +243,16 @@ scope test
             int8 length2;
             int8[length1] array1 = null;
             int8[length2] array2 = null;
-            string string1;
+            string8 string1;
             int8 length3;
             int8 length4;
             int8[length3] array3 = null;
             int8[length4] array4 = null;
         }
 
-        variant VariantUint8KindWithString32Type switch (uint8) of string32
+        variant VariantUint8KindWithString32Type switch (uint8) of string
         {
-           case 0xa1: string;
+           case 0xa1: string8;
            case 0x16: string16;
            case 0xb1: string32;
         }
@@ -274,9 +274,9 @@ scope test
             case 0x61: int16;
         }
 
-        variant VariantEnumKindWithString32 switch (EnumWithInt8) of string32
+        variant VariantEnumKindWithString32 switch (EnumWithInt8) of string
         {
-            case ONE: string;
+            case ONE: string8;
             case TWO: string16;
             case THREE: string32;
         }
@@ -341,11 +341,17 @@ scope test
             case THREE: list<0, 0>;
         }
 
+        variant VariantOfVariantArray switch (EnumWithInt8) of array
+        {
+            case ONE: array<uint32, uint32>;
+            case TWO: array<uint8, uint8>;
+        }
+
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
-            required string field0;
+            required string8 field0;
             uint32 field1;
-            string field2;
+            string8 field2;
         }
 
         list<uint8, uint8> ListWithVariant
@@ -405,6 +411,12 @@ scope test
         {
             required TypedefUint32 field1;
             TypedefFromTypedef field2 = 4000000000L;
+        }
+
+        list<VariantOfList> ListWithArray
+        {
+            required VariantEnumKindWithString32 field1;
+            VariantOfVariantArray<VariantEnumKindWithString32> arrayOfString;
         }
     }
 }

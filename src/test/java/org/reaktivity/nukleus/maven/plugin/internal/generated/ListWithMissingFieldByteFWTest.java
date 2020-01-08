@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -24,6 +25,8 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithMissingFieldByteFW;
@@ -123,8 +126,8 @@ public class ListWithMissingFieldByteFWTest
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
         assertEquals(logicalLength, listWithMissingFieldByteRO.fieldCount());
-        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
-        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1().asString());
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2().asString());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
         assertEquals(-2000000000, listWithMissingFieldByteRO.variantOfInt());
     }
@@ -141,8 +144,8 @@ public class ListWithMissingFieldByteFWTest
             offsetPhysicalLength + physicalLength));
         assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
         assertEquals(logicalLength, listWithMissingFieldByteRO.fieldCount());
-        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
-        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1().asString());
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2().asString());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
         assertEquals(-2000000000, listWithMissingFieldByteRO.variantOfInt());
     }
@@ -151,16 +154,16 @@ public class ListWithMissingFieldByteFWTest
     public void shouldFailToSetString1WithInsufficientSpace() throws Exception
     {
         listWithMissingFieldByteRW.wrap(buffer, 10, 17)
-            .variantOfString1("string1");
+            .variantOfString1(asStringFW("string1"));
     }
 
     @Test(expected = AssertionError.class)
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .variantOfUint(4000000000L)
-            .variantOfString2("string2")
+            .variantOfString2(asStringFW("string2"))
             .build();
     }
 
@@ -168,8 +171,8 @@ public class ListWithMissingFieldByteFWTest
     public void shouldFailWhenSameFieldIsSetMoreThanOnce() throws Exception
     {
         listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
-            .variantOfString1("string2")
+            .variantOfString1(asStringFW("string1"))
+            .variantOfString1(asStringFW("string2"))
             .build();
     }
 
@@ -177,7 +180,7 @@ public class ListWithMissingFieldByteFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString2("string2")
+            .variantOfString2(asStringFW("string2"))
             .build();
     }
 
@@ -185,22 +188,22 @@ public class ListWithMissingFieldByteFWTest
     public void shouldAssertErrorWhenValueNotPresent() throws Exception
     {
         int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .build()
             .limit();
         listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
-        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2().asString());
     }
 
     @Test
     public void shouldSetOnlyRequiredFields() throws Exception
     {
         int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .build()
             .limit();
         listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1().asString());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
     }
 
@@ -208,12 +211,12 @@ public class ListWithMissingFieldByteFWTest
     public void shouldSetSomeFields() throws Exception
     {
         int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
+            .variantOfString1(asStringFW("string1"))
             .variantOfUint(4000000000L)
             .build()
             .limit();
         listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1().asString());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
     }
 
@@ -221,16 +224,23 @@ public class ListWithMissingFieldByteFWTest
     public void shouldSetAllFields() throws Exception
     {
         int limit = listWithMissingFieldByteRW.wrap(buffer, 0, buffer.capacity())
-            .variantOfString1("string1")
-            .variantOfString2("string2")
+            .variantOfString1(asStringFW("string1"))
+            .variantOfString2(asStringFW("string2"))
             .variantOfUint(4000000000L)
             .variantOfInt(-2000000000)
             .build()
             .limit();
         listWithMissingFieldByteRO.wrap(buffer,  0,  limit);
-        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1());
-        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2());
+        assertEquals("string1", listWithMissingFieldByteRO.variantOfString1().asString());
+        assertEquals("string2", listWithMissingFieldByteRO.variantOfString2().asString());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
         assertEquals(-2000000000, listWithMissingFieldByteRO.variantOfInt());
+    }
+
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

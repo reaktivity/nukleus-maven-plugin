@@ -1453,7 +1453,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 ClassName className,
                 String sizeName)
             {
-                if ("StringFW".equals(className.simpleName()) ||
+                if ("String8FW".equals(className.simpleName()) ||
                     "String16FW".equals(className.simpleName()) ||
                     "String32FW".equals(className.simpleName()))
                 {

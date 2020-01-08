@@ -38,6 +38,7 @@ public final class AstType
 
     public static final AstType OCTETS = new AstType("octets");
     public static final AstType STRING = new AstType("string");
+    public static final AstType STRING8 = new AstType("string8");
     public static final AstType STRING16 = new AstType("string16");
     public static final AstType STRING32 = new AstType("string32");
 
@@ -47,6 +48,12 @@ public final class AstType
     public static final AstType LIST0 = new AstType("list0");
     public static final AstType LIST8 = new AstType("list8");
     public static final AstType LIST32 = new AstType("list32");
+
+    public static final AstType VARIANT = new AstType("variant");
+    public static final AstType VARIANT_ARRAY = new AstType("variantArray");
+    public static final AstType VARIANT_ARRAY8 = new AstType("variantArray8");
+    public static final AstType VARIANT_ARRAY16 = new AstType("variantArray16");
+    public static final AstType VARIANT_ARRAY32 = new AstType("variantArray32");
 
     private final String name;
     private final int bits;

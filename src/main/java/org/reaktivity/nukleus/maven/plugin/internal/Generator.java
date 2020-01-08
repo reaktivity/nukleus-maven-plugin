@@ -42,13 +42,20 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.OctetsFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String16FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.String8FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StringFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varbyteuint32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantArray16FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantArray32FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantArray8FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantArrayFWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 
 public class Generator
@@ -112,19 +119,31 @@ public class Generator
             typeSpecs.addAll(specification.accept(visitor));
         }
 
-        typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new OctetsFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new String32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new Varbyteuint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new ListFWGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new List32FWGenerator(resolver.resolveClass(AstType.LIST)));
-        typeSpecs.add(new List8FWGenerator(resolver.resolveClass(AstType.LIST)));
-        typeSpecs.add(new List0FWGenerator(resolver.resolveClass(AstType.LIST)));
+        ClassName flyweightType = resolver.resolveClass(AstType.FLYWEIGHT);
+        ClassName stringType = resolver.resolveClass(AstType.STRING);
+        ClassName listType = resolver.resolveClass(AstType.LIST);
+        ClassName variantType = resolver.resolveClass(AstType.VARIANT);
+        ClassName variantArrayType = resolver.resolveClass(AstType.VARIANT_ARRAY);
+
+        typeSpecs.add(new FlyweightGenerator(flyweightType));
+        typeSpecs.add(new OctetsFlyweightGenerator(flyweightType));
+        typeSpecs.add(new StringFlyweightGenerator(flyweightType));
+        typeSpecs.add(new String8FlyweightGenerator(stringType));
+        typeSpecs.add(new String16FlyweightGenerator(stringType));
+        typeSpecs.add(new String32FlyweightGenerator(stringType));
+        typeSpecs.add(new ArrayFlyweightGenerator(flyweightType));
+        typeSpecs.add(new Varbyteuint32FlyweightGenerator(flyweightType));
+        typeSpecs.add(new Varint32FlyweightGenerator(flyweightType));
+        typeSpecs.add(new Varint64FlyweightGenerator(flyweightType));
+        typeSpecs.add(new ListFWGenerator(flyweightType));
+        typeSpecs.add(new List32FWGenerator(listType));
+        typeSpecs.add(new List8FWGenerator(listType));
+        typeSpecs.add(new List0FWGenerator(listType));
+        typeSpecs.add(new VariantArrayFWGenerator(flyweightType, variantType));
+        typeSpecs.add(new VariantArray8FWGenerator(flyweightType, variantArrayType, variantType));
+        typeSpecs.add(new VariantArray16FWGenerator(flyweightType, variantArrayType, variantType));
+        typeSpecs.add(new VariantArray32FWGenerator(flyweightType, variantArrayType, variantType));
+        typeSpecs.add(new VariantFWGenerator(flyweightType));
 
         System.out.println("Generating to " + outputDirectory);
 

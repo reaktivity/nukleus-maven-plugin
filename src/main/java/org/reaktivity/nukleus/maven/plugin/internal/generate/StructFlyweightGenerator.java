@@ -3206,8 +3206,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     private static boolean isStringType(
         ClassName classType)
     {
+        return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
+    }
+
+    private static boolean isString8Type(
+        ClassName classType)
+    {
         String name = classType.simpleName();
-        return "StringFW".equals(name) || isString16Type(classType) || isString32Type(classType);
+        return "String8FW".equals(name);
     }
 
     private static boolean isString16Type(
