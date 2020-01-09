@@ -30,7 +30,7 @@ public abstract class MapFW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, 
 
     public abstract void forEach(Function<KV, Consumer<VV>> consumer);
 
-    public abstract DirectBuffer pairs();
+    public abstract DirectBuffer entries();
 
     public abstract static class Builder<T extends MapFW,
         KB extends VariantFW.Builder<KV, KK, KO>, KV extends VariantFW<KK, KO>, KK, KO extends Flyweight,
@@ -51,7 +51,7 @@ public abstract class MapFW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, 
             this.valueRW = valueRW;
         }
 
-        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> pair(
+        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> entry(
             KO key,
             VO value)
         {
@@ -68,7 +68,7 @@ public abstract class MapFW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, 
             return this;
         }
 
-        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> pairs(
+        public Builder<T, KB, KV, KK, KO, VB, VV, VK, VO> entries(
             DirectBuffer buffer,
             int srcOffset,
             int length,

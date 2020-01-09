@@ -222,11 +222,11 @@ public final class VariantOfMapFW<KV extends VariantFW<?, ?>, VV extends Variant
             throw new UnsupportedOperationException();
         }
 
-        public Builder<KB, KV, KK, KO, VB, VV, VK, VO> pair(
+        public Builder<KB, KV, KK, KO, VB, VV, VK, VO> entry(
             KO key,
             VO value)
         {
-            map32RW.pair(key, value);
+            map32RW.entry(key, value);
             limit(map32RW.limit());
             return this;
         }
@@ -256,14 +256,14 @@ public final class VariantOfMapFW<KV extends VariantFW<?, ?>, VV extends Variant
                 enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
                 enumWithInt8RW.set(KIND_MAP8);
                 map8RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
-                map8RW.pairs(map32.pairs(), 0, map32.pairs().capacity(), fieldCount);
+                map8RW.entries(map32.entries(), 0, map32.entries().capacity(), fieldCount);
                 limit(map8RW.build().limit());
                 break;
             case 1:
                 enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
                 enumWithInt8RW.set(KIND_MAP16);
                 map16RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
-                map16RW.pairs(map32.pairs(), 0, map32.pairs().capacity(), fieldCount);
+                map16RW.entries(map32.entries(), 0, map32.entries().capacity(), fieldCount);
                 limit(map16RW.build().limit());
                 break;
             case 2:

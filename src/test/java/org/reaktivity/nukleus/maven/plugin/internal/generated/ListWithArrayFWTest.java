@@ -182,7 +182,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asStringFWArray(asStringFW("symbolA"), asStringFW("symbolB")))
+            .arrayOfString(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB")))
             .field1(asStringFW("field1"))
             .build();
     }
@@ -207,7 +207,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asStringFWArray(asStringFW("symbolA"), asStringFW("symbolB")));
+            .arrayOfString(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB")));
     }
 
     @Test(expected = AssertionError.class)
@@ -244,7 +244,7 @@ public class ListWithArrayFWTest
     {
         int limit = listWithArrayRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .arrayOfString(asStringFWArray(asStringFW("symbolA"), asStringFW("symbolB")))
+            .arrayOfString(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB")))
             .build()
             .limit();
 
@@ -278,11 +278,5 @@ public class ListWithArrayFWTest
         default:
             throw new IllegalArgumentException("Illegal value: " + value);
         }
-    }
-
-    private static List<StringFW> asStringFWArray(
-        StringFW... values)
-    {
-        return new ArrayList<>(Arrays.asList(values));
     }
 }

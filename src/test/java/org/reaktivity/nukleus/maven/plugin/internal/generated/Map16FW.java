@@ -43,7 +43,7 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
 
     private final VV valueRO;
 
-    private final DirectBuffer pairsRO = new UnsafeBuffer(0L, 0);
+    private final DirectBuffer entriesRO = new UnsafeBuffer(0L, 0);
 
 
     public Map16FW(
@@ -67,9 +67,9 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
     }
 
     @Override
-    public DirectBuffer pairs()
+    public DirectBuffer entries()
     {
-        return pairsRO;
+        return entriesRO;
     }
 
     @Override
@@ -94,7 +94,7 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
     {
         super.wrap(buffer, offset, maxLimit);
         final int itemsSize = length() - FIELD_COUNT_SIZE;
-        pairsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
+        entriesRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
         checkLimit(limit(), maxLimit);
         return this;
     }
@@ -110,7 +110,7 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
             return null;
         }
         final int itemsSize = length() - FIELD_COUNT_SIZE;
-        pairsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
+        entriesRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize);
         if (limit() > maxLimit)
         {
             return null;
@@ -152,7 +152,7 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
         }
 
         @Override
-        public Builder<KB, KV, KK, KO, VB, VV, VK, VO> pairs(
+        public Builder<KB, KV, KK, KO, VB, VV, VK, VO> entries(
             DirectBuffer buffer,
             int srcOffset,
             int length,
@@ -162,7 +162,7 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
             int newLimit = offset() + FIELDS_OFFSET + length;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
-            super.pairs(buffer, srcOffset, length, fieldCount);
+            super.entries(buffer, srcOffset, length, fieldCount);
             return this;
         }
 

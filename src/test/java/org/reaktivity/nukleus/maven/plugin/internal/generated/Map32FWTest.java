@@ -59,44 +59,44 @@ public class Map32FWTest
         MutableDirectBuffer buffer,
         int offset)
     {
-        int length = 48;
+        int length = 52;
         int fieldCount = 4;
-        String pair1Key = "pair1Key";
-        String pair1Value = "pair1Value";
-        String pair2Key = "pair2Key";
-        String pair2Value = "pair2Value";
+        String entry1Key = "entry1Key";
+        String entry1Value = "entry1Value";
+        String entry2Key = "entry2Key";
+        String entry2Value = "entry2Value";
 
         buffer.putInt(offset, length);
         int offsetFieldCount = offset + lengthSize;
         buffer.putInt(offsetFieldCount, fieldCount);
 
-        int offsetMapPair1KeyKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetMapPair1KeyKind, EnumWithInt8.ONE.value());
-        int offsetPair1KeyLength = offsetMapPair1KeyKind + Byte.BYTES;
-        buffer.putByte(offsetPair1KeyLength, (byte) pair1Key.length());
-        int offsetPair1Key = offsetPair1KeyLength + Byte.BYTES;
-        buffer.putBytes(offsetPair1Key, pair1Key.getBytes());
+        int offsetMapEntry1KeyKind = offsetFieldCount + fieldCountSize;
+        buffer.putByte(offsetMapEntry1KeyKind, EnumWithInt8.ONE.value());
+        int offsetEntry1KeyLength = offsetMapEntry1KeyKind + Byte.BYTES;
+        buffer.putByte(offsetEntry1KeyLength, (byte) entry1Key.length());
+        int offsetEntry1Key = offsetEntry1KeyLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry1Key, entry1Key.getBytes());
 
-        int offsetMapPair1ValueKind = offsetPair1Key + pair1Key.length();
-        buffer.putByte(offsetMapPair1ValueKind, EnumWithInt8.ONE.value());
-        int offsetPair1ValueLength = offsetMapPair1ValueKind + Byte.BYTES;
-        buffer.putByte(offsetPair1ValueLength, (byte) pair1Value.length());
-        int offsetPair1Value = offsetPair1ValueLength + Byte.BYTES;
-        buffer.putBytes(offsetPair1Value, pair1Value.getBytes());
+        int offsetMapEntry1ValueKind = offsetEntry1Key + entry1Key.length();
+        buffer.putByte(offsetMapEntry1ValueKind, EnumWithInt8.ONE.value());
+        int offsetEntry1ValueLength = offsetMapEntry1ValueKind + Byte.BYTES;
+        buffer.putByte(offsetEntry1ValueLength, (byte) entry1Value.length());
+        int offsetEntry1Value = offsetEntry1ValueLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry1Value, entry1Value.getBytes());
 
-        int offsetMapPair2KeyKind = offsetPair1Value + pair1Value.length();
-        buffer.putByte(offsetMapPair2KeyKind, EnumWithInt8.ONE.value());
-        int offsetPair2KeyLength = offsetMapPair2KeyKind + Byte.BYTES;
-        buffer.putByte(offsetPair2KeyLength, (byte) pair2Key.length());
-        int offsetPair2Key = offsetPair2KeyLength + Byte.BYTES;
-        buffer.putBytes(offsetPair2Key, pair2Key.getBytes());
+        int offsetMapEntry2KeyKind = offsetEntry1Value + entry1Value.length();
+        buffer.putByte(offsetMapEntry2KeyKind, EnumWithInt8.ONE.value());
+        int offsetEntry2KeyLength = offsetMapEntry2KeyKind + Byte.BYTES;
+        buffer.putByte(offsetEntry2KeyLength, (byte) entry2Key.length());
+        int offsetEntry2Key = offsetEntry2KeyLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry2Key, entry2Key.getBytes());
 
-        int offsetMapPair2ValueKind = offsetPair2Key + pair2Key.length();
-        buffer.putByte(offsetMapPair2ValueKind, EnumWithInt8.ONE.value());
-        int offsetPair2ValueLength = offsetMapPair2ValueKind + Byte.BYTES;
-        buffer.putByte(offsetPair2ValueLength, (byte) pair2Value.length());
-        int offsetPair2Value = offsetPair2ValueLength + Byte.BYTES;
-        buffer.putBytes(offsetPair2Value, pair2Value.getBytes());
+        int offsetMapEntry2ValueKind = offsetEntry2Key + entry2Key.length();
+        buffer.putByte(offsetMapEntry2ValueKind, EnumWithInt8.ONE.value());
+        int offsetEntry2ValueLength = offsetMapEntry2ValueKind + Byte.BYTES;
+        buffer.putByte(offsetEntry2ValueLength, (byte) entry2Value.length());
+        int offsetEntry2Value = offsetEntry2ValueLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry2Value, entry2Value.getBytes());
 
         return length + lengthSize;
     }
@@ -112,20 +112,20 @@ public class Map32FWTest
             mapItems.add(vv.get().asString());
         });
         assertEquals(4, mapItems.size());
-        assertEquals("pair1Key", mapItems.get(0));
-        assertEquals("pair1Value", mapItems.get(1));
-        assertEquals("pair2Key", mapItems.get(2));
-        assertEquals("pair2Value", mapItems.get(3));
-        assertEquals(48, flyweight.length());
+        assertEquals("entry1Key", mapItems.get(0));
+        assertEquals("entry1Value", mapItems.get(1));
+        assertEquals("entry2Key", mapItems.get(2));
+        assertEquals("entry2Value", mapItems.get(3));
+        assertEquals(52, flyweight.length());
         assertEquals(4, flyweight.fieldCount());
-        assertEquals(offset + 52, flyweight.limit());
+        assertEquals(offset + 56, flyweight.limit());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int length = 18;
+        int length = 52;
         setAllItems(buffer, offset);
         for (int maxLimit = offset; maxLimit <= length; maxLimit++)
         {
@@ -137,7 +137,7 @@ public class Map32FWTest
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int length = 18;
+        int length = 52;
         setAllItems(buffer, offset);
         for (int maxLimit = offset; maxLimit <= length; maxLimit++)
         {
@@ -200,11 +200,11 @@ public class Map32FWTest
     }
 
     @Test
-    public void shouldSetKeyValuePairs() throws Exception
+    public void shouldSetKeyValueEntrys() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .pair(asStringFW("pair1Key"), asStringFW("pair1Value"))
-            .pair(asStringFW("pair2Key"), asStringFW("pair2Value"))
+            .entry(asStringFW("entry1Key"), asStringFW("entry1Value"))
+            .entry(asStringFW("entry2Key"), asStringFW("entry2Value"))
             .build()
             .limit();
 

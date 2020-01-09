@@ -245,12 +245,12 @@ public final class ListWithMapFW extends ListFW
             assert lastFieldSet == INDEX_FIELD1 : "Prior required field \"field1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
-                mapRW.wrap(b, o, m);
+                VariantOfMapFW.Builder map = mapRW.wrap(b, o, m);
                 for (int i  = 0; i < keys.size(); i++)
                 {
-                    mapRW.pair(keys.get(i), values.get(i));
+                    map.entry(keys.get(i), values.get(i));
                 }
-                return mapRW.build().sizeof();
+                return map.build().sizeof();
 
             });
             lastFieldSet = INDEX_MAP;

@@ -240,12 +240,12 @@ public final class ListWithArrayFW extends ListFW
             assert lastFieldSet == INDEX_FIELD1 : "Prior required field \"field1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
-                arrayOfStringRW.wrap(b, o, m);
+                VariantOfVariantArrayFW.Builder arrayOfString = arrayOfStringRW.wrap(b, o, m);
                 for (StringFW value : values)
                 {
-                    arrayOfStringRW.item(value);
+                    arrayOfString.item(value);
                 }
-                return arrayOfStringRW.build().sizeof();
+                return arrayOfString.build().sizeof();
 
             });
             lastFieldSet = INDEX_ARRAY_OF_STRING;
