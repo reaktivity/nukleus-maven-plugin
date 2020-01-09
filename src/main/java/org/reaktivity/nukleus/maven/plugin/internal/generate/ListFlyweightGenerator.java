@@ -2065,8 +2065,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
                 TypeName parameterType = Objects.requireNonNullElse(resolver.resolveUnsignedType(variantNode.of()),
                     ofTypeName.isPrimitive() ? primitiveReturnType : arrayItemType != null ?
-                        ParameterizedTypeName.get(ClassName.get(List.class), resolver.resolveType(arrayItemOfType))
-                        : resolver.resolveClass(AstType.STRING));
+                        ParameterizedTypeName.get(resolver.resolveClass(AstType.VARIANT_ARRAY),
+                            resolver.resolveType(arrayItemTypeName)) : resolver.resolveClass(AstType.STRING));
                 MethodSpec.Builder methodBuilder = methodBuilder(methodName(name))
                     .addModifiers(PUBLIC)
                     .returns(thisType)
@@ -2108,9 +2108,16 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
                     if (arrayItemType != null)
                     {
-                        methodBuilder.addStatement("$L.field((b, o, m) -> { $LRW.wrap(b, o, m); for ($T v : value) " +
-                                "{$LRW.item(v);} return $LRW.build().sizeof(); })",
-                            variantRW(templateClassName), name, resolver.resolveClass(arrayItemOfType), name, name);
+                        ClassName arrayItemTypeClass = resolver.resolveClass(arrayItemTypeName);
+                        ClassName arrayItemTypeBuilderClass = arrayItemTypeClass.nestedClass("Builder");
+                        ClassName kindTypeClass = resolver.resolveClass(arrayItemKindType);
+                        TypeName parameterizedArrayName = ParameterizedTypeName.get(builderType,
+                            arrayItemTypeBuilderClass, arrayItemTypeClass, enumClassName(kindTypeClass),
+                            resolver.resolveClass(arrayItemOfType));
+
+                        methodBuilder.addStatement("$L.field((b, o, m) ->\n{\n$T $L = $LRW.wrap(b, o, m);\n" +
+                                "value.forEach(v -> $L.item(v.get()));\nreturn $LRW.build().sizeof();\n})",
+                            variantRW(templateClassName), parameterizedArrayName, name, name, name, name);
                     }
                     else
                     {

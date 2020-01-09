@@ -16,7 +16,6 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.text.MessageFormat;
-import java.util.List;
 
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
@@ -24,7 +23,6 @@ import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
 
 public final class ListWithArrayFW extends ListFW
 {
@@ -234,19 +232,16 @@ public final class ListWithArrayFW extends ListFW
         }
 
         public Builder arrayOfString(
-            List<StringFW> values)
+            VariantArrayFW<VariantEnumKindWithString32FW> value)
         {
             assert lastFieldSet < INDEX_ARRAY_OF_STRING : "Field \"arrayOfString\" cannot be set out of order";
             assert lastFieldSet == INDEX_FIELD1 : "Prior required field \"field1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
-                VariantOfVariantArrayFW.Builder arrayOfString = arrayOfStringRW.wrap(b, o, m);
-                for (StringFW value : values)
-                {
-                    arrayOfString.item(value);
-                }
+                VariantOfVariantArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW,
+                    EnumWithInt8, StringFW> arrayOfString = arrayOfStringRW.wrap(b, o, m);
+                value.forEach(v -> arrayOfString.item(v.get()));
                 return arrayOfString.build().sizeof();
-
             });
             lastFieldSet = INDEX_ARRAY_OF_STRING;
             return this;
