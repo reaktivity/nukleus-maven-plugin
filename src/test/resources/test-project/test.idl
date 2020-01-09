@@ -354,6 +354,15 @@ scope test
 //            case THREE: map<uint8>;
 //        }
 
+//        variant VariantWithoutOf switch (EnumWithInt8)
+//        {
+//            case ONE:
+//                VariantEnumKindOfUint32;
+//            case TWO:
+//            case THREE:
+//                VariantEnumKindWithString32;
+//        }
+
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
             required string8 field0;
