@@ -64,22 +64,22 @@ public final class String16FW extends StringFW
     @Override
     public int limit()
     {
-        return offset() + FIELD_SIZE_LENGTH + Math.max(length0(), 0);
+        return offset() + FIELD_SIZE_LENGTH + Math.max(length(), 0);
     }
 
     public DirectBuffer value()
     {
-        return length0() == -1 ? null : valueRO;
+        return length() == -1 ? null : valueRO;
     }
 
     @Override
     public String asString()
     {
-        if (maxLimit() == offset() || length0() == -1)
+        if (maxLimit() == offset() || length() == -1)
         {
             return null;
         }
-        return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length0());
+        return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length());
     }
 
     @Override
@@ -92,7 +92,7 @@ public final class String16FW extends StringFW
         {
             return null;
         }
-        int length0 = length0();
+        int length0 = length();
         if (length0 != -1)
         {
             valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0);
@@ -109,7 +109,7 @@ public final class String16FW extends StringFW
         super.wrap(buffer, offset, maxLimit);
         checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit);
         checkLimit(limit(), maxLimit);
-        int length0 = length0();
+        int length0 = length();
         if (length0 != -1)
         {
             valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0);
@@ -123,7 +123,7 @@ public final class String16FW extends StringFW
         return maxLimit() == offset() ? "null" : String.format("\"%s\"", asString());
     }
 
-    protected int length0()
+    protected int length()
     {
         int length = buffer().getShort(offset(), byteOrder) & 0xFFFF;
         return length == 65535 ? -1 : length;
@@ -171,8 +171,8 @@ public final class String16FW extends StringFW
             {
                 int newLimit = offset() + value.sizeof();
                 checkLimit(newLimit, maxLimit());
-                buffer().putShort(offset(), (short) value.length0(), byteOrder);
-                buffer().putBytes(offset() + 2, value.buffer(), value.offset() + 2, value.length0());
+                buffer().putShort(offset(), (short) value.length(), byteOrder);
+                buffer().putBytes(offset() + 2, value.buffer(), value.offset() + 2, value.length());
                 limit(newLimit);
             }
             super.set(value);

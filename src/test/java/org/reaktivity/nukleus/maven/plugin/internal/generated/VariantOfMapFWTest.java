@@ -28,12 +28,7 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.nukleus.maven.plugin.internal.generated.VariantOfMapFW.Builder;
-import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class VariantOfMapFWTest
 {
@@ -47,7 +42,7 @@ public class VariantOfMapFWTest
 
     private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
         StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> flyweightRW =
-        new Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
+        new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
             new TypedefStringFW.Builder(), new TypedefStringFW());
     private final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> flyweightRO =
         new VariantOfMapFW<>(new VariantEnumKindWithString32FW(), new TypedefStringFW());

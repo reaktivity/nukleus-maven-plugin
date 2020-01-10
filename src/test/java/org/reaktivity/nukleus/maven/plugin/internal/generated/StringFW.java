@@ -26,7 +26,7 @@ public abstract class StringFW extends Flyweight
 {
     public abstract String asString();
 
-    protected abstract int length0();
+    protected abstract int length();
 
     public abstract static class Builder<T extends StringFW> extends Flyweight.Builder<T>
     {

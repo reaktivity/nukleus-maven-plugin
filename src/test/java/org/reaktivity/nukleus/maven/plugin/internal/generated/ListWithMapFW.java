@@ -16,18 +16,13 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.text.MessageFormat;
-import java.util.List;
 
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
 
 public final class ListWithMapFW extends ListFW
 {
@@ -238,20 +233,16 @@ public final class ListWithMapFW extends ListFW
         }
 
         public Builder map(
-            List<StringFW> keys,
-            List<StringFW> values)
+            MapFW<VariantEnumKindWithString32FW, TypedefStringFW> entries)
         {
             assert lastFieldSet < INDEX_MAP : "Field \"map\" cannot be set out of order";
             assert lastFieldSet == INDEX_FIELD1 : "Prior required field \"field1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
-                VariantOfMapFW.Builder map = mapRW.wrap(b, o, m);
-                for (int i  = 0; i < keys.size(); i++)
-                {
-                    map.entry(keys.get(i), values.get(i));
-                }
+                VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
+                    StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> map = mapRW.wrap(b, o, m);
+                entries.forEach(kv -> vv -> map.entry(kv.get(), vv.get()));
                 return map.build().sizeof();
-
             });
             lastFieldSet = INDEX_MAP;
             return this;

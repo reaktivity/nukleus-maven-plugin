@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.agrona.MutableDirectBuffer;
@@ -183,7 +182,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asVariantArrayFW(Arrays.asList("symbolA", "symbolB")))
+            .arrayOfString(asVariantArrayFW())
             .field1(asStringFW("field1"))
             .build();
     }
@@ -208,7 +207,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asVariantArrayFW(Arrays.asList("symbolA", "symbolB")));
+            .arrayOfString(asVariantArrayFW());
     }
 
     @Test(expected = AssertionError.class)
@@ -245,7 +244,7 @@ public class ListWithArrayFWTest
     {
         int limit = listWithArrayRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .arrayOfString(asVariantArrayFW(Arrays.asList("symbolA", "symbolB")))
+            .arrayOfString(asVariantArrayFW())
             .build()
             .limit();
 
@@ -281,8 +280,7 @@ public class ListWithArrayFWTest
         }
     }
 
-    private static VariantArrayFW<VariantEnumKindWithString32FW> asVariantArrayFW(
-        List<String> values)
+    private static VariantArrayFW<VariantEnumKindWithString32FW> asVariantArrayFW()
     {
         VariantOfVariantArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
             StringFW> variantOfVariantArrayRW =

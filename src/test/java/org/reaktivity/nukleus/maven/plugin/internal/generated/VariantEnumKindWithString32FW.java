@@ -278,7 +278,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
         public Builder set(
             StringFW value)
         {
-            int length = value.length0();
+            int length = value.length();
             int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(length)) >> 3;
             switch (highestByteIndex)
             {

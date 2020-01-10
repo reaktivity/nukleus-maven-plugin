@@ -54,17 +54,17 @@ public final class String8FW extends StringFW
     @Override
     public int limit()
     {
-        return offset() + FIELD_SIZE_LENGTH + Math.max(length0(), 0);
+        return offset() + FIELD_SIZE_LENGTH + Math.max(length(), 0);
     }
 
     @Override
     public String asString()
     {
-        if (maxLimit() == offset() || length0() == -1)
+        if (maxLimit() == offset() || length() == -1)
         {
             return null;
         }
-        return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length0());
+        return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length());
     }
 
     @Override
@@ -77,7 +77,7 @@ public final class String8FW extends StringFW
         {
             return null;
         }
-        int length0 = length0();
+        int length0 = length();
         if (length0 != -1)
         {
             valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0);
@@ -94,7 +94,7 @@ public final class String8FW extends StringFW
         super.wrap(buffer, offset, maxLimit);
         checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit);
         checkLimit(limit(), maxLimit);
-        int length0 = length0();
+        int length0 = length();
         if (length0 != -1)
         {
             valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0);
@@ -104,7 +104,7 @@ public final class String8FW extends StringFW
 
     public DirectBuffer value()
     {
-        return length0() == -1 ? null : valueRO;
+        return length() == -1 ? null : valueRO;
     }
 
     @Override
@@ -113,7 +113,7 @@ public final class String8FW extends StringFW
         return String.format("\"%s\"", asString());
     }
 
-    protected int length0()
+    protected int length()
     {
         int length = buffer().getByte(offset()) & 0xFF;
         return length == 255 ? -1 : length;

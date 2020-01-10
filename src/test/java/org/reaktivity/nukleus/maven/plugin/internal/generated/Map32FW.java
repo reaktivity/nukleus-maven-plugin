@@ -23,7 +23,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-import org.reaktivity.reaktor.internal.test.types.VariantFW;
+
 
 public final class Map32FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?>> extends MapFW<KV, VV>
 {

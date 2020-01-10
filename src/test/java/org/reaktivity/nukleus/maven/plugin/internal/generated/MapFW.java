@@ -20,7 +20,6 @@ import java.util.function.Function;
 
 import org.agrona.DirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-import org.reaktivity.reaktor.internal.test.types.VariantFW;
 
 public abstract class MapFW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?>> extends Flyweight
 {
