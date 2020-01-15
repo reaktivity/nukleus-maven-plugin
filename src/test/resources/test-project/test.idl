@@ -357,7 +357,7 @@ scope test
 //        variant VariantWithoutOf switch (EnumWithInt8)
 //        {
 //            case ONE:
-//                VariantEnumKindOfUint32;
+//                VariantEnumKindOfInt8;
 //            case TWO:
 //            case THREE:
 //                VariantEnumKindWithString32;
