@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.agrona.MutableDirectBuffer;
@@ -182,7 +183,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asVariantArrayFW())
+            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
             .field1(asStringFW("field1"))
             .build();
     }
@@ -207,7 +208,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asVariantArrayFW());
+            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))));
     }
 
     @Test(expected = AssertionError.class)
@@ -244,7 +245,7 @@ public class ListWithArrayFWTest
     {
         int limit = listWithArrayRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .arrayOfString(asVariantArrayFW())
+            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
             .build()
             .limit();
 
@@ -280,18 +281,21 @@ public class ListWithArrayFWTest
         }
     }
 
-    private static VariantArrayFW<VariantEnumKindWithString32FW> asVariantArrayFW()
+    private static VariantArrayFW<VariantEnumKindWithString32FW> asVariantArrayFW(
+        List<StringFW> values)
     {
         VariantOfVariantArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
             StringFW> variantOfVariantArrayRW =
             new VariantOfVariantArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
                 new VariantEnumKindWithString32FW());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+        variantOfVariantArrayRW.wrap(buffer, 0, buffer.capacity());
+        for (StringFW value : values)
+        {
+            variantOfVariantArrayRW.item(value);
+        }
         VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfVariantArrayRO =
-            variantOfVariantArrayRW.wrap(buffer, 0, buffer.capacity())
-                .item(asStringFW("symbolA"))
-                .item(asStringFW("symbolB"))
-                .build();
+            variantOfVariantArrayRW.build();
         return variantOfVariantArrayRO.get();
     }
 }
