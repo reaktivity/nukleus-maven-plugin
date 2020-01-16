@@ -123,6 +123,12 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
         return offset() + LENGTH_SIZE + length();
     }
 
+    @Override
+    public String toString()
+    {
+        return String.format("map16<%d, %d>", length(), fieldCount());
+    }
+
     public static final class Builder<KB extends VariantFW.Builder<KV, KK, KO>, KV extends VariantFW<KK, KO>, KK,
         KO extends Flyweight,
         VB extends VariantFW.Builder<VV, VK, VO>, VV extends VariantFW<VK, VO>, VK, VO extends Flyweight>
