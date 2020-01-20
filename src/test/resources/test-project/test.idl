@@ -347,12 +347,12 @@ scope test
             case TWO: array<uint8, uint8>;
         }
 
-//        variant VariantOfMap switch (EnumWithInt8) of map
-//        {
-//            case ONE: map<uint32>;
-//            case TWO: map<uint16>;
-//            case THREE: map<uint8>;
-//        }
+        variant VariantOfMap switch (EnumWithInt8) of map
+        {
+            case ONE: map<uint32>;
+            case TWO: map<uint16>;
+            case THREE: map<uint8>;
+        }
 
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
@@ -426,11 +426,11 @@ scope test
             required VariantEnumKindWithString32 field1;
             VariantOfVariantArray<VariantEnumKindWithString32> arrayOfString;
         }
-//
-//        list<VariantOfList> ListWithMap
-//        {
-//            required VariantEnumKindWithString32 field1;
-//            VariantOfMap<VariantEnumKindWithString32, TypedefString> map;
-//        }
+
+        list<VariantOfList> ListWithMap
+        {
+            required VariantEnumKindWithString32 field1;
+            VariantOfMap<VariantEnumKindWithString32, TypedefString> mapOfString;
+        }
     }
 }

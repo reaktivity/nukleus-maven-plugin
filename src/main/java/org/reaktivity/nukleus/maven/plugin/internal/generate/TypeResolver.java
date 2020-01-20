@@ -111,6 +111,9 @@ public final class TypeResolver
         namesByType.put(AstType.OCTETS, ClassName.get(packageName, "OctetsFW"));
         namesByType.put(AstType.VARIANT, ClassName.get(packageName, "VariantFW"));
         namesByType.put(AstType.MAP, ClassName.get(packageName, "MapFW"));
+        namesByType.put(AstType.MAP8, ClassName.get(packageName, "Map8FW"));
+        namesByType.put(AstType.MAP16, ClassName.get(packageName, "Map16FW"));
+        namesByType.put(AstType.MAP32, ClassName.get(packageName, "Map32FW"));
         namesByType.put(AstType.INT8, TypeName.BYTE);
         namesByType.put(AstType.UINT8, TypeName.BYTE);
         namesByType.put(AstType.INT16, TypeName.SHORT);

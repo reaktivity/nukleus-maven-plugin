@@ -242,6 +242,23 @@ public final class VariantOfMapFW<KV extends VariantFW<?, ?>, VV extends Variant
             return this;
         }
 
+        @Override
+        public Builder<KB, KV, KK, KO, VB, VV, VK, VO> setAs(
+            EnumWithInt8 kind,
+            MapFW value,
+            int kindPadding)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Builder<KB, KV, KK, KO, VB, VV, VK, VO> set(
+            MapFW value)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public VariantOfMapFW<KV, VV> build()
         {
             Map32FW map32 = map32RW.build();

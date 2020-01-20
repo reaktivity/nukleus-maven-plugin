@@ -30,9 +30,9 @@ public final class ListWithMapFW extends ListFW
 
     private static final long MASK_FIELD1 = 1 << INDEX_FIELD1;
 
-    private static final int INDEX_MAP = 1;
+    private static final int INDEX_MAP_OF_STRING = 1;
 
-    private static final long MASK_MAP = 1 << INDEX_MAP;
+    private static final long MASK_MAP_OF_STRING = 1 << INDEX_MAP_OF_STRING;
 
     private static final byte MISSING_FIELD_BYTE = VariantOfListFW.MISSING_FIELD_PLACEHOLDER;
 
@@ -40,7 +40,7 @@ public final class ListWithMapFW extends ListFW
 
     private VariantEnumKindWithString32FW field1RO = new VariantEnumKindWithString32FW();
 
-    private VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> mapRO =
+    private VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> mapOfStringRO =
         new VariantOfMapFW<>(new VariantEnumKindWithString32FW(), new TypedefStringFW());
 
     private VariantOfListFW variantOfListRO = new VariantOfListFW();
@@ -53,10 +53,10 @@ public final class ListWithMapFW extends ListFW
         return field1RO.get();
     }
 
-    public MapFW<VariantEnumKindWithString32FW, TypedefStringFW> map()
+    public MapFW<VariantEnumKindWithString32FW, TypedefStringFW> mapOfString()
     {
-        assert (bitmask & MASK_MAP) != 0L : "Field \"map\" is not set";
-        return mapRO.get();
+        assert (bitmask & MASK_MAP_OF_STRING) != 0L : "Field \"mapOfString\" is not set";
+        return mapOfStringRO.get();
     }
 
     @Override
@@ -101,12 +101,12 @@ public final class ListWithMapFW extends ListFW
                 fieldLimit = field1RO.limit();
                 bitmask |= 1 << INDEX_FIELD1;
                 break;
-            case INDEX_MAP:
+            case INDEX_MAP_OF_STRING:
                 if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_BYTE)
                 {
-                    mapRO.wrap(fieldsBuffer, fieldLimit, maxLimit);
-                    fieldLimit = mapRO.limit();
-                    bitmask |= 1 << INDEX_MAP;
+                    mapOfStringRO.wrap(fieldsBuffer, fieldLimit, maxLimit);
+                    fieldLimit = mapOfStringRO.limit();
+                    bitmask |= 1 << INDEX_MAP_OF_STRING;
                 }
                 else
                 {
@@ -159,15 +159,15 @@ public final class ListWithMapFW extends ListFW
                 fieldLimit = field1RO.limit();
                 bitmask |= 1 << INDEX_FIELD1;
                 break;
-            case INDEX_MAP:
+            case INDEX_MAP_OF_STRING:
                 if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_BYTE)
                 {
-                    if (mapRO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
+                    if (mapOfStringRO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
-                    fieldLimit = mapRO.limit();
-                    bitmask |= 1 << INDEX_MAP;
+                    fieldLimit = mapOfStringRO.limit();
+                    bitmask |= 1 << INDEX_MAP_OF_STRING;
                 }
                 else
                 {
@@ -192,17 +192,17 @@ public final class ListWithMapFW extends ListFW
     @Override
     public String toString()
     {
-        Object map = null;
+        Object mapOfString = null;
         StringBuilder format = new StringBuilder();
         format.append("LIST_WITH_MAP [bitmask={0}");
         format.append(", field1={1}");
-        if ((bitmask & MASK_MAP) != 0L)
+        if ((bitmask & MASK_MAP_OF_STRING) != 0L)
         {
-            format.append(", map={2}");
-            map = map();
+            format.append(", mapOfString={2}");
+            mapOfString = mapOfString();
         }
         format.append("]");
-        return MessageFormat.format(format.toString(), String.format("0x%16X", bitmask), field1(), map);
+        return MessageFormat.format(format.toString(), String.format("0x%16X", bitmask), field1(), mapOfString);
     }
 
     public static final class Builder extends Flyweight.Builder<ListWithMapFW>
@@ -210,7 +210,7 @@ public final class ListWithMapFW extends ListFW
         private final VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
 
         private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
-            StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> mapRW =
+            StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> mapOfStringRW =
             new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
                 new TypedefStringFW.Builder(), new TypedefStringFW());
 
@@ -232,19 +232,20 @@ public final class ListWithMapFW extends ListFW
             return this;
         }
 
-        public Builder map(
+        public Builder mapOfString(
             MapFW<VariantEnumKindWithString32FW, TypedefStringFW> entries)
         {
-            assert lastFieldSet < INDEX_MAP : "Field \"map\" cannot be set out of order";
+            assert lastFieldSet < INDEX_MAP_OF_STRING : "Field \"mapOfString\" cannot be set out of order";
             assert lastFieldSet == INDEX_FIELD1 : "Prior required field \"field1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
                 VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
-                    StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> map = mapRW.wrap(b, o, m);
-                entries.forEach(kv -> vv -> map.entry(kv.get(), vv.get()));
-                return map.build().sizeof();
+                    StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> mapOfString =
+                    mapOfStringRW.wrap(b, o, m);
+                entries.forEach(kv -> vv -> mapOfString.entry(kv.get(), vv.get()));
+                return mapOfString.build().sizeof();
             });
-            lastFieldSet = INDEX_MAP;
+            lastFieldSet = INDEX_MAP_OF_STRING;
             return this;
         }
 

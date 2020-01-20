@@ -56,6 +56,9 @@ public final class AstType
     public static final AstType VARIANT_ARRAY32 = new AstType("variantArray32");
 
     public static final AstType MAP = new AstType("map");
+    public static final AstType MAP8 = new AstType("map8");
+    public static final AstType MAP16 = new AstType("map16");
+    public static final AstType MAP32 = new AstType("map32");
 
     private final String name;
     private final int bits;

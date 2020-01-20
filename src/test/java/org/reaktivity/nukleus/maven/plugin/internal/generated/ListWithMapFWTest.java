@@ -28,7 +28,16 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.MapFW;
+import org.reaktivity.reaktor.internal.test.types.String16FW;
+import org.reaktivity.reaktor.internal.test.types.String32FW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithMapFW;
+import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public class ListWithMapFWTest
 {
@@ -125,13 +134,13 @@ public class ListWithMapFWTest
         assertEquals("field1", flyweight.field1().asString());
         assertEquals(6, flyweight.field1().length());
         List<String> mapItems = new ArrayList<>();
-        flyweight.map().forEach(kv -> vv ->
+        flyweight.mapOfString().forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());
         });
-        assertEquals(49, flyweight.map().length());
-        assertEquals(4, flyweight.map().fieldCount());
+        assertEquals(49, flyweight.mapOfString().length());
+        assertEquals(4, flyweight.mapOfString().fieldCount());
         assertEquals(4, mapItems.size());
         assertEquals("entry1Key", mapItems.get(0));
         assertEquals("entry1Value", mapItems.get(1));
@@ -190,7 +199,7 @@ public class ListWithMapFWTest
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .map(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .field1(asStringFW("field1"))
             .build();
@@ -201,9 +210,9 @@ public class ListWithMapFWTest
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .map(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
-            .map(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build();
     }
@@ -219,7 +228,7 @@ public class ListWithMapFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .map(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))));
     }
 
@@ -233,7 +242,7 @@ public class ListWithMapFWTest
 
         final ListWithMapFW listWithMap = flyweightRO.wrap(buffer, 0, limit);
 
-        listWithMap.map();
+        listWithMap.mapOfString();
     }
 
     @Test
@@ -241,7 +250,7 @@ public class ListWithMapFWTest
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .map(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build()
             .limit();
