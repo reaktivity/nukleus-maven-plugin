@@ -155,7 +155,9 @@ scope test
         {
             ONE (1),
             TWO (2),
-            THREE (3)
+            THREE (3),
+            FOUR (4),
+            FIVE (5)
         }
 
         enum EnumWithInt16 (int16)
@@ -347,6 +349,12 @@ scope test
             case TWO: array<uint8, uint8>;
         }
 
+        variant VariantOfInt32 switch (EnumWithInt8) of int32
+        {
+            case FOUR: int32;
+            case FIVE: int8;
+        }
+
 //        variant VariantOfMap switch (EnumWithInt8) of map
 //        {
 //            case ONE: map<uint32>;
@@ -354,13 +362,30 @@ scope test
 //            case THREE: map<uint8>;
 //        }
 
+//        variant AmqpValue switch (AmqpType)
+//        {
+//            case DESCRIBED:
+//                AmqpDescribedValue;
+//            case NULL:
+//                AmqpNull;
+//            case BOOLEAN:
+//            case TRUE:
+//            case FALSE:
+//                AmqpBoolean;
+//            case UBYTE:
+//                AmqpUByte;
+//            case USHORT:
+//                AmqpUShort;
+
 //        variant VariantWithoutOf switch (EnumWithInt8)
 //        {
 //            case ONE:
-//                VariantEnumKindOfInt8;
 //            case TWO:
 //            case THREE:
 //                VariantEnumKindWithString32;
+//            case FOUR:
+//            case Five:
+//                VariantOfInt32;
 //        }
 
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
@@ -423,6 +448,7 @@ scope test
         typedef UnionOctets as TypedefUnion;
         typedef ListWithVariant as TypedefList;
         typedef EnumWithInt8 as TypedefEnum;
+        // typedef VariantOfMap<TypedefString, V> as TypedefMap<V>;
 
         list<VariantOfList> ListWithTypedef
         {
@@ -440,6 +466,20 @@ scope test
 //        {
 //            required VariantEnumKindWithString32 field1;
 //            VariantOfMap<VariantEnumKindWithString32, TypedefString> map;
+//        }
+
+//        list<VariantOfList> ListForAmqpOpen
+//        {
+//            required VariantEnumKindWithString32 containerId;
+//            VariantEnumKindWithString32 hostname;
+//            VariantEnumKindOfUint32 maxFrameSize = 4294967295;
+//            VariantEnumKindOfUint16 channelMax = 65535;
+//            TypedefUint32 idleTimeOut;
+//            VariantOfVariantArray<TypedefString> outgoingLocales;
+//            VariantOfVariantArray<TypedefString> incomingLocales;
+//            VariantOfVariantArray<TypedefString> offeredCapabilities;
+//            VariantOfVariantArray<TypedefString> desiredCapabilities;
+//            TypedefMap<VariantWithoutOf> properties;
 //        }
     }
 }

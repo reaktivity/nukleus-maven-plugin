@@ -22,8 +22,8 @@ import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfInt8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 
 public final class VariantWithoutOfFW extends Flyweight
 {
@@ -37,9 +37,13 @@ public final class VariantWithoutOfFW extends Flyweight
 
     public static final EnumWithInt8 KIND_THREE = EnumWithInt8.THREE;
 
+    public static final EnumWithInt8 KIND_FOUR = EnumWithInt8.FOUR;
+
+    public static final EnumWithInt8 KIND_FIVE = EnumWithInt8.FIVE;
+
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
-    private final VariantEnumKindOfInt8FW variantEnumKindOfInt8RO = new VariantEnumKindOfInt8FW();
+    private final VariantOfInt32FW variantOfInt32RO = new VariantOfInt32FW();
 
     private final VariantEnumKindWithString32FW variantEnumKindWithString32RO = new VariantEnumKindWithString32FW();
 
@@ -48,9 +52,9 @@ public final class VariantWithoutOfFW extends Flyweight
         return enumWithInt8RO.get();
     }
 
-    public long getAsVariantEnumKindOfInt8()
+    public int getAsVariantOfInt32()
     {
-        return variantEnumKindOfInt8RO.get();
+        return variantOfInt32RO.get();
     }
 
     public StringFW getAsVariantEnumKindWithString32()
@@ -76,11 +80,19 @@ public final class VariantWithoutOfFW extends Flyweight
         switch (kind())
         {
         case ONE:
-            variantEnumKindOfInt8RO.tryWrap(buffer, offset, maxLimit);
-            break;
         case TWO:
         case THREE:
-            variantEnumKindWithString32RO.tryWrap(buffer, offset, maxLimit);
+            if (variantEnumKindWithString32RO.tryWrap(buffer, offset, maxLimit) == null)
+            {
+                return null;
+            }
+            break;
+        case FOUR:
+        case FIVE:
+            if (variantOfInt32RO.tryWrap(buffer, offset, maxLimit) == null)
+            {
+                return null;
+            }
             break;
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
@@ -99,11 +111,13 @@ public final class VariantWithoutOfFW extends Flyweight
         switch (kind())
         {
         case ONE:
-            variantEnumKindOfInt8RO.wrap(buffer, offset, maxLimit);
-            break;
         case TWO:
         case THREE:
             variantEnumKindWithString32RO.wrap(buffer, offset, maxLimit);
+            break;
+        case FOUR:
+        case FIVE:
+            variantOfInt32RO.wrap(buffer, offset, maxLimit);
             break;
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
@@ -117,10 +131,12 @@ public final class VariantWithoutOfFW extends Flyweight
         switch (kind())
         {
         case ONE:
-            return variantEnumKindOfInt8RO.limit();
         case TWO:
         case THREE:
             return variantEnumKindWithString32RO.limit();
+        case FOUR:
+        case FIVE:
+            return variantOfInt32RO.limit();
         default:
             return offset();
         }
@@ -132,10 +148,12 @@ public final class VariantWithoutOfFW extends Flyweight
         switch (kind())
         {
         case ONE:
-            return variantEnumKindOfInt8RO.toString();
         case TWO:
         case THREE:
             return variantEnumKindWithString32RO.toString();
+        case FOUR:
+        case FIVE:
+            return variantOfInt32RO.toString();
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
@@ -143,7 +161,7 @@ public final class VariantWithoutOfFW extends Flyweight
 
     public static final class Builder extends Flyweight.Builder<VariantWithoutOfFW>
     {
-        private final VariantEnumKindOfInt8FW.Builder variantEnumKindOfInt8RW = new VariantEnumKindOfInt8FW.Builder();
+        private final VariantOfInt32FW.Builder variantOfInt32RW = new VariantOfInt32FW.Builder();
 
         private final VariantEnumKindWithString32FW.Builder variantEnumKindWithString32RW =
             new VariantEnumKindWithString32FW.Builder();
@@ -155,13 +173,13 @@ public final class VariantWithoutOfFW extends Flyweight
             super(new VariantWithoutOfFW());
         }
 
-        public Builder setAsVariantEnumKindOfUint32(
+        public Builder setAsVariantOfInt32(
             int value)
         {
-            VariantEnumKindOfInt8FW.Builder variantEnumKindOfInt8 = variantEnumKindOfInt8RW.wrap(buffer(), offset(),
+            VariantOfInt32FW.Builder variantOfInt32 = variantOfInt32RW.wrap(buffer(), offset(),
                 maxLimit());
-            variantEnumKindOfInt8.set(value);
-            limit(variantEnumKindOfInt8.build().limit());
+            variantOfInt32.set(value);
+            limit(variantOfInt32.build().limit());
             return this;
         }
 

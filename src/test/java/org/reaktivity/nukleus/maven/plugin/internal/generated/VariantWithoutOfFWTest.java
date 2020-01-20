@@ -19,6 +19,9 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -40,20 +43,93 @@ public class VariantWithoutOfFWTest
     private final VariantWithoutOfFW.Builder flyweightRW = new VariantWithoutOfFW.Builder();
     private final VariantWithoutOfFW flyweightRO = new VariantWithoutOfFW();
     public static final EnumWithInt8 KIND_ONE = EnumWithInt8.ONE;
-    public static final EnumWithInt8 KIND_TWO = EnumWithInt8.TWO;
+    public static final EnumWithInt8 KIND_FOUR = EnumWithInt8.FOUR;
+    public static final EnumWithInt8 KIND_FIVE = EnumWithInt8.FIVE;
+
+    static int setStringValue(
+        MutableDirectBuffer buffer,
+        final int offset)
+    {
+        String value = "stringValue";
+        buffer.putByte(offset, KIND_ONE.value());
+        int offsetValueLength = offset + Byte.BYTES;
+        buffer.putByte(offsetValueLength, (byte) value.length());
+        int offsetValue = offsetValueLength + Byte.BYTES;
+        buffer.putBytes(offsetValue, value.getBytes());
+        return Byte.BYTES + Byte.BYTES + value.length();
+    }
 
     @Test
-    public void shouldSetAsVariantEnumKindOfUint32()
+    public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
+    {
+        int length = setStringValue(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
+        {
+            try
+            {
+                flyweightRO.wrap(buffer, 10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch (Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
+    {
+        int length = setStringValue(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
+        {
+            assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
+        }
+    }
+
+    @Test
+    public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
+    {
+        int length = setStringValue(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + length));
+    }
+
+    @Test
+    public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
+    {
+        int length = setStringValue(buffer, 10);
+        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + length));
+    }
+
+    @Test
+    public void shouldSetAsVariantOfInt32WithInt8()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsVariantEnumKindOfUint32(100)
+            .setAsVariantOfInt32(100)
             .build()
             .limit();
 
         VariantWithoutOfFW variantWithoutOf = flyweightRO.wrap(buffer, 0, limit);
 
-        assertEquals(100, variantWithoutOf.getAsVariantEnumKindOfInt8());
-        assertEquals(KIND_ONE, variantWithoutOf.kind());
+        assertEquals(100, variantWithoutOf.getAsVariantOfInt32());
+        assertEquals(KIND_FIVE, variantWithoutOf.kind());
+    }
+
+    @Test
+    public void shouldSetAsVariantOfInt32WithInt32()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .setAsVariantOfInt32(100000)
+            .build()
+            .limit();
+
+        VariantWithoutOfFW variantWithoutOf = flyweightRO.wrap(buffer, 0, limit);
+
+        assertEquals(100000, variantWithoutOf.getAsVariantOfInt32());
+        assertEquals(KIND_FOUR, variantWithoutOf.kind());
     }
 
     @Test
@@ -68,7 +144,7 @@ public class VariantWithoutOfFWTest
 
         assertNotNull(variantWithoutOf.getAsVariantEnumKindWithString32());
         assertEquals("stringValue", variantWithoutOf.getAsVariantEnumKindWithString32().asString());
-        assertEquals(KIND_TWO, variantWithoutOf.kind());
+        assertEquals(KIND_ONE, variantWithoutOf.kind());
     }
 
     private static StringFW asStringFW(
