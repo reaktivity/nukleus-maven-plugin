@@ -76,7 +76,8 @@ public final class Map16FW<KV extends VariantFW<?, ?>, VV extends VariantFW<?, ?
         Function<KV, Consumer<VV>> consumer)
     {
         int offset = offset() + FIELDS_OFFSET;
-        for (int i = 0; i < fieldCount() / 2; i++)
+        int fieldCount = fieldCount();
+        for (int i = 0; i < fieldCount; i += 2)
         {
             keyRO.wrap(buffer(), offset, limit());
             valueRO.wrap(buffer(), keyRO.limit(), limit());
