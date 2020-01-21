@@ -28,11 +28,16 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.MapFW;
 import org.reaktivity.reaktor.internal.test.types.String16FW;
 import org.reaktivity.reaktor.internal.test.types.String32FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithMapFW;
+import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public class ListWithMapFWTest
 {
@@ -129,13 +134,13 @@ public class ListWithMapFWTest
         assertEquals("field1", flyweight.field1().asString());
         assertEquals(6, flyweight.field1().length());
         List<String> mapItems = new ArrayList<>();
-        flyweight.map().forEach(kv -> vv ->
+        flyweight.mapOfString().forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());
         });
-        assertEquals(49, flyweight.map().length());
-        assertEquals(4, flyweight.map().fieldCount());
+        assertEquals(49, flyweight.mapOfString().length());
+        assertEquals(4, flyweight.mapOfString().fieldCount());
         assertEquals(4, mapItems.size());
         assertEquals("entry1Key", mapItems.get(0));
         assertEquals("entry1Value", mapItems.get(1));
@@ -194,8 +199,8 @@ public class ListWithMapFWTest
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .map(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
-                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value")))
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .field1(asStringFW("field1"))
             .build();
     }
@@ -205,10 +210,10 @@ public class ListWithMapFWTest
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .map(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
-                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value")))
-            .map(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
-                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value")))
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build();
     }
 
@@ -223,8 +228,8 @@ public class ListWithMapFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .map(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
-                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value")));
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))));
     }
 
     @Test(expected = AssertionError.class)
@@ -237,7 +242,7 @@ public class ListWithMapFWTest
 
         final ListWithMapFW listWithMap = flyweightRO.wrap(buffer, 0, limit);
 
-        listWithMap.map();
+        listWithMap.mapOfString();
     }
 
     @Test
@@ -245,8 +250,8 @@ public class ListWithMapFWTest
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .map(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
-                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value")))
+            .mapOfString(asMapFW(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+                Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build()
             .limit();
 
@@ -276,5 +281,23 @@ public class ListWithMapFWTest
         default:
             throw new IllegalArgumentException("Illegal value: " + value);
         }
+    }
+
+    private static MapFW<VariantEnumKindWithString32FW, TypedefStringFW> asMapFW(
+        List<StringFW> keys,
+        List<StringFW> values)
+    {
+        VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
+            StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> variantOfMapRW =
+            new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
+                new TypedefStringFW.Builder(), new TypedefStringFW());
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+        variantOfMapRW.wrap(buffer, 0, buffer.capacity());
+        for (int i = 0; i < keys.size(); i++)
+        {
+            variantOfMapRW.entry(keys.get(i), values.get(i));
+        }
+        VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMapRO = variantOfMapRW.build();
+        return variantOfMapRO.get();
     }
 }

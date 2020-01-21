@@ -39,6 +39,10 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.List0FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.List32FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.List8FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Map16FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Map32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Map8FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.MapFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.OctetsFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String16FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String32FlyweightGenerator;
@@ -124,6 +128,7 @@ public class Generator
         ClassName listType = resolver.resolveClass(AstType.LIST);
         ClassName variantType = resolver.resolveClass(AstType.VARIANT);
         ClassName variantArrayType = resolver.resolveClass(AstType.VARIANT_ARRAY);
+        ClassName mapType = resolver.resolveClass(AstType.MAP);
 
         typeSpecs.add(new FlyweightGenerator(flyweightType));
         typeSpecs.add(new OctetsFlyweightGenerator(flyweightType));
@@ -139,6 +144,10 @@ public class Generator
         typeSpecs.add(new List32FWGenerator(listType));
         typeSpecs.add(new List8FWGenerator(listType));
         typeSpecs.add(new List0FWGenerator(listType));
+        typeSpecs.add(new MapFlyweightGenerator(flyweightType, variantType));
+        typeSpecs.add(new Map8FlyweightGenerator(flyweightType, mapType, variantType));
+        typeSpecs.add(new Map16FlyweightGenerator(flyweightType, mapType, variantType));
+        typeSpecs.add(new Map32FlyweightGenerator(flyweightType, mapType, variantType));
         typeSpecs.add(new VariantArrayFWGenerator(flyweightType, variantType));
         typeSpecs.add(new VariantArray8FWGenerator(flyweightType, variantArrayType, variantType));
         typeSpecs.add(new VariantArray16FWGenerator(flyweightType, variantArrayType, variantType));

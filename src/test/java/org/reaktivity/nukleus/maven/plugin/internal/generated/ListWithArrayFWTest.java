@@ -36,6 +36,7 @@ import org.reaktivity.reaktor.internal.test.types.VariantArrayFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithArrayFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfVariantArrayFW;
 
 public class ListWithArrayFWTest
 {
@@ -182,7 +183,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB")))
+            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
             .field1(asStringFW("field1"))
             .build();
     }
@@ -207,7 +208,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB")));
+            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))));
     }
 
     @Test(expected = AssertionError.class)
@@ -244,7 +245,7 @@ public class ListWithArrayFWTest
     {
         int limit = listWithArrayRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .arrayOfString(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB")))
+            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
             .build()
             .limit();
 
@@ -278,5 +279,23 @@ public class ListWithArrayFWTest
         default:
             throw new IllegalArgumentException("Illegal value: " + value);
         }
+    }
+
+    private static VariantArrayFW<VariantEnumKindWithString32FW> asVariantArrayFW(
+        List<StringFW> values)
+    {
+        VariantOfVariantArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
+            StringFW> variantOfVariantArrayRW =
+            new VariantOfVariantArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
+                new VariantEnumKindWithString32FW());
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
+        variantOfVariantArrayRW.wrap(buffer, 0, buffer.capacity());
+        for (StringFW value : values)
+        {
+            variantOfVariantArrayRW.item(value);
+        }
+        VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfVariantArrayRO =
+            variantOfVariantArrayRW.build();
+        return variantOfVariantArrayRO.get();
     }
 }

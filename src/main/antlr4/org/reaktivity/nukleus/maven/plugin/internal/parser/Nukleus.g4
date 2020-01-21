@@ -288,6 +288,7 @@ list_member
    | KW_REQUIRED? varint_array_member SEMICOLON
    | KW_REQUIRED? array_member SEMICOLON
    | KW_REQUIRED? variant_array SEMICOLON
+   | KW_REQUIRED? variant_map SEMICOLON
    ;
 
 non_primitive_member_with_default
@@ -308,6 +309,10 @@ unbounded_octets_member
 
 variant_array
    : arraytype=declarator LEFT_ANG_BRACKET itemtype=declarator RIGHT_ANG_BRACKET name=declarator
+   ;
+
+variant_map
+   : maptype=declarator LEFT_ANG_BRACKET keytype=declarator COMMA valuetype=declarator RIGHT_ANG_BRACKET name=declarator
    ;
 
 union_type
@@ -337,6 +342,7 @@ variant_of_type
    | string_type
    | list_keyword
    | array_keyword
+   | map_type
    ;
 
 variant_case_list
@@ -360,6 +366,7 @@ variant_member
    | variant_int_literal
    | variant_list_member
    | variant_array_member
+   | variant_map_member
    ;
 
 variant_list_member
@@ -374,6 +381,12 @@ variant_array_member
    | KW_ARRAY LEFT_ANG_BRACKET uint8_type COMMA uint8_type RIGHT_ANG_BRACKET
    ;
 
+variant_map_member
+   : KW_MAP LEFT_ANG_BRACKET uint32_type RIGHT_ANG_BRACKET
+   | KW_MAP LEFT_ANG_BRACKET uint16_type RIGHT_ANG_BRACKET
+   | KW_MAP LEFT_ANG_BRACKET uint8_type RIGHT_ANG_BRACKET
+   ;
+
 typedef_type
    : KW_TYPEDEF ID KW_AS ID SEMICOLON
    ;
@@ -381,6 +394,10 @@ typedef_type
 array_type
    : simple_type_spec LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
    ;
+
+map_type
+    : KW_MAP
+    ;
 
 string_type
    : KW_STRING
@@ -586,6 +603,11 @@ KW_LIST
 
 KW_ARRAY
    : 'array'
+   ;
+
+
+KW_MAP
+   : 'map'
    ;
 
 

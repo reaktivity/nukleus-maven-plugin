@@ -304,6 +304,12 @@ scope test
             case THREE: int32;
         }
 
+        variant VariantOfInt32 switch (EnumWithInt8) of int32
+        {
+            case FOUR: int32;
+            case FIVE: int8;
+        }
+
         variant VariantEnumKindOfUint8 switch (EnumWithUint8) of uint8
         {
             case ICHI: uint8;
@@ -349,33 +355,12 @@ scope test
             case TWO: array<uint8, uint8>;
         }
 
-        variant VariantOfInt32 switch (EnumWithInt8) of int32
+        variant VariantOfMap switch (EnumWithInt8) of map
         {
-            case FOUR: int32;
-            case FIVE: int8;
+            case ONE: map<uint32>;
+            case TWO: map<uint16>;
+            case THREE: map<uint8>;
         }
-
-//        variant VariantOfMap switch (EnumWithInt8) of map
-//        {
-//            case ONE: map<uint32>;
-//            case TWO: map<uint16>;
-//            case THREE: map<uint8>;
-//        }
-
-//        variant AmqpValue switch (AmqpType)
-//        {
-//            case DESCRIBED:
-//                AmqpDescribedValue;
-//            case NULL:
-//                AmqpNull;
-//            case BOOLEAN:
-//            case TRUE:
-//            case FALSE:
-//                AmqpBoolean;
-//            case UBYTE:
-//                AmqpUByte;
-//            case USHORT:
-//                AmqpUShort;
 
 //        variant VariantWithoutOf switch (EnumWithInt8)
 //        {
@@ -461,25 +446,11 @@ scope test
             required VariantEnumKindWithString32 field1;
             VariantOfVariantArray<VariantEnumKindWithString32> arrayOfString;
         }
-//
-//        list<VariantOfList> ListWithMap
-//        {
-//            required VariantEnumKindWithString32 field1;
-//            VariantOfMap<VariantEnumKindWithString32, TypedefString> map;
-//        }
 
-//        list<VariantOfList> ListForAmqpOpen
-//        {
-//            required VariantEnumKindWithString32 containerId;
-//            VariantEnumKindWithString32 hostname;
-//            VariantEnumKindOfUint32 maxFrameSize = 4294967295;
-//            VariantEnumKindOfUint16 channelMax = 65535;
-//            TypedefUint32 idleTimeOut;
-//            VariantOfVariantArray<TypedefString> outgoingLocales;
-//            VariantOfVariantArray<TypedefString> incomingLocales;
-//            VariantOfVariantArray<TypedefString> offeredCapabilities;
-//            VariantOfVariantArray<TypedefString> desiredCapabilities;
-//            TypedefMap<VariantWithoutOf> properties;
-//        }
+        list<VariantOfList> ListWithMap
+        {
+            required VariantEnumKindWithString32 field1;
+            VariantOfMap<VariantEnumKindWithString32, TypedefString> mapOfString;
+        }
     }
 }

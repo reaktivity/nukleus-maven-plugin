@@ -27,6 +27,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -36,24 +37,27 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
-public final class VariantArrayFWGenerator extends ClassSpecGenerator
+public final class MapFlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
+    private final TypeVariableName typeVarKV;
+    private final TypeVariableName typeVarVV;
     private final BuilderClassBuilder builderClassBuilder;
-    private final TypeVariableName typeVarV;
 
-    public VariantArrayFWGenerator(
+    public MapFlyweightGenerator(
         ClassName flyweightType,
         ClassName variantType)
     {
-        super(flyweightType.peerClass("VariantArrayFW"));
+        super(flyweightType.peerClass("MapFW"));
         TypeName anyType = TypeVariableName.get("?");
         TypeName parameterizedVariantType = ParameterizedTypeName.get(variantType, anyType, anyType);
-        this.typeVarV = TypeVariableName.get("V", parameterizedVariantType);
+        this.typeVarKV = TypeVariableName.get("KV", parameterizedVariantType);
+        this.typeVarVV = TypeVariableName.get("VV", parameterizedVariantType);
         this.classBuilder = classBuilder(thisName)
             .superclass(flyweightType)
             .addModifiers(PUBLIC, ABSTRACT)
-            .addTypeVariable(typeVarV);
+            .addTypeVariable(typeVarKV)
+            .addTypeVariable(typeVarVV);
 
         this.builderClassBuilder = new BuilderClassBuilder(thisName, variantType, flyweightType);
     }
@@ -65,7 +69,7 @@ public final class VariantArrayFWGenerator extends ClassSpecGenerator
             .addMethod(lengthMethod())
             .addMethod(fieldCountMethod())
             .addMethod(forEachMethod())
-            .addMethod(itemsMethod())
+            .addMethod(entriesMethod())
             .addType(builderClassBuilder.build())
             .build();
     }
@@ -88,17 +92,18 @@ public final class VariantArrayFWGenerator extends ClassSpecGenerator
 
     private MethodSpec forEachMethod()
     {
-        TypeName consumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
+        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarVV);
+        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarKV,
+            parameterizedConsumerType);
         return methodBuilder("forEach")
             .addModifiers(PUBLIC, ABSTRACT)
-            .returns(void.class)
-            .addParameter(consumerType, "consumer")
+            .addParameter(parameterizedFunctionType, "consumer")
             .build();
     }
 
-    private MethodSpec itemsMethod()
+    private MethodSpec entriesMethod()
     {
-        return methodBuilder("items")
+        return methodBuilder("entries")
             .addModifiers(PUBLIC, ABSTRACT)
             .returns(DIRECT_BUFFER_TYPE)
             .build();
@@ -107,61 +112,65 @@ public final class VariantArrayFWGenerator extends ClassSpecGenerator
     private static final class BuilderClassBuilder
     {
         private final TypeSpec.Builder classBuilder;
-        private final TypeVariableName typeVarB;
-        private final TypeVariableName typeVarO;
         private final TypeVariableName typeVarT;
+        private final TypeVariableName typeVarKB;
+        private final TypeVariableName typeVarKV;
+        private final TypeVariableName typeVarKK;
+        private final TypeVariableName typeVarKO;
+        private final TypeVariableName typeVarVB;
+        private final TypeVariableName typeVarVV;
+        private final TypeVariableName typeVarVK;
+        private final TypeVariableName typeVarVO;
         private final TypeName parameterizedBuilderType;
 
         private BuilderClassBuilder(
-            ClassName variantArrayType,
+            ClassName mapType,
             ClassName variantType,
             ClassName flyweightType)
         {
-            this.typeVarO = TypeVariableName.get("O", flyweightType);
-            TypeVariableName typeVarK = TypeVariableName.get("K");
-            TypeVariableName typeVarV = TypeVariableName.get("V", ParameterizedTypeName.get(variantType, typeVarK, typeVarO));
-            this.typeVarT = TypeVariableName.get("T", ParameterizedTypeName.get(variantArrayType, typeVarV));
-
-            ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
             ClassName variantBuilderType = variantType.nestedClass("Builder");
-            this.typeVarB = TypeVariableName.get("B",
-                ParameterizedTypeName.get(variantBuilderType, typeVarV, typeVarK, typeVarO));
+            ClassName builderType = mapType.nestedClass("Builder");
+            ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
 
-            ClassName builderType = variantArrayType.nestedClass("Builder");
-            this.parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarB, typeVarV, typeVarK,
-                typeVarO);
+            this.typeVarKK = TypeVariableName.get("KK");
+            this.typeVarKO = TypeVariableName.get("KO", flyweightType);
+            this.typeVarKV = TypeVariableName.get("KV", ParameterizedTypeName.get(variantType, typeVarKK, typeVarKO));
+            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(variantBuilderType, typeVarKV, typeVarKK,
+                typeVarKO));
+            this.typeVarVK = TypeVariableName.get("VK");
+            this.typeVarVO = TypeVariableName.get("VO", flyweightType);
+            this.typeVarVV = TypeVariableName.get("VV", ParameterizedTypeName.get(variantType, typeVarVK, typeVarVO));
+            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(variantBuilderType, typeVarVV, typeVarVK,
+                typeVarVO));
+            this.typeVarT = TypeVariableName.get("T", mapType);
+            this.parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarKB, typeVarKV, typeVarKK,
+                typeVarKO, typeVarVB, typeVarVV, typeVarVK, typeVarVO);
+
             this.classBuilder = classBuilder(builderType.simpleName())
                 .addModifiers(PUBLIC, ABSTRACT, STATIC)
                 .superclass(ParameterizedTypeName.get(flyweightBuilderType, typeVarT))
                 .addTypeVariable(typeVarT)
-                .addTypeVariable(typeVarB)
-                .addTypeVariable(typeVarV)
-                .addTypeVariable(typeVarK)
-                .addTypeVariable(typeVarO);
+                .addTypeVariable(typeVarKB)
+                .addTypeVariable(typeVarKV)
+                .addTypeVariable(typeVarKK)
+                .addTypeVariable(typeVarKO)
+                .addTypeVariable(typeVarVB)
+                .addTypeVariable(typeVarVV)
+                .addTypeVariable(typeVarVK)
+                .addTypeVariable(typeVarVO);
         }
 
         public TypeSpec build()
         {
             return classBuilder
-                .addField(itemRWField())
-                .addField(maxLengthField())
                 .addField(fieldCountField())
+                .addField(keyRWField())
+                .addField(valueRWField())
                 .addMethod(constructor())
-                .addMethod(itemMethod())
-                .addMethod(itemsMethod())
+                .addMethod(entryMethod())
+                .addMethod(entriesMethod())
                 .addMethod(fieldCountMethod())
-                .addMethod(relayoutMethod())
                 .build();
-        }
-
-        private FieldSpec itemRWField()
-        {
-            return FieldSpec.builder(typeVarB, "itemRW", PROTECTED, FINAL).build();
-        }
-
-        private FieldSpec maxLengthField()
-        {
-            return FieldSpec.builder(int.class, "maxLength", PRIVATE).build();
         }
 
         private FieldSpec fieldCountField()
@@ -169,34 +178,53 @@ public final class VariantArrayFWGenerator extends ClassSpecGenerator
             return FieldSpec.builder(int.class, "fieldCount", PRIVATE).build();
         }
 
+        private FieldSpec keyRWField()
+        {
+            return FieldSpec.builder(typeVarKB, "keyRW", PROTECTED, FINAL).build();
+        }
+
+        private FieldSpec valueRWField()
+        {
+            return FieldSpec.builder(typeVarVB, "valueRW", PROTECTED, FINAL).build();
+        }
+
         private MethodSpec constructor()
         {
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addParameter(typeVarT, "flyweight")
-                .addParameter(typeVarB, "itemRW")
+                .addParameter(typeVarKB, "keyRW")
+                .addParameter(typeVarVB, "valueRW")
                 .addStatement("super(flyweight)")
-                .addStatement("this.itemRW = itemRW")
+                .addStatement("this.keyRW = keyRW")
+                .addStatement("this.valueRW = valueRW")
                 .build();
         }
 
-        private MethodSpec itemMethod()
+        private MethodSpec entryMethod()
         {
-            return methodBuilder("item")
+            return methodBuilder("entry")
                 .addModifiers(PUBLIC)
-                .addParameter(typeVarO, "item")
                 .returns(parameterizedBuilderType)
-                .addStatement("maxLength = Math.max(maxLength, item.sizeof())")
-                .addStatement("checkLimit(itemRW.limit(), maxLimit())")
-                .addStatement("limit(itemRW.limit())")
+                .addParameter(typeVarKO, "key")
+                .addParameter(typeVarVO, "value")
+                .addStatement("keyRW.wrap(buffer(), limit(), maxLimit())")
+                .addStatement("keyRW.set(key)")
+                .addStatement("checkLimit(keyRW.limit(), maxLimit())")
+                .addStatement("limit(keyRW.limit())")
+                .addStatement("fieldCount++")
+                .addStatement("valueRW.wrap(buffer(), limit(), maxLimit())")
+                .addStatement("valueRW.set(value)")
+                .addStatement("checkLimit(valueRW.limit(), maxLimit())")
+                .addStatement("limit(valueRW.limit())")
                 .addStatement("fieldCount++")
                 .addStatement("return this")
                 .build();
         }
 
-        private MethodSpec itemsMethod()
+        private MethodSpec entriesMethod()
         {
-            return methodBuilder("items")
+            return methodBuilder("entries")
                 .addModifiers(PUBLIC)
                 .returns(parameterizedBuilderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
@@ -214,29 +242,6 @@ public final class VariantArrayFWGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .returns(int.class)
                 .addStatement("return fieldCount")
-                .build();
-        }
-
-        private MethodSpec relayoutMethod()
-        {
-            return methodBuilder("relayout")
-                .addModifiers(PROTECTED)
-                .returns(void.class)
-                .beginControlFlow("if (maxLength > 0 && !itemRW.maxKind().equals(itemRW.kindFromLength(maxLength)))")
-                .addStatement("K kind = itemRW.kindFromLength(maxLength)")
-                .addStatement("int originalPadding = 0")
-                .addStatement("int rearrangePadding = 0")
-                .addStatement("int originalLimit = itemRW.limit()")
-                .beginControlFlow("for (int i = 0; i < fieldCount; i++)")
-                .addStatement("V itemRO = itemRW.build(originalLimit)")
-                .addStatement("O originalItem = itemRO.getAs(itemRW.maxKind(), originalPadding)")
-                .addStatement("originalPadding += originalItem.sizeof()")
-                .addStatement("itemRW.setAs(kind, originalItem, rearrangePadding)")
-                .addStatement("O rearrangedItem = itemRO.getAs(kind, rearrangePadding)")
-                .addStatement("rearrangePadding += rearrangedItem.sizeof()")
-                .endControlFlow()
-                .addStatement("limit(itemRW.limit())")
-                .endControlFlow()
                 .build();
         }
     }
