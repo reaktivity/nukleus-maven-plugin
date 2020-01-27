@@ -433,7 +433,7 @@ scope test
         typedef UnionOctets as TypedefUnion;
         typedef ListWithVariant as TypedefList;
         typedef EnumWithInt8 as TypedefEnum;
-        // typedef VariantOfMap<TypedefString, V> as TypedefMap<V>;
+        // typedef VariantOfMap<VariantEnumKindWithString32, V> as TypedefMap<V>;
 
         list<VariantOfList> ListWithTypedef
         {
@@ -452,5 +452,10 @@ scope test
             required VariantEnumKindWithString32 field1;
             VariantOfMap<VariantEnumKindWithString32, TypedefString> mapOfString;
         }
+
+//        list<VariantOfList> ListWithTypedefMap
+//        {
+//            TypedefMap<VariantWithoutOf> field1;
+//        }
     }
 }

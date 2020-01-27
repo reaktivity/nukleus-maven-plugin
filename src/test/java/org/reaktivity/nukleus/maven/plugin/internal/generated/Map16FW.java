@@ -86,7 +86,7 @@ public final class Map16FW<KV extends Flyweight, VV extends Flyweight> extends M
     }
 
     @Override
-    public Map16FW tryWrap(
+    public Map16FW<KV, VV> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -105,7 +105,7 @@ public final class Map16FW<KV extends Flyweight, VV extends Flyweight> extends M
     }
 
     @Override
-    public Map16FW wrap(
+    public Map16FW<KV, VV> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)

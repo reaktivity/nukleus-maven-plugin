@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +29,9 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.Map8FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class Map8FWTest
 {
@@ -45,9 +43,8 @@ public class Map8FWTest
         }
     };
 
-    private final Map8FW.Builder<TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW,
-        VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
-        flyweightRW = new Map8FW.Builder<>(new TypedefStringFW.Builder(), new TypedefStringFW(),
+    private final Map8FW.Builder<TypedefStringFW.Builder, TypedefStringFW, VariantEnumKindWithString32FW.Builder,
+        VariantEnumKindWithString32FW> flyweightRW = new Map8FW.Builder<>(new TypedefStringFW.Builder(), new TypedefStringFW(),
         new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW());
 
     private final Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweightRO =
@@ -122,51 +119,60 @@ public class Map8FWTest
         assertEquals(offset + 50, flyweight.limit());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int length = 49;
-        setAllItems(buffer, offset);
-        for (int maxLimit = offset; maxLimit <= length; maxLimit++)
+        int length = setAllItems(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
-            flyweightRO.wrap(buffer, offset, maxLimit);
+            try
+            {
+                flyweightRO.wrap(buffer, 10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch (Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
         }
     }
 
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int length = 49;
-        setAllItems(buffer, offset);
-        for (int maxLimit = offset; maxLimit <= length; maxLimit++)
+        int length = setAllItems(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
-            assertNull(flyweightRO.tryWrap(buffer, offset, maxLimit));
+            assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int size = setAllItems(buffer, offset);
-        Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        int length = setAllItems(buffer, 10);
 
-        assertSame(flyweightRO, map);
-        assertAllTestValuesRead(map, offset);
+        final Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map8 =
+            flyweightRO.wrap(buffer, 10, 10 + length);
+
+        assertSame(flyweightRO, map8);
+        assertAllTestValuesRead(map8, 10);
     }
 
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int size = setAllItems(buffer, offset);
-        Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+        int length = setAllItems(buffer, 10);
 
-        assertNotNull(map);
-        assertSame(flyweightRO, map);
-        assertAllTestValuesRead(map, offset);
+        final Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map8 =
+            flyweightRO.tryWrap(buffer, 10, 10 + length);
+
+        assertNotNull(map8);
+        assertSame(flyweightRO, map8);
+        assertAllTestValuesRead(map8, 10);
     }
 
     @Test
@@ -204,8 +210,8 @@ public class Map8FWTest
     public void shouldSetKeyValueEntrys() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .entry(asStringFW("entry1Key"), asStringFW("entry1Value"))
-            .entry(asStringFW("entry2Key"), asStringFW("entry2Value"))
+            .entry(k -> k.set(asStringFW("entry1Key")), v -> v.set(asStringFW("entry1Value")))
+            .entry(k -> k.set(asStringFW("entry2Key")), v -> v.set(asStringFW("entry2Value")))
             .build()
             .limit();
 

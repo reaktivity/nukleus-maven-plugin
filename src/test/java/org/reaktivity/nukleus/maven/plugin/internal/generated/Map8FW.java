@@ -86,7 +86,7 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
     }
 
     @Override
-    public Map8FW tryWrap(
+    public Map8FW<KV, VV> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -105,7 +105,7 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
     }
 
     @Override
-    public Map8FW wrap(
+    public Map8FW<KV, VV> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)

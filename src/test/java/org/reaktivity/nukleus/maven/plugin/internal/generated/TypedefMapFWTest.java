@@ -33,7 +33,7 @@ import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 
-public class Map32FWTest
+public class TypedefMapFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -43,30 +43,32 @@ public class Map32FWTest
         }
     };
 
-    private final Map32FW.Builder<TypedefStringFW.Builder, TypedefStringFW, VariantEnumKindWithString32FW.Builder,
-        VariantEnumKindWithString32FW> flyweightRW = new Map32FW.Builder<>(new TypedefStringFW.Builder(), new TypedefStringFW(),
-        new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW());
+    private final TypedefMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW> flyweightRW =
+        new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
+            new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW());
+    private final TypedefMapFW<VariantEnumKindWithString32FW> flyweightRO =
+        new TypedefMapFW<>(new VariantEnumKindWithString32FW(), new VariantEnumKindWithString32FW());
+    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
+    private final int kindSize = Byte.BYTES;
+    private final int lengthSize = Byte.BYTES;
+    private final int fieldCountSize = Byte.BYTES;
 
-    private final Map32FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweightRO =
-        new Map32FW<>(new TypedefStringFW(), new VariantEnumKindWithString32FW());
-
-    private final int lengthSize = Integer.BYTES;
-    private final int fieldCountSize = Integer.BYTES;
-
-    private int setAllItems(
+    private int setTwoEntries(
         MutableDirectBuffer buffer,
         int offset)
     {
-        int length = 52;
+        int length = 49;
         int fieldCount = 4;
         String entry1Key = "entry1Key";
         String entry1Value = "entry1Value";
         String entry2Key = "entry2Key";
         String entry2Value = "entry2Value";
 
-        buffer.putInt(offset, length);
-        int offsetFieldCount = offset + lengthSize;
-        buffer.putInt(offsetFieldCount, fieldCount);
+        buffer.putByte(offset, KIND_MAP8.value());
+        int offsetLength = offset + kindSize;
+        buffer.putByte(offsetLength, (byte) length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putByte(offsetFieldCount, (byte) fieldCount);
 
         int offsetMapEntry1KeyKind = offsetFieldCount + fieldCountSize;
         buffer.putByte(offsetMapEntry1KeyKind, EnumWithInt8.ONE.value());
@@ -96,15 +98,15 @@ public class Map32FWTest
         int offsetEntry2Value = offsetEntry2ValueLength + Byte.BYTES;
         buffer.putBytes(offsetEntry2Value, entry2Value.getBytes());
 
-        return length + lengthSize;
+        return length + kindSize + lengthSize;
     }
 
     static void assertAllTestValuesRead(
-        Map32FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweight,
+        TypedefMapFW<VariantEnumKindWithString32FW> flyweight,
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.forEach(kv -> vv ->
+        flyweight.get().forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());
@@ -114,15 +116,16 @@ public class Map32FWTest
         assertEquals("entry1Value", mapItems.get(1));
         assertEquals("entry2Key", mapItems.get(2));
         assertEquals("entry2Value", mapItems.get(3));
-        assertEquals(52, flyweight.length());
-        assertEquals(4, flyweight.fieldCount());
-        assertEquals(offset + 56, flyweight.limit());
+        assertEquals(49, flyweight.get().length());
+        assertEquals(4, flyweight.get().fieldCount());
+        assertEquals(offset + 51, flyweight.limit());
+        assertEquals(KIND_MAP8, flyweight.kind());
     }
 
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int length = setAllItems(buffer, 10);
+        int length = setTwoEntries(buffer, 10);
         for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             try
@@ -143,7 +146,7 @@ public class Map32FWTest
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int length = setAllItems(buffer, 10);
+        int length = setTwoEntries(buffer, 10);
         for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
@@ -153,61 +156,64 @@ public class Map32FWTest
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int length = setAllItems(buffer, 10);
+        int length = setTwoEntries(buffer, 10);
 
-        final Map32FW<TypedefStringFW, VariantEnumKindWithString32FW> map32 =
-            flyweightRO.wrap(buffer, 10, 10 + length);
+        final TypedefMapFW<VariantEnumKindWithString32FW> variantOfMap = flyweightRO.wrap(buffer, 10, 10 + length);
 
-        assertSame(flyweightRO, map32);
-        assertAllTestValuesRead(map32, 10);
+        assertSame(flyweightRO, variantOfMap);
+        assertAllTestValuesRead(variantOfMap, 10);
     }
 
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int length = setAllItems(buffer, 10);
+        int length = setTwoEntries(buffer, 10);
 
-        final Map32FW<TypedefStringFW, VariantEnumKindWithString32FW> map32 =
+        final TypedefMapFW<VariantEnumKindWithString32FW> variantOfMap =
             flyweightRO.tryWrap(buffer, 10, 10 + length);
 
-        assertNotNull(map32);
-        assertSame(flyweightRO, map32);
-        assertAllTestValuesRead(map32, 10);
+        assertNotNull(variantOfMap);
+        assertSame(flyweightRO, variantOfMap);
+        assertAllTestValuesRead(variantOfMap, 10);
     }
 
     @Test
     public void shouldWrapAndReadItems() throws Exception
     {
         final int offset = 10;
-        int size = setAllItems(buffer, offset);
-        Map32FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals(offset + size, map.limit());
+        int size = setTwoEntries(buffer, offset);
+        final TypedefMapFW<VariantEnumKindWithString32FW> variantOfMap =
+            flyweightRO.wrap(buffer, offset, buffer.capacity());
+        assertEquals(offset + size, variantOfMap.limit());
 
-        assertAllTestValuesRead(map, offset);
+        assertAllTestValuesRead(variantOfMap, offset);
     }
 
     @Test
-    public void shouldReadEmptyMap() throws Exception
+    public void shouldReadEmptyList() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .build()
             .limit();
 
-        final Map32FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer,  0,  limit);
+        final TypedefMapFW<VariantEnumKindWithString32FW> variantOfMap =
+            flyweightRO.wrap(buffer, 0, limit);
 
         List<String> mapItems = new ArrayList<>();
-        map.forEach(kv -> vv ->
+        variantOfMap.get().forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());
         });
 
-        assertEquals(lengthSize + fieldCountSize, map.limit());
+        assertEquals(3, variantOfMap.limit());
+        assertEquals(0, variantOfMap.get().fieldCount());
+        assertEquals(1, variantOfMap.get().length());
         assertEquals(0, mapItems.size());
     }
 
     @Test
-    public void shouldSetKeyValueEntrys() throws Exception
+    public void shouldSetEntries() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .entry(k -> k.set(asStringFW("entry1Key")), v -> v.set(asStringFW("entry1Value")))
@@ -215,9 +221,10 @@ public class Map32FWTest
             .build()
             .limit();
 
-        final Map32FW map = flyweightRO.wrap(buffer,  0,  limit);
+        final TypedefMapFW<VariantEnumKindWithString32FW> variantOfMap =
+            flyweightRO.wrap(buffer, 0, limit);
 
-        assertAllTestValuesRead(map, 0);
+        assertAllTestValuesRead(variantOfMap, 0);
     }
 
     private static StringFW asStringFW(
@@ -227,3 +234,4 @@ public class Map32FWTest
         return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }
+

@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
@@ -137,6 +138,22 @@ public class VariantWithoutOfFWTest
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .setAsVariantEnumKindWithString32(asStringFW("stringValue"))
+            .build()
+            .limit();
+
+        VariantWithoutOfFW variantWithoutOf = flyweightRO.wrap(buffer, 0, limit);
+
+        assertNotNull(variantWithoutOf.getAsVariantEnumKindWithString32());
+        assertEquals("stringValue", variantWithoutOf.getAsVariantEnumKindWithString32().asString());
+        assertEquals(KIND_ONE, variantWithoutOf.kind());
+    }
+
+    @Test
+    @Ignore
+    public void shouldSetWithString32()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(asStringFW("stringValue"))
             .build()
             .limit();
 

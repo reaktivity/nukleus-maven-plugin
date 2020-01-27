@@ -33,7 +33,6 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public class VariantOfMapFWTest
 {
@@ -45,8 +44,8 @@ public class VariantOfMapFWTest
         }
     };
 
-    private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
-        StringFW, TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW> flyweightRW =
+    private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW,
+        TypedefStringFW.Builder, TypedefStringFW> flyweightRW =
         new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
             new TypedefStringFW.Builder(), new TypedefStringFW());
     private final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> flyweightRO =
@@ -56,7 +55,7 @@ public class VariantOfMapFWTest
     private final int lengthSize = Byte.BYTES;
     private final int fieldCountSize = Byte.BYTES;
 
-    private int setTwoEntris(
+    private int setTwoEntries(
         MutableDirectBuffer buffer,
         int offset)
     {
@@ -73,33 +72,33 @@ public class VariantOfMapFWTest
         int offsetFieldCount = offsetLength + lengthSize;
         buffer.putByte(offsetFieldCount, (byte) fieldCount);
 
-        int offsetMapEntri1KeyKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetMapEntri1KeyKind, EnumWithInt8.ONE.value());
-        int offsetEntri1KeyLength = offsetMapEntri1KeyKind + Byte.BYTES;
-        buffer.putByte(offsetEntri1KeyLength, (byte) entry1Key.length());
-        int offsetEntri1Key = offsetEntri1KeyLength + Byte.BYTES;
-        buffer.putBytes(offsetEntri1Key, entry1Key.getBytes());
+        int offsetMapEntry1KeyKind = offsetFieldCount + fieldCountSize;
+        buffer.putByte(offsetMapEntry1KeyKind, EnumWithInt8.ONE.value());
+        int offsetEntry1KeyLength = offsetMapEntry1KeyKind + Byte.BYTES;
+        buffer.putByte(offsetEntry1KeyLength, (byte) entry1Key.length());
+        int offsetEntry1Key = offsetEntry1KeyLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry1Key, entry1Key.getBytes());
 
-        int offsetMapEntri1ValueKind = offsetEntri1Key + entry1Key.length();
-        buffer.putByte(offsetMapEntri1ValueKind, EnumWithInt8.ONE.value());
-        int offsetEntri1ValueLength = offsetMapEntri1ValueKind + Byte.BYTES;
-        buffer.putByte(offsetEntri1ValueLength, (byte) entry1Value.length());
-        int offsetEntri1Value = offsetEntri1ValueLength + Byte.BYTES;
-        buffer.putBytes(offsetEntri1Value, entry1Value.getBytes());
+        int offsetMapEntry1ValueKind = offsetEntry1Key + entry1Key.length();
+        buffer.putByte(offsetMapEntry1ValueKind, EnumWithInt8.ONE.value());
+        int offsetEntry1ValueLength = offsetMapEntry1ValueKind + Byte.BYTES;
+        buffer.putByte(offsetEntry1ValueLength, (byte) entry1Value.length());
+        int offsetEntry1Value = offsetEntry1ValueLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry1Value, entry1Value.getBytes());
 
-        int offsetMapEntri2KeyKind = offsetEntri1Value + entry1Value.length();
-        buffer.putByte(offsetMapEntri2KeyKind, EnumWithInt8.ONE.value());
-        int offsetEntri2KeyLength = offsetMapEntri2KeyKind + Byte.BYTES;
-        buffer.putByte(offsetEntri2KeyLength, (byte) entry2Key.length());
-        int offsetEntri2Key = offsetEntri2KeyLength + Byte.BYTES;
-        buffer.putBytes(offsetEntri2Key, entry2Key.getBytes());
+        int offsetMapEntry2KeyKind = offsetEntry1Value + entry1Value.length();
+        buffer.putByte(offsetMapEntry2KeyKind, EnumWithInt8.ONE.value());
+        int offsetEntry2KeyLength = offsetMapEntry2KeyKind + Byte.BYTES;
+        buffer.putByte(offsetEntry2KeyLength, (byte) entry2Key.length());
+        int offsetEntry2Key = offsetEntry2KeyLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry2Key, entry2Key.getBytes());
 
-        int offsetMapEntri2ValueKind = offsetEntri2Key + entry2Key.length();
-        buffer.putByte(offsetMapEntri2ValueKind, EnumWithInt8.ONE.value());
-        int offsetEntri2ValueLength = offsetMapEntri2ValueKind + Byte.BYTES;
-        buffer.putByte(offsetEntri2ValueLength, (byte) entry2Value.length());
-        int offsetEntri2Value = offsetEntri2ValueLength + Byte.BYTES;
-        buffer.putBytes(offsetEntri2Value, entry2Value.getBytes());
+        int offsetMapEntry2ValueKind = offsetEntry2Key + entry2Key.length();
+        buffer.putByte(offsetMapEntry2ValueKind, EnumWithInt8.ONE.value());
+        int offsetEntry2ValueLength = offsetMapEntry2ValueKind + Byte.BYTES;
+        buffer.putByte(offsetEntry2ValueLength, (byte) entry2Value.length());
+        int offsetEntry2Value = offsetEntry2ValueLength + Byte.BYTES;
+        buffer.putBytes(offsetEntry2Value, entry2Value.getBytes());
 
         return length + kindSize + lengthSize;
     }
@@ -130,7 +129,7 @@ public class VariantOfMapFWTest
     {
         final int offset = 10;
         int length = 49;
-        setTwoEntris(buffer, offset);
+        setTwoEntries(buffer, offset);
         for (int maxLimit = offset; maxLimit <= length; maxLimit++)
         {
             flyweightRO.wrap(buffer, offset, maxLimit);
@@ -142,7 +141,7 @@ public class VariantOfMapFWTest
     {
         final int offset = 10;
         int length = 49;
-        setTwoEntris(buffer, offset);
+        setTwoEntries(buffer, offset);
         for (int maxLimit = offset; maxLimit <= length; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer, offset, maxLimit));
@@ -153,7 +152,7 @@ public class VariantOfMapFWTest
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int size = setTwoEntris(buffer, offset);
+        int size = setTwoEntries(buffer, offset);
         final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap = flyweightRO.wrap(buffer, offset,
             buffer.capacity());
 
@@ -165,7 +164,7 @@ public class VariantOfMapFWTest
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int size = setTwoEntris(buffer, offset);
+        int size = setTwoEntries(buffer, offset);
         final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap =
             flyweightRO.tryWrap(buffer, offset, buffer.capacity());
 
@@ -178,7 +177,7 @@ public class VariantOfMapFWTest
     public void shouldWrapAndReadItems() throws Exception
     {
         final int offset = 10;
-        int size = setTwoEntris(buffer, offset);
+        int size = setTwoEntries(buffer, offset);
         final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap =
             flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals(offset + size, variantOfMap.limit());
@@ -210,11 +209,11 @@ public class VariantOfMapFWTest
     }
 
     @Test
-    public void shouldSetEntris() throws Exception
+    public void shouldSetEntries() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .entry(asStringFW("entry1Key"), asStringFW("entry1Value"))
-            .entry(asStringFW("entry2Key"), asStringFW("entry2Value"))
+            .entry(k -> k.set(asStringFW("entry1Key")), v -> v.set(asStringFW("entry1Value")))
+            .entry(k -> k.set(asStringFW("entry2Key")), v -> v.set(asStringFW("entry2Value")))
             .build()
             .limit();
 

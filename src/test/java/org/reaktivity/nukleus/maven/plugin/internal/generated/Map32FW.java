@@ -86,7 +86,7 @@ public final class Map32FW<KV extends Flyweight, VV extends Flyweight> extends M
     }
 
     @Override
-    public Map32FW tryWrap(
+    public Map32FW<KV, VV> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -105,7 +105,7 @@ public final class Map32FW<KV extends Flyweight, VV extends Flyweight> extends M
     }
 
     @Override
-    public Map32FW wrap(
+    public Map32FW<KV, VV> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
