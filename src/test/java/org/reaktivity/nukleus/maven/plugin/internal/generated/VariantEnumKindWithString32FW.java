@@ -23,11 +23,10 @@ import org.reaktivity.reaktor.internal.test.types.String16FW;
 import org.reaktivity.reaktor.internal.test.types.String32FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
-import org.reaktivity.reaktor.internal.test.types.VariantFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8, StringFW>
+public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt8, StringFW>
 {
     public static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
 
@@ -202,7 +201,7 @@ public final class VariantEnumKindWithString32FW extends VariantFW<EnumWithInt8,
         return get().limit();
     }
 
-    public static final class Builder extends VariantFW.Builder<VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
+    public static final class Builder extends VariantOfFW.Builder<VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
     {
         private int size;
 

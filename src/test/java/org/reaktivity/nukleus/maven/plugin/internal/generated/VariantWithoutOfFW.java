@@ -18,15 +18,13 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
-import org.reaktivity.reaktor.internal.test.types.VariantFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 
-public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8, Flyweight>
+public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
 {
     private static final int FIELD_SIZE_KIND = BitUtil.SIZE_OF_BYTE;
 
@@ -51,12 +49,6 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8, Flyweight>
     public EnumWithInt8 kind()
     {
         return enumWithInt8RO.get();
-    }
-
-    @Override
-    public Flyweight get()
-    {
-        throw new UnsupportedOperationException();
     }
 
     public int getAsVariantOfInt32()
@@ -166,7 +158,7 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8, Flyweight>
         }
     }
 
-    public static final class Builder extends VariantFW.Builder<VariantWithoutOfFW, EnumWithInt8, Flyweight>
+    public static final class Builder extends VariantFW.Builder<VariantWithoutOfFW, EnumWithInt8>
     {
         private final VariantOfInt32FW.Builder variantOfInt32RW = new VariantOfInt32FW.Builder();
 
@@ -206,20 +198,6 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8, Flyweight>
         {
             super.wrap(buffer, offset, maxLimit);
             return this;
-        }
-
-        @Override
-        public VariantFW.Builder<VariantWithoutOfFW, EnumWithInt8, Flyweight> kind(
-            EnumWithInt8 value)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public VariantWithoutOfFW build(
-            int maxLimit)
-        {
-            throw new UnsupportedOperationException();
         }
     }
 }
