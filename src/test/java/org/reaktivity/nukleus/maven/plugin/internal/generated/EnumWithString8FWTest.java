@@ -31,7 +31,7 @@ import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithString;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithStringFW;
 
-public class EnumWithStringFWTest
+public class EnumWithString8FWTest
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 

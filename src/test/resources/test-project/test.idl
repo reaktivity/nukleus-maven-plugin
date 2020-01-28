@@ -331,7 +331,7 @@ scope test
             case SAN: 1;
         }
 
-        variant VariantUint8KindWithUint64Type switch (uint8) of uint64
+        variant VariantUint8KindOfUint64 switch (uint8) of uint64
         {
             case 0x80: uint64;
             case 0x53: uint8;

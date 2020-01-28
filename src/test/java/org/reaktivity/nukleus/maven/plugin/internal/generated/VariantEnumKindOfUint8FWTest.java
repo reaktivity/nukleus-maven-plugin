@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_SHORT;
+import static org.agrona.BitUtil.SIZE_OF_BYTE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -26,8 +26,6 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint8;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint8FW;
 
 public class VariantEnumKindOfUint8FWTest
 {
@@ -54,17 +52,24 @@ public class VariantEnumKindOfUint8FWTest
         MutableDirectBuffer buffer,
         final int offset)
     {
-        int pos = offset;
-        buffer.putShort(pos, EnumWithUint8.ICHI.value());
-        buffer.putShort(pos += SIZE_OF_SHORT, (short) 200);
-        return pos - offset + SIZE_OF_SHORT;
+        buffer.putByte(offset, (byte) EnumWithUint8.ICHI.value());
+        buffer.putByte(offset + SIZE_OF_BYTE, (byte) 200);
+        return SIZE_OF_BYTE + SIZE_OF_BYTE;
+    }
+
+    void assertAllTestValuesRead(
+        VariantEnumKindOfUint8FW flyweight)
+    {
+        assertEquals(200, flyweight.getAsUint8());
+        assertEquals(200, flyweight.get());
+        assertEquals(EnumWithUint8.ICHI, flyweight.kind());
     }
 
     @Test
     public void shouldNotTryWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -73,8 +78,8 @@ public class VariantEnumKindOfUint8FWTest
     @Test
     public void shouldNotWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             try
             {
@@ -94,37 +99,47 @@ public class VariantEnumKindOfUint8FWTest
     @Test
     public void shouldTryWrapWhenLengthSufficientCase()
     {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
+        int length = setAllTestValues(buffer, 10);
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.tryWrap(buffer, 10, 10 + length);
+
+        assertNotNull(variantEnumKindOfUint8);
+        assertSame(flyweightRO, variantEnumKindOfUint8);
+        assertAllTestValuesRead(variantEnumKindOfUint8);
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientCase()
     {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
+        int length = setAllTestValues(buffer, 10);
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, 10, 10 + length);
+
+        assertSame(flyweightRO, variantEnumKindOfUint8);
+        assertAllTestValuesRead(variantEnumKindOfUint8);
     }
 
     @Test
     public void shouldTryWrapAndReadAllValuesCase() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertEquals(200, flyweightRO.getAsUint8());
-        assertEquals(200, flyweightRO.get());
-        assertEquals(EnumWithUint8.ICHI, flyweightRO.kind());
+        int length = setAllTestValues(buffer, offset);
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.tryWrap(buffer, offset, offset + length);
+
+        assertNotNull(variantEnumKindOfUint8);
+        assertAllTestValuesRead(variantEnumKindOfUint8);
     }
 
     @Test
     public void shouldWrapAndReadAllValuesCase() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset);
-        flyweightRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals(200, flyweightRO.getAsUint8());
-        assertEquals(200, flyweightRO.get());
-        assertEquals(EnumWithUint8.ICHI, flyweightRO.kind());
+        int length = setAllTestValues(buffer, offset);
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, offset, offset + length);
+
+        assertAllTestValuesRead(variantEnumKindOfUint8);
     }
 
     @Test
@@ -134,10 +149,10 @@ public class VariantEnumKindOfUint8FWTest
             .setAsUint8(200)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(200, flyweightRO.getAsUint8());
-        assertEquals(200, flyweightRO.get());
-        assertEquals(EnumWithUint8.ICHI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesRead(variantEnumKindOfUint8);
     }
 
     @Test
@@ -147,10 +162,10 @@ public class VariantEnumKindOfUint8FWTest
             .set(200)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(200, flyweightRO.getAsUint8());
-        assertEquals(200, flyweightRO.get());
-        assertEquals(EnumWithUint8.ICHI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesRead(variantEnumKindOfUint8);
     }
 
     @Test
@@ -160,7 +175,9 @@ public class VariantEnumKindOfUint8FWTest
             .set(0)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, 0, limit);
+
         assertEquals(0, flyweightRO.getAsZero());
         assertEquals(0, flyweightRO.get());
         assertEquals(EnumWithUint8.NI, flyweightRO.kind());
@@ -173,7 +190,9 @@ public class VariantEnumKindOfUint8FWTest
             .set(1)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
+
+        final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, 0, limit);
+
         assertEquals(1, flyweightRO.getAsOne());
         assertEquals(1, flyweightRO.get());
         assertEquals(EnumWithUint8.SAN, flyweightRO.kind());

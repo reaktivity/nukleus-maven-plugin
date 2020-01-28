@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_INT;
+import static org.agrona.BitUtil.SIZE_OF_SHORT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -27,7 +27,6 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint16FW;
 
 public class VariantEnumKindOfUint16FWTest
 {
@@ -55,16 +54,24 @@ public class VariantEnumKindOfUint16FWTest
         final int offset)
     {
         int pos = offset;
-        buffer.putInt(pos, EnumWithUint16.ICHI.value());
-        buffer.putInt(pos += SIZE_OF_INT, 60000);
-        return pos - offset + SIZE_OF_INT;
+        buffer.putShort(offset, (short) EnumWithUint16.ICHI.value());
+        buffer.putShort(offset + SIZE_OF_SHORT, (short) 60000);
+        return SIZE_OF_SHORT + SIZE_OF_SHORT;
+    }
+
+    void assertAllTestValuesRead(
+        VariantEnumKindOfUint16FW flyweight)
+    {
+        assertEquals(60000, flyweight.getAsUint16());
+        assertEquals(60000, flyweight.get());
+        assertEquals(EnumWithUint16.ICHI, flyweight.kind());
     }
 
     @Test
     public void shouldNotTryWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -73,8 +80,8 @@ public class VariantEnumKindOfUint16FWTest
     @Test
     public void shouldNotWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             try
             {
@@ -94,37 +101,45 @@ public class VariantEnumKindOfUint16FWTest
     @Test
     public void shouldTryWrapWhenLengthSufficientCase()
     {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
+        int length = setAllTestValues(buffer, 10);
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.tryWrap(buffer, 10, 10 + length);
+
+        assertNotNull(variantEnumKindOfUint16);
+        assertSame(flyweightRO, variantEnumKindOfUint16);
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientCase()
     {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
+        int length = setAllTestValues(buffer, 10);
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, 10, 10 + length);
+
+        assertSame(flyweightRO, variantEnumKindOfUint16);
     }
 
     @Test
     public void shouldTryWrapAndReadAllValuesCase() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertEquals(60000, flyweightRO.getAsUint16());
-        assertEquals(60000, flyweightRO.get());
-        assertEquals(EnumWithUint16.ICHI, flyweightRO.kind());
+        int length = setAllTestValues(buffer, offset);
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.tryWrap(buffer, offset, offset + length);
+
+        assertNotNull(variantEnumKindOfUint16);
+        assertAllTestValuesRead(variantEnumKindOfUint16);
     }
 
     @Test
     public void shouldWrapAndReadAllValuesCase() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset);
-        flyweightRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals(60000, flyweightRO.getAsUint16());
-        assertEquals(60000, flyweightRO.get());
-        assertEquals(EnumWithUint16.ICHI, flyweightRO.kind());
+        int length = setAllTestValues(buffer, offset);
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, offset, offset + length);
+
+        assertAllTestValuesRead(variantEnumKindOfUint16);
     }
 
     @Test
@@ -134,10 +149,12 @@ public class VariantEnumKindOfUint16FWTest
             .setAsUint8(200)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(200, flyweightRO.getAsUint8());
-        assertEquals(200, flyweightRO.get());
-        assertEquals(EnumWithUint16.NI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertEquals(200, variantEnumKindOfUint16.getAsUint8());
+        assertEquals(200, variantEnumKindOfUint16.get());
+        assertEquals(EnumWithUint16.NI, variantEnumKindOfUint16.kind());
     }
 
     @Test
@@ -147,10 +164,10 @@ public class VariantEnumKindOfUint16FWTest
             .setAsUint16(60000)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(60000, flyweightRO.getAsUint16());
-        assertEquals(60000, flyweightRO.get());
-        assertEquals(EnumWithUint16.ICHI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesRead(variantEnumKindOfUint16);
     }
 
     @Test
@@ -160,10 +177,12 @@ public class VariantEnumKindOfUint16FWTest
             .setAsZero()
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(0, flyweightRO.getAsZero());
-        assertEquals(0, flyweightRO.get());
-        assertEquals(EnumWithUint16.SAN, flyweightRO.kind());
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertEquals(0, variantEnumKindOfUint16.getAsZero());
+        assertEquals(0, variantEnumKindOfUint16.get());
+        assertEquals(EnumWithUint16.SAN, variantEnumKindOfUint16.kind());
     }
 
     @Test
@@ -173,10 +192,12 @@ public class VariantEnumKindOfUint16FWTest
             .set(200)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(200, flyweightRO.getAsUint8());
-        assertEquals(200, flyweightRO.get());
-        assertEquals(EnumWithUint16.NI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertEquals(200, variantEnumKindOfUint16.getAsUint8());
+        assertEquals(200, variantEnumKindOfUint16.get());
+        assertEquals(EnumWithUint16.NI, variantEnumKindOfUint16.kind());
     }
 
     @Test
@@ -186,10 +207,10 @@ public class VariantEnumKindOfUint16FWTest
             .set(60000)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(60000, flyweightRO.getAsUint16());
-        assertEquals(60000, flyweightRO.get());
-        assertEquals(EnumWithUint16.ICHI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesRead(variantEnumKindOfUint16);
     }
 
     @Test
@@ -199,9 +220,11 @@ public class VariantEnumKindOfUint16FWTest
             .set(0)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(0, flyweightRO.getAsZero());
-        assertEquals(0, flyweightRO.get());
-        assertEquals(EnumWithUint16.SAN, flyweightRO.kind());
+
+        final VariantEnumKindOfUint16FW variantEnumKindOfUint16 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertEquals(0, variantEnumKindOfUint16.getAsZero());
+        assertEquals(0, variantEnumKindOfUint16.get());
+        assertEquals(EnumWithUint16.SAN, variantEnumKindOfUint16.kind());
     }
 }

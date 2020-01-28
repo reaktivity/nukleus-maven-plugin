@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_SHORT;
+import static org.agrona.BitUtil.SIZE_OF_BYTE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -28,8 +28,6 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint8;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint8FW;
 
 public class EnumWithUint8FWTest
 {
@@ -59,8 +57,8 @@ public class EnumWithUint8FWTest
         MutableDirectBuffer buffer,
         final int offset)
     {
-        buffer.putShort(offset,  EnumWithUint8.NI.value());
-        return SIZE_OF_SHORT;
+        buffer.putByte(offset, (byte) EnumWithUint8.NI.value());
+        return SIZE_OF_BYTE;
     }
 
     void assertAllTestValuesRead(
@@ -103,26 +101,30 @@ public class EnumWithUint8FWTest
     @Test
     public void shouldTryWrapAndReadAllValues() throws Exception
     {
-        final int offset = 1;
-        setAllTestValues(buffer, offset);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertAllTestValuesRead(flyweightRO);
+        int size = setAllTestValues(buffer, 10);
+
+        final EnumWithUint8FW enumWithUint8 = flyweightRO.tryWrap(buffer, 10, 10 + size);
+
+        assertNotNull(enumWithUint8);
+        assertAllTestValuesRead(enumWithUint8);
     }
 
     @Test
     public void shouldWrapAndReadAllValues() throws Exception
     {
         int size = setAllTestValues(buffer, 10);
-        int limit = flyweightRO.wrap(buffer,  10,  buffer.capacity()).limit();
-        assertEquals(10 + size, limit);
-        assertAllTestValuesRead(flyweightRO);
+
+        final EnumWithUint8FW enumWithUint8 = flyweightRO.wrap(buffer, 10, 10 + size);
+
+        assertEquals(10 + size, enumWithUint8.limit());
+        assertAllTestValuesRead(enumWithUint8);
     }
 
     @Test
     public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putShort(offset,  (short) -2);
+        buffer.putByte(offset, (byte) -2);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
         assertNull(flyweightRO.get());
     }
@@ -131,7 +133,7 @@ public class EnumWithUint8FWTest
     public void shouldNotWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putShort(offset,  (short) -2);
+        buffer.putByte(offset,  (byte) -2);
         flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
         assertNull(flyweightRO.get());
     }
@@ -144,21 +146,21 @@ public class EnumWithUint8FWTest
             .build()
             .limit();
         setAllTestValues(expected,  0);
-        assertEquals(SIZE_OF_SHORT, limit);
+        assertEquals(SIZE_OF_BYTE, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
     public void shouldSetUsingEnumWithUint8FW()
     {
-        EnumWithUint8FW enumWithInt8 = new EnumWithUint8FW().wrap(asBuffer((short) 201), 0, SIZE_OF_SHORT);
-        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_SHORT)
+        EnumWithUint8FW enumWithInt8 = new EnumWithUint8FW().wrap(asBuffer(201), 0, SIZE_OF_BYTE);
+        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_BYTE)
             .set(enumWithInt8)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 10,  limit);
-        assertEquals(EnumWithUint8.ICHI, flyweightRO.get());
-        assertEquals(SIZE_OF_SHORT, flyweightRO.sizeof());
+        final EnumWithUint8FW enumWithUint8 = flyweightRO.wrap(buffer, 10,  limit);
+        assertEquals(EnumWithUint8.ICHI, enumWithUint8.get());
+        assertEquals(SIZE_OF_BYTE, enumWithUint8.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -171,7 +173,7 @@ public class EnumWithUint8FWTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUsingEnumWithUint8FWWithInsufficientSpace()
     {
-        EnumWithUint8FW enumWithInt8 = new EnumWithUint8FW().wrap(asBuffer((short) 201), 0, SIZE_OF_SHORT);
+        EnumWithUint8FW enumWithInt8 = new EnumWithUint8FW().wrap(asBuffer(201), 0, SIZE_OF_BYTE);
         flyweightRW.wrap(buffer, 10, 10)
             .set(enumWithInt8);
     }
@@ -186,10 +188,10 @@ public class EnumWithUint8FWTest
     }
 
     private static DirectBuffer asBuffer(
-        short value)
+        int value)
     {
-        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_SHORT));
-        valueBuffer.putShort(0, value);
+        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_BYTE));
+        valueBuffer.putByte(0, (byte) value);
         return valueBuffer;
     }
 }
