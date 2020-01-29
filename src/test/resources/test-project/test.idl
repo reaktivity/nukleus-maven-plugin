@@ -362,6 +362,13 @@ scope test
             case THREE: map<uint8>;
         }
 
+//        variant VariantOfOctets switch (EnumWithInt8) of octets[]
+//        {
+//            case ONE: octets[uint32];
+//            case TWO: octets[uint16];
+//            case THREE: octets[uint8];
+//        }
+
 //        variant VariantWithoutOf switch (EnumWithInt8)
 //        {
 //            case ONE:

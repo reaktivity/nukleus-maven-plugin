@@ -207,7 +207,7 @@ public class Map32FWTest
     }
 
     @Test
-    public void shouldSetKeyValueEntrys() throws Exception
+    public void shouldSetKeyValueEntries() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .entry(k -> k.set(asStringFW("entry1Key")), v -> v.set(asStringFW("entry1Value")))
