@@ -291,9 +291,9 @@ public class ListWithTypedefMapFWTest
         List<StringFW> keys,
         List<StringFW> values)
     {
-        TypedefMapFW.Builder<VariantWithoutOfFW.Builder, VariantWithoutOfFW> typedefMapRW =
-            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
-                new VariantWithoutOfFW.Builder(), new VariantWithoutOfFW());
+        TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> typedefMapRW =
+            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
+                new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
         typedefMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)
@@ -310,9 +310,9 @@ public class ListWithTypedefMapFWTest
         List<StringFW> keys,
         List<Integer> values)
     {
-        TypedefMapFW.Builder<VariantWithoutOfFW.Builder, VariantWithoutOfFW> typedefMapRW =
-            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
-                new VariantWithoutOfFW.Builder(), new VariantWithoutOfFW());
+        TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> typedefMapRW =
+            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
+                new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
         typedefMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)

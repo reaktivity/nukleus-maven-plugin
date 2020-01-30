@@ -44,10 +44,10 @@ public class VariantOfMapFWTest
         }
     };
 
-    private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW,
-        TypedefStringFW.Builder, TypedefStringFW> flyweightRW =
-        new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
-            new TypedefStringFW.Builder(), new TypedefStringFW());
+    private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW, VariantEnumKindWithString32FW.Builder,
+        TypedefStringFW.Builder> flyweightRW =
+        new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(), new TypedefStringFW(),
+            new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
     private final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> flyweightRO =
         new VariantOfMapFW<>(new VariantEnumKindWithString32FW(), new TypedefStringFW());
     private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;

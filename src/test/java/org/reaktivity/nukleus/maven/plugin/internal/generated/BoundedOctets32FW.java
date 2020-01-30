@@ -36,7 +36,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
 
     public int length()
     {
-        return (int) (buffer().getInt(offset() + LENGTH_OFFSET) & 0xFFFF_FFFFL);
+        return buffer().getInt(offset() + LENGTH_OFFSET);
     }
 
     @Override
@@ -92,7 +92,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
         {
             int newLimit = offset() + LENGTH_SIZE + value.length();
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, (int) (value.length() & 0xFFFF_FFFFL));
+            buffer().putInt(offset() + LENGTH_OFFSET, value.length());
             buffer().putBytes(offset() + VALUE_OFFSET, value.buffer(), value.offset() + VALUE_OFFSET, value.length());
             limit(newLimit);
             return this;
@@ -106,7 +106,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
         {
             int newLimit = offset() + LENGTH_SIZE + length;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, (int) (length & 0xFFFF_FFFFL));
+            buffer().putInt(offset() + LENGTH_OFFSET, length);
             buffer().putBytes(offset() + VALUE_OFFSET, value, offset, length);
             limit(newLimit);
             return this;
@@ -118,7 +118,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
         {
             int newLimit = offset() + LENGTH_SIZE + value.length;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, (int) (value.length & 0xFFFF_FFFFL));
+            buffer().putInt(offset() + LENGTH_OFFSET, value.length);
             buffer().putBytes(offset() + VALUE_OFFSET, value);
             limit(newLimit);
             return this;

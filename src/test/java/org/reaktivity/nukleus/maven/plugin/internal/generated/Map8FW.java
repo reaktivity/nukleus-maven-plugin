@@ -24,7 +24,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends MapFW<KV, VV>
+public final class Map8FW<K extends Flyweight, V extends Flyweight> extends MapFW<K, V>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 
@@ -38,15 +38,15 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
 
     private static final int LENGTH_MAX_VALUE = 0xFF;
 
-    private final KV keyRO;
+    private final K keyRO;
 
-    private final VV valueRO;
+    private final V valueRO;
 
     private final DirectBuffer entriesRO = new UnsafeBuffer(0L, 0);
 
     public Map8FW(
-        KV keyRO,
-        VV valueRO)
+        K keyRO,
+        V valueRO)
     {
         this.keyRO = keyRO;
         this.valueRO = valueRO;
@@ -72,7 +72,7 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
 
     @Override
     public void forEach(
-        Function<KV, Consumer<VV>> consumer)
+        Function<K, Consumer<V>> consumer)
     {
         int offset = offset() + FIELDS_OFFSET;
         int fieldCount = fieldCount();
@@ -86,7 +86,7 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
     }
 
     @Override
-    public Map8FW<KV, VV> tryWrap(
+    public Map8FW<K, V> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -105,7 +105,7 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
     }
 
     @Override
-    public Map8FW<KV, VV> wrap(
+    public Map8FW<K, V> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -129,20 +129,20 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
         return String.format("map8<%d, %d>", length(), fieldCount());
     }
 
-    public static final class Builder<KB extends Flyweight.Builder<KV>, KV extends Flyweight,
-        VB extends Flyweight.Builder<VV>, VV extends Flyweight> extends MapFW.Builder<Map8FW, KB, KV, VB, VV>
+    public static final class Builder<K extends Flyweight, V extends Flyweight, KB extends Flyweight.Builder<K>,
+        VB extends Flyweight.Builder<V>> extends MapFW.Builder<Map8FW, K, V, KB, VB>
     {
         public Builder(
+            K keyRO,
+            V valueRO,
             KB keyRW,
-            KV keyRO,
-            VB valueRW,
-            VV valueRO)
+            VB valueRW)
         {
             super(new Map8FW<>(keyRO, valueRO), keyRW, valueRW);
         }
 
         @Override
-        public Builder<KB, KV, VB, VV> wrap(
+        public Builder<K, V, KB, VB> wrap(
             MutableDirectBuffer buffer,
             int offset,
             int maxLimit)
@@ -155,7 +155,7 @@ public final class Map8FW<KV extends Flyweight, VV extends Flyweight> extends Ma
         }
 
         @Override
-        public Builder<KB, KV, VB, VV> entries(
+        public Builder<K, V, KB, VB> entries(
             DirectBuffer buffer,
             int srcOffset,
             int length,

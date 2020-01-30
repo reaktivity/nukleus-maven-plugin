@@ -289,10 +289,10 @@ public class ListWithMapFWTest
         List<StringFW> keys,
         List<StringFW> values)
     {
-        VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW,
-            TypedefStringFW.Builder, TypedefStringFW> variantOfMapRW =
-            new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
-                new TypedefStringFW.Builder(), new TypedefStringFW());
+        VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW,
+            VariantEnumKindWithString32FW.Builder, TypedefStringFW.Builder> variantOfMapRW =
+            new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(), new TypedefStringFW(),
+                new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
         variantOfMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)

@@ -21,18 +21,18 @@ import java.util.function.Function;
 import org.agrona.DirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
-public abstract class MapFW<KV extends Flyweight, VV extends Flyweight> extends Flyweight
+public abstract class MapFW<K extends Flyweight, V extends Flyweight> extends Flyweight
 {
     public abstract int length();
 
     public abstract int fieldCount();
 
-    public abstract void forEach(Function<KV, Consumer<VV>> consumer);
+    public abstract void forEach(Function<K, Consumer<V>> consumer);
 
     public abstract DirectBuffer entries();
 
-    public abstract static class Builder<T extends MapFW, KB extends Flyweight.Builder<KV>, KV extends Flyweight,
-        VB extends Flyweight.Builder<VV>, VV extends Flyweight> extends Flyweight.Builder<T>
+    public abstract static class Builder<T extends MapFW, K extends Flyweight, V extends Flyweight,
+        KB extends Flyweight.Builder<K>, VB extends Flyweight.Builder<V>> extends Flyweight.Builder<T>
     {
         private int fieldCount;
 
@@ -50,7 +50,7 @@ public abstract class MapFW<KV extends Flyweight, VV extends Flyweight> extends 
             this.valueRW = valueRW;
         }
 
-        public Builder<T, KB, KV, VB, VV> entry(
+        public Builder<T, K, V, KB, VB> entry(
             Consumer<KB> key,
             Consumer<VB> value)
         {
@@ -67,7 +67,7 @@ public abstract class MapFW<KV extends Flyweight, VV extends Flyweight> extends 
             return this;
         }
 
-        public Builder<T, KB, KV, VB, VV> entries(
+        public Builder<T, K, V, KB, VB> entries(
             DirectBuffer buffer,
             int srcOffset,
             int length,

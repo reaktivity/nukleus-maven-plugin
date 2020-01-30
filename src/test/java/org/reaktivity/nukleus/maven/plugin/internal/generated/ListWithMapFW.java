@@ -209,10 +209,10 @@ public final class ListWithMapFW extends ListFW
     {
         private final VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
 
-        private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW,
-            TypedefStringFW.Builder, TypedefStringFW> mapOfStringRW =
-            new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW(),
-            new TypedefStringFW.Builder(), new TypedefStringFW());
+        private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW,
+            VariantEnumKindWithString32FW.Builder, TypedefStringFW.Builder> mapOfStringRW =
+            new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(), new TypedefStringFW(),
+                new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
 
         private int lastFieldSet = -1;
 
@@ -239,8 +239,8 @@ public final class ListWithMapFW extends ListFW
             assert lastFieldSet == INDEX_FIELD1 : "Prior required field \"field1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
-                VariantOfMapFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW,
-                    TypedefStringFW.Builder, TypedefStringFW> mapOfString = mapOfStringRW.wrap(b, o, m);
+                VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW,
+                    VariantEnumKindWithString32FW.Builder, TypedefStringFW.Builder> mapOfString = mapOfStringRW.wrap(b, o, m);
                 value.forEach(kv -> vv -> mapOfString.entry(k -> k.set(kv.get()), v -> v.set(vv.get())));
                 return mapOfString.build().sizeof();
             });

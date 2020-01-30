@@ -180,10 +180,9 @@ public final class ListWithTypedefMapFW extends ListFW
 
     public static final class Builder extends Flyweight.Builder<ListWithTypedefMapFW>
     {
-        private final TypedefMapFW.Builder<VariantWithoutOfFW.Builder, VariantWithoutOfFW> field1RW =
-            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
-                new VariantEnumKindWithString32FW(), new VariantWithoutOfFW.Builder(),
-                new VariantWithoutOfFW());
+        private final TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1RW =
+            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
+                new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
 
         private int lastFieldSet = -1;
 
@@ -200,7 +199,7 @@ public final class ListWithTypedefMapFW extends ListFW
             assert lastFieldSet < INDEX_FIELD1 : "Field \"field1\" cannot be set out of order";
             variantOfListRW.field((b, o, m) ->
             {
-                TypedefMapFW.Builder<VariantWithoutOfFW.Builder, VariantWithoutOfFW> field1 =
+                TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1 =
                     field1RW.wrap(b, o, m);
                 field1.set(value);
                 return field1.build().sizeof();

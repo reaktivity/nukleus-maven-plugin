@@ -23,7 +23,7 @@ import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWithInt8, MapFW>
+public final class TypedefMapFW<V extends Flyweight> extends VariantOfFW<EnumWithInt8, MapFW>
 {
     public static final EnumWithInt8 KIND_MAP32 = EnumWithInt8.ONE;
 
@@ -33,15 +33,15 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
-    private final Map32FW<VariantEnumKindWithString32FW, VV> map32RO;
+    private final Map32FW<VariantEnumKindWithString32FW, V> map32RO;
 
-    private final Map16FW<VariantEnumKindWithString32FW, VV> map16RO;
+    private final Map16FW<VariantEnumKindWithString32FW, V> map16RO;
 
-    private final Map8FW<VariantEnumKindWithString32FW, VV> map8RO;
+    private final Map8FW<VariantEnumKindWithString32FW, V> map8RO;
 
     public TypedefMapFW(
         VariantEnumKindWithString32FW keyType,
-        VV valueType)
+        V valueType)
     {
         map32RO = new Map32FW<>(keyType, valueType);
         map16RO = new Map16FW<>(keyType, valueType);
@@ -55,7 +55,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
     }
 
     @Override
-    public MapFW<VariantEnumKindWithString32FW, VV> get()
+    public MapFW<VariantEnumKindWithString32FW, V> get()
     {
         switch (kind())
         {
@@ -71,7 +71,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
     }
 
     @Override
-    public MapFW<VariantEnumKindWithString32FW, VV> getAs(
+    public MapFW<VariantEnumKindWithString32FW, V> getAs(
         EnumWithInt8 kind,
         int kindPadding)
     {
@@ -79,7 +79,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
     }
 
     @Override
-    public TypedefMapFW<VV> tryWrap(
+    public TypedefMapFW<V> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -124,7 +124,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
     }
 
     @Override
-    public TypedefMapFW<VV> wrap(
+    public TypedefMapFW<V> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -150,7 +150,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
     }
 
     @Override
-    public TypedefMapFW<VV> wrapWithKindPadding(
+    public TypedefMapFW<V> wrapWithKindPadding(
         DirectBuffer buffer,
         int elementsOffset,
         int maxLimit,
@@ -171,27 +171,27 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
         return get().limit();
     }
 
-    public static final class Builder<VB extends Flyweight.Builder<VV>, VV extends Flyweight>
-        extends VariantOfFW.Builder<TypedefMapFW<VV>, EnumWithInt8, MapFW>
+    public static final class Builder<V extends Flyweight, VB extends Flyweight.Builder<V>>
+        extends VariantOfFW.Builder<TypedefMapFW<V>, EnumWithInt8, MapFW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
-        private final Map32FW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, VB, VV> map32RW;
+        private final Map32FW.Builder<VariantEnumKindWithString32FW, V, VariantEnumKindWithString32FW.Builder, VB> map32RW;
 
-        private final Map16FW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, VB, VV> map16RW;
+        private final Map16FW.Builder<VariantEnumKindWithString32FW, V, VariantEnumKindWithString32FW.Builder, VB> map16RW;
 
-        private final Map8FW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, VB, VV> map8RW;
+        private final Map8FW.Builder<VariantEnumKindWithString32FW, V, VariantEnumKindWithString32FW.Builder, VB> map8RW;
 
         public Builder(
-            VariantEnumKindWithString32FW.Builder keyRW,
             VariantEnumKindWithString32FW keyRO,
-            VB valueRW,
-            VV valueRO)
+            V valueRO,
+            VariantEnumKindWithString32FW.Builder keyRW,
+            VB valueRW)
         {
             super(new TypedefMapFW<>(keyRO, valueRO));
-            map32RW = new Map32FW.Builder<>(keyRW, keyRO, valueRW, valueRO);
-            map16RW = new Map16FW.Builder<>(keyRW, keyRO, valueRW, valueRO);
-            map8RW = new Map8FW.Builder<>(keyRW, keyRO, valueRW, valueRO);
+            map32RW = new Map32FW.Builder<>(keyRO, valueRO, keyRW, valueRW);
+            map16RW = new Map16FW.Builder<>(keyRO, valueRO, keyRW, valueRW);
+            map8RW = new Map8FW.Builder<>(keyRO, valueRO, keyRW, valueRW);
         }
 
         @Override
@@ -213,7 +213,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
             throw new UnsupportedOperationException();
         }
 
-        public Builder<VB, VV> entry(
+        public Builder<V, VB> entry(
             Consumer<VariantEnumKindWithString32FW.Builder> key,
             Consumer<VB> value)
         {
@@ -223,14 +223,14 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
         }
 
         @Override
-        public TypedefMapFW<VV> build(
+        public TypedefMapFW<V> build(
             int maxLimit)
         {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Builder<VB, VV> setAs(
+        public Builder<V, VB> setAs(
             EnumWithInt8 kind,
             MapFW value,
             int kindPadding)
@@ -239,7 +239,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
         }
 
         @Override
-        public Builder<VB, VV> set(
+        public Builder<V, VB> set(
             MapFW value)
         {
             map32RW.entries(value.entries(), 0, value.entries().capacity(), value.fieldCount());
@@ -248,7 +248,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
         }
 
         @Override
-        public Builder<VB, VV> wrap(
+        public Builder<V, VB> wrap(
             MutableDirectBuffer buffer,
             int offset,
             int maxLimit)
@@ -260,7 +260,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
         }
 
         @Override
-        public TypedefMapFW<VV> build()
+        public TypedefMapFW<V> build()
         {
             Map32FW map32 = map32RW.build();
             long length = Math.max(map32.length(), map32.fieldCount());
@@ -294,7 +294,7 @@ public final class TypedefMapFW<VV extends Flyweight> extends VariantOfFW<EnumWi
         }
 
         @Override
-        public Builder<VB, VV> kind(
+        public Builder<V, VB> kind(
             EnumWithInt8 value)
         {
             enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
