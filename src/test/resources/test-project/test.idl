@@ -376,7 +376,7 @@ scope test
 //            case THREE:
 //                VariantEnumKindWithString32;
 //            case FOUR:
-//            case Five:
+//            case FIVE:
 //                VariantOfInt32;
 //        }
 

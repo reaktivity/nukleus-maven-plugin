@@ -20,11 +20,10 @@ import java.util.function.Consumer;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
-import org.reaktivity.reaktor.internal.test.types.VariantFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfMapFW<KV extends Flyweight, VV extends Flyweight> extends VariantFW<EnumWithInt8, MapFW>
+public final class VariantOfMapFW<KV extends Flyweight, VV extends Flyweight> extends VariantOfFW<EnumWithInt8, MapFW>
 {
     public static final EnumWithInt8 KIND_MAP32 = EnumWithInt8.ONE;
 
@@ -173,7 +172,7 @@ public final class VariantOfMapFW<KV extends Flyweight, VV extends Flyweight> ex
     }
 
     public static final class Builder<KB extends Flyweight.Builder<KV>, KV extends Flyweight, VB extends Flyweight.Builder<VV>,
-        VV extends Flyweight> extends VariantFW.Builder<VariantOfMapFW<KV, VV>, EnumWithInt8, MapFW>
+        VV extends Flyweight> extends VariantOfFW.Builder<VariantOfMapFW<KV, VV>, EnumWithInt8, MapFW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 

@@ -32,7 +32,7 @@ public abstract class MapFW<KV extends Flyweight, VV extends Flyweight> extends 
     public abstract DirectBuffer entries();
 
     public abstract static class Builder<T extends MapFW, KB extends Flyweight.Builder<KV>, KV extends Flyweight,
-        VB extends Flyweight.Builder, VV extends Flyweight> extends Flyweight.Builder<T>
+        VB extends Flyweight.Builder<VV>, VV extends Flyweight> extends Flyweight.Builder<T>
     {
         private int fieldCount;
 
