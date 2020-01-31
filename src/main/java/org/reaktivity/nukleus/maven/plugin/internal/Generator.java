@@ -56,6 +56,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantArray32FWGen
 import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantArray8FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantArrayFWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantFWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.VariantOfFWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
 
@@ -127,6 +128,7 @@ public class Generator
         ClassName stringType = resolver.resolveClass(AstType.STRING);
         ClassName listType = resolver.resolveClass(AstType.LIST);
         ClassName variantType = resolver.resolveClass(AstType.VARIANT);
+        ClassName variantOfType = resolver.resolveClass(AstType.VARIANT_OF);
         ClassName variantArrayType = resolver.resolveClass(AstType.VARIANT_ARRAY);
         ClassName mapType = resolver.resolveClass(AstType.MAP);
 
@@ -144,15 +146,16 @@ public class Generator
         typeSpecs.add(new List32FWGenerator(listType));
         typeSpecs.add(new List8FWGenerator(listType));
         typeSpecs.add(new List0FWGenerator(listType));
-        typeSpecs.add(new MapFlyweightGenerator(flyweightType, variantType));
-        typeSpecs.add(new Map8FlyweightGenerator(flyweightType, mapType, variantType));
-        typeSpecs.add(new Map16FlyweightGenerator(flyweightType, mapType, variantType));
-        typeSpecs.add(new Map32FlyweightGenerator(flyweightType, mapType, variantType));
-        typeSpecs.add(new VariantArrayFWGenerator(flyweightType, variantType));
-        typeSpecs.add(new VariantArray8FWGenerator(flyweightType, variantArrayType, variantType));
-        typeSpecs.add(new VariantArray16FWGenerator(flyweightType, variantArrayType, variantType));
-        typeSpecs.add(new VariantArray32FWGenerator(flyweightType, variantArrayType, variantType));
+        typeSpecs.add(new MapFlyweightGenerator(flyweightType));
+        typeSpecs.add(new Map8FlyweightGenerator(flyweightType, mapType));
+        typeSpecs.add(new Map16FlyweightGenerator(flyweightType, mapType));
+        typeSpecs.add(new Map32FlyweightGenerator(flyweightType, mapType));
+        typeSpecs.add(new VariantArrayFWGenerator(flyweightType, variantOfType));
+        typeSpecs.add(new VariantArray8FWGenerator(flyweightType, variantArrayType, variantOfType));
+        typeSpecs.add(new VariantArray16FWGenerator(flyweightType, variantArrayType, variantOfType));
+        typeSpecs.add(new VariantArray32FWGenerator(flyweightType, variantArrayType, variantOfType));
         typeSpecs.add(new VariantFWGenerator(flyweightType));
+        typeSpecs.add(new VariantOfFWGenerator(flyweightType, variantType));
 
         System.out.println("Generating to " + outputDirectory);
 

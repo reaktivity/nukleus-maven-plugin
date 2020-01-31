@@ -87,6 +87,7 @@ public final class ListFWGenerator extends ClassSpecGenerator
         private final ClassName classType;
         private final ClassName listType;
         private final ClassName visitorType;
+        private final TypeName parameterizedListBuildertype;
         private final TypeVariableName typeVarT;
 
         private BuilderClassBuilder(
@@ -96,6 +97,7 @@ public final class ListFWGenerator extends ClassSpecGenerator
             this.typeVarT = TypeVariableName.get("T");
             TypeName builderType = ParameterizedTypeName.get(builderRawType, typeVarT);
             this.listType = listType;
+            this.parameterizedListBuildertype = ParameterizedTypeName.get(listType.nestedClass("Builder"), typeVarT);
             this.classType = listType.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
                 .addModifiers(PUBLIC, ABSTRACT, STATIC)
@@ -135,7 +137,7 @@ public final class ListFWGenerator extends ClassSpecGenerator
             return methodBuilder("wrap")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(listType.nestedClass("Builder"))
+                .returns(parameterizedListBuildertype)
                 .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
@@ -149,7 +151,7 @@ public final class ListFWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("field")
                 .addModifiers(PUBLIC)
-                .returns(listType.nestedClass("Builder"))
+                .returns(parameterizedListBuildertype)
                 .addParameter(visitorType, "visitor")
                 .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
                 .addStatement("fieldCount++")
@@ -164,7 +166,7 @@ public final class ListFWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("fields")
                 .addModifiers(PUBLIC)
-                .returns(listType.nestedClass("Builder"))
+                .returns(parameterizedListBuildertype)
                 .addParameter(int.class, "fieldCount")
                 .addParameter(visitorType, "visitor")
                 .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
@@ -180,7 +182,7 @@ public final class ListFWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("fields")
                 .addModifiers(PUBLIC)
-                .returns(listType.nestedClass("Builder"))
+                .returns(parameterizedListBuildertype)
                 .addParameter(int.class, "fieldCount")
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "index")

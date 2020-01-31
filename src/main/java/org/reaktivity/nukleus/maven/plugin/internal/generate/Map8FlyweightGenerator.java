@@ -41,28 +41,25 @@ import com.squareup.javapoet.TypeVariableName;
 public final class Map8FlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
-    private final TypeVariableName typeVarKV;
-    private final TypeVariableName typeVarVV;
+    private final TypeVariableName typeVarK;
+    private final TypeVariableName typeVarV;
     private final BuilderClassBuilder builderClassBuilder;
 
     public Map8FlyweightGenerator(
         ClassName flyweightType,
-        ClassName mapType,
-        ClassName variantType)
+        ClassName mapType)
     {
         super(flyweightType.peerClass("Map8FW"));
-        TypeName anyType = TypeVariableName.get("?");
-        TypeName parameterizedVariantType = ParameterizedTypeName.get(variantType, anyType, anyType);
-        this.typeVarKV = TypeVariableName.get("KV", parameterizedVariantType);
-        this.typeVarVV = TypeVariableName.get("VV", parameterizedVariantType);
-        TypeName parameterizedMapType = ParameterizedTypeName.get(mapType, typeVarKV, typeVarVV);
+        this.typeVarK = TypeVariableName.get("K", flyweightType);
+        this.typeVarV = TypeVariableName.get("V", flyweightType);
+        TypeName parameterizedMapType = ParameterizedTypeName.get(mapType, typeVarK, typeVarV);
         this.classBuilder = classBuilder(thisName)
             .superclass(parameterizedMapType)
             .addModifiers(PUBLIC, FINAL)
-            .addTypeVariable(typeVarKV)
-            .addTypeVariable(typeVarVV);
+            .addTypeVariable(typeVarK)
+            .addTypeVariable(typeVarV);
 
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, mapType, variantType, flyweightType);
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, mapType, flyweightType);
     }
 
     @Override
@@ -135,13 +132,13 @@ public final class Map8FlyweightGenerator extends ClassSpecGenerator
 
     private FieldSpec keyField()
     {
-        return FieldSpec.builder(typeVarKV, "keyRO", PRIVATE, FINAL)
+        return FieldSpec.builder(typeVarK, "keyRO", PRIVATE, FINAL)
             .build();
     }
 
     private FieldSpec valueField()
     {
-        return FieldSpec.builder(typeVarVV, "valueRO", PRIVATE, FINAL)
+        return FieldSpec.builder(typeVarV, "valueRO", PRIVATE, FINAL)
             .build();
     }
 
@@ -156,8 +153,8 @@ public final class Map8FlyweightGenerator extends ClassSpecGenerator
     {
         return constructorBuilder()
             .addModifiers(PUBLIC)
-            .addParameter(typeVarKV, "keyRO")
-            .addParameter(typeVarVV, "valueRO")
+            .addParameter(typeVarK, "keyRO")
+            .addParameter(typeVarV, "valueRO")
             .addStatement("this.keyRO = keyRO")
             .addStatement("this.valueRO = valueRO")
             .build();
@@ -195,8 +192,8 @@ public final class Map8FlyweightGenerator extends ClassSpecGenerator
 
     private MethodSpec forEachMethod()
     {
-        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarVV);
-        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarKV,
+        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
+        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarK,
             parameterizedConsumerType);
 
         return methodBuilder("forEach")
@@ -222,7 +219,7 @@ public final class Map8FlyweightGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(thisName)
+            .returns(ParameterizedTypeName.get(thisName, typeVarK, typeVarV))
             .beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null)")
             .addStatement("return null")
             .endControlFlow()
@@ -243,7 +240,7 @@ public final class Map8FlyweightGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(thisName)
+            .returns(ParameterizedTypeName.get(thisName, typeVarK, typeVarV))
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("final int itemsSize = length() - FIELD_COUNT_SIZE")
             .addStatement("entriesRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize)")
@@ -277,52 +274,36 @@ public final class Map8FlyweightGenerator extends ClassSpecGenerator
         private final ClassName map8Type;
         private final TypeSpec.Builder classBuilder;
         private final TypeVariableName typeVarKB;
-        private final TypeVariableName typeVarKV;
-        private final TypeVariableName typeVarKK;
-        private final TypeVariableName typeVarKO;
+        private final TypeVariableName typeVarK;
         private final TypeVariableName typeVarVB;
-        private final TypeVariableName typeVarVV;
-        private final TypeVariableName typeVarVK;
-        private final TypeVariableName typeVarVO;
+        private final TypeVariableName typeVarV;
         private final TypeName parameterizedBuilderType;
 
         private BuilderClassBuilder(
             ClassName map8Type,
             ClassName mapType,
-            ClassName variantType,
             ClassName flyweightType)
         {
-            ClassName variantBuilderType = variantType.nestedClass("Builder");
             ClassName map8BuilderType = map8Type.nestedClass("Builder");
             ClassName mapBuilderType = mapType.nestedClass("Builder");
+            ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
             this.map8Type = map8Type;
-            this.typeVarKK = TypeVariableName.get("KK");
-            this.typeVarKO = TypeVariableName.get("KO", flyweightType);
-            this.typeVarKV = TypeVariableName.get("KV", ParameterizedTypeName.get(variantType, typeVarKK, typeVarKO));
-            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(variantBuilderType, typeVarKV, typeVarKK,
-                typeVarKO));
-            this.typeVarVK = TypeVariableName.get("VK");
-            this.typeVarVO = TypeVariableName.get("VO", flyweightType);
-            this.typeVarVV = TypeVariableName.get("VV", ParameterizedTypeName.get(variantType, typeVarVK, typeVarVO));
-            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(variantBuilderType, typeVarVV, typeVarVK,
-                typeVarVO));
-            TypeName parameterizedMapBuilderType = ParameterizedTypeName.get(mapBuilderType, map8Type, typeVarKB, typeVarKV,
-                typeVarKK, typeVarKO, typeVarVB, typeVarVV, typeVarVK, typeVarVO);
+            this.typeVarK = TypeVariableName.get("K", flyweightType);
+            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(flyweightBuilderType, typeVarK));
+            this.typeVarV = TypeVariableName.get("V", flyweightType);
+            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(flyweightBuilderType, typeVarV));
+            TypeName parameterizedMapBuilderType = ParameterizedTypeName.get(mapBuilderType, map8Type, typeVarK, typeVarV,
+                typeVarKB, typeVarVB);
 
-            this.parameterizedBuilderType = ParameterizedTypeName.get(map8BuilderType, typeVarKB, typeVarKV, typeVarKK,
-                typeVarKO, typeVarVB, typeVarVV, typeVarVK, typeVarVO);
+            this.parameterizedBuilderType = ParameterizedTypeName.get(map8BuilderType, typeVarK, typeVarV, typeVarKB, typeVarVB);
 
             this.classBuilder = classBuilder(map8BuilderType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL)
                 .superclass(parameterizedMapBuilderType)
+                .addTypeVariable(typeVarK)
+                .addTypeVariable(typeVarV)
                 .addTypeVariable(typeVarKB)
-                .addTypeVariable(typeVarKV)
-                .addTypeVariable(typeVarKK)
-                .addTypeVariable(typeVarKO)
-                .addTypeVariable(typeVarVB)
-                .addTypeVariable(typeVarVV)
-                .addTypeVariable(typeVarVK)
-                .addTypeVariable(typeVarVO);
+                .addTypeVariable(typeVarVB);
         }
 
         public TypeSpec build()
@@ -339,10 +320,10 @@ public final class Map8FlyweightGenerator extends ClassSpecGenerator
         {
             return constructorBuilder()
                 .addModifiers(PUBLIC)
+                .addParameter(typeVarK, "keyRO")
+                .addParameter(typeVarV, "valueRO")
                 .addParameter(typeVarKB, "keyRW")
-                .addParameter(typeVarKV, "keyRO")
                 .addParameter(typeVarVB, "valueRW")
-                .addParameter(typeVarVV, "valueRO")
                 .addStatement("super(new Map8FW<>(keyRO, valueRO), keyRW, valueRW)")
                 .build();
         }

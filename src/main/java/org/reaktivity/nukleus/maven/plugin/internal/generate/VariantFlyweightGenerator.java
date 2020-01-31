@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
@@ -145,13 +146,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         super(variantName);
         this.anyType = TypeVariableName.get("?");
         this.typeVarO = TypeVariableName.get("O", flyweightName);
-        ClassName variantFWType = resolver.resolveClass(AstType.VARIANT);
+        ClassName variantFWType = resolver.resolveClass(AstType.VARIANT_OF);
         TypeName parameterizedVariantFWType =  ParameterizedTypeName.get(variantFWType, anyType, typeVarO);
         this.typeVarV = TypeVariableName.get("V", parameterizedVariantFWType);
-        this.typeVarKV = TypeVariableName.get("KV", ParameterizedTypeName.get(variantFWType, anyType, anyType));
-        this.typeVarVV = TypeVariableName.get("VV", ParameterizedTypeName.get(variantFWType, anyType, anyType));
+        this.typeVarKV = TypeVariableName.get("K", flyweightName);
+        this.typeVarVV = TypeVariableName.get("V", flyweightName);
         this.baseName = baseName;
-        this.builder = builder(variantName, flyweightName, variantFWType, kindTypeName, ofType, resolver);
+        this.builder = builder(variantName, variantFWType, kindTypeName, ofType, resolver);
         this.memberField = new MemberFieldGenerator(variantName, kindTypeName, ofType, typeVarV, typeVarKV, typeVarVV, builder);
         this.memberKindConstant = new KindConstantGenerator(variantName, kindTypeName, builder);
         this.memberSizeConstant = new MemberSizeConstantGenerator(variantName, kindTypeName, builder);
@@ -225,7 +226,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
     private TypeSpec.Builder builder(
         ClassName variantName,
-        ClassName flyweightName,
         ClassName variantFWType,
         TypeName kindTypeName,
         AstType ofType,
@@ -234,11 +234,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         TypeSpec.Builder classBuilder = classBuilder(variantName);
         if ((isListType(ofType) || isStringType(ofType)) && !kindTypeName.isPrimitive())
         {
-            ClassName variantType = resolver.resolveClass(AstType.VARIANT);
             TypeName ofTypeName = resolver.resolveClass(isStringType(ofType) ? AstType.STRING : AstType.LIST);
 
             ClassName kindName = enumClassName(kindTypeName);
-            TypeName superClassType = ParameterizedTypeName.get(variantType, kindName, ofTypeName);
+            TypeName superClassType = ParameterizedTypeName.get(variantFWType, kindName, ofTypeName);
             return classBuilder
                 .superclass(superClassType)
                 .addModifiers(PUBLIC, FINAL);
@@ -1285,12 +1284,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final TypeVariableName typeVarO;
         private final TypeVariableName typeVarKB;
         private final TypeVariableName typeVarKV;
-        private final TypeVariableName typeVarKK;
-        private final TypeVariableName typeVarKO;
         private final TypeVariableName typeVarVB;
         private final TypeVariableName typeVarVV;
-        private final TypeVariableName typeVarVK;
-        private final TypeVariableName typeVarVO;
 
         private BuilderClassGenerator(
             ClassName thisVariantType,
@@ -1323,22 +1318,16 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.builder = classBuilder(thisVariantBuilderType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL);
             this.typeVarO = typeVarO;
-            ClassName variantFWType = resolver.resolveClass(AstType.VARIANT);
+            ClassName variantFWType = resolver.resolveClass(AstType.VARIANT_OF);
             ClassName variantBuilderType = variantFWType.nestedClass("Builder");
             this.typeVarK = TypeVariableName.get("K");
             this.typeVarV = TypeVariableName.get("V", ParameterizedTypeName.get(variantFWType, typeVarK, typeVarO));
             this.typeVarB = TypeVariableName.get("B", ParameterizedTypeName.get(variantBuilderType, typeVarV, typeVarK,
                 typeVarO));
-            this.typeVarKO = TypeVariableName.get("KO", flyweightType);
-            this.typeVarKK = TypeVariableName.get("KK");
-            this.typeVarKV = TypeVariableName.get("KV", ParameterizedTypeName.get(variantFWType, typeVarKK, typeVarKO));
-            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(variantBuilderType, typeVarKV, typeVarKK,
-                typeVarKO));
-            this.typeVarVO = TypeVariableName.get("VO", flyweightType);
-            this.typeVarVK = TypeVariableName.get("VK");
-            this.typeVarVV = TypeVariableName.get("VV", ParameterizedTypeName.get(variantFWType, typeVarVK, typeVarVO));
-            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(variantBuilderType, typeVarVV, typeVarVK,
-                typeVarVO));
+            this.typeVarKV = TypeVariableName.get("K", flyweightType);
+            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(flyweightBuilderRawType, typeVarKV));
+            this.typeVarVV = TypeVariableName.get("V", flyweightType);
+            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(flyweightBuilderRawType, typeVarVV));
             if ((isStringType(ofType) || isListType(ofType)) && !kindTypeName.isPrimitive())
             {
                 ClassName ofTypeClassName = resolver.resolveClass(isStringType(ofType) ? AstType.STRING : AstType.LIST);
@@ -1367,14 +1356,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 TypeName parameterizedVariantType = ParameterizedTypeName.get(thisVariantType, typeVarKV, typeVarVV);
                 TypeName parameterizedSuperType = ParameterizedTypeName.get(variantBuilderType, parameterizedVariantType,
                     kindName, resolver.resolveClass(ofType));
-                builder.addTypeVariable(typeVarKB)
-                    .addTypeVariable(typeVarKV)
-                    .addTypeVariable(typeVarKK)
-                    .addTypeVariable(typeVarKO)
-                    .addTypeVariable(typeVarVB)
+                builder.addTypeVariable(typeVarKV)
                     .addTypeVariable(typeVarVV)
-                    .addTypeVariable(typeVarVK)
-                    .addTypeVariable(typeVarVO)
+                    .addTypeVariable(typeVarKB)
+                    .addTypeVariable(typeVarVB)
                     .superclass(parameterizedSuperType);
             }
             else
@@ -1397,7 +1382,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 builder, resolver);
             this.setWithSpecificKindMethod = new SetWithSpecificKindMethodGenerator(kindTypeName, ofType, resolver);
             this.memberField = new MemberFieldGenerator(thisVariantBuilderType, kindTypeName, typeVarB, typeVarV, typeVarK,
-                typeVarO, typeVarKB, typeVarKV, typeVarKK, typeVarKO, typeVarVB, typeVarVV, typeVarVK, typeVarVO, ofType,
+                typeVarO, typeVarKB, typeVarKV, typeVarVB, typeVarVV, ofType,
                 builder);
             this.constructor = new ConstructorGenerator(thisVariantType, ofType, typeVarB, typeVarV, typeVarKB, typeVarKV,
                 typeVarVB, typeVarVV);
@@ -1477,10 +1462,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (isMapType(ofType))
                 {
-                    builder.addParameter(typeVarKB, "keyRW")
-                        .addParameter(typeVarKV, "keyRO")
-                        .addParameter(typeVarVB, "valueRW")
+                    builder.addParameter(typeVarKV, "keyRO")
                         .addParameter(typeVarVV, "valueRO")
+                        .addParameter(typeVarKB, "keyRW")
+                        .addParameter(typeVarVB, "valueRW")
                         .addStatement("super(new $T<>(keyRO, valueRO))", thisVariantType);
                 }
             }
@@ -1495,7 +1480,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (isMapType(ofType))
                 {
-                    builder.addStatement("$LRW = new $T.Builder<>(keyRW, keyRO, valueRW, valueRO)", memberName, memberTypeName);
+                    builder.addStatement("$LRW = new $T.Builder<>(keyRO, valueRO, keyRW, valueRW)", memberName, memberTypeName);
                 }
                 return this;
             }
@@ -1613,8 +1598,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (isMapType(ofType))
                 {
-                    return builder.returns(ParameterizedTypeName.get(thisName, typeVarKB, typeVarKV, typeVarKK, typeVarKO,
-                        typeVarVB, typeVarVV, typeVarVK, typeVarVO))
+                    return builder.returns(ParameterizedTypeName.get(thisName, typeVarKV, typeVarVV, typeVarKB, typeVarVB))
                         .addParameter(resolver.resolveType(ofType), "value")
                         .addStatement("throw new UnsupportedOperationException()")
                         .build();
@@ -2224,8 +2208,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (isMapType(ofType))
                     {
-                        builder.returns(ParameterizedTypeName.get(thisName, typeVarKB, typeVarKV, typeVarKK, typeVarKO, typeVarVB,
-                            typeVarVV, typeVarVK, typeVarVO));
+                        builder.returns(ParameterizedTypeName.get(thisName, typeVarKV, typeVarVV, typeVarKB, typeVarVB));
                     }
                 }
             }
@@ -2652,8 +2635,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         }
                         else if (isMapType(ofType))
                         {
-                            builder.returns(ParameterizedTypeName.get(thisName, typeVarKB, typeVarKV, typeVarKK, typeVarKO,
-                                typeVarVB, typeVarVV, typeVarVK, typeVarVO));
+                            builder.returns(ParameterizedTypeName.get(thisName, typeVarKV, typeVarVV, typeVarKB, typeVarVB));
                         }
                     }
                     builder.addParameter(enumClassName(kindTypeName), "value")
@@ -2969,13 +2951,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             @Override
             public MethodSpec generate()
             {
+                ClassName consumerRawType = ClassName.get(Consumer.class);
+                TypeName consumerKeyType = ParameterizedTypeName.get(consumerRawType, typeVarKB);
+                TypeName consumerValueType = ParameterizedTypeName.get(consumerRawType, typeVarVB);
                 Collections.sort(size);
                 int largestListSize = size.get(size.size() - 1);
                 return builder.addModifiers(PUBLIC)
-                    .returns(ParameterizedTypeName.get(thisName, typeVarKB, typeVarKV, typeVarKK, typeVarKO, typeVarVB, typeVarVV,
-                        typeVarVK, typeVarVO))
-                    .addParameter(typeVarKO, "key")
-                    .addParameter(typeVarVO, "value")
+                    .returns(ParameterizedTypeName.get(thisName, typeVarKV, typeVarVV, typeVarKB, typeVarVB))
+                    .addParameter(consumerKeyType, "key")
+                    .addParameter(consumerValueType, "value")
                     .addStatement("map$LRW.entry(key, value)", largestListSize)
                     .addStatement("limit(map$LRW.limit())", largestListSize)
                     .addStatement("return this")
@@ -3089,8 +3073,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (isMapType(ofType))
                 {
-                    builder.returns(ParameterizedTypeName.get(thisName, typeVarKB, typeVarKV, typeVarKK, typeVarKO, typeVarVB,
-                        typeVarVV, typeVarVK, typeVarVO))
+                    builder.returns(ParameterizedTypeName.get(thisName, typeVarKV, typeVarVV, typeVarKB, typeVarVB))
                         .addStatement("kind($L)", kind(String.format("map%d", largestListSize)))
                         .addStatement("map$LRW.wrap(buffer, limit(), maxLimit)", largestListSize);
                 }
@@ -3160,12 +3143,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private final TypeVariableName typeVarO;
             private final TypeVariableName typeVarKB;
             private final TypeVariableName typeVarKV;
-            private final TypeVariableName typeVarKK;
-            private final TypeVariableName typeVarKO;
             private final TypeVariableName typeVarVB;
             private final TypeVariableName typeVarVV;
-            private final TypeVariableName typeVarVK;
-            private final TypeVariableName typeVarVO;
 
             private MemberFieldGenerator(
                 ClassName thisType,
@@ -3176,12 +3155,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 TypeVariableName typeVarO,
                 TypeVariableName typeVarKB,
                 TypeVariableName typeVarKV,
-                TypeVariableName typeVarKK,
-                TypeVariableName typeVarKO,
                 TypeVariableName typeVarVB,
                 TypeVariableName typeVarVV,
-                TypeVariableName typeVarVK,
-                TypeVariableName typeVarVO,
                 AstType ofType,
                 TypeSpec.Builder builder)
             {
@@ -3193,12 +3168,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 this.typeVarO = typeVarO;
                 this.typeVarKB = typeVarKB;
                 this.typeVarKV = typeVarKV;
-                this.typeVarKK = typeVarKK;
-                this.typeVarKO = typeVarKO;
                 this.typeVarVB = typeVarVB;
                 this.typeVarVV = typeVarVV;
-                this.typeVarVK = typeVarVK;
-                this.typeVarVO = typeVarVO;
                 if (!kindTypeName.isPrimitive())
                 {
                     ClassName classType = (ClassName) kindTypeName;
@@ -3226,8 +3197,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     }
                     else if (isMapType(ofType))
                     {
-                        TypeName parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarKB,
-                            typeVarKV, typeVarKK, typeVarKO, typeVarVB, typeVarVV, typeVarVK, typeVarVO);
+                        TypeName parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarKV, typeVarVV,
+                            typeVarKB, typeVarVB);
                         builder.addField(FieldSpec.builder(parameterizedBuilderType, fieldRW, PRIVATE, FINAL).build());
                     }
                     else

@@ -50,6 +50,7 @@ public final class AstType
     public static final AstType LIST32 = new AstType("list32");
 
     public static final AstType VARIANT = new AstType("variant");
+    public static final AstType VARIANT_OF = new AstType("variantOf");
     public static final AstType VARIANT_ARRAY = new AstType("variantArray");
     public static final AstType VARIANT_ARRAY8 = new AstType("variantArray8");
     public static final AstType VARIANT_ARRAY16 = new AstType("variantArray16");

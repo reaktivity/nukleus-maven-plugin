@@ -40,26 +40,23 @@ import com.squareup.javapoet.TypeVariableName;
 public final class MapFlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
-    private final TypeVariableName typeVarKV;
-    private final TypeVariableName typeVarVV;
+    private final TypeVariableName typeVarK;
+    private final TypeVariableName typeVarV;
     private final BuilderClassBuilder builderClassBuilder;
 
     public MapFlyweightGenerator(
-        ClassName flyweightType,
-        ClassName variantType)
+        ClassName flyweightType)
     {
         super(flyweightType.peerClass("MapFW"));
-        TypeName anyType = TypeVariableName.get("?");
-        TypeName parameterizedVariantType = ParameterizedTypeName.get(variantType, anyType, anyType);
-        this.typeVarKV = TypeVariableName.get("KV", parameterizedVariantType);
-        this.typeVarVV = TypeVariableName.get("VV", parameterizedVariantType);
+        this.typeVarK = TypeVariableName.get("K", flyweightType);
+        this.typeVarV = TypeVariableName.get("V", flyweightType);
         this.classBuilder = classBuilder(thisName)
             .superclass(flyweightType)
             .addModifiers(PUBLIC, ABSTRACT)
-            .addTypeVariable(typeVarKV)
-            .addTypeVariable(typeVarVV);
+            .addTypeVariable(typeVarK)
+            .addTypeVariable(typeVarV);
 
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, variantType, flyweightType);
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
     }
 
     @Override
@@ -92,8 +89,8 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
 
     private MethodSpec forEachMethod()
     {
-        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarVV);
-        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarKV,
+        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
+        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarK,
             parameterizedConsumerType);
         return methodBuilder("forEach")
             .addModifiers(PUBLIC, ABSTRACT)
@@ -114,50 +111,33 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final TypeVariableName typeVarT;
         private final TypeVariableName typeVarKB;
-        private final TypeVariableName typeVarKV;
-        private final TypeVariableName typeVarKK;
-        private final TypeVariableName typeVarKO;
         private final TypeVariableName typeVarVB;
-        private final TypeVariableName typeVarVV;
-        private final TypeVariableName typeVarVK;
-        private final TypeVariableName typeVarVO;
+
         private final TypeName parameterizedBuilderType;
 
         private BuilderClassBuilder(
             ClassName mapType,
-            ClassName variantType,
             ClassName flyweightType)
         {
-            ClassName variantBuilderType = variantType.nestedClass("Builder");
             ClassName builderType = mapType.nestedClass("Builder");
             ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
 
-            this.typeVarKK = TypeVariableName.get("KK");
-            this.typeVarKO = TypeVariableName.get("KO", flyweightType);
-            this.typeVarKV = TypeVariableName.get("KV", ParameterizedTypeName.get(variantType, typeVarKK, typeVarKO));
-            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(variantBuilderType, typeVarKV, typeVarKK,
-                typeVarKO));
-            this.typeVarVK = TypeVariableName.get("VK");
-            this.typeVarVO = TypeVariableName.get("VO", flyweightType);
-            this.typeVarVV = TypeVariableName.get("VV", ParameterizedTypeName.get(variantType, typeVarVK, typeVarVO));
-            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(variantBuilderType, typeVarVV, typeVarVK,
-                typeVarVO));
+            TypeVariableName typeVarK = TypeVariableName.get("K", flyweightType);
+            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(flyweightBuilderType, typeVarK));
+            TypeVariableName typeVarV = TypeVariableName.get("V", flyweightType);
+            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(flyweightBuilderType, typeVarV));
             this.typeVarT = TypeVariableName.get("T", mapType);
-            this.parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarKB, typeVarKV, typeVarKK,
-                typeVarKO, typeVarVB, typeVarVV, typeVarVK, typeVarVO);
+            this.parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarK, typeVarV, typeVarKB,
+                typeVarVB);
 
             this.classBuilder = classBuilder(builderType.simpleName())
                 .addModifiers(PUBLIC, ABSTRACT, STATIC)
                 .superclass(ParameterizedTypeName.get(flyweightBuilderType, typeVarT))
                 .addTypeVariable(typeVarT)
+                .addTypeVariable(typeVarK)
+                .addTypeVariable(typeVarV)
                 .addTypeVariable(typeVarKB)
-                .addTypeVariable(typeVarKV)
-                .addTypeVariable(typeVarKK)
-                .addTypeVariable(typeVarKO)
-                .addTypeVariable(typeVarVB)
-                .addTypeVariable(typeVarVV)
-                .addTypeVariable(typeVarVK)
-                .addTypeVariable(typeVarVO);
+                .addTypeVariable(typeVarVB);
         }
 
         public TypeSpec build()
@@ -203,18 +183,22 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec entryMethod()
         {
+            ClassName consumerRawType = ClassName.get(Consumer.class);
+            TypeName consumerKeyType = ParameterizedTypeName.get(consumerRawType, typeVarKB);
+            TypeName consumerValueType = ParameterizedTypeName.get(consumerRawType, typeVarVB);
+
             return methodBuilder("entry")
                 .addModifiers(PUBLIC)
                 .returns(parameterizedBuilderType)
-                .addParameter(typeVarKO, "key")
-                .addParameter(typeVarVO, "value")
+                .addParameter(consumerKeyType, "key")
+                .addParameter(consumerValueType, "value")
                 .addStatement("keyRW.wrap(buffer(), limit(), maxLimit())")
-                .addStatement("keyRW.set(key)")
+                .addStatement("key.accept(keyRW)")
                 .addStatement("checkLimit(keyRW.limit(), maxLimit())")
                 .addStatement("limit(keyRW.limit())")
                 .addStatement("fieldCount++")
                 .addStatement("valueRW.wrap(buffer(), limit(), maxLimit())")
-                .addStatement("valueRW.set(value)")
+                .addStatement("value.accept(valueRW)")
                 .addStatement("checkLimit(valueRW.limit(), maxLimit())")
                 .addStatement("limit(valueRW.limit())")
                 .addStatement("fieldCount++")

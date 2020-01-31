@@ -328,8 +328,8 @@ case_member
    ;
 
 variant_type
-   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF variant_of_type)? LEFT_BRACE variant_case_list
-   RIGHT_BRACE
+   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET KW_OF variant_of_type LEFT_BRACE variant_case_list RIGHT_BRACE
+   | KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET LEFT_BRACE variant_case_list_without_of RIGHT_BRACE
    ;
 
 kind
@@ -349,8 +349,17 @@ variant_case_list
    : variant_case_member *
    ;
 
+variant_case_list_without_of
+   : variant_case_member_without_of *
+   ;
+
 variant_case_member
    : KW_CASE variant_case_value COLON variant_member SEMICOLON
+   ;
+
+variant_case_member_without_of
+   : KW_CASE variant_case_value COLON
+   | variant_case_member
    ;
 
 variant_case_value

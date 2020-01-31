@@ -33,6 +33,7 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public class VariantOfMapFWTest
 {
@@ -45,9 +46,8 @@ public class VariantOfMapFWTest
     };
 
     private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW, VariantEnumKindWithString32FW.Builder,
-        TypedefStringFW.Builder> flyweightRW =
-        new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(), new TypedefStringFW(),
-            new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
+        TypedefStringFW.Builder> flyweightRW = new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(),
+        new TypedefStringFW(), new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
     private final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> flyweightRO =
         new VariantOfMapFW<>(new VariantEnumKindWithString32FW(), new TypedefStringFW());
     private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
