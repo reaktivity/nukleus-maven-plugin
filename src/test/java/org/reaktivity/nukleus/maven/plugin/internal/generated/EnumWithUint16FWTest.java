@@ -29,6 +29,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16FW;
 
 public class EnumWithUint16FWTest
 {

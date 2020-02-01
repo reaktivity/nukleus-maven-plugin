@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantUint8KindOfUint64FW;
 
 public class VariantUint8KindOfUint64FWTest
 {

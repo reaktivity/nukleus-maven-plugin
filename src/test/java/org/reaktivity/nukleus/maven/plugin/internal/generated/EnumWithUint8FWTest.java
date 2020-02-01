@@ -28,6 +28,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint8;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint8FW;
 
 public class EnumWithUint8FWTest
 {
