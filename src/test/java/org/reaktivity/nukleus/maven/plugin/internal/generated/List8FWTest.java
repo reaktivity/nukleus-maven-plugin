@@ -166,9 +166,9 @@ public class List8FWTest
 
         final List8FW list8 = list8RO.wrap(buffer, 0, limit);
 
-        assertEquals(26, list8.length());
+        assertEquals(18, list8.length());
         assertEquals(2, list8.fieldCount());
-        assertEquals(27, list8.limit());
+        assertEquals(19, list8.limit());
     }
 
     @Test
@@ -200,9 +200,9 @@ public class List8FWTest
 
         final List8FW list8 = list8RO.wrap(buffer, 0, limit);
 
-        assertEquals(26, list8.length());
+        assertEquals(18, list8.length());
         assertEquals(2, list8.fieldCount());
-        assertEquals(27, list8.limit());
+        assertEquals(19, list8.limit());
     }
 
     @Test
@@ -218,9 +218,9 @@ public class List8FWTest
 
         final List8FW list8 = list8RO.wrap(buffer, 0, limit);
 
-        assertEquals(26, list8.length());
+        assertEquals(18, list8.length());
         assertEquals(2, list8.fieldCount());
-        assertEquals(27, list8.limit());
+        assertEquals(19, list8.limit());
     }
 
     private static StringFW asStringFW(

@@ -42,20 +42,20 @@ public class ListWithMissingFieldByteFWTest
     };
     private final ListWithMissingFieldByteFW.Builder listWithMissingFieldByteRW = new ListWithMissingFieldByteFW.Builder();
     private final ListWithMissingFieldByteFW listWithMissingFieldByteRO = new ListWithMissingFieldByteFW();
-    private final int physicalLengthSize = Integer.BYTES;
-    private final int logicalLengthSize = Integer.BYTES;
+    private final int lengthSize = Integer.BYTES;
+    private final int fieldCountSize = Integer.BYTES;
 
     private void setAllFields(
         MutableDirectBuffer buffer)
     {
-        int physicalLength = 47;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
-        buffer.putInt(offsetPhysicalLength, physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putInt(offsetLogicalLength, logicalLength);
+        int length = 39;
+        int fieldCount = 4;
+        int offsetLength = 10;
+        buffer.putInt(offsetLength, length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putInt(offsetFieldCount, fieldCount);
 
-        int offsetVariantOfString1Kind = offsetLogicalLength + logicalLengthSize;
+        int offsetVariantOfString1Kind = offsetFieldCount + fieldCountSize;
         buffer.putByte(offsetVariantOfString1Kind, EnumWithInt8.ONE.value());
         int offsetVariantOfString1Length = offsetVariantOfString1Kind + Byte.BYTES;
         buffer.putByte(offsetVariantOfString1Length, (byte) "string1".length());
@@ -70,11 +70,11 @@ public class ListWithMissingFieldByteFWTest
         buffer.putBytes(offsetVariantOfString2, "string2".getBytes());
 
         int offsetVariantOfUintKind = offsetVariantOfString2 + "string2".length();
-        buffer.putLong(offsetVariantOfUintKind, EnumWithUint32.NI.value());
-        int offsetVariantOfUint = offsetVariantOfUintKind + Long.BYTES;
-        buffer.putLong(offsetVariantOfUint, 4000000000L);
+        buffer.putInt(offsetVariantOfUintKind, (int) EnumWithUint32.NI.value());
+        int offsetVariantOfUint = offsetVariantOfUintKind + Integer.BYTES;
+        buffer.putInt(offsetVariantOfUint, (int) 4000000000L);
 
-        int offsetVariantOfIntKind = offsetVariantOfUint + Long.BYTES;
+        int offsetVariantOfIntKind = offsetVariantOfUint + Integer.BYTES;
         buffer.putByte(offsetVariantOfIntKind, EnumWithInt8.THREE.value());
         int offsetVariantOfInt = offsetVariantOfIntKind + Byte.BYTES;
         buffer.putInt(offsetVariantOfInt, -2000000000);
@@ -83,9 +83,9 @@ public class ListWithMissingFieldByteFWTest
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 47;
+        int length = 39;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
             try
             {
@@ -105,27 +105,27 @@ public class ListWithMissingFieldByteFWTest
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int physicalLength = 47;
-        int offsetPhysicalLength = 10;
+        int length = 39;
+        int offsetLength = 10;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
-            assertNull(listWithMissingFieldByteRO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
+            assertNull(listWithMissingFieldByteRO.tryWrap(buffer,  offsetLength, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 47;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
+        int length = 39;
+        int fieldCount = 4;
+        int offsetLength = 10;
         setAllFields(buffer);
 
-        assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.wrap(buffer, offsetPhysicalLength,
-            offsetPhysicalLength + physicalLength));
-        assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithMissingFieldByteRO.fieldCount());
+        assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.wrap(buffer, offsetLength,
+            offsetLength + length));
+        assertEquals(length, listWithMissingFieldByteRO.limit() - offsetLength);
+        assertEquals(fieldCount, listWithMissingFieldByteRO.fieldCount());
         assertEquals("string1", listWithMissingFieldByteRO.variantOfString1().asString());
         assertEquals("string2", listWithMissingFieldByteRO.variantOfString2().asString());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());
@@ -135,15 +135,15 @@ public class ListWithMissingFieldByteFWTest
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int physicalLength = 47;
-        int logicalLength = 4;
-        int offsetPhysicalLength = 10;
+        int length = 39;
+        int fieldCount = 4;
+        int offsetLength = 10;
         setAllFields(buffer);
 
-        assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.tryWrap(buffer, offsetPhysicalLength,
-            offsetPhysicalLength + physicalLength));
-        assertEquals(physicalLength, listWithMissingFieldByteRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithMissingFieldByteRO.fieldCount());
+        assertSame(listWithMissingFieldByteRO, listWithMissingFieldByteRO.tryWrap(buffer, offsetLength,
+            offsetLength + length));
+        assertEquals(length, listWithMissingFieldByteRO.limit() - offsetLength);
+        assertEquals(fieldCount, listWithMissingFieldByteRO.fieldCount());
         assertEquals("string1", listWithMissingFieldByteRO.variantOfString1().asString());
         assertEquals("string2", listWithMissingFieldByteRO.variantOfString2().asString());
         assertEquals(4000000000L, listWithMissingFieldByteRO.variantOfUint());

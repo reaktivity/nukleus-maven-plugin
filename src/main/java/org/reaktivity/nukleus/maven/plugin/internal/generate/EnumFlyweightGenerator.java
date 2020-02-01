@@ -128,8 +128,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
     private FieldSpec fieldSizeValueConstant()
     {
-        String constantType = valueTypeName == null ? "BYTE" : CLASS_NAMES.get(unsignedValueTypeName == null ? valueTypeName :
-            isTypeByte() ? TypeName.SHORT : unsignedValueTypeName).toUpperCase();
+        String constantType = valueTypeName == null ? "BYTE" : CLASS_NAMES.get(valueTypeName).toUpperCase();
         return FieldSpec.builder(int.class, "FIELD_SIZE_VALUE", PRIVATE, STATIC, FINAL)
                 .initializer(String.format("$T.SIZE_OF_%s", constantType), BIT_UTIL_TYPE)
                 .build();
@@ -158,11 +157,26 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
     private MethodSpec getMethod()
     {
-        String bufferType = valueTypeName == null ? "Byte" : CLASS_NAMES.get(unsignedValueTypeName == null ? valueTypeName :
-            isTypeByte() ? TypeName.SHORT : unsignedValueTypeName);
+        String bufferType = valueTypeName == null ? "Byte" : CLASS_NAMES.get(valueTypeName);
+        String unsignedHex = "";
+        if (unsignedValueTypeName != null)
+        {
+            if (valueTypeName.equals(TypeName.BYTE))
+            {
+                unsignedHex = " & 0xFF";
+            }
+            else if (valueTypeName.equals(TypeName.SHORT))
+            {
+                unsignedHex = " & 0xFFFF";
+            }
+            else if (valueTypeName.equals(TypeName.INT))
+            {
+                unsignedHex = " & 0xFFFF_FFFFL";
+            }
+        }
         String returnStatement = String.format("return %s", isValueTypeString() ?
             "stringRO.asString() != null ? $T.valueOf(stringRO.asString().toUpperCase()) : null" :
-            String.format("$T.valueOf(buffer().get%s(offset() + FIELD_OFFSET_VALUE))", bufferType));
+            String.format("$T.valueOf(buffer().get%s(offset() + FIELD_OFFSET_VALUE)%s)", bufferType, unsignedHex));
         return methodBuilder("get")
                 .addModifiers(PUBLIC)
                 .returns(enumTypeName)
@@ -181,10 +195,10 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                .returns(thisName);
         if (isValueTypeString())
         {
-            builder.beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit))")
+            builder.beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null)")
                    .addStatement("return null")
                    .endControlFlow()
-                   .beginControlFlow("if (null == stringRO.tryWrap(buffer, offset, maxLimit))")
+                   .beginControlFlow("if (stringRO.tryWrap(buffer, offset, maxLimit) == null)")
                    .addStatement("return null")
                    .endControlFlow()
                    .beginControlFlow("if (limit() > maxLimit)")
@@ -193,7 +207,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         }
         else
         {
-            builder.beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)")
+            builder.beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null || limit() > maxLimit)")
                    .addStatement("return null")
                    .endControlFlow();
         }
@@ -357,15 +371,37 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             else
             {
                 final String methodName = isParameterizedType() ? "value" : "ordinal";
-                final String bufferType = isParameterizedType() ? CLASS_NAMES.get(isTypeUnsignedInt() ?
-                    valueTypeName.equals(TypeName.BYTE) && unsignedValueTypeName.equals(TypeName.INT) ? TypeName.SHORT :
-                    unsignedValueTypeName : valueTypeName) : "Byte";
-                final String castToByte = isParameterizedType() ? "" : "(byte) ";
+                final String bufferType = isParameterizedType() ? CLASS_NAMES.get(valueTypeName) : "Byte";
+                String castType = "";
+                String unsignedHex = "";
+                if (!isParameterizedType())
+                {
+                    castType = "(byte) ";
+                }
+                else if (unsignedValueTypeName != null)
+                {
+                    if (valueTypeName.equals(TypeName.BYTE))
+                    {
+                        unsignedHex = " & 0xFF)";
+                        castType = "(byte) (";
+                    }
+                    else if (valueTypeName.equals(TypeName.SHORT))
+                    {
+                        unsignedHex = " & 0xFFFF)";
+                        castType = "(short) (";
+                    }
+                    else if (valueTypeName.equals(TypeName.INT))
+                    {
+                        unsignedHex = " & 0xFFFF_FFFFL)";
+                        castType = "(int) (";
+                    }
+                }
                 builder.addStatement("MutableDirectBuffer buffer = buffer()")
                        .addStatement("int offset = offset()")
                        .addStatement("int newLimit = offset + FIELD_SIZE_VALUE")
                        .addStatement("checkLimit(newLimit, maxLimit())")
-                       .addStatement(String.format("buffer.put%s(offset, %svalue.%s())", bufferType, castToByte, methodName))
+                       .addStatement(String.format("buffer.put%s(offset, %svalue.%s()%s)", bufferType, castType, methodName,
+                           unsignedHex))
                        .addStatement("limit(newLimit)");
             }
             return builder.addStatement("valueSet = true")

@@ -51,4 +51,3 @@ public enum EnumWithUint8
         return null;
     }
 }
-

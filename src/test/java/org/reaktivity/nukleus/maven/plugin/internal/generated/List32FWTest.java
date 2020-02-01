@@ -166,9 +166,9 @@ public class List32FWTest
 
         final List32FW list32 = list32RO.wrap(buffer, 0, limit);
 
-        assertEquals(29, list32.length());
+        assertEquals(21, list32.length());
         assertEquals(2, list32.fieldCount());
-        assertEquals(33, list32.limit());
+        assertEquals(25, list32.limit());
     }
 
     @Test
@@ -200,9 +200,9 @@ public class List32FWTest
 
         final List32FW list32 = list32RO.wrap(buffer, 0, limit);
 
-        assertEquals(29, list32.length());
+        assertEquals(21, list32.length());
         assertEquals(2, list32.fieldCount());
-        assertEquals(33, list32.limit());
+        assertEquals(25, list32.limit());
     }
 
     @Test
@@ -218,9 +218,9 @@ public class List32FWTest
 
         final List32FW list32 = list32RO.wrap(buffer, 0, limit);
 
-        assertEquals(29, list32.length());
+        assertEquals(21, list32.length());
         assertEquals(2, list32.fieldCount());
-        assertEquals(33, list32.limit());
+        assertEquals(25, list32.limit());
     }
 
     private static StringFW asStringFW(

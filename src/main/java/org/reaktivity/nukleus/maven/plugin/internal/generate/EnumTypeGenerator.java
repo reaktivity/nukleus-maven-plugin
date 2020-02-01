@@ -96,8 +96,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             }
             if (valueTypeName.isPrimitive())
             {
-                builder.addField(isTypeUnsignedInt() ? isTypeByte() ? TypeName.SHORT : unsignedValueTypeName : valueTypeName,
-                        "value", Modifier.PRIVATE, Modifier.FINAL);
+                builder.addField(isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName, "value", Modifier.PRIVATE,
+                    Modifier.FINAL);
             }
             else
             {
@@ -137,13 +137,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             else
             {
                 TypeName valueType = unsignedValueTypeName == null ? valueTypeName : unsignedValueTypeName;
-                if (unsignedValueTypeName != null && unsignedValueTypeName.equals(TypeName.INT) &&
-                    valueTypeName.equals(TypeName.BYTE))
-                {
-                    builder.addEnumConstant(name,
-                        TypeSpec.anonymousClassBuilder("(short) $L", value).build());
-                }
-                else if (valueType.equals(TypeName.BYTE) || valueType.equals(TypeName.SHORT))
+                if (valueType.equals(TypeName.BYTE) || valueType.equals(TypeName.SHORT))
                 {
                     builder.addEnumConstant(name,
                         TypeSpec.anonymousClassBuilder("($L) $L", valueType, value).build());
@@ -202,9 +196,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         {
             if (valueTypeName.isPrimitive())
             {
-
-                builder.addParameter(isTypeUnsignedInt() ? (isTypeByte() ? TypeName.SHORT : unsignedValueTypeName) :
-                    valueTypeName, "value");
+                builder.addParameter(isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName, "value");
             }
             else
             {
@@ -228,7 +220,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         {
             if (valueTypeName.isPrimitive())
             {
-                builder.returns(isTypeUnsignedInt() ? (isTypeByte() ? TypeName.SHORT : unsignedValueTypeName) : valueTypeName);
+                builder.returns(isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName);
             }
             else
             {
@@ -270,8 +262,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         {
             final String discriminant = isParameterizedType() ? "value" : "ordinal";
 
-            builder.addParameter(isParameterizedType() ? (isTypeUnsignedInt() ? (isTypeByte() ? TypeName.SHORT :
-                unsignedValueTypeName) : valueTypeName) : TypeName.INT, discriminant);
+            builder.addParameter(isParameterizedType() ? (isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName) :
+                TypeName.INT, discriminant);
 
             if (isValueTypeLong())
             {

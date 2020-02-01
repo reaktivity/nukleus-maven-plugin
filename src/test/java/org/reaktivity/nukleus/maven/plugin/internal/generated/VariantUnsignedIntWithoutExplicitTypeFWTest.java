@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_SHORT;
+import static org.agrona.BitUtil.SIZE_OF_BYTE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -56,8 +56,8 @@ public class VariantUnsignedIntWithoutExplicitTypeFWTest
     {
         int pos = offset;
         buffer.putByte(pos, (byte) 0x52);
-        buffer.putShort(pos += 1, (short) 200);
-        return pos - offset + SIZE_OF_SHORT;
+        buffer.putByte(pos += 1, (byte) 200);
+        return pos - offset + SIZE_OF_BYTE;
     }
 
     @Test
@@ -164,7 +164,7 @@ public class VariantUnsignedIntWithoutExplicitTypeFWTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUInt32WithInsufficientSpace()
     {
-        flyweightRW.wrap(buffer, 10, 18)
+        flyweightRW.wrap(buffer, 10, 14)
             .setAsUint32(12345);
     }
 }

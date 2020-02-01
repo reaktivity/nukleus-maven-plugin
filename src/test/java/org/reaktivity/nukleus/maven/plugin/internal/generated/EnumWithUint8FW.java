@@ -43,7 +43,7 @@ public final class EnumWithUint8FW extends Flyweight
         int offset,
         int maxLimit)
     {
-        if (null == super.tryWrap(buffer, offset, maxLimit) || limit() > maxLimit)
+        if (super.tryWrap(buffer, offset, maxLimit) == null || limit() > maxLimit)
         {
             return null;
         }

@@ -199,11 +199,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
 
         assertEquals(EnumWithInt8.TWO, variantOfList.kind());
-        assertEquals(26, variantOfList.get().length());
+        assertEquals(18, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
-        assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.get().length());
-        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(20, variantOfList.limit());
     }
 
     @Test
@@ -231,11 +229,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
 
         assertEquals(EnumWithInt8.ONE, variantOfList.kind());
-        assertEquals(272, variantOfList.get().length());
+        assertEquals(264, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
-        assertEquals(277, variantOfList.limit());
-        assertEquals(272, variantOfList.get().length());
-        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(269, variantOfList.limit());
     }
 
     @Test
@@ -256,11 +252,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
 
         assertEquals(EnumWithInt8.TWO, variantOfList.kind());
-        assertEquals(26, variantOfList.get().length());
+        assertEquals(18, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
-        assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.get().length());
-        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(20, variantOfList.limit());
     }
 
     @Test
@@ -277,11 +271,9 @@ public class VariantOfListFWTest
         final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
 
         assertEquals(EnumWithInt8.TWO, variantOfList.kind());
-        assertEquals(26, variantOfList.get().length());
+        assertEquals(18, variantOfList.get().length());
         assertEquals(2, variantOfList.get().fieldCount());
-        assertEquals(28, variantOfList.limit());
-        assertEquals(26, variantOfList.get().length());
-        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(20, variantOfList.limit());
     }
 
     private static StringFW asStringFW(
