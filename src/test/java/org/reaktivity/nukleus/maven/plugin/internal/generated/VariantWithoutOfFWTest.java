@@ -108,13 +108,13 @@ public class VariantWithoutOfFWTest
     public void shouldSetAsVariantOfInt32WithInt8()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsVariantOfInt32(100)
+            .setAsVariantOfInt32(asVariantOfInt32FW(100))
             .build()
             .limit();
 
         VariantWithoutOfFW variantWithoutOf = flyweightRO.wrap(buffer, 0, limit);
 
-        assertEquals(100, variantWithoutOf.getAsVariantOfInt32());
+        assertEquals(100, variantWithoutOf.getAsVariantOfInt32().get());
         assertEquals(KIND_FIVE, variantWithoutOf.kind());
     }
 
@@ -122,13 +122,13 @@ public class VariantWithoutOfFWTest
     public void shouldSetAsVariantOfInt32WithInt32()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsVariantOfInt32(100000)
+            .setAsVariantOfInt32(asVariantOfInt32FW(100000))
             .build()
             .limit();
 
         VariantWithoutOfFW variantWithoutOf = flyweightRO.wrap(buffer, 0, limit);
 
-        assertEquals(100000, variantWithoutOf.getAsVariantOfInt32());
+        assertEquals(100000, variantWithoutOf.getAsVariantOfInt32().get());
         assertEquals(KIND_FOUR, variantWithoutOf.kind());
     }
 
@@ -136,21 +136,36 @@ public class VariantWithoutOfFWTest
     public void shouldSetAsVariantEnumKindWithString32()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsVariantEnumKindWithString32(asStringFW("stringValue"))
+            .setAsVariantEnumKindWithString32(asVariantEnumKindWithString32FW(asStringFW("stringValue")))
             .build()
             .limit();
 
         VariantWithoutOfFW variantWithoutOf = flyweightRO.wrap(buffer, 0, limit);
 
         assertNotNull(variantWithoutOf.getAsVariantEnumKindWithString32());
-        assertEquals("stringValue", variantWithoutOf.getAsVariantEnumKindWithString32().asString());
+        assertEquals("stringValue", variantWithoutOf.getAsVariantEnumKindWithString32().get().asString());
         assertEquals(KIND_ONE, variantWithoutOf.kind());
+    }
+
+    private static VariantOfInt32FW asVariantOfInt32FW(
+        int value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + Integer.BYTES));
+        return new VariantOfInt32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value).build();
+    }
+
+    private static VariantEnumKindWithString32FW asVariantEnumKindWithString32FW(
+        StringFW value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.sizeof()));
+        return new VariantEnumKindWithString32FW.Builder().wrap(buffer, 0, buffer.capacity())
+            .set(value).build();
     }
 
     private static StringFW asStringFW(
         String value)
     {
-        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.length()));
         return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

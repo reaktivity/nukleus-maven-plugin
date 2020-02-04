@@ -350,16 +350,19 @@ variant_case_list
    ;
 
 variant_case_list_without_of
-   : variant_case_member_without_of *
+   : (variant_case_member_no_type * variant_case_member_without_of +) +
    ;
 
 variant_case_member
    : KW_CASE variant_case_value COLON variant_member SEMICOLON
    ;
 
-variant_case_member_without_of
+variant_case_member_no_type
    : KW_CASE variant_case_value COLON
-   | variant_case_member
+   ;
+
+variant_case_member_without_of
+   : KW_CASE variant_case_value COLON variant_member_without_of SEMICOLON
    ;
 
 variant_case_value
@@ -376,6 +379,11 @@ variant_member
    | variant_list_member
    | variant_array_member
    | variant_map_member
+   ;
+
+variant_member_without_of
+   : variant_member
+   | type_spec
    ;
 
 variant_list_member

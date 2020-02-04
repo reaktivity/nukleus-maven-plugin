@@ -124,6 +124,15 @@ public final class AstType
         return this == UINT8 || this == UINT16 || this == UINT24 || this == UINT32 || this == UINT64 || this == VARBYTEUINT32;
     }
 
+    public boolean isDynamicType()
+    {
+        return !isSignedInt() && !isUnsignedInt() && this != OCTETS && this != STRING && this != STRING8 && this != STRING16 &&
+            this != STRING32 && this != ARRAY && this != FLYWEIGHT && this != LIST && this != LIST0 && this != LIST8 &&
+            this != LIST32 && this != VARIANT && this != VARIANT_OF && this != VARIANT_ARRAY && this != VARIANT_ARRAY8 &&
+            this != VARIANT_ARRAY16 && this != VARIANT_ARRAY32 && this != MAP && this != MAP8 && this != MAP16 &&
+            this != MAP32;
+    }
+
     @Override
     public String toString()
     {

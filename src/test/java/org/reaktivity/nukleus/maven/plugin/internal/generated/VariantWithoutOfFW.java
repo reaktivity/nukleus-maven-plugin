@@ -15,21 +15,13 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 
 public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
 {
-    private static final int FIELD_SIZE_KIND = BitUtil.SIZE_OF_BYTE;
-
-    private static final int FIELD_OFFSET_KIND = 0;
-
     public static final EnumWithInt8 KIND_ONE = EnumWithInt8.ONE;
 
     public static final EnumWithInt8 KIND_TWO = EnumWithInt8.TWO;
@@ -51,14 +43,14 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
         return enumWithInt8RO.get();
     }
 
-    public int getAsVariantOfInt32()
+    public VariantOfInt32FW getAsVariantOfInt32()
     {
-        return variantOfInt32RO.get();
+        return variantOfInt32RO;
     }
 
-    public StringFW getAsVariantEnumKindWithString32()
+    public VariantEnumKindWithString32FW getAsVariantEnumKindWithString32()
     {
-        return variantEnumKindWithString32RO.get();
+        return variantEnumKindWithString32RO;
     }
 
     @Override
@@ -94,7 +86,11 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
             }
             break;
         default:
-            throw new IllegalStateException("Unrecognized kind: " + kind());
+            break;
+        }
+        if (limit() > maxLimit)
+        {
+            return null;
         }
         return this;
     }
@@ -119,8 +115,9 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
             variantOfInt32RO.wrap(buffer, offset, maxLimit);
             break;
         default:
-            throw new IllegalStateException("Unrecognized kind: " + kind());
+            break;
         }
+        checkLimit(limit(), maxLimit);
         return this;
     }
 
@@ -154,7 +151,7 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
         case FIVE:
             return variantOfInt32RO.toString();
         default:
-            throw new IllegalStateException("Unrecognized kind: " + kind());
+            return String.format("VARIANT_WITHOUT_OF [unknown]");
         }
     }
 
@@ -171,21 +168,21 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
         }
 
         public Builder setAsVariantOfInt32(
-            int value)
+            VariantOfInt32FW value)
         {
             VariantOfInt32FW.Builder variantOfInt32 = variantOfInt32RW.wrap(buffer(), offset(),
                 maxLimit());
-            variantOfInt32.set(value);
+            variantOfInt32.set(value.get());
             limit(variantOfInt32.build().limit());
             return this;
         }
 
         public Builder setAsVariantEnumKindWithString32(
-            StringFW value)
+            VariantEnumKindWithString32FW value)
         {
             VariantEnumKindWithString32FW.Builder variantEnumKindWithString32 = variantEnumKindWithString32RW.wrap(buffer(),
                 offset(), maxLimit());
-            variantEnumKindWithString32.set(value);
+            variantEnumKindWithString32.set(value.get());
             limit(variantEnumKindWithString32.build().limit());
             return this;
         }

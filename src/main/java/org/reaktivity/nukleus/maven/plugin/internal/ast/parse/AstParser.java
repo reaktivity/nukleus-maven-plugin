@@ -95,11 +95,14 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varbyte
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_arrayContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_member_no_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_member_without_ofContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_list_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_mapContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_map_memberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_member_without_ofContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_of_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint32_typeContext;
@@ -1167,30 +1170,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstVariantNode.Builder visitKind(
             KindContext ctx)
         {
-            if (ctx.KW_UINT8() != null)
-            {
-                variantBuilder.kindType(AstType.UINT8);
-            }
-            return super.visitKind(ctx);
-        }
-
-        @Override
-        public AstVariantNode.Builder visitScoped_name(
-            Scoped_nameContext ctx)
-        {
-            String kindTypeName = ctx.getText();
-            AstType astTypeName = astTypesByQualifiedName.get(kindTypeName);
-            if (astTypeName == null)
-            {
-                astTypeName = qualifiedPrefixes.stream()
-                    .map(qp -> String.format("%s%s", qp, kindTypeName))
-                    .map(astTypesByQualifiedName::get)
-                    .filter(Objects::nonNull)
-                    .findFirst()
-                    .orElse(AstType.dynamicType(kindTypeName));
-            }
-            variantBuilder.kindType(astTypeName);
-            return super.visitScoped_name(ctx);
+            VariantKindVisitor variantKindVisitor = new VariantKindVisitor(variantBuilder);
+            return variantKindVisitor.visitKind(ctx);
         }
 
         @Override
@@ -1212,6 +1193,71 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             return variantBuilder;
         }
 
+        @Override
+        public AstVariantNode.Builder visitVariant_case_member_no_type(
+            Variant_case_member_no_typeContext ctx)
+        {
+            AstVariantCaseNode.Builder variantCaseNodeBuilder = new VariantCaseVisitor().visitVariant_case_member_no_type(ctx);
+
+            AstVariantCaseNode caseN = variantCaseNodeBuilder.build();
+            variantBuilder.caseN(caseN);
+
+            return variantBuilder;
+        }
+
+        @Override
+        public AstVariantNode.Builder visitVariant_case_member_without_of(
+            Variant_case_member_without_ofContext ctx)
+        {
+            AstVariantCaseNode.Builder variantCaseNodeBuilder = new VariantCaseVisitor().visitVariant_case_member_without_of(ctx);
+
+            AstVariantCaseNode caseN = variantCaseNodeBuilder.build();
+            variantBuilder.caseN(caseN);
+
+            return variantBuilder;
+        }
+
+        public final class VariantKindVisitor extends NukleusBaseVisitor<AstVariantNode.Builder>
+        {
+            private AstVariantNode.Builder variantBuilder;
+
+            public VariantKindVisitor(
+                AstVariantNode.Builder variantBuilder)
+            {
+                this.variantBuilder = variantBuilder;
+            }
+
+            @Override
+            public AstVariantNode.Builder visitKind(
+                KindContext ctx)
+            {
+                if (ctx.KW_UINT8() != null)
+                {
+                    variantBuilder.kindType(AstType.UINT8);
+                }
+                return super.visitKind(ctx);
+            }
+
+            @Override
+            public AstVariantNode.Builder visitScoped_name(
+                Scoped_nameContext ctx)
+            {
+                String kindTypeName = ctx.getText();
+                AstType astTypeName = astTypesByQualifiedName.get(kindTypeName);
+                if (astTypeName == null)
+                {
+                    astTypeName = qualifiedPrefixes.stream()
+                        .map(qp -> String.format("%s%s", qp, kindTypeName))
+                        .map(astTypesByQualifiedName::get)
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(AstType.dynamicType(kindTypeName));
+                }
+                variantBuilder.kindType(astTypeName);
+                return super.visitScoped_name(ctx);
+            }
+        }
+
         public final class VariantCaseVisitor extends NukleusBaseVisitor<AstVariantCaseNode.Builder>
         {
             private final AstVariantCaseNode.Builder variantCaseBuilder;
@@ -1227,6 +1273,41 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             {
                 super.visitVariant_case_member(ctx);
                 return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVariant_case_member_no_type(
+                Variant_case_member_no_typeContext ctx)
+            {
+                super.visitVariant_case_member_no_type(ctx);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVariant_case_member_without_of(
+                Variant_case_member_without_ofContext ctx)
+            {
+                super.visitVariant_case_member_without_of(ctx);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVariant_member_without_of(
+                Variant_member_without_ofContext ctx)
+            {
+                String typeName = ctx.getText();
+                AstType astTypeName = astTypesByQualifiedName.get(typeName);
+                if (astTypeName == null)
+                {
+                    astTypeName = qualifiedPrefixes.stream()
+                        .map(qp -> String.format("%s%s", qp, typeName))
+                        .map(astTypesByQualifiedName::get)
+                        .filter(Objects::nonNull)
+                        .findFirst()
+                        .orElse(AstType.dynamicType(typeName));
+                }
+                variantCaseBuilder.type(astTypeName);
+                return super.visitVariant_member_without_of(ctx);
             }
 
             @Override

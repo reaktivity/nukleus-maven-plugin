@@ -259,14 +259,6 @@ scope test
            case 0xb1: string32;
         }
 
-        variant VariantUnsignedIntWithoutExplicitType switch (uint8)
-        {
-           case 0x70: uint32;
-           case 0x50: uint24;
-           case 0x52: uint8;
-           case 0x43: 0;
-        }
-
         variant VariantUint8KindWithInt64Type switch (uint8) of int64
         {
             case 0x71: int32;
@@ -369,16 +361,16 @@ scope test
 //            case THREE: octets[uint8];
 //        }
 
-//        variant VariantWithoutOf switch (EnumWithInt8)
-//        {
-//            case ONE:
-//            case TWO:
-//            case THREE:
-//                VariantEnumKindWithString32;
-//            case FOUR:
-//            case FIVE:
-//                VariantOfInt32;
-//        }
+        variant VariantWithoutOf switch (EnumWithInt8)
+        {
+            case ONE:
+            case TWO:
+            case THREE:
+               VariantEnumKindWithString32;
+            case FOUR:
+            case FIVE:
+               VariantOfInt32;
+        }
 
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {

@@ -85,7 +85,8 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
         int missingFieldValue = variantCaseNode.missingFieldValue();
         TypeName typeName = resolver.resolveType(memberType);
         TypeName unsignedTypeName = resolver.resolveUnsignedType(memberType);
-        generator.addMember(value, memberType.name(), memberType, typeName, unsignedTypeName, missingFieldValue);
+        String memberTypeName = memberType != null ? memberType.name() : null;
+        generator.addMember(value, memberTypeName, memberType, typeName, unsignedTypeName, missingFieldValue);
         return defaultResult();
     }
 

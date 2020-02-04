@@ -124,7 +124,7 @@ public class ListWithTypedefMapFWTest
         flyweight.field1().forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
-            mapItems.add(vv.getAsVariantEnumKindWithString32().asString());
+            mapItems.add(vv.getAsVariantEnumKindWithString32().get().asString());
         });
         assertEquals(49, flyweight.field1().length());
         assertEquals(4, flyweight.field1().fieldCount());
@@ -147,7 +147,7 @@ public class ListWithTypedefMapFWTest
         flyweight.field1().forEach(kv -> vv ->
         {
             mapKeys.add(kv.get().asString());
-            mapValues.add(vv.getAsVariantOfInt32());
+            mapValues.add(vv.getAsVariantOfInt32().get());
         });
         assertEquals(30, flyweight.field1().length());
         assertEquals(4, flyweight.field1().fieldCount());
@@ -287,6 +287,21 @@ public class ListWithTypedefMapFWTest
         }
     }
 
+    private static VariantEnumKindWithString32FW asVariantEnumKindWithString32FW(
+        StringFW value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.sizeof()));
+        return new VariantEnumKindWithString32FW.Builder().wrap(buffer, 0, buffer.capacity())
+            .set(value).build();
+    }
+
+    private static VariantOfInt32FW asVariantOfInt32FW(
+        int value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + Integer.BYTES));
+        return new VariantOfInt32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value).build();
+    }
+
     private static MapFW<VariantEnumKindWithString32FW, VariantWithoutOfFW> asMapFWWithStringValue(
         List<StringFW> keys,
         List<StringFW> values)
@@ -300,7 +315,7 @@ public class ListWithTypedefMapFWTest
         {
             StringFW key = keys.get(i);
             StringFW value = values.get(i);
-            typedefMapRW.entry(k -> k.set(key), v -> v.setAsVariantEnumKindWithString32(value));
+            typedefMapRW.entry(k -> k.set(key), v -> v.setAsVariantEnumKindWithString32(asVariantEnumKindWithString32FW(value)));
         }
         TypedefMapFW<VariantWithoutOfFW> typedefMapRO = typedefMapRW.build();
         return typedefMapRO.get();
@@ -319,7 +334,7 @@ public class ListWithTypedefMapFWTest
         {
             StringFW key = keys.get(i);
             int value = values.get(i);
-            typedefMapRW.entry(k -> k.set(key), v -> v.setAsVariantOfInt32(value));
+            typedefMapRW.entry(k -> k.set(key), v -> v.setAsVariantOfInt32(asVariantOfInt32FW(value)));
         }
         TypedefMapFW<VariantWithoutOfFW> typedefMapRO = typedefMapRW.build();
         return typedefMapRO.get();
