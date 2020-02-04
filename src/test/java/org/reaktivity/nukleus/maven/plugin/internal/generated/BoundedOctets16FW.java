@@ -28,12 +28,14 @@ public final class BoundedOctets16FW extends BoundedOctetsFW
 
     private static final int VALUE_OFFSET = LENGTH_OFFSET + LENGTH_SIZE;
 
+    @Override
     public <T> T get(
         Flyweight.Visitor<T> visitor)
     {
         return visitor.visit(buffer(), offset() + VALUE_OFFSET, limit());
     }
 
+    @Override
     public int length()
     {
         return buffer().getShort(offset() + LENGTH_OFFSET) & 0xFFFF;

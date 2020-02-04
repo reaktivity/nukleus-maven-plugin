@@ -34,6 +34,10 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.visit.ScopeVisitor;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ArrayFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctets16FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctets32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctets8FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctetsFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.List0FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.List32FWGenerator;
@@ -131,6 +135,7 @@ public class Generator
         ClassName variantOfType = resolver.resolveClass(AstType.VARIANT_OF);
         ClassName variantArrayType = resolver.resolveClass(AstType.VARIANT_ARRAY);
         ClassName mapType = resolver.resolveClass(AstType.MAP);
+        ClassName boundedOctetsType = resolver.resolveClass(AstType.BOUNDED_OCTETS);
 
         typeSpecs.add(new FlyweightGenerator(flyweightType));
         typeSpecs.add(new OctetsFlyweightGenerator(flyweightType));
@@ -156,6 +161,10 @@ public class Generator
         typeSpecs.add(new VariantArray32FWGenerator(flyweightType, variantArrayType, variantOfType));
         typeSpecs.add(new VariantFWGenerator(flyweightType));
         typeSpecs.add(new VariantOfFWGenerator(flyweightType, variantType));
+        typeSpecs.add(new BoundedOctetsFlyweightGenerator(flyweightType));
+        typeSpecs.add(new BoundedOctets8FlyweightGenerator(flyweightType, boundedOctetsType));
+        typeSpecs.add(new BoundedOctets16FlyweightGenerator(flyweightType, boundedOctetsType));
+        typeSpecs.add(new BoundedOctets32FlyweightGenerator(flyweightType, boundedOctetsType));
 
         System.out.println("Generating to " + outputDirectory);
 

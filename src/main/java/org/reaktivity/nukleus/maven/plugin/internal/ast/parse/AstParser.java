@@ -265,8 +265,8 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         AstTypedefNode.Builder typeDefBuilder = new AstTypedefNode.Builder();
 
         final String prefix = qualifiedPrefixes.peekFirst();
-        final String typeDefName = ctx.ID(1).getText();
-        final String originalTypeName = ctx.ID(0).getText();
+        final String typeDefName = ctx.typedeftype.getText();
+        final String originalTypeName = ctx.originaltype.getText();
         final String qualifiedVariantName = String.format("%s%s", prefix, typeDefName);
         astTypesByQualifiedName.put(qualifiedVariantName, AstType.dynamicType(qualifiedVariantName));
         typeDefBuilder.name(typeDefName);
@@ -282,7 +282,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
                 .orElse(AstType.dynamicType(originalTypeName));
         }
         typeDefBuilder.originalType(originalType);
-
 
         AstTypedefNode typeDef = typeDefBuilder.build();
         AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();

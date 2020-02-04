@@ -27,6 +27,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctets8FW;
 
 public class BoundedOctets8FWTest
 {

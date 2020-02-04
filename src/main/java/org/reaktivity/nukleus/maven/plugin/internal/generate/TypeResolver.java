@@ -109,6 +109,10 @@ public final class TypeResolver
         namesByType.put(AstType.LIST8, ClassName.get(packageName, "List8FW"));
         namesByType.put(AstType.LIST32, ClassName.get(packageName, "List32FW"));
         namesByType.put(AstType.OCTETS, ClassName.get(packageName, "OctetsFW"));
+        namesByType.put(AstType.BOUNDED_OCTETS, ClassName.get(packageName, "BoundedOctetsFW"));
+        namesByType.put(AstType.BOUNDED_OCTETS8, ClassName.get(packageName, "BoundedOctets8FW"));
+        namesByType.put(AstType.BOUNDED_OCTETS16, ClassName.get(packageName, "BoundedOctets16FW"));
+        namesByType.put(AstType.BOUNDED_OCTETS32, ClassName.get(packageName, "BoundedOctets32FW"));
         namesByType.put(AstType.VARIANT, ClassName.get(packageName, "VariantFW"));
         namesByType.put(AstType.VARIANT_OF, ClassName.get(packageName, "VariantOfFW"));
         namesByType.put(AstType.MAP, ClassName.get(packageName, "MapFW"));

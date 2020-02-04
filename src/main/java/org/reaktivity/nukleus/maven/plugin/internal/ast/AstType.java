@@ -37,6 +37,10 @@ public final class AstType
     public static final AstType VARBYTEUINT32 = new AstType("varbyteuint32");
 
     public static final AstType OCTETS = new AstType("octets");
+    public static final AstType BOUNDED_OCTETS = new AstType("boundedOctets");
+    public static final AstType BOUNDED_OCTETS8 = new AstType("boundedOctets8");
+    public static final AstType BOUNDED_OCTETS16 = new AstType("boundedOctets16");
+    public static final AstType BOUNDED_OCTETS32 = new AstType("boundedOctets32");
     public static final AstType STRING = new AstType("string");
     public static final AstType STRING8 = new AstType("string8");
     public static final AstType STRING16 = new AstType("string16");
@@ -130,7 +134,8 @@ public final class AstType
             this != STRING32 && this != ARRAY && this != FLYWEIGHT && this != LIST && this != LIST0 && this != LIST8 &&
             this != LIST32 && this != VARIANT && this != VARIANT_OF && this != VARIANT_ARRAY && this != VARIANT_ARRAY8 &&
             this != VARIANT_ARRAY16 && this != VARIANT_ARRAY32 && this != MAP && this != MAP8 && this != MAP16 &&
-            this != MAP32;
+            this != MAP32 && this != BOUNDED_OCTETS  && this != BOUNDED_OCTETS8 && this != BOUNDED_OCTETS16 &&
+            this != BOUNDED_OCTETS32;
     }
 
     @Override

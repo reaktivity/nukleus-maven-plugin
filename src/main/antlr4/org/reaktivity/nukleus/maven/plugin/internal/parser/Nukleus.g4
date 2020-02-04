@@ -405,7 +405,9 @@ variant_map_member
    ;
 
 typedef_type
-   : KW_TYPEDEF ID KW_AS ID SEMICOLON
+   : KW_TYPEDEF originaltype=ID KW_AS typedeftype=ID SEMICOLON
+   | KW_TYPEDEF originaltype=ID LEFT_ANG_BRACKET keytype=ID COMMA valuetype=ID RIGHT_ANG_BRACKET KW_AS typedeftype=ID
+   LEFT_ANG_BRACKET valuetype=ID RIGHT_ANG_BRACKET SEMICOLON
    ;
 
 array_type
