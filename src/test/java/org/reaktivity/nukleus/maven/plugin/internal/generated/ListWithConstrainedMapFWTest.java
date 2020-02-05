@@ -35,8 +35,11 @@ import org.reaktivity.reaktor.internal.test.types.String32FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
 
-public class ListWithTypedefMapFWTest
+public class ListWithConstrainedMapFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -46,8 +49,8 @@ public class ListWithTypedefMapFWTest
         }
     };
 
-    private final ListWithTypedefMapFW.Builder flyweightRW = new ListWithTypedefMapFW.Builder();
-    private final ListWithTypedefMapFW flyweightRO = new ListWithTypedefMapFW();
+    private final ListWithConstrainedMapFW.Builder flyweightRW = new ListWithConstrainedMapFW.Builder();
+    private final ListWithConstrainedMapFW flyweightRO = new ListWithConstrainedMapFW();
 
     private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
     private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
@@ -114,7 +117,7 @@ public class ListWithTypedefMapFWTest
     }
 
     static void assertAllTestValuesReadWithStringValues(
-        ListWithTypedefMapFW flyweight,
+        ListWithConstrainedMapFW flyweight,
         int offset)
     {
         assertEquals(52, flyweight.length());
@@ -136,7 +139,7 @@ public class ListWithTypedefMapFWTest
     }
 
     static void assertAllTestValuesReadWithIntValues(
-        ListWithTypedefMapFW flyweight,
+        ListWithConstrainedMapFW flyweight,
         int offset)
     {
         assertEquals(33, flyweight.length());
@@ -195,7 +198,7 @@ public class ListWithTypedefMapFWTest
     {
         int length = setStringEntries(buffer, 10);
 
-        final ListWithTypedefMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 10, 10 + length);
+        final ListWithConstrainedMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 10, 10 + length);
 
         assertSame(flyweightRO, listWithTypedefMap);
         assertAllTestValuesReadWithStringValues(listWithTypedefMap, 10);
@@ -206,7 +209,7 @@ public class ListWithTypedefMapFWTest
     {
         int length = setStringEntries(buffer, 10);
 
-        final ListWithTypedefMapFW listWithTypedefMap = flyweightRO.tryWrap(buffer, 10, 10 + length);
+        final ListWithConstrainedMapFW listWithTypedefMap = flyweightRO.tryWrap(buffer, 10, 10 + length);
 
         assertNotNull(listWithTypedefMap);
         assertSame(flyweightRO, listWithTypedefMap);
@@ -217,9 +220,9 @@ public class ListWithTypedefMapFWTest
     public void shouldFailWhenSameFieldIsSetMoreThanOnce() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .field1(asMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .field1(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
-            .field1(asMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .field1(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build();
     }
@@ -231,7 +234,7 @@ public class ListWithTypedefMapFWTest
             .build()
             .limit();
 
-        final ListWithTypedefMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 0, limit);
+        final ListWithConstrainedMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 0, limit);
 
         listWithTypedefMap.field1();
     }
@@ -240,12 +243,12 @@ public class ListWithTypedefMapFWTest
     public void shouldSetEntriesWithStringKeyAndStringValue() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .field1(asMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .field1(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build()
             .limit();
 
-        final ListWithTypedefMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 0, limit);
+        final ListWithConstrainedMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 0, limit);
 
         assertAllTestValuesReadWithStringValues(listWithTypedefMap, 0);
     }
@@ -259,7 +262,7 @@ public class ListWithTypedefMapFWTest
             .build()
             .limit();
 
-        final ListWithTypedefMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 0, limit);
+        final ListWithConstrainedMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 0, limit);
 
         assertAllTestValuesReadWithIntValues(listWithTypedefMap, 0);
     }
@@ -302,41 +305,40 @@ public class ListWithTypedefMapFWTest
         return new VariantOfInt32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value).build();
     }
 
-    private static MapFW<VariantEnumKindWithString32FW, VariantWithoutOfFW> asMapFWWithStringValue(
+    private static ConstrainedMapFW<VariantWithoutOfFW> asConstrainedMapFWWithStringValue(
         List<StringFW> keys,
         List<StringFW> values)
     {
-        TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> typedefMapRW =
-            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
+        ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> constrainedMapRW =
+            new ConstrainedMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
                 new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
-        typedefMapRW.wrap(buffer, 0, buffer.capacity());
+        constrainedMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)
         {
             StringFW key = keys.get(i);
             StringFW value = values.get(i);
-            typedefMapRW.entry(k -> k.set(key), v -> v.setAsVariantEnumKindWithString32(asVariantEnumKindWithString32FW(value)));
+            constrainedMapRW.entry(k -> k.set(key),
+                v -> v.setAsVariantEnumKindWithString32(asVariantEnumKindWithString32FW(value)));
         }
-        TypedefMapFW<VariantWithoutOfFW> typedefMapRO = typedefMapRW.build();
-        return typedefMapRO.get();
+        return constrainedMapRW.build();
     }
 
-    private static MapFW<VariantEnumKindWithString32FW, VariantWithoutOfFW> asMapFWWithIntValue(
+    private static ConstrainedMapFW<VariantWithoutOfFW> asMapFWWithIntValue(
         List<StringFW> keys,
         List<Integer> values)
     {
-        TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> typedefMapRW =
-            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
+        ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> constrainedMapRW =
+            new ConstrainedMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
                 new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
-        typedefMapRW.wrap(buffer, 0, buffer.capacity());
+        constrainedMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)
         {
             StringFW key = keys.get(i);
             int value = values.get(i);
-            typedefMapRW.entry(k -> k.set(key), v -> v.setAsVariantOfInt32(asVariantOfInt32FW(value)));
+            constrainedMapRW.entry(k -> k.set(key), v -> v.setAsVariantOfInt32(asVariantOfInt32FW(value)));
         }
-        TypedefMapFW<VariantWithoutOfFW> typedefMapRO = typedefMapRW.build();
-        return typedefMapRO.get();
+        return constrainedMapRW.build();
     }
 }

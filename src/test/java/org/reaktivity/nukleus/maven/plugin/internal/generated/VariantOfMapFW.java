@@ -222,6 +222,17 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
             return this;
         }
 
+        public Builder<K, V, KB, VB> entries(
+            DirectBuffer buffer,
+            int srcOffset,
+            int length,
+            int fieldCount)
+        {
+            map32RW.entries(buffer, srcOffset, length, fieldCount);
+            limit(map32RW.limit());
+            return this;
+        }
+
         @Override
         public VariantOfMapFW<K, V> build(
             int maxLimit)

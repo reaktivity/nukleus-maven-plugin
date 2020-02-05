@@ -22,9 +22,11 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
 
-public final class ListWithTypedefMapFW extends ListFW
+public final class ListWithConstrainedMapFW extends ListFW
 {
     private static final int INDEX_FIELD1 = 0;
 
@@ -34,17 +36,17 @@ public final class ListWithTypedefMapFW extends ListFW
 
     private static final int MISSING_FIELD_BYTE_SIZE = BitUtil.SIZE_OF_BYTE;
 
-    private TypedefMapFW<VariantWithoutOfFW> field1RO =
-        new TypedefMapFW<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW());
+    private ConstrainedMapFW<VariantWithoutOfFW> field1RO =
+        new ConstrainedMapFW<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW());
 
     private VariantOfListFW variantOfListRO = new VariantOfListFW();
 
     private long bitmask;
 
-    public MapFW<VariantEnumKindWithString32FW, VariantWithoutOfFW> field1()
+    public ConstrainedMapFW<VariantWithoutOfFW> field1()
     {
         assert (bitmask & MASK_FIELD1) != 0L : "Field \"field1\" is not set";
-        return field1RO.get();
+        return field1RO;
     }
 
     @Override
@@ -66,7 +68,7 @@ public final class ListWithTypedefMapFW extends ListFW
     }
 
     @Override
-    public ListWithTypedefMapFW wrap(
+    public ListWithConstrainedMapFW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -103,7 +105,7 @@ public final class ListWithTypedefMapFW extends ListFW
     }
 
     @Override
-    public ListWithTypedefMapFW tryWrap(
+    public ListWithConstrainedMapFW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -168,7 +170,7 @@ public final class ListWithTypedefMapFW extends ListFW
     {
         Object field1 = null;
         StringBuilder format = new StringBuilder();
-        format.append("LIST_WITH_TYPEDEFMAP [bitmask={0}");
+        format.append("LIST_WITH_CONSTRAINED_MAP [bitmask={0}");
         if ((bitmask & MASK_FIELD1) != 0L)
         {
             format.append(", field1={1}");
@@ -178,10 +180,10 @@ public final class ListWithTypedefMapFW extends ListFW
         return MessageFormat.format(format.toString(), String.format("0x%16X", bitmask), field1);
     }
 
-    public static final class Builder extends Flyweight.Builder<ListWithTypedefMapFW>
+    public static final class Builder extends Flyweight.Builder<ListWithConstrainedMapFW>
     {
-        private final TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1RW =
-            new TypedefMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
+        private final ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1RW =
+            new ConstrainedMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
                 new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
 
         private int lastFieldSet = -1;
@@ -190,18 +192,18 @@ public final class ListWithTypedefMapFW extends ListFW
 
         public Builder()
         {
-            super(new ListWithTypedefMapFW());
+            super(new ListWithConstrainedMapFW());
         }
 
         public Builder field1(
-            MapFW<VariantEnumKindWithString32FW, VariantWithoutOfFW> value)
+            ConstrainedMapFW<VariantWithoutOfFW> value)
         {
             assert lastFieldSet < INDEX_FIELD1 : "Field \"field1\" cannot be set out of order";
             variantOfListRW.field((b, o, m) ->
             {
-                TypedefMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1 =
+                ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1 =
                     field1RW.wrap(b, o, m);
-                field1.set(value);
+                field1.entries(value.entries(), 0, value.entries().capacity(), value.fieldCount());
                 return field1.build().sizeof();
             });
             lastFieldSet = INDEX_FIELD1;
@@ -221,7 +223,7 @@ public final class ListWithTypedefMapFW extends ListFW
         }
 
         @Override
-        public ListWithTypedefMapFW build()
+        public ListWithConstrainedMapFW build()
         {
             limit(variantOfListRW.build().limit());
             return super.build();
