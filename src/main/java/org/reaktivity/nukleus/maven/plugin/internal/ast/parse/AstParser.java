@@ -65,6 +65,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_ke
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_paramsContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_usingContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Map_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Non_primitive_member_with_defaultContext;
@@ -813,6 +814,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             List_paramsContext ctx)
         {
             AstListNode.Builder builder = new ListParamsVisitor(listBuilder).visitList_params(ctx);
+            return listBuilder;
+        }
+
+        @Override
+        public Builder visitList_using(
+            List_usingContext ctx)
+        {
+            AstListNode.Builder builder = new ListParamsVisitor(listBuilder).visitList_using(ctx);
             return listBuilder;
         }
 

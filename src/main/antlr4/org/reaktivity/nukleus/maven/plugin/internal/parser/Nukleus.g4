@@ -265,14 +265,16 @@ default_null
    ;
 
 list_type
-   : KW_LIST (list_params)? ID LEFT_BRACE list_members RIGHT_BRACE
+   : KW_LIST (list_params)? ID (list_using)? LEFT_BRACE list_members RIGHT_BRACE
    ;
 
 list_params
    : LEFT_ANG_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
-   | LEFT_ANG_BRACKET declarator RIGHT_ANG_BRACKET
    ;
 
+list_using
+   : KW_USING declarator
+   ;
 
 list_members
    : list_member* list_unbounded_member?
@@ -629,6 +631,11 @@ KW_DEFAULT
 
 KW_LIST
    : 'list'
+   ;
+
+
+KW_USING
+   : 'using'
    ;
 
 

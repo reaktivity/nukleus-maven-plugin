@@ -417,7 +417,7 @@ scope test
             VariantEnumKindWithInt32 variantOfInt;
         }
 
-        list<VariantOfList> ListFromVariantOfList
+        list ListFromVariantOfList using VariantOfList
         {
             required VariantEnumKindWithString32 variantOfString1;
             VariantEnumKindWithString32 variantOfString2;
@@ -435,19 +435,19 @@ scope test
 
 //        map ConstrainedMap<VariantEnumKindWithString32, V> using VariantOfMap;
 
-        list<VariantOfList> ListWithTypedef
+        list ListWithTypedef using VariantOfList
         {
             required TypedefUint32 field1;
             TypedefFromTypedef field2 = 4000000000L;
         }
 
-        list<VariantOfList> ListWithArray
+        list ListWithArray using VariantOfList
         {
             required VariantEnumKindWithString32 field1;
             VariantOfVariantArray<VariantEnumKindWithString32> arrayOfString;
         }
 
-        list<VariantOfList> ListWithMap
+        list ListWithMap using VariantOfList
         {
             required VariantEnumKindWithString32 field1;
             VariantOfMap<VariantEnumKindWithString32, TypedefString> mapOfString;
