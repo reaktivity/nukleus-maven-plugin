@@ -23,10 +23,11 @@ import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.MapFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEnumKindWithString32FW, V>
 {
-    private VariantOfMapFW<VariantEnumKindWithString32FW, V> variantOfMapRO;
+    private final VariantOfMapFW<VariantEnumKindWithString32FW, V> variantOfMapRO;
 
     public ConstrainedMapFW(
         VariantEnumKindWithString32FW keyRO,
@@ -103,7 +104,7 @@ public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEn
     @Override
     public String toString()
     {
-        return String.format("ConstrainedMap<%d, %d>", variantOfMapRO.get().length(), variantOfMapRO.get().fieldCount());
+        return String.format("ConstrainedMap[%d, %d]", variantOfMapRO.get().length(), variantOfMapRO.get().fieldCount());
     }
 
     public static final class Builder<V extends Flyweight, VB extends Flyweight.Builder<V>>

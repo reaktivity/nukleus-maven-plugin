@@ -453,7 +453,7 @@ scope test
             VariantOfMap<VariantEnumKindWithString32, TypedefString> mapOfString;
         }
 
-//        list<VariantOfList> ListWithConstrainedMap
+//        list ListWithConstrainedMap using VariantOfList
 //        {
 //            ConstrainedMap<VariantWithoutOf> field1;
 //        }
