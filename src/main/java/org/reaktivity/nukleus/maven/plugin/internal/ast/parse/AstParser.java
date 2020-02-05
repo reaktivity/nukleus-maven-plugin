@@ -68,6 +68,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_ty
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Map_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Non_primitive_member_with_defaultContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_keywordContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.OptionByteOrderContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.ScopeContext;
@@ -103,6 +104,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_mapContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_map_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_member_without_ofContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_octets_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_of_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varint32_typeContext;
@@ -1451,8 +1453,17 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitVariant_map_member(
                 Variant_map_memberContext ctx)
             {
-                AstVariantCaseNode.Builder variantArrayMemberVisitor = new MapMemberVisitor(variantCaseBuilder)
+                AstVariantCaseNode.Builder variantMapMemberVisitor = new MapMemberVisitor(variantCaseBuilder)
                     .visitVariant_map_member(ctx);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVariant_octets_member(
+                Variant_octets_memberContext ctx)
+            {
+                AstVariantCaseNode.Builder variantOctetsMemberVisitor = new OctetsMemberVisitor(variantCaseBuilder)
+                    .visitVariant_octets_member(ctx);
                 return variantCaseBuilder;
             }
         }
@@ -1587,6 +1598,41 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             }
         }
 
+        public final class OctetsMemberVisitor extends NukleusBaseVisitor<AstVariantCaseNode.Builder>
+        {
+            private final AstVariantCaseNode.Builder variantCaseBuilder;
+
+            public OctetsMemberVisitor(
+                AstVariantCaseNode.Builder variantCaseBuilder)
+            {
+                this.variantCaseBuilder = variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint32_type(
+                Uint32_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.BOUNDED_OCTETS32);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint16_type(
+                Uint16_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.BOUNDED_OCTETS16);
+                return variantCaseBuilder;
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitUint8_type(
+                Uint8_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.BOUNDED_OCTETS8);
+                return variantCaseBuilder;
+            }
+        }
+
         @Override
         public AstVariantNode.Builder visitString_type(
             String_typeContext ctx)
@@ -1617,6 +1663,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             variantBuilder.of(AstType.MAP);
             return super.visitMap_type(ctx);
+        }
+
+        @Override
+        public AstVariantNode.Builder visitOctets_keyword(
+            Octets_keywordContext ctx)
+        {
+            variantBuilder.of(AstType.BOUNDED_OCTETS);
+            return super.visitOctets_keyword(ctx);
         }
 
         @Override

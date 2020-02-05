@@ -22,11 +22,11 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
 public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOctetsFW>
 {
-    public static final EnumWithInt8 KIND_OCTETS32 = EnumWithInt8.ONE;
+    public static final EnumWithInt8 KIND_BOUNDED_OCTETS32 = EnumWithInt8.ONE;
 
-    public static final EnumWithInt8 KIND_OCTETS16 = EnumWithInt8.TWO;
+    public static final EnumWithInt8 KIND_BOUNDED_OCTETS16 = EnumWithInt8.TWO;
 
-    public static final EnumWithInt8 KIND_OCTETS8 = EnumWithInt8.THREE;
+    public static final EnumWithInt8 KIND_BOUNDED_OCTETS8 = EnumWithInt8.THREE;
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
@@ -177,7 +177,7 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
         public Builder setAsBoundedOctets32(
             BoundedOctetsFW value)
         {
-            kind(KIND_OCTETS32);
+            kind(KIND_BOUNDED_OCTETS32);
             BoundedOctets32FW.Builder boundedOctets32 = boundedOctets32RW.wrap(buffer(), limit(), maxLimit());
             boundedOctets32.set(value);
             limit(boundedOctets32.build().limit());
@@ -187,7 +187,7 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
         public Builder setAsBoundedOctets16(
             BoundedOctetsFW value)
         {
-            kind(KIND_OCTETS16);
+            kind(KIND_BOUNDED_OCTETS16);
             BoundedOctets16FW.Builder boundedOctets16 = boundedOctets16RW.wrap(buffer(), limit(), maxLimit());
             boundedOctets16.set(value);
             limit(boundedOctets16.build().limit());
@@ -197,7 +197,7 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
         public Builder setAsBoundedOctets8(
             BoundedOctetsFW value)
         {
-            kind(KIND_OCTETS8);
+            kind(KIND_BOUNDED_OCTETS8);
             BoundedOctets8FW.Builder boundedOctets8 = boundedOctets8RW.wrap(buffer(), limit(), maxLimit());
             boundedOctets8.set(value);
             limit(boundedOctets8.build().limit());

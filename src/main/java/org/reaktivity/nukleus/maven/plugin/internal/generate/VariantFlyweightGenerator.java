@@ -236,9 +236,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         TypeResolver resolver)
     {
         TypeSpec.Builder classBuilder = classBuilder(variantName);
-        if ((isListType(ofType) || isStringType(ofType)) && !kindTypeName.isPrimitive())
+        if ((isListType(ofType) || isStringType(ofType) || isBoundedOctetsType(ofType)) && !kindTypeName.isPrimitive())
         {
-            TypeName ofTypeName = resolver.resolveClass(isStringType(ofType) ? AstType.STRING : AstType.LIST);
+            TypeName ofTypeName = resolver.resolveClass(ofType);
 
             ClassName kindName = enumClassName(kindTypeName);
             TypeName superClassType = ParameterizedTypeName.get(variantOfFWType, kindName, ofTypeName);
@@ -767,7 +767,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+            if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
             {
                 return builder
                     .addStatement("throw new UnsupportedOperationException()")
@@ -784,7 +784,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public void mixin(TypeSpec.Builder builder)
         {
-            if ((isNonPrimitiveType(ofType)) && !kindTypeName.isPrimitive())
+            if (isNonPrimitiveType(ofType) && !kindTypeName.isPrimitive())
             {
                 super.mixin(builder);
             }
@@ -806,7 +806,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 .returns(String.class));
             this.kindTypeName = kindTypeName;
             this.ofType = ofType;
-            if (!isListType(ofType) && !isArrayType(ofType) && !isMapType(ofType))
+            if (!isListType(ofType) && !isArrayType(ofType) && !isMapType(ofType) && !isBoundedOctetsType(ofType))
             {
                 builder.beginControlFlow("switch (kind())");
             }
@@ -818,7 +818,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             AstType memberType,
             TypeName memberTypeName)
         {
-            if (!isListType(ofType) && !isArrayType(ofType) && !isMapType(ofType))
+            if (!isListType(ofType) && !isArrayType(ofType) && !isMapType(ofType) && !isBoundedOctetsType(ofType))
             {
                 builder.beginControlFlow("case $L:", kindTypeName.isPrimitive() && memberType != null ?
                     kind(memberName) : kindValue);
@@ -852,7 +852,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+            if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
             {
                 builder.addStatement("return get().toString()");
             }
@@ -1003,7 +1003,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
             }
 
-            if (!(isNonPrimitiveType(ofType)))
+            if (!isNonPrimitiveType(ofType))
             {
                 builder.addMethod(methodBuilder(getAs(memberType.isDynamicType() && memberTypeName != null ?
                     fieldName(memberTypeName) : name))
@@ -1092,13 +1092,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 ofTypeName.equals(TypeName.INT) ? TypeName.INT : TypeName.LONG;
             TypeName returnType;
 
-            if (isListType(ofType))
+            if (isListType(ofType) || isStringType(ofType) || isBoundedOctetsType(ofType))
             {
                 returnType = ofTypeName;
-            }
-            else if (isStringType(ofType))
-            {
-                returnType = resolver.resolveClass(AstType.STRING);
             }
             else if (isArrayType(ofType))
             {
@@ -1185,10 +1181,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         @Override
         public MethodSpec generate()
         {
-            TypeName returnType = isStringType(ofType) ? resolver.resolveClass(AstType.STRING) : isArrayType(ofType) ?
+            TypeName returnType = isArrayType(ofType) ?
                 ParameterizedTypeName.get(resolver.resolveClass(AstType.VARIANT_ARRAY), typeVarV) : isMapType(ofType) ?
                 ParameterizedTypeName.get(resolver.resolveClass(ofType), typeVarKV, typeVarVV) : ofTypeName;
-            if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+            if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
             {
                 return builder.returns(returnType)
                     .addStatement("throw new UnsupportedOperationException()")
@@ -1360,6 +1356,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final KindMethodGenerator kindMethod;
         private final ItemMethodGenerator itemMethod;
         private final EntryMethodGenerator entryMethod;
+        private final EntriesMethodGenerator entriesMethod;
         private final MaxKindMethodGenerator maxKindMethod;
         private final SizeMethodGenerator sizeMethod;
         private final KindFromLengthMethodGenerator kindFromLengthMethod;
@@ -1410,8 +1407,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         {
             super(thisVariantBuilderType);
 
-            this.builder = classBuilder(thisVariantBuilderType.simpleName())
-                .addModifiers(PUBLIC, STATIC, FINAL);
+
             this.typeVarO = typeVarO;
             ClassName variantOfFWType = resolver.resolveClass(AstType.VARIANT_OF);
             ClassName variantOfBuilderType = variantOfFWType.nestedClass("Builder");
@@ -1425,9 +1421,51 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(flyweightBuilderRawType, typeVarKV));
             this.typeVarVV = TypeVariableName.get("V", flyweightType);
             this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(flyweightBuilderRawType, typeVarVV));
-            if ((isStringType(ofType) || isListType(ofType)) && !kindTypeName.isPrimitive())
+            this.builder = classBuilder(thisVariantBuilderType.simpleName())
+                .addModifiers(PUBLIC, STATIC, FINAL);
+            builder(thisVariantBuilderType, flyweightBuilderRawType, thisVariantType, kindTypeName, ofType, resolver, typeVarO,
+                variantOfFWType, variantOfBuilderType, variantBuilderType);
+
+            this.variantType = thisVariantType;
+            this.sizeField = new SizeFieldGenerator(thisVariantBuilderType, kindTypeName, ofType, builder);
+            this.kindMethod = new KindMethodGenerator(kindTypeName, ofType);
+            this.maxKindMethod = new MaxKindMethodGenerator(kindTypeName, ofType);
+            this.sizeMethod = new SizeMethodGenerator(kindTypeName, ofType);
+            this.kindFromLengthMethod = new KindFromLengthMethodGenerator(kindTypeName, ofType);
+            this.itemMethod = new ItemMethodGenerator(ofType);
+            this.entryMethod = new EntryMethodGenerator(ofType);
+            this.entriesMethod = new EntriesMethodGenerator(ofType);
+            this.buildMethodWithMaxLimit = new BuildMethodWithMaxLimitGenerator(kindTypeName, thisVariantType, ofType);
+            this.fieldMethod = new FieldMethodGenerator(flyweightBuilderRawType, ofType);
+            this.wrapMethod = new WrapMethodGenerator(ofType);
+            this.setAsFieldMethod = new SetAsFieldMethodGenerator(thisVariantBuilderType, kindTypeName, ofType, ofTypeName,
+                builder, resolver);
+            this.setWithSpecificKindMethod = new SetWithSpecificKindMethodGenerator(kindTypeName, ofType, resolver);
+            this.memberField = new MemberFieldGenerator(thisVariantBuilderType, kindTypeName, typeVarB, typeVarV, typeVarK,
+                typeVarO, typeVarKB, typeVarKV, typeVarVB, typeVarVV, ofType,
+                builder);
+            this.constructor = new ConstructorGenerator(thisVariantType, ofType, typeVarB, typeVarV, typeVarKB, typeVarKV,
+                typeVarVB, typeVarVV);
+            this.setMethod = new SetMethodGenerator(ofType, ofTypeName, unsignedOfTypeName, kindTypeName, resolver);
+            this.buildMethod = new BuildMethodGenerator(kindTypeName, thisVariantType, ofType);
+            this.setList32FieldsMethod = new SetList32FieldsMethodGenerator(ofType);
+        }
+
+        private void builder(
+            ClassName thisVariantBuilderType,
+            ClassName flyweightBuilderRawType,
+            ClassName thisVariantType,
+            TypeName kindTypeName,
+            AstType ofType,
+            TypeResolver resolver,
+            TypeVariableName typeVarO,
+            ClassName variantOfFWType,
+            ClassName variantOfBuilderType,
+            ClassName variantBuilderType)
+        {
+            if ((isStringType(ofType) || isListType(ofType) || isBoundedOctetsType(ofType)) && !kindTypeName.isPrimitive())
             {
-                ClassName ofTypeClassName = resolver.resolveClass(isStringType(ofType) ? AstType.STRING : AstType.LIST);
+                ClassName ofTypeClassName = resolver.resolveClass(ofType);
                 ClassName kindName = enumClassName(kindTypeName);
                 TypeName superClassType = ParameterizedTypeName.get(variantOfFWType, kindName, ofTypeClassName);
                 classBuilder(thisVariantBuilderType).superclass(superClassType).addModifiers(PUBLIC, FINAL);
@@ -1467,29 +1505,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             {
                 builder.superclass(ParameterizedTypeName.get(flyweightBuilderRawType, thisVariantType));
             }
-
-            this.variantType = thisVariantType;
-            this.sizeField = new SizeFieldGenerator(thisVariantBuilderType, kindTypeName, ofType, builder);
-            this.kindMethod = new KindMethodGenerator(kindTypeName, ofType);
-            this.maxKindMethod = new MaxKindMethodGenerator(kindTypeName, ofType);
-            this.sizeMethod = new SizeMethodGenerator(kindTypeName, ofType);
-            this.kindFromLengthMethod = new KindFromLengthMethodGenerator(kindTypeName, ofType);
-            this.itemMethod = new ItemMethodGenerator(ofType);
-            this.entryMethod = new EntryMethodGenerator(ofType);
-            this.buildMethodWithMaxLimit = new BuildMethodWithMaxLimitGenerator(kindTypeName, thisVariantType, ofType);
-            this.fieldMethod = new FieldMethodGenerator(flyweightBuilderRawType, ofType);
-            this.wrapMethod = new WrapMethodGenerator(ofType);
-            this.setAsFieldMethod = new SetAsFieldMethodGenerator(thisVariantBuilderType, kindTypeName, ofType, ofTypeName,
-                builder, resolver);
-            this.setWithSpecificKindMethod = new SetWithSpecificKindMethodGenerator(kindTypeName, ofType, resolver);
-            this.memberField = new MemberFieldGenerator(thisVariantBuilderType, kindTypeName, typeVarB, typeVarV, typeVarK,
-                typeVarO, typeVarKB, typeVarKV, typeVarVB, typeVarVV, ofType,
-                builder);
-            this.constructor = new ConstructorGenerator(thisVariantType, ofType, typeVarB, typeVarV, typeVarKB, typeVarKV,
-                typeVarVB, typeVarVV);
-            this.setMethod = new SetMethodGenerator(ofType, ofTypeName, unsignedOfTypeName, kindTypeName, resolver);
-            this.buildMethod = new BuildMethodGenerator(kindTypeName, thisVariantType, ofType);
-            this.setList32FieldsMethod = new SetList32FieldsMethodGenerator(ofType);
         }
 
         private void addMember(
@@ -1503,6 +1518,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             kindFromLengthMethod.addMember(memberName, memberTypeName, unsignedMemberTypeName);
             itemMethod.addMember(memberType);
             entryMethod.addMember(memberType);
+            entriesMethod.addMember(memberType);
             fieldMethod.addMember(memberType);
             wrapMethod.addMember(memberType);
             setAsFieldMethod.addMember(memberName, memberType, memberTypeName, unsignedMemberTypeName);
@@ -1522,6 +1538,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             kindFromLengthMethod.mixin(builder);
             itemMethod.mixin(builder);
             entryMethod.mixin(builder);
+            entriesMethod.mixin(builder);
             buildMethodWithMaxLimit.mixin(builder);
             sizeField.build();
             fieldMethod.mixin(builder);
@@ -1536,6 +1553,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             return builder.addMethod(constructor.generate())
                 .build();
         }
+
+
 
         private static final class ConstructorGenerator extends MethodSpecGenerator
         {
@@ -1763,8 +1782,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                        .endControlFlow()
                        .endControlFlow();
                 TypeName parameterType = Objects.requireNonNullElseGet(unsignedOfType, () -> ofTypeName.isPrimitive() ?
-                    ofTypeName.equals(TypeName.LONG) ? TypeName.LONG : TypeName.INT : isListType(ofType) ? ofTypeName :
-                    resolver.resolveClass(AstType.STRING));
+                    ofTypeName.equals(TypeName.LONG) ? TypeName.LONG : TypeName.INT : ofTypeName);
                 return builder.addParameter(parameterType, isListType(ofType) ? "list" : "value")
                               .addStatement("return this")
                               .build();
@@ -2111,10 +2129,6 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         {
                             parameterType = memberTypeName;
                         }
-                        else if (isListType(ofType))
-                        {
-                            parameterType = ofTypeName;
-                        }
                         else if (memberTypeName.isPrimitive())
                         {
                             if (!memberTypeName.equals(TypeName.BYTE) && !memberTypeName.equals(TypeName.SHORT))
@@ -2124,7 +2138,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         }
                         else
                         {
-                            parameterType = resolver.resolveType(AstType.STRING);
+                            parameterType = ofTypeName;
                         }
                         MethodSpec.Builder setAsMethodBuilder = methodBuilder(setAs(memberType.isDynamicType() ?
                             fieldName(memberTypeName) : memberName))
@@ -2289,6 +2303,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                             .addStatement("$L.fields(list.fieldCount(), fields, 0, fields.capacity())", memberName)
                             .addStatement("limit($L.build().limit())", memberName);
                     }
+                    else if (isBoundedOctetsType(ofType))
+                    {
+                        code.addStatement("$L.set(value)", memberName)
+                            .addStatement("limit($L.build().limit())", memberName);
+                    }
                     else
                     {
                         code.addStatement("$L.set(value.asString(), $T.UTF_8)", memberName, StandardCharsets.class)
@@ -2351,8 +2370,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     ClassName kindName = enumClassName(kindTypeName);
                     TypeName ofTypeClassName = isArrayType(ofType) ?
                         ParameterizedTypeName.get(resolver.resolveClass(AstType.VARIANT_ARRAY), typeVarV) :
-                        isMapType(ofType) ? resolver.resolveType(ofType) :
-                        resolver.resolveClass(isStringType(ofType) ? AstType.STRING : AstType.LIST);
+                        resolver.resolveClass(ofType);
                     builder.addParameter(kindName, "kind")
                         .addParameter(ofTypeClassName, "value")
                         .addParameter(int.class, "kindPadding");
@@ -2388,7 +2406,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             @Override
             public MethodSpec generate()
             {
-                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
                 {
                     return builder.addStatement("throw new UnsupportedOperationException()")
                         .build();
@@ -2862,7 +2880,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             @Override
             public MethodSpec generate()
             {
-                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
                 {
                     return builder.returns(enumClassName(kindTypeName))
                         .addStatement("throw new UnsupportedOperationException()")
@@ -2904,7 +2922,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             @Override
             public MethodSpec generate()
             {
-                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
                 {
                     return builder.addStatement("throw new UnsupportedOperationException()")
                         .build();
@@ -2959,7 +2977,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             @Override
             public MethodSpec generate()
             {
-                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
                 {
                     return builder.returns(enumClassName(kindTypeName))
                         .addStatement("throw new UnsupportedOperationException()")
@@ -3147,6 +3165,56 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             }
         }
 
+        private final class EntriesMethodGenerator extends MethodSpecGenerator
+        {
+            private final AstType ofType;
+            private final List<Integer> size = new ArrayList<>();
+
+            private EntriesMethodGenerator(
+                AstType ofType)
+            {
+                super(methodBuilder("entries"));
+                this.ofType = ofType;
+            }
+
+            public EntriesMethodGenerator addMember(
+                AstType memberType)
+            {
+                if (isMapType(ofType))
+                {
+                    size.add(typeSize(memberType));
+                }
+                return this;
+            }
+
+            @Override
+            public MethodSpec generate()
+            {
+                Collections.sort(size);
+                int largestListSize = size.get(size.size() - 1);
+                return builder.addModifiers(PUBLIC)
+                    .returns(ParameterizedTypeName.get(thisName, typeVarKV, typeVarVV, typeVarKB, typeVarVB))
+                    .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                    .addParameter(int.class, "index")
+                    .addParameter(int.class, "length")
+                    .addParameter(int.class, "fieldCount")
+                    .addStatement("map$LRW.entries(buffer, index, length, fieldCount)", largestListSize)
+                    .addStatement("limit(map$LRW.limit())", largestListSize)
+                    .addStatement("return this")
+                    .build();
+            }
+
+            @Override
+            public void mixin(
+                TypeSpec.Builder builder)
+            {
+                if (isMapType(ofType))
+                {
+                    super.mixin(builder);
+                }
+            }
+        }
+
         private final class BuildMethodWithMaxLimitGenerator extends MethodSpecGenerator
         {
             private final TypeName kindTypeName;
@@ -3176,7 +3244,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             @Override
             public MethodSpec generate()
             {
-                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType))
+                if (isListType(ofType) || isArrayType(ofType) || isMapType(ofType) || isBoundedOctetsType(ofType))
                 {
                     return builder.addStatement("throw new UnsupportedOperationException()")
                         .build();
@@ -3387,7 +3455,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
     private static boolean isNonPrimitiveType(
         AstType type)
     {
-        return isListType(type) || isStringType(type) || isArrayType(type) || isMapType(type);
+        return isListType(type) || isStringType(type) || isArrayType(type) || isMapType(type) || isBoundedOctetsType(type);
     }
 
     private static boolean isListType(
@@ -3407,6 +3475,12 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         AstType type)
     {
         return AstType.MAP.equals(type);
+    }
+
+    private static boolean isBoundedOctetsType(
+        AstType type)
+    {
+        return AstType.BOUNDED_OCTETS.equals(type);
     }
 
     private static boolean isStringType(

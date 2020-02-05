@@ -26,7 +26,12 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctets16FW;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctets32FW;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctets8FW;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctetsFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfOctetsFW;
 
 public class VariantOfOctetsFWTest
 {

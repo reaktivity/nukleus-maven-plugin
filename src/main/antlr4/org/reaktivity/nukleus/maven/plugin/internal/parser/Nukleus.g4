@@ -343,6 +343,7 @@ variant_of_type
    | list_keyword
    | array_keyword
    | map_type
+   | octets_keyword
    ;
 
 variant_case_list
@@ -379,6 +380,7 @@ variant_member
    | variant_list_member
    | variant_array_member
    | variant_map_member
+   | variant_octets_member
    ;
 
 variant_member_without_of
@@ -402,6 +404,12 @@ variant_map_member
    : KW_MAP LEFT_ANG_BRACKET uint32_type RIGHT_ANG_BRACKET
    | KW_MAP LEFT_ANG_BRACKET uint16_type RIGHT_ANG_BRACKET
    | KW_MAP LEFT_ANG_BRACKET uint8_type RIGHT_ANG_BRACKET
+   ;
+
+variant_octets_member
+   : KW_OCTETS LEFT_SQUARE_BRACKET uint32_type RIGHT_SQUARE_BRACKET
+   | KW_OCTETS LEFT_SQUARE_BRACKET uint16_type RIGHT_SQUARE_BRACKET
+   | KW_OCTETS LEFT_SQUARE_BRACKET uint8_type RIGHT_SQUARE_BRACKET
    ;
 
 typedef_type
@@ -442,6 +450,10 @@ list_keyword
 
 array_keyword
    : KW_ARRAY
+   ;
+
+octets_keyword
+   : KW_OCTETS LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
    ;
 
 int_literal
