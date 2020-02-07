@@ -25,6 +25,7 @@ import java.util.function.Function;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMapNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
@@ -150,12 +151,12 @@ public final class TypeResolver
 
     private static final class QualifiedNameVisitor extends AstNode.Visitor<Map<String, AstNamedNode>>
     {
-        private final Map<String, AstNamedNode> namedNodesNyName;
+        private final Map<String, AstNamedNode> namedNodesByName;
         private final Deque<String> nestedNames;
 
         private QualifiedNameVisitor()
         {
-            this.namedNodesNyName = new HashMap<>();
+            this.namedNodesByName = new HashMap<>();
             this.nestedNames = new LinkedList<>();
         }
 
@@ -203,6 +204,13 @@ public final class TypeResolver
         }
 
         @Override
+        public Map<String, AstNamedNode> visitMap(
+            AstMapNode mapNode)
+        {
+            return visitNamedNode(mapNode, node -> super.visitMap((AstMapNode) node));
+        }
+
+        @Override
         public Map<String, AstNamedNode> visitUnion(
             AstUnionNode unionNode)
         {
@@ -224,7 +232,7 @@ public final class TypeResolver
             {
                 nestedNames.addLast(namedNode.name());
                 String qualifiedName = String.join("::", nestedNames);
-                namedNodesNyName.put(qualifiedName, namedNode);
+                namedNodesByName.put(qualifiedName, namedNode);
                 return visit.apply(namedNode);
             }
             finally
@@ -236,7 +244,7 @@ public final class TypeResolver
         @Override
         protected Map<String, AstNamedNode> defaultResult()
         {
-            return namedNodesNyName;
+            return namedNodesByName;
         }
     }
 
@@ -309,6 +317,13 @@ public final class TypeResolver
             AstTypedefNode typedefNode)
         {
             return visitNamedType(typedefNode, typedefNode.name(), super::visitTypedef);
+        }
+
+        @Override
+        public Map<AstType, TypeName> visitMap(
+            AstMapNode mapNode)
+        {
+            return visitNamedType(mapNode, mapNode.name(), super::visitMap);
         }
 
         private <N extends AstNode> Map<AstType, TypeName> visitNamedType(

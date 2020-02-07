@@ -134,6 +134,7 @@ public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEn
             return this;
         }
 
+        @Override
         public Builder<V, VB> entry(
             Consumer<VariantEnumKindWithString32FW.Builder> key,
             Consumer<VB> value)

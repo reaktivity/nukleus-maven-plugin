@@ -18,16 +18,18 @@ package org.reaktivity.nukleus.maven.plugin.internal.generate;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
+import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -39,169 +41,359 @@ import com.squareup.javapoet.TypeVariableName;
 
 public final class MapFlyweightGenerator extends ClassSpecGenerator
 {
-    private final TypeSpec.Builder classBuilder;
-    private final TypeVariableName typeVarK;
-    private final TypeVariableName typeVarV;
+    private final String baseName;
+    private final TypeSpec.Builder builder;
+    private final TypeName keyTypeName;
+    private final TypeName valueTypeName;
+    private final ClassName templateMapTypeName;
+    private final TypeName parameterizedMapName;
     private final BuilderClassBuilder builderClassBuilder;
 
     public MapFlyweightGenerator(
-        ClassName flyweightType)
+        ClassName mapName,
+        ClassName flyweightName,
+        String baseName,
+        ClassName templateMapTypeName,
+        AstType mapKeyType,
+        ClassName mapKeyTypeName,
+        AstType mapValueType,
+        ClassName mapValueTypeName,
+        TypeResolver resolver)
     {
-        super(flyweightType.peerClass("MapFW"));
-        this.typeVarK = TypeVariableName.get("K", flyweightType);
-        this.typeVarV = TypeVariableName.get("V", flyweightType);
-        this.classBuilder = classBuilder(thisName)
-            .superclass(flyweightType)
-            .addModifiers(PUBLIC, ABSTRACT)
-            .addTypeVariable(typeVarK)
-            .addTypeVariable(typeVarV);
+        super(mapName);
+        this.baseName = baseName;
+        this.keyTypeName = Objects.requireNonNullElse(mapKeyTypeName, TypeVariableName.get(mapKeyType.name(), flyweightName));
+        this.valueTypeName = Objects.requireNonNullElse(mapValueTypeName,
+            TypeVariableName.get(mapValueType.name(), flyweightName));
+        this.templateMapTypeName = templateMapTypeName;
+        ClassName mapFWType = resolver.resolveClass(AstType.MAP);
+        if (mapKeyTypeName == null && mapValueTypeName == null)
+        {
+            parameterizedMapName = ParameterizedTypeName.get(mapName, TypeVariableName.get(mapKeyType.name()),
+                TypeVariableName.get(mapValueType.name()));
+        }
+        else if (mapKeyTypeName == null)
+        {
+            parameterizedMapName = ParameterizedTypeName.get(mapName, TypeVariableName.get(mapKeyType.name()));
+        }
+        else if (mapValueTypeName == null)
+        {
+            parameterizedMapName = ParameterizedTypeName.get(mapName, TypeVariableName.get(mapValueType.name()));
+        }
+        else
+        {
+            parameterizedMapName = mapName;
+        }
+        this.builder = builder(mapName, mapFWType, flyweightName, mapKeyType, mapKeyTypeName, mapValueType, mapValueTypeName);
+        this.builderClassBuilder = new BuilderClassBuilder(mapName, parameterizedMapName, mapFWType, flyweightName,
+            templateMapTypeName, mapKeyType, mapKeyTypeName, keyTypeName, mapValueType, mapValueTypeName, valueTypeName);
+    }
 
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
+    private TypeSpec.Builder builder(
+        ClassName mapName,
+        ClassName mapFWType,
+        ClassName flyweightName,
+        AstType mapKeyType,
+        ClassName mapKeyTypeName,
+        AstType mapValueType,
+        ClassName mapValueTypeName)
+    {
+        TypeSpec.Builder classBuilder = classBuilder(mapName);
+        if (mapKeyTypeName == null)
+        {
+            classBuilder.addTypeVariable(TypeVariableName.get(mapKeyType.name(), flyweightName));
+        }
+        if (mapValueTypeName == null)
+        {
+            classBuilder.addTypeVariable(TypeVariableName.get(mapValueType.name(), flyweightName));
+        }
+        TypeName superClassType = ParameterizedTypeName.get(mapFWType, keyTypeName, valueTypeName);
+        return classBuilder.superclass(superClassType)
+            .addModifiers(PUBLIC, FINAL);
     }
 
     @Override
     public TypeSpec generate()
     {
-        return classBuilder
+        return builder
+            .addField(mapField())
+            .addMethod(constructor())
             .addMethod(lengthMethod())
             .addMethod(fieldCountMethod())
-            .addMethod(forEachMethod())
             .addMethod(entriesMethod())
+            .addMethod(forEachMethod())
+            .addMethod(tryWrapMethod())
+            .addMethod(wrapMethod())
+            .addMethod(limitMethod())
+            .addMethod(toStringMethod())
             .addType(builderClassBuilder.build())
+            .build();
+    }
+
+    private FieldSpec mapField()
+    {
+        ParameterizedTypeName parameterizedMapTypeName = ParameterizedTypeName.get(templateMapTypeName, keyTypeName,
+            valueTypeName);
+        String fieldName = String.format("%sRO", fieldName(templateMapTypeName));
+        return FieldSpec.builder(parameterizedMapTypeName, fieldName)
+            .addModifiers(PRIVATE, FINAL)
+            .build();
+    }
+
+    private MethodSpec constructor()
+    {
+        return constructorBuilder()
+            .addModifiers(PUBLIC)
+            .addParameter(keyTypeName, "keyRO")
+            .addParameter(valueTypeName, "valueRO")
+            .addStatement("$LRO = new $T<>(keyRO, valueRO)", fieldName(templateMapTypeName), templateMapTypeName)
             .build();
     }
 
     private MethodSpec lengthMethod()
     {
         return methodBuilder("length")
-            .addModifiers(PUBLIC, ABSTRACT)
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
             .returns(int.class)
+            .addStatement("return $LRO.get().length()", fieldName(templateMapTypeName))
             .build();
     }
 
     private MethodSpec fieldCountMethod()
     {
         return methodBuilder("fieldCount")
-            .addModifiers(PUBLIC, ABSTRACT)
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
             .returns(int.class)
-            .build();
-    }
-
-    private MethodSpec forEachMethod()
-    {
-        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
-        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarK,
-            parameterizedConsumerType);
-        return methodBuilder("forEach")
-            .addModifiers(PUBLIC, ABSTRACT)
-            .addParameter(parameterizedFunctionType, "consumer")
+            .addStatement("return $LRO.get().fieldCount()", fieldName(templateMapTypeName))
             .build();
     }
 
     private MethodSpec entriesMethod()
     {
         return methodBuilder("entries")
-            .addModifiers(PUBLIC, ABSTRACT)
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
             .returns(DIRECT_BUFFER_TYPE)
+            .addStatement("return $LRO.get().entries()", fieldName(templateMapTypeName))
+            .build();
+    }
+
+    private MethodSpec forEachMethod()
+    {
+        ClassName functionType = ClassName.get(Function.class);
+        ClassName consumerType = ClassName.get(Consumer.class);
+        TypeName parameterizedConsumerType = ParameterizedTypeName.get(consumerType, valueTypeName);
+        ParameterizedTypeName parameterizedFunctionType = ParameterizedTypeName.get(functionType, keyTypeName,
+            parameterizedConsumerType);
+        return methodBuilder("forEach")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .addParameter(parameterizedFunctionType, "consumer")
+            .addStatement("$LRO.get().forEach(consumer)", fieldName(templateMapTypeName))
+            .build();
+    }
+
+    private MethodSpec tryWrapMethod()
+    {
+        return methodBuilder("tryWrap")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(parameterizedMapName)
+            .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+            .addParameter(int.class, "offset")
+            .addParameter(int.class, "maxLimit")
+            .beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null)")
+            .addStatement("return null")
+            .endControlFlow()
+            .beginControlFlow("if ($LRO.tryWrap(buffer, offset, maxLimit) == null)", fieldName(templateMapTypeName))
+            .addStatement("return null")
+            .endControlFlow()
+            .beginControlFlow("if (limit() > maxLimit)")
+            .addStatement("return null")
+            .endControlFlow()
+            .addStatement("return this")
+            .build();
+    }
+
+    private MethodSpec wrapMethod()
+    {
+        return methodBuilder("wrap")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(parameterizedMapName)
+            .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+            .addParameter(int.class, "offset")
+            .addParameter(int.class, "maxLimit")
+            .addStatement("super.wrap(buffer, offset, maxLimit)")
+            .addStatement("$LRO.wrap(buffer, offset, maxLimit)", fieldName(templateMapTypeName))
+            .addStatement("checkLimit(limit(), maxLimit)")
+            .addStatement("return this")
+            .build();
+    }
+
+    private MethodSpec limitMethod()
+    {
+        return methodBuilder("limit")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(int.class)
+            .addStatement("return $LRO.limit()", fieldName(templateMapTypeName))
+            .build();
+    }
+
+    private MethodSpec toStringMethod()
+    {
+        return methodBuilder("toString")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(String.class)
+            .addStatement("return String.format(\"$L[%d, %d]\", $LRO.get().length(), $LRO.get().fieldCount())",
+                thisName.simpleName(), fieldName(templateMapTypeName), fieldName(templateMapTypeName))
             .build();
     }
 
     private static final class BuilderClassBuilder
     {
         private final TypeSpec.Builder classBuilder;
-        private final TypeVariableName typeVarT;
-        private final TypeVariableName typeVarKB;
-        private final TypeVariableName typeVarVB;
-
-        private final TypeName parameterizedBuilderType;
+        private final ClassName mapName;
+        private final TypeName parameterizedMapName;
+        private final ClassName templateMapTypeName;
+        private final TypeName keyTypeName;
+        private final TypeName valueTypeName;
+        private final TypeName keyBuilderTypeName;
+        private final TypeName valueBuilderTypeName;
+        private final TypeName parameterizedMapBuilderName;
 
         private BuilderClassBuilder(
-            ClassName mapType,
-            ClassName flyweightType)
+            ClassName mapName,
+            TypeName parameterizedMapName,
+            ClassName mapFWName,
+            ClassName flyweightType,
+            ClassName templateMapTypeName,
+            AstType mapKeyType,
+            ClassName mapKeyTypeName,
+            TypeName keyTypeName,
+            AstType mapValueType,
+            ClassName mapValueTypeName,
+            TypeName valueTypeName)
         {
-            ClassName builderType = mapType.nestedClass("Builder");
+            this.mapName = mapName;
+            this.parameterizedMapName = parameterizedMapName;
+            this.templateMapTypeName = templateMapTypeName;
+            this.keyTypeName = keyTypeName;
+            this.valueTypeName = valueTypeName;
+            ClassName mapBuilderName = mapName.nestedClass("Builder");
+            ClassName mapFWBuilderName = mapFWName.nestedClass("Builder");
             ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
+            keyBuilderTypeName = mapKeyTypeName != null ? mapKeyTypeName.nestedClass("Builder") :
+                TypeVariableName.get(String.format("%s%s", mapKeyType.name(), "B"));
+            valueBuilderTypeName = mapValueTypeName != null ? mapValueTypeName.nestedClass("Builder") :
+                TypeVariableName.get(String.format("%s%s", mapValueType.name(), "B"));
+            TypeName parameterizedMapFWBuilder = ParameterizedTypeName.get(mapFWBuilderName, parameterizedMapName, keyTypeName,
+                valueTypeName, keyBuilderTypeName, valueBuilderTypeName);
+            this.classBuilder = classBuilder(mapBuilderName.simpleName())
+                .addModifiers(PUBLIC, STATIC, FINAL)
+                .superclass(parameterizedMapFWBuilder);
+            if (mapKeyTypeName == null)
+            {
+                TypeVariableName typeVarK = TypeVariableName.get(mapKeyType.name(), flyweightType);
+                classBuilder.addTypeVariable(typeVarK)
+                    .addTypeVariable(TypeVariableName.get(String.format("%s%s", mapKeyType.name(), "B"),
+                        ParameterizedTypeName.get(flyweightBuilderType, typeVarK)));
+            }
+            if (mapValueTypeName == null)
+            {
+                TypeVariableName typeVarV = TypeVariableName.get(mapValueType.name(), flyweightType);
+                classBuilder.addTypeVariable(typeVarV)
+                    .addTypeVariable(TypeVariableName.get(String.format("%s%s", mapValueType.name(), "B"),
+                        ParameterizedTypeName.get(flyweightBuilderType, typeVarV)));
+            }
 
-            TypeVariableName typeVarK = TypeVariableName.get("K", flyweightType);
-            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(flyweightBuilderType, typeVarK));
-            TypeVariableName typeVarV = TypeVariableName.get("V", flyweightType);
-            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(flyweightBuilderType, typeVarV));
-            this.typeVarT = TypeVariableName.get("T", mapType);
-            this.parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarK, typeVarV, typeVarKB,
-                typeVarVB);
-
-            this.classBuilder = classBuilder(builderType.simpleName())
-                .addModifiers(PUBLIC, ABSTRACT, STATIC)
-                .superclass(ParameterizedTypeName.get(flyweightBuilderType, typeVarT))
-                .addTypeVariable(typeVarT)
-                .addTypeVariable(typeVarK)
-                .addTypeVariable(typeVarV)
-                .addTypeVariable(typeVarKB)
-                .addTypeVariable(typeVarVB);
+            if (mapKeyTypeName == null && mapValueTypeName == null)
+            {
+                parameterizedMapBuilderName = ParameterizedTypeName.get(mapBuilderName, keyTypeName, valueTypeName,
+                    keyBuilderTypeName, valueBuilderTypeName);
+            }
+            else if (mapKeyTypeName == null)
+            {
+                parameterizedMapBuilderName = ParameterizedTypeName.get(mapBuilderName, keyTypeName, keyBuilderTypeName);
+            }
+            else if (mapValueTypeName == null)
+            {
+                parameterizedMapBuilderName = ParameterizedTypeName.get(mapBuilderName, valueTypeName, valueBuilderTypeName);
+            }
+            else
+            {
+                parameterizedMapBuilderName = mapBuilderName;
+            }
         }
 
         public TypeSpec build()
         {
             return classBuilder
-                .addField(fieldCountField())
-                .addField(keyRWField())
-                .addField(valueRWField())
+                .addField(mapBuilderField())
                 .addMethod(constructor())
+                .addMethod(wrapMethod())
                 .addMethod(entryMethod())
                 .addMethod(entriesMethod())
-                .addMethod(fieldCountMethod())
+                .addMethod(buildMethod())
                 .build();
         }
 
-        private FieldSpec fieldCountField()
+        private FieldSpec mapBuilderField()
         {
-            return FieldSpec.builder(int.class, "fieldCount", PRIVATE).build();
-        }
-
-        private FieldSpec keyRWField()
-        {
-            return FieldSpec.builder(typeVarKB, "keyRW", PROTECTED, FINAL).build();
-        }
-
-        private FieldSpec valueRWField()
-        {
-            return FieldSpec.builder(typeVarVB, "valueRW", PROTECTED, FINAL).build();
+            ParameterizedTypeName parameterizedMapTypeName = ParameterizedTypeName.get(templateMapTypeName.nestedClass("Builder"),
+                keyTypeName, valueTypeName, keyBuilderTypeName, valueBuilderTypeName);
+            String fieldName = String.format("%sRW", fieldName(templateMapTypeName));
+            return FieldSpec.builder(parameterizedMapTypeName, fieldName)
+                .addModifiers(PRIVATE, FINAL)
+                .build();
         }
 
         private MethodSpec constructor()
         {
             return constructorBuilder()
                 .addModifiers(PUBLIC)
-                .addParameter(typeVarT, "flyweight")
-                .addParameter(typeVarKB, "keyRW")
-                .addParameter(typeVarVB, "valueRW")
-                .addStatement("super(flyweight)")
-                .addStatement("this.keyRW = keyRW")
-                .addStatement("this.valueRW = valueRW")
+                .addParameter(keyTypeName, "keyRO")
+                .addParameter(valueTypeName, "valueRO")
+                .addParameter(keyBuilderTypeName, "keyRW")
+                .addParameter(valueBuilderTypeName, "valueRW")
+                .addStatement("super(new $T<>(keyRO, valueRO), keyRW, valueRW)", mapName)
+                .addStatement("$LRW = new $T.Builder<>(keyRO, valueRO, keyRW, valueRW)",
+                    fieldName(templateMapTypeName), templateMapTypeName)
+                .build();
+        }
+
+        private MethodSpec wrapMethod()
+        {
+            return methodBuilder("wrap")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(parameterizedMapBuilderName)
+                .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "offset")
+                .addParameter(int.class, "maxLimit")
+                .addStatement("super.wrap(buffer, offset, maxLimit)")
+                .addStatement("$LRW.wrap(buffer, offset, maxLimit)", fieldName(templateMapTypeName))
+                .addStatement("return this")
                 .build();
         }
 
         private MethodSpec entryMethod()
         {
-            ClassName consumerRawType = ClassName.get(Consumer.class);
-            TypeName consumerKeyType = ParameterizedTypeName.get(consumerRawType, typeVarKB);
-            TypeName consumerValueType = ParameterizedTypeName.get(consumerRawType, typeVarVB);
-
+            ClassName consumerType = ClassName.get(Consumer.class);
+            TypeName parameterizedConsumerTypeWithKey = ParameterizedTypeName.get(consumerType, keyBuilderTypeName);
+            TypeName parameterizedConsumerTypeWithValue = ParameterizedTypeName.get(consumerType, valueBuilderTypeName);
             return methodBuilder("entry")
+                .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedBuilderType)
-                .addParameter(consumerKeyType, "key")
-                .addParameter(consumerValueType, "value")
-                .addStatement("keyRW.wrap(buffer(), limit(), maxLimit())")
-                .addStatement("key.accept(keyRW)")
-                .addStatement("checkLimit(keyRW.limit(), maxLimit())")
-                .addStatement("limit(keyRW.limit())")
-                .addStatement("fieldCount++")
-                .addStatement("valueRW.wrap(buffer(), limit(), maxLimit())")
-                .addStatement("value.accept(valueRW)")
-                .addStatement("checkLimit(valueRW.limit(), maxLimit())")
-                .addStatement("limit(valueRW.limit())")
-                .addStatement("fieldCount++")
+                .returns(parameterizedMapBuilderName)
+                .addParameter(parameterizedConsumerTypeWithKey, "key")
+                .addParameter(parameterizedConsumerTypeWithValue, "value")
+                .addStatement("$LRW.entry(key, value)", fieldName(templateMapTypeName))
+                .addStatement("limit($LRW.limit())", fieldName(templateMapTypeName))
                 .addStatement("return this")
                 .build();
         }
@@ -209,24 +401,35 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
         private MethodSpec entriesMethod()
         {
             return methodBuilder("entries")
+                .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedBuilderType)
+                .returns(parameterizedMapBuilderName)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
-                .addParameter(int.class, "srcOffset")
+                .addParameter(int.class, "index")
                 .addParameter(int.class, "length")
                 .addParameter(int.class, "fieldCount")
-                .addStatement("this.fieldCount = fieldCount")
+                .addStatement("$LRW.entries(buffer, index, length, fieldCount)", fieldName(templateMapTypeName))
+                .addStatement("limit($LRW.limit())", fieldName(templateMapTypeName))
                 .addStatement("return this")
                 .build();
         }
 
-        private MethodSpec fieldCountMethod()
+        private MethodSpec buildMethod()
         {
-            return methodBuilder("fieldCount")
+            return methodBuilder("build")
+                .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(int.class)
-                .addStatement("return fieldCount")
+                .returns(parameterizedMapName)
+                .addStatement("limit($LRW.build().limit())", fieldName(templateMapTypeName))
+                .addStatement("return super.build()")
                 .build();
         }
+    }
+
+    private static String fieldName(
+        TypeName type)
+    {
+        String fieldName =  ((ClassName) type).simpleName();
+        return String.format("%s%s", Character.toLowerCase(fieldName.charAt(0)), fieldName.substring(1, fieldName.length() - 2));
     }
 }

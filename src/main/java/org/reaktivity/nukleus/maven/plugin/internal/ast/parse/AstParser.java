@@ -32,6 +32,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode.Builder;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMapNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
@@ -66,6 +67,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_me
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_paramsContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_usingContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Map_keywordContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Map_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Non_primitive_member_with_defaultContext;
@@ -268,11 +270,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         AstTypedefNode.Builder typeDefBuilder = new AstTypedefNode.Builder();
 
         final String prefix = qualifiedPrefixes.peekFirst();
-        final String typeDefName = ctx.typedeftype.getText();
+        final String typedefName = ctx.typedeftype.getText();
         final String originalTypeName = ctx.originaltype.getText();
-        final String qualifiedVariantName = String.format("%s%s", prefix, typeDefName);
-        astTypesByQualifiedName.put(qualifiedVariantName, AstType.dynamicType(qualifiedVariantName));
-        typeDefBuilder.name(typeDefName);
+        final String qualifiedTypedefName = String.format("%s%s", prefix, typedefName);
+        astTypesByQualifiedName.put(qualifiedTypedefName, AstType.dynamicType(qualifiedTypedefName));
+        typeDefBuilder.name(typedefName);
         AstType originalType = astTypesByQualifiedName.get(originalTypeName);
 
         if (originalType == null)
@@ -293,6 +295,39 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             scopeBuilder.typedef(typeDef);
         }
         return typeDef;
+    }
+
+    @Override
+    public AstNode visitMap_type(
+        Map_typeContext ctx)
+    {
+        AstMapNode.Builder mapBuilder = new AstMapNode.Builder();
+
+        final String prefix = qualifiedPrefixes.peekFirst();
+        final String mapName = ctx.ID().getText();
+        final String templateTypeName = ctx.templatetype.getText();
+        final String keyTypeName = ctx.keytype.getText();
+        final String valueTypeName = ctx.valuetype.getText();
+        final String qualifiedMapName = String.format("%s%s", prefix, mapName);
+        astTypesByQualifiedName.put(qualifiedMapName, AstType.dynamicType(qualifiedMapName));
+        mapBuilder.name(mapName);
+
+        AstType templateType = Objects.requireNonNullElse(astTypesByQualifiedName.get(templateTypeName),
+            lookUpAstType(templateTypeName));
+        AstType keyType = Objects.requireNonNullElse(astTypesByQualifiedName.get(keyTypeName), lookUpAstType(keyTypeName));
+        AstType valueType = Objects.requireNonNullElse(astTypesByQualifiedName.get(valueTypeName), lookUpAstType(valueTypeName));
+
+        mapBuilder.templateMapType(templateType);
+        mapBuilder.keyType(keyType);
+        mapBuilder.valueType(valueType);
+
+        AstMapNode map = mapBuilder.build();
+        AstScopeNode.Builder scopeBuilder = scopeBuilders.peekLast();
+        if (scopeBuilder != null)
+        {
+            scopeBuilder.map(map);
+        }
+        return map;
     }
 
     @Override
@@ -921,17 +956,6 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
                 lookUpAstType(mapValueTypeName));
             listMemberBuilder.mapValueType(astMapValueTypeName);
             return super.visitVariant_map(ctx);
-        }
-
-        private AstType lookUpAstType(
-            String name)
-        {
-            return qualifiedPrefixes.stream()
-                .map(qp -> String.format("%s%s", qp, name))
-                .map(astTypesByQualifiedName::get)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(AstType.dynamicType(name));
         }
 
         @Override
@@ -1667,11 +1691,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public AstVariantNode.Builder visitMap_type(
-            Map_typeContext ctx)
+        public AstVariantNode.Builder visitMap_keyword(
+            Map_keywordContext ctx)
         {
             variantBuilder.of(AstType.MAP);
-            return super.visitMap_type(ctx);
+            return super.visitMap_keyword(ctx);
         }
 
         @Override
@@ -1923,5 +1947,16 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             valueBuilder.value(parsed);
             return defaultResult();
         }
+    }
+
+    private AstType lookUpAstType(
+        String name)
+    {
+        return qualifiedPrefixes.stream()
+            .map(qp -> String.format("%s%s", qp, name))
+            .map(astTypesByQualifiedName::get)
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(AstType.dynamicType(name));
     }
 }

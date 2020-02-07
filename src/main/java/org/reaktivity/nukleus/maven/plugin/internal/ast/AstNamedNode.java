@@ -21,7 +21,7 @@ public abstract class AstNamedNode extends AstNode
 {
     public enum Kind
     {
-        SCOPE, STRUCT, UNION, VARIANT, LIST, ENUM, TYPEDEF, DEFAULT
+        SCOPE, STRUCT, UNION, VARIANT, LIST, ENUM, TYPEDEF, MAP, DEFAULT
     }
     protected final String name;
 

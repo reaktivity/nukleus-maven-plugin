@@ -78,6 +78,7 @@ constr_type_spec
    | union_type
    | variant_type
    | typedef_type
+   | map_type
    ;
 
 declarators
@@ -317,6 +318,11 @@ variant_map
    : maptype=declarator LEFT_ANG_BRACKET keytype=declarator COMMA valuetype=declarator RIGHT_ANG_BRACKET name=declarator
    ;
 
+map_type
+   : KW_MAP ID LEFT_ANG_BRACKET keytype=scoped_name COMMA valuetype=scoped_name RIGHT_ANG_BRACKET KW_USING
+   templatetype=scoped_name SEMICOLON
+   ;
+
 union_type
    : KW_UNION ID KW_SWITCH LEFT_BRACKET KW_UINT8 RIGHT_BRACKET (KW_EXTENDS scoped_name)? LEFT_BRACE case_list RIGHT_BRACE
    ;
@@ -344,7 +350,7 @@ variant_of_type
    | string_type
    | list_keyword
    | array_keyword
-   | map_type
+   | map_keyword
    | octets_keyword
    ;
 
@@ -424,7 +430,7 @@ array_type
    : simple_type_spec LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
    ;
 
-map_type
+map_keyword
     : KW_MAP
     ;
 

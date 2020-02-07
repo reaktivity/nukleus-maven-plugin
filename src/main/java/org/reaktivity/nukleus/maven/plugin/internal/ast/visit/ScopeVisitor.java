@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMapNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -35,6 +36,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.MapFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -131,6 +133,32 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
             return visitEnum((AstEnumNode) newNode);
         case TYPEDEF:
             return visitTypedef((AstTypedefNode) newNode);
+        }
+        return defaultResult();
+    }
+
+    @Override
+    public Collection<TypeSpecGenerator<?>> visitMap(
+        AstMapNode mapNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        AstVariantNode templateNode = (AstVariantNode) resolver.resolve(mapNode.templateMapType().name());
+        if (AstType.MAP.equals(templateNode.of()))
+        {
+            String baseName = mapNode.name();
+            AstType mapType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+            ClassName mapName = resolver.resolveClass(mapType);
+            ClassName templateMapTypeName = resolver.resolveClass(mapNode.templateMapType());
+            ClassName mapKeyTypeName = resolver.resolveClass(mapNode.keyType());
+            ClassName mapValueTypeName = resolver.resolveClass(mapNode.valueType());
+
+            MapFlyweightGenerator generator = new MapFlyweightGenerator(mapName, resolver.flyweightName(), baseName,
+                templateMapTypeName, mapNode.keyType(), mapKeyTypeName, mapNode.valueType(), mapValueTypeName, resolver);
+            defaultResult.add(generator);
         }
         return defaultResult();
     }

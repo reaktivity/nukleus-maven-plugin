@@ -38,14 +38,14 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
-public final class Map16FlyweightGenerator extends ClassSpecGenerator
+public final class Map16FWGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final TypeVariableName typeVarK;
     private final TypeVariableName typeVarV;
     private final BuilderClassBuilder builderClassBuilder;
 
-    public Map16FlyweightGenerator(
+    public Map16FWGenerator(
         ClassName flyweightType,
         ClassName mapType)
     {
@@ -352,14 +352,14 @@ public final class Map16FlyweightGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .returns(parameterizedBuilderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
-                .addParameter(int.class, "srcOffset")
+                .addParameter(int.class, "index")
                 .addParameter(int.class, "length")
                 .addParameter(int.class, "fieldCount")
-                .addStatement("buffer().putBytes(offset() + FIELDS_OFFSET, buffer, srcOffset, length)")
+                .addStatement("buffer().putBytes(offset() + FIELDS_OFFSET, buffer, index, length)")
                 .addStatement("int newLimit = offset() + FIELDS_OFFSET + length")
                 .addStatement("checkLimit(newLimit, maxLimit())")
                 .addStatement("limit(newLimit)")
-                .addStatement("super.entries(buffer, srcOffset, length, fieldCount)")
+                .addStatement("super.entries(buffer, index, length, fieldCount)")
                 .addStatement("return this")
                 .build();
         }

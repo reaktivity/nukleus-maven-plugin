@@ -433,7 +433,7 @@ scope test
         typedef ListWithVariant as TypedefList;
         typedef EnumWithInt8 as TypedefEnum;
 
-//        map ConstrainedMap<VariantEnumKindWithString32, V> using VariantOfMap;
+        map ConstrainedMap<VariantEnumKindWithString32, V> using VariantOfMap;
 
         list ListWithTypedef using VariantOfList
         {
