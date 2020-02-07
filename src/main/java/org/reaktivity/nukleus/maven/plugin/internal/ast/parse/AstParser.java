@@ -70,6 +70,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.List_us
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Map_keywordContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Map_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.MemberContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Member_with_parametric_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Non_primitive_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_keywordContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Octets_typeContext;
@@ -96,7 +97,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbound
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Union_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Varbyteuint32_typeContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_arrayContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_member_no_typeContext;
@@ -104,7 +104,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_case_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_int_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_list_memberContext;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_mapContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_map_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_member_without_ofContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Variant_octets_memberContext;
@@ -919,43 +918,26 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
-        public Builder visitVariant_array(
-            Variant_arrayContext ctx)
+        public Builder visitMember_with_parametric_type(
+            Member_with_parametric_typeContext ctx)
         {
             listMemberBuilder.name(ctx.name.getText());
-            String variantArrayTypeName = ctx.arraytype.getText();
-            AstType astVariantArrayTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(variantArrayTypeName),
-                lookUpAstType(variantArrayTypeName));
-            listMemberBuilder.type(astVariantArrayTypeName);
+            String typeName = ctx.membertype.getText();
+            AstType astTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(typeName), lookUpAstType(typeName));
+            listMemberBuilder.type(astTypeName);
 
-            String arrayItemTypeName = ctx.itemtype.getText();
-            AstType astArrayItemTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(arrayItemTypeName),
-                lookUpAstType(arrayItemTypeName));
-            listMemberBuilder.arrayTypeName(astArrayItemTypeName);
-            listMemberBuilder.arrayType(AstType.VARIANT);
-            return super.visitVariant_array(ctx);
-        }
+            String typeParam = ctx.param1.getText();
+            AstType astTypeParam = Objects.requireNonNullElse(astTypesByQualifiedName.get(typeParam),
+                lookUpAstType(typeParam));
+            listMemberBuilder.typeParam(astTypeParam);
 
-        @Override
-        public Builder visitVariant_map(
-            Variant_mapContext ctx)
-        {
-            listMemberBuilder.name(ctx.name.getText());
-            String variantMapTypeName = ctx.maptype.getText();
-            AstType astVariantMapTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(variantMapTypeName),
-                lookUpAstType(variantMapTypeName));
-            listMemberBuilder.type(astVariantMapTypeName);
-
-            String mapKeyTypeName = ctx.keytype.getText();
-            AstType astMapKeyTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(mapKeyTypeName),
-                lookUpAstType(mapKeyTypeName));
-            listMemberBuilder.mapKeyType(astMapKeyTypeName);
-
-            String mapValueTypeName = ctx.valuetype.getText();
-            AstType astMapValueTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(mapValueTypeName),
-                lookUpAstType(mapValueTypeName));
-            listMemberBuilder.mapValueType(astMapValueTypeName);
-            return super.visitVariant_map(ctx);
+            if (ctx.param2 != null)
+            {
+                String secondTypeParam = ctx.param2.getText();
+                listMemberBuilder.typeParam(Objects.requireNonNullElse(astTypesByQualifiedName.get(secondTypeParam),
+                    lookUpAstType(secondTypeParam)));
+            }
+            return super.visitMember_with_parametric_type(ctx);
         }
 
         @Override

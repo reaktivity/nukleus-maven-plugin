@@ -177,28 +177,32 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         AstType arrayItemTypeName,
         AstType arrayItemOfType,
         AstType arrayItemKindType,
-        AstType mapKeyType,
-        AstType mapKeyKindType,
-        AstType mapKeyOfType,
-        AstType mapValueType,
-        AstType mapValueKindType,
-        AstType mapValueOfType)
+        AstType variantOfMapKeyType,
+        AstType variantOfMapKeyKindType,
+        AstType variantOfMapKeyOfType,
+        AstType variantOfMapValueType,
+        AstType variantOfMapValueKindType,
+        AstType variantOfMapValueOfType,
+        ClassName mapParamName,
+        ClassName originalMapKeyName,
+        ClassName originalMapValueName)
     {
         memberSizeConstant.addMember(name, typeName);
         fieldIndexConstant.addMember(name);
         maskConstant.addMember(name);
         defaultValueConstant.addMember(name, type, typeName, unsignedTypeName, defaultValue);
-        memberField.addMember(name, type, typeName, byteOrder, arrayItemType, arrayItemTypeName, arrayItemOfType, mapKeyType,
-            mapValueType);
+        memberField.addMember(name, type, typeName, byteOrder, arrayItemType, arrayItemTypeName, arrayItemOfType,
+            variantOfMapKeyType, variantOfMapValueType, mapParamName, originalMapKeyName, originalMapValueName);
         optionalOffsets.addMember(name);
         memberAccessor.addMember(name, type, typeName, unsignedTypeName, byteOrder, isRequired, defaultValue, arrayItemType,
-            arrayItemTypeName, mapKeyType, mapValueType);
+            arrayItemTypeName, variantOfMapKeyType, variantOfMapValueType, mapParamName);
         wrapMethod.addMember(name, typeName, defaultValue, isRequired);
         tryWrapMethod.addMember(name, typeName, defaultValue, isRequired);
         toStringMethod.addMember(name, typeName, defaultValue, isRequired);
         builderClass.addMember(name, type, typeName, unsignedTypeName, size, sizeType, usedAsSize, defaultValue,
-            byteOrder, isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType, arrayItemKindType, mapKeyType,
-            mapKeyKindType, mapKeyOfType, mapValueType, mapValueKindType, mapValueOfType);
+            byteOrder, isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType, arrayItemKindType, variantOfMapKeyType,
+            variantOfMapKeyKindType, variantOfMapKeyOfType, variantOfMapValueType, variantOfMapValueKindType,
+            variantOfMapValueOfType, mapParamName, originalMapKeyName, originalMapValueName);
         return this;
     }
 
@@ -573,13 +577,16 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             AstType arrayItemType,
             AstType arrayItemTypeName,
             AstType arrayItemOfType,
-            AstType mapKeyType,
-            AstType mapValueType)
+            AstType variantOfMapKeyType,
+            AstType variantOfMapValueType,
+            ClassName mapParamName,
+            ClassName originalMapKeyName,
+            ClassName originalMapValueName)
         {
             if (!typeName.isPrimitive())
             {
                 addNonPrimitiveMember(name, type, typeName, byteOrder, arrayItemType, arrayItemTypeName, arrayItemOfType,
-                    mapKeyType, mapValueType);
+                    variantOfMapKeyType, variantOfMapValueType, mapParamName, originalMapKeyName, originalMapValueName);
             }
             return this;
         }
@@ -592,8 +599,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             AstType arrayItemType,
             AstType arrayItemTypeName,
             AstType arrayItemOfType,
-            AstType mapKeyType,
-            AstType mapValueType)
+            AstType variantOfMapKeyType,
+            AstType variantOfMapValueType,
+            ClassName mapParamName,
+            ClassName originalMapKeyName,
+            ClassName originalMapValueName)
         {
             String fieldRO = String.format("%sRO", name);
             FieldSpec.Builder fieldBuilder = FieldSpec.builder(typeName, fieldRO, PRIVATE);
@@ -610,14 +620,19 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 fieldBuilder = FieldSpec.builder(parameterizedArrayName, fieldRO, PRIVATE)
                     .initializer("new $T<>(new $T())", typeName, resolver.resolveClass(arrayItemTypeName));
             }
-            else if (mapKeyType != null)
+            else if (variantOfMapKeyType != null)
             {
-                ClassName mapKeyClassName = resolver.resolveClass(mapKeyType);
-                ClassName mapValueClassName = resolver.resolveClass(mapValueType);
+                ClassName mapKeyClassName = resolver.resolveClass(variantOfMapKeyType);
+                ClassName mapValueClassName = resolver.resolveClass(variantOfMapValueType);
                 TypeName parameterizedMapName = ParameterizedTypeName.get(resolver.resolveClass(type), mapKeyClassName,
                     mapValueClassName);
                 fieldBuilder = FieldSpec.builder(parameterizedMapName, fieldRO, PRIVATE)
                     .initializer("new $T<>(new $T(), new $T())", typeName, mapKeyClassName, mapValueClassName);
+            }
+            else if (mapParamName != null)
+            {
+                fieldBuilder = FieldSpec.builder(ParameterizedTypeName.get((ClassName) typeName, mapParamName), fieldRO, PRIVATE)
+                    .initializer("new $T<>(new $T(), new $T())", typeName, originalMapKeyName, originalMapValueName);
             }
             else
             {
@@ -804,7 +819,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             AstType arrayItemType,
             AstType arrayItemTypeName,
             AstType mapKeyType,
-            AstType mapValueType)
+            AstType mapValueType,
+            ClassName mapParamName)
         {
             if (typeName.isPrimitive())
             {
@@ -813,7 +829,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             else
             {
                 addNonPrimitiveMember(name, type, typeName, isRequired, defaultValue, arrayItemType, arrayItemTypeName,
-                    mapKeyType, mapValueType);
+                    mapKeyType, mapValueType, mapParamName);
             }
             return this;
         }
@@ -924,10 +940,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             AstType arrayItemType,
             AstType arrayItemTypeName,
             AstType mapKeyType,
-            AstType mapValueType)
+            AstType mapValueType,
+            ClassName mapParamName)
         {
             CodeBlock.Builder codeBlock = CodeBlock.builder();
-            TypeName returnType = typeName;
+            TypeName returnType = mapParamName == null ? typeName : ParameterizedTypeName.get((ClassName) typeName, mapParamName);
             AstNamedNode namedNode = resolver.resolve(type.name());
             if (namedNode == null)
             {
@@ -1556,14 +1573,17 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             AstType mapKeyOfType,
             AstType mapValueType,
             AstType mapValueKindType,
-            AstType mapValueOfType)
+            AstType mapValueOfType,
+            ClassName mapParamName,
+            ClassName originalMapKeyName,
+            ClassName originalMapValueName)
         {
             memberField.addMember(name, typeName, byteOrder, arrayItemType, arrayItemTypeName, arrayItemOfType,
-                arrayItemKindType, mapKeyType, mapValueType);
+                arrayItemKindType, mapKeyType, mapValueType, mapParamName, originalMapKeyName, originalMapValueName);
             memberAccessor.addMember(name, type, typeName, isRequired);
             memberMutator.addMember(name, type, typeName, unsignedType, usedAsSize, size, sizeType, byteOrder, defaultValue,
                 isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType, arrayItemKindType, mapKeyType, mapKeyKindType,
-                mapKeyOfType, mapValueType, mapValueKindType, mapValueOfType);
+                mapKeyOfType, mapValueType, mapValueKindType, mapValueOfType, mapParamName);
             buildMethod.addMember(name, isRequired);
         }
 
@@ -1647,7 +1667,10 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 AstType arrayItemOfType,
                 AstType arrayItemKindType,
                 AstType mapKeyType,
-                AstType mapValueType)
+                AstType mapValueType,
+                ClassName mapParamName,
+                ClassName originalMapKeyName,
+                ClassName originalMapValueName)
             {
                 if (!type.isPrimitive())
                 {
@@ -1688,6 +1711,16 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                             builder.addField(FieldSpec.builder(parameterizedMapName, fieldRW, PRIVATE, FINAL)
                                 .initializer("new $T<>(new $T(), new $T(), new $T(), new $T())", builderType,
                                     mapKeyTypeClass, mapValueTypeClass, mapKeyTypeBuilderClass, mapValueTypeBuilderClass)
+                                .build());
+                        }
+                        else if (mapParamName != null)
+                        {
+                            TypeName parameterizedMapName = ParameterizedTypeName.get(builderType, mapParamName,
+                                mapParamName.nestedClass("Builder"));
+                            builder.addField(FieldSpec.builder(parameterizedMapName, fieldRW, PRIVATE, FINAL)
+                                .initializer("new $T<>(new $T(), new $T(), new $T(), new $T())", builderType,
+                                    originalMapKeyName, originalMapValueName, originalMapKeyName.nestedClass("Builder"),
+                                    originalMapValueName.nestedClass("Builder"))
                                 .build());
                         }
                         else
@@ -1905,7 +1938,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 AstType mapKeyOfType,
                 AstType mapValueType,
                 AstType mapValueKindType,
-                AstType mapValueOfType)
+                AstType mapValueOfType,
+                ClassName mapParamName)
             {
                 if (typeName.isPrimitive())
                 {
@@ -1915,7 +1949,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 {
                     addNonPrimitiveMember(name, type, typeName, isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType,
                         arrayItemKindType, mapKeyType, mapKeyKindType, mapKeyOfType, mapValueType, mapValueKindType,
-                        mapValueOfType);
+                        mapValueOfType, mapParamName);
                 }
                 bitsOfOnes = (bitsOfOnes << 1) | 1;
                 if (isRequired)
@@ -2023,7 +2057,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 AstType mapKeyOfType,
                 AstType mapValueType,
                 AstType mapValueKindType,
-                AstType mapValueOfType)
+                AstType mapValueOfType,
+                ClassName mapParamName)
             {
                 ClassName className = (ClassName) typeName;
                 AstNamedNode namedNode = resolver.resolve(type.name());
@@ -2044,7 +2079,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                         {
                             addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired, arrayItemType,
                                 arrayItemTypeName, arrayItemOfType, arrayItemKindType, mapKeyType, mapKeyKindType,
-                                mapKeyOfType, mapValueType, mapValueKindType, mapValueOfType);
+                                mapKeyOfType, mapValueType, mapValueKindType, mapValueOfType, mapParamName);
                             return;
                         }
                     }
@@ -2056,6 +2091,10 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     {
                         addVariantType(name, type, className, isRequired, arrayItemType, arrayItemTypeName, arrayItemOfType,
                             arrayItemKindType, mapKeyType, mapValueType);
+                    }
+                    else if (isMapType(kind))
+                    {
+                        addMapType(name, isRequired, className, mapParamName);
                     }
                     else
                     {
@@ -2211,6 +2250,69 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                             variantRW(templateClassName), name);
                     }
                 }
+
+                if (nullValue == null && templateType == null)
+                {
+                    methodBuilder.addStatement("fieldsMask |= $L", maskConstant(name));
+                }
+                else
+                {
+                    methodBuilder.addStatement("lastFieldSet = $L", fieldIndex(name));
+                    if (!isRequired)
+                    {
+                        addDefaultNullMutator(name);
+                    }
+                }
+                if (templateType == null)
+                {
+                    methodBuilder.addStatement("limit($LRW.build().limit())", name);
+                }
+                methodBuilder.addStatement("return this");
+                builder.addMethod(methodBuilder.build());
+            }
+
+            private void addMapType(
+                String name,
+                boolean isRequired,
+                ClassName typeName,
+                ClassName mapParamName)
+            {
+                MethodSpec.Builder methodBuilder = methodBuilder(methodName(name))
+                    .addModifiers(PUBLIC)
+                    .returns(thisType)
+                    .addParameter(ParameterizedTypeName.get(typeName, mapParamName), "value");
+                ClassName templateClassName = resolver.resolveClass(templateType);
+                String outOfOrderCheck = "assert lastFieldSet < $L : \"Field \\\"$L\\\" cannot be set out of order\"";
+                methodBuilder.addStatement(outOfOrderCheck, fieldIndex(name), name);
+
+                if (priorRequiredFieldName != null)
+                {
+                    int priorRequiredFieldPosition = requiredFieldPosition.get(priorRequiredFieldName);
+                    if (priorRequiredFieldPosition == ((1 << position) >> 1))
+                    {
+                        methodBuilder.addStatement("assert lastFieldSet == $L : \"Prior required field " +
+                            "\\\"$L\\\" is not set\"", fieldIndex(priorRequiredFieldName), priorRequiredFieldName);
+                    }
+                    else
+                    {
+                        methodBuilder.beginControlFlow("if (lastFieldSet < $L)", fieldIndex(priorFieldName))
+                            .addStatement("$L()", defaultMethodName(priorFieldName))
+                            .endControlFlow();
+                    }
+                }
+                else if (nullValue != null && priorFieldName != null)
+                {
+                    methodBuilder.beginControlFlow("if (lastFieldSet < $L)", fieldIndex(priorFieldName))
+                        .addStatement(String.format("default%s%s()",
+                            Character.toUpperCase(priorFieldName.charAt(0)), priorFieldName.substring(1)))
+                        .endControlFlow();
+                }
+
+                TypeName parameterizedMapBuilderName = ParameterizedTypeName.get(typeName.nestedClass("Builder"), mapParamName,
+                    mapParamName.nestedClass("Builder"));
+                methodBuilder.addStatement("$L.field((b, o, m) ->\n{\n$T $L = $LRW.wrap(b, o, m);\n$L.entries(" +
+                        "value.entries(), 0, value.entries().capacity(), value.fieldCount());\nreturn $L.build().sizeof();\n})",
+                    variantRW(templateClassName), parameterizedMapBuilderName, name, name, name, name);
 
                 if (nullValue == null && templateType == null)
                 {
@@ -2644,6 +2746,12 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         Kind kind)
     {
         return Kind.VARIANT.equals(kind);
+    }
+
+    private static boolean isMapType(
+        Kind kind)
+    {
+        return Kind.MAP.equals(kind);
     }
 
     private static boolean isTypedefType(

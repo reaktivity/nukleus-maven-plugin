@@ -290,8 +290,7 @@ list_member
    | KW_REQUIRED? integer_array_member SEMICOLON
    | KW_REQUIRED? varint_array_member SEMICOLON
    | KW_REQUIRED? array_member SEMICOLON
-   | KW_REQUIRED? variant_array SEMICOLON
-   | KW_REQUIRED? variant_map SEMICOLON
+   | KW_REQUIRED? member_with_parametric_type SEMICOLON
    ;
 
 non_primitive_member_with_default
@@ -310,12 +309,8 @@ unbounded_octets_member
    : unbounded_octets_type declarators SEMICOLON
    ;
 
-variant_array
-   : arraytype=declarator LEFT_ANG_BRACKET itemtype=declarator RIGHT_ANG_BRACKET name=declarator
-   ;
-
-variant_map
-   : maptype=declarator LEFT_ANG_BRACKET keytype=declarator COMMA valuetype=declarator RIGHT_ANG_BRACKET name=declarator
+member_with_parametric_type
+   : membertype=declarator LEFT_ANG_BRACKET param1=declarator (COMMA param2=declarator)? RIGHT_ANG_BRACKET name=declarator
    ;
 
 map_type

@@ -34,7 +34,9 @@ import org.reaktivity.reaktor.internal.test.types.String16FW;
 import org.reaktivity.reaktor.internal.test.types.String32FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.ConstrainedMapFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithConstrainedMapFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
@@ -124,13 +126,13 @@ public class ListWithConstrainedMapFWTest
         assertEquals(1, flyweight.fieldCount());
         assertEquals(offset + 54, flyweight.limit());
         List<String> mapItems = new ArrayList<>();
-        flyweight.field1().forEach(kv -> vv ->
+        flyweight.constrainedMap().forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.getAsVariantEnumKindWithString32().get().asString());
         });
-        assertEquals(49, flyweight.field1().length());
-        assertEquals(4, flyweight.field1().fieldCount());
+        assertEquals(49, flyweight.constrainedMap().length());
+        assertEquals(4, flyweight.constrainedMap().fieldCount());
         assertEquals(4, mapItems.size());
         assertEquals("entry1Key", mapItems.get(0));
         assertEquals("entry1Value", mapItems.get(1));
@@ -147,13 +149,13 @@ public class ListWithConstrainedMapFWTest
         assertEquals(offset + 35, flyweight.limit());
         List<String> mapKeys = new ArrayList<>();
         List<Integer> mapValues = new ArrayList<>();
-        flyweight.field1().forEach(kv -> vv ->
+        flyweight.constrainedMap().forEach(kv -> vv ->
         {
             mapKeys.add(kv.get().asString());
             mapValues.add(vv.getAsVariantOfInt32().get());
         });
-        assertEquals(30, flyweight.field1().length());
-        assertEquals(4, flyweight.field1().fieldCount());
+        assertEquals(30, flyweight.constrainedMap().length());
+        assertEquals(4, flyweight.constrainedMap().fieldCount());
         assertEquals(2, mapKeys.size());
         assertEquals(2, mapValues.size());
         assertEquals("entry1Key", mapKeys.get(0));
@@ -220,9 +222,9 @@ public class ListWithConstrainedMapFWTest
     public void shouldFailWhenSameFieldIsSetMoreThanOnce() throws Exception
     {
         flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .field1(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .constrainedMap(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
-            .field1(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .constrainedMap(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build();
     }
@@ -236,14 +238,14 @@ public class ListWithConstrainedMapFWTest
 
         final ListWithConstrainedMapFW listWithTypedefMap = flyweightRO.wrap(buffer, 0, limit);
 
-        listWithTypedefMap.field1();
+        listWithTypedefMap.constrainedMap();
     }
 
     @Test
     public void shouldSetEntriesWithStringKeyAndStringValue() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .field1(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .constrainedMap(asConstrainedMapFWWithStringValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(asStringFW("entry1Value"), asStringFW("entry2Value"))))
             .build()
             .limit();
@@ -257,7 +259,7 @@ public class ListWithConstrainedMapFWTest
     public void shouldSetEntriesWithStringKeyAndIntValue() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .field1(asMapFWWithIntValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
+            .constrainedMap(asMapFWWithIntValue(Arrays.asList(asStringFW("entry1Key"), asStringFW("entry2Key")),
                 Arrays.asList(100, 1000)))
             .build()
             .limit();

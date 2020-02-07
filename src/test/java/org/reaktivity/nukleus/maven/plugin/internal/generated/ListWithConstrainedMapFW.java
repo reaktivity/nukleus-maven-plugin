@@ -28,25 +28,25 @@ import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
 
 public final class ListWithConstrainedMapFW extends ListFW
 {
-    private static final int INDEX_FIELD1 = 0;
+    private static final int INDEX_CONSTRAINED_MAP = 0;
 
-    private static final long MASK_FIELD1 = 1 << INDEX_FIELD1;
+    private static final long MASK_CONSTRAINED_MAP = 1 << INDEX_CONSTRAINED_MAP;
 
     private static final byte MISSING_FIELD_BYTE = VariantOfListFW.MISSING_FIELD_PLACEHOLDER;
 
     private static final int MISSING_FIELD_BYTE_SIZE = BitUtil.SIZE_OF_BYTE;
 
-    private ConstrainedMapFW<VariantWithoutOfFW> field1RO =
+    private ConstrainedMapFW<VariantWithoutOfFW> constrainedMapRO =
         new ConstrainedMapFW<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW());
 
     private VariantOfListFW variantOfListRO = new VariantOfListFW();
 
     private long bitmask;
 
-    public ConstrainedMapFW<VariantWithoutOfFW> field1()
+    public ConstrainedMapFW<VariantWithoutOfFW> constrainedMap()
     {
-        assert (bitmask & MASK_FIELD1) != 0L : "Field \"field1\" is not set";
-        return field1RO;
+        assert (bitmask & MASK_CONSTRAINED_MAP) != 0L : "Field \"constrainedMap\" is not set";
+        return constrainedMapRO;
     }
 
     @Override
@@ -81,17 +81,17 @@ public final class ListWithConstrainedMapFW extends ListFW
         bitmask = 0;
         DirectBuffer fieldsBuffer = fields();
         int fieldLimit = 0;
-        for (int field = INDEX_FIELD1; field < fieldCount; field++)
+        for (int field = INDEX_CONSTRAINED_MAP; field < fieldCount; field++)
         {
             checkLimit(fieldLimit + BitUtil.SIZE_OF_BYTE, limit);
             switch (field)
             {
-            case INDEX_FIELD1:
+            case INDEX_CONSTRAINED_MAP:
                 if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_BYTE)
                 {
-                    field1RO.wrap(fieldsBuffer, fieldLimit, maxLimit);
-                    fieldLimit = field1RO.limit();
-                    bitmask |= 1 << INDEX_FIELD1;
+                    constrainedMapRO.wrap(fieldsBuffer, fieldLimit, maxLimit);
+                    fieldLimit = constrainedMapRO.limit();
+                    bitmask |= 1 << INDEX_CONSTRAINED_MAP;
                 }
                 else
                 {
@@ -127,7 +127,7 @@ public final class ListWithConstrainedMapFW extends ListFW
         bitmask = 0;
         DirectBuffer fieldsBuffer = fields();
         int fieldLimit = 0;
-        for (int field = INDEX_FIELD1; field < fieldCount; field++)
+        for (int field = INDEX_CONSTRAINED_MAP; field < fieldCount; field++)
         {
             if (fieldLimit + BitUtil.SIZE_OF_BYTE > limit)
             {
@@ -135,15 +135,15 @@ public final class ListWithConstrainedMapFW extends ListFW
             }
             switch (field)
             {
-            case INDEX_FIELD1:
+            case INDEX_CONSTRAINED_MAP:
                 if (fieldsBuffer.getByte(fieldLimit) != MISSING_FIELD_BYTE)
                 {
-                    if (field1RO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
+                    if (constrainedMapRO.tryWrap(fieldsBuffer, fieldLimit, maxLimit) == null)
                     {
                         return null;
                     }
-                    fieldLimit = field1RO.limit();
-                    bitmask |= 1 << INDEX_FIELD1;
+                    fieldLimit = constrainedMapRO.limit();
+                    bitmask |= 1 << INDEX_CONSTRAINED_MAP;
                 }
                 else
                 {
@@ -168,21 +168,21 @@ public final class ListWithConstrainedMapFW extends ListFW
     @Override
     public String toString()
     {
-        Object field1 = null;
+        Object constrainedMap = null;
         StringBuilder format = new StringBuilder();
         format.append("LIST_WITH_CONSTRAINED_MAP [bitmask={0}");
-        if ((bitmask & MASK_FIELD1) != 0L)
+        if ((bitmask & MASK_CONSTRAINED_MAP) != 0L)
         {
-            format.append(", field1={1}");
-            field1 = field1();
+            format.append(", constrainedMap={1}");
+            constrainedMap = constrainedMap();
         }
         format.append("]");
-        return MessageFormat.format(format.toString(), String.format("0x%16X", bitmask), field1);
+        return MessageFormat.format(format.toString(), String.format("0x%16X", bitmask), constrainedMap);
     }
 
     public static final class Builder extends Flyweight.Builder<ListWithConstrainedMapFW>
     {
-        private final ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1RW =
+        private final ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> constrainedMapRW =
             new ConstrainedMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
                 new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
 
@@ -195,18 +195,18 @@ public final class ListWithConstrainedMapFW extends ListFW
             super(new ListWithConstrainedMapFW());
         }
 
-        public Builder field1(
+        public Builder constrainedMap(
             ConstrainedMapFW<VariantWithoutOfFW> value)
         {
-            assert lastFieldSet < INDEX_FIELD1 : "Field \"field1\" cannot be set out of order";
+            assert lastFieldSet < INDEX_CONSTRAINED_MAP : "Field \"constrainedMap\" cannot be set out of order";
             variantOfListRW.field((b, o, m) ->
             {
-                ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> field1 =
-                    field1RW.wrap(b, o, m);
-                field1.entries(value.entries(), 0, value.entries().capacity(), value.fieldCount());
-                return field1.build().sizeof();
+                ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> constrainedMap =
+                    constrainedMapRW.wrap(b, o, m);
+                constrainedMap.entries(value.entries(), 0, value.entries().capacity(), value.fieldCount());
+                return constrainedMap.build().sizeof();
             });
-            lastFieldSet = INDEX_FIELD1;
+            lastFieldSet = INDEX_CONSTRAINED_MAP;
             return this;
         }
 
