@@ -2000,12 +2000,22 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         }
                         else
                         {
-                            builder.beginControlFlow("if ((value & $L) == $L)", bitMask(kindTypeName),
-                                bitMask(kindTypeName))
-                                   .addStatement(String.format("$L(%svalue)",
-                                       currentType.kindType().equals(TypeName.LONG) ? "" :
-                                           ofTypeName.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()))
-                                   .endControlFlow();
+                            if (iterator.hasNext() || currentType.kindType().equals(TypeName.BYTE) ||
+                                currentType.kindType().equals(TypeName.SHORT))
+                            {
+                                builder.beginControlFlow("if ((value & $L) == $L || value == 0)", bitMask(kindTypeName),
+                                    bitMask(kindTypeName))
+                                    .addStatement(String.format("$L(%svalue)",
+                                        currentType.kindType().equals(TypeName.LONG) ? "" :
+                                            ofTypeName.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()))
+                                    .endControlFlow();
+                            }
+                            else
+                            {
+                                builder.addStatement(String.format("$L(%svalue)",
+                                    currentType.kindType().equals(TypeName.LONG) ? "" :
+                                        ofTypeName.equals(TypeName.LONG) ? "(int) " : ""), setAs(currentType.kindTypeName()));
+                            }
                         }
 
                     }
@@ -2862,7 +2872,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             public MaxKindMethodGenerator addMember(
                 String memberName)
             {
-                if (!kindTypeName.isPrimitive() && memberName != null)
+                if (isNonPrimitiveType(ofType) && !kindTypeName.isPrimitive() && memberName != null)
                 {
                     if (!Character.isDigit(memberName.charAt(0)))
                     {

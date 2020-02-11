@@ -2340,6 +2340,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 MethodSpec.Builder defaultNullMethod = methodBuilder(defaultMethodName(name))
                     .addModifiers(PRIVATE)
                     .returns(thisType);
+                ClassName templateClassName = resolver.resolveClass(templateType);
                 if (priorRequiredFieldName != null)
                 {
                     int priorRequiredFieldPosition = requiredFieldPosition.get(priorRequiredFieldName);
@@ -2374,8 +2375,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 else
                 {
                     defaultNullMethod
-                        .addStatement("variantOfListRW.field((b, o, m) -> { b.putByte(o, MISSING_FIELD_BYTE); " +
-                            "return MISSING_FIELD_BYTE_SIZE; })")
+                        .addStatement("$L.field((b, o, m) -> { b.putByte(o, MISSING_FIELD_BYTE); " +
+                            "return MISSING_FIELD_BYTE_SIZE; })", variantRW(templateClassName))
                         .addStatement("lastFieldSet = $L", fieldIndex(name));
                 }
                 defaultNullMutators.add(defaultNullMethod.addStatement("return this").build());

@@ -105,11 +105,21 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
                 if (AstType.VARIANT_ARRAY.equals(ofType))
                 {
                     AstType arrayType = listMemberNode.typeParams().get(0);
-                    AstVariantNode arrayTypeNode = (AstVariantNode) resolver.resolve(arrayType.name());
+                    AstNamedNode arrayTypeNode = resolver.resolve(arrayType.name());
                     arrayItemType = AstType.VARIANT;
                     arrayItemTypeName = arrayType;
-                    arrayItemOfType = arrayTypeNode.of();
-                    arrayItemKindType = arrayTypeNode.kindType();
+                    if (arrayTypeNode instanceof AstTypedefNode)
+                    {
+                        AstTypedefNode typedefType = (AstTypedefNode) arrayTypeNode;
+                        AstVariantNode originalType = (AstVariantNode) resolver.resolve(typedefType.originalType().name());
+                        arrayItemOfType = originalType.of();
+                        arrayItemKindType = originalType.kindType();
+                    }
+                    else
+                    {
+                        arrayItemOfType = ((AstVariantNode) arrayTypeNode).of();
+                        arrayItemKindType = ((AstVariantNode) arrayTypeNode).kindType();
+                    }
                 }
                 else if (AstType.MAP.equals(ofType))
                 {
