@@ -20,6 +20,11 @@ import java.util.function.Consumer;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
+import org.reaktivity.reaktor.internal.test.types.Map16FW;
+import org.reaktivity.reaktor.internal.test.types.Map32FW;
+import org.reaktivity.reaktor.internal.test.types.Map8FW;
+import org.reaktivity.reaktor.internal.test.types.MapFW;
+import org.reaktivity.reaktor.internal.test.types.VariantOfFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 

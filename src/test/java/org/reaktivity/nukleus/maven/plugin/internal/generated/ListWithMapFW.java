@@ -22,8 +22,12 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
+import org.reaktivity.reaktor.internal.test.types.MapFW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public final class ListWithMapFW extends ListFW
 {

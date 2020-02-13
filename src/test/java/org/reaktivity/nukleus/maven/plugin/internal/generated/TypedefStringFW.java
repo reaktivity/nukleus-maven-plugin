@@ -24,6 +24,7 @@ import org.reaktivity.reaktor.internal.test.types.String16FW;
 import org.reaktivity.reaktor.internal.test.types.String32FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.VariantOfFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 

@@ -16,7 +16,6 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public abstract class VariantOfFW<K, V extends Flyweight> extends VariantFW<K>
 {
@@ -65,7 +64,7 @@ public abstract class VariantOfFW<K, V extends Flyweight> extends VariantFW<K>
             return null;
         }
 
-        public int size()
+        public int sizeWithoutKind()
         {
             return 0;
         }

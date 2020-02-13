@@ -15,8 +15,6 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
-
 public abstract class VariantFW<K> extends Flyweight
 {
     public abstract K kind();

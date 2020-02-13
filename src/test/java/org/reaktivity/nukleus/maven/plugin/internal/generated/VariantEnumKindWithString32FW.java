@@ -16,13 +16,10 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.String16FW;
-import org.reaktivity.reaktor.internal.test.types.String32FW;
-import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
@@ -154,6 +151,19 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
     }
 
     @Override
+    public VariantEnumKindWithString32FW wrap(
+        DirectBuffer buffer,
+        int offset,
+        int maxLimit,
+        ArrayFW array)
+    {
+        super.wrap(buffer, array.offset() + array.fieldsOffset(), maxLimit);
+        wrapWithKindPadding(buffer, array.offset() + array.fieldsOffset(), maxLimit, array.valuePadding());
+        array.valuePadding(array.valuePadding() + get().sizeof());
+        return this;
+    }
+
+    @Override
     public VariantEnumKindWithString32FW wrapWithKindPadding(
         DirectBuffer buffer,
         int elementsOffset,
@@ -220,10 +230,10 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
 
         public Builder setAsString8(
             StringFW value,
-            int kindPadding)
+            Supplier<Integer> supplier)
         {
             kind(KIND_STRING8);
-            String8FW.Builder string8 = string8RW.wrap(buffer(), limit() + kindPadding, maxLimit());
+            String8FW.Builder string8 = string8RW.wrap(buffer(), supplier.get(), maxLimit());
             string8.set(value.asString(), StandardCharsets.UTF_8);
             String8FW string8RO = string8.build();
             size = string8RO.sizeof();
@@ -233,10 +243,10 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
 
         public Builder setAsString16(
             StringFW value,
-            int kindPadding)
+            Supplier<Integer> supplier)
         {
             kind(KIND_STRING16);
-            String16FW.Builder string16 = string16RW.wrap(buffer(), limit() + kindPadding, maxLimit());
+            String16FW.Builder string16 = string16RW.wrap(buffer(), supplier.get(), maxLimit());
             string16.set(value.asString(), StandardCharsets.UTF_8);
             String16FW string16RO = string16.build();
             size = string16RO.sizeof();
@@ -246,10 +256,10 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
 
         public Builder setAsString32(
             StringFW value,
-            int kindPadding)
+            Supplier<Integer> supplier)
         {
             kind(KIND_STRING32);
-            String32FW.Builder string32 = string32RW.wrap(buffer(), limit() + kindPadding, maxLimit());
+            String32FW.Builder string32 = string32RW.wrap(buffer(), supplier.get(), maxLimit());
             string32.set(value.asString(), StandardCharsets.UTF_8);
             String32FW string32RO = string32.build();
             size = string32RO.sizeof();
@@ -264,7 +274,7 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
         }
 
         @Override
-        public int size()
+        public int sizeWithoutKind()
         {
             return size;
         }
@@ -302,18 +312,21 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
             StringFW value,
             int kindPadding)
         {
+            Supplier<Integer> supplier = kindPadding == 0 ? valuePadding() == 0 ? this::limit : () -> limit() + valuePadding() :
+                () -> limit() + kindPadding;
             switch (kind)
             {
             case ONE:
-                setAsString8(value, kindPadding);
+                setAsString8(value, supplier);
                 break;
             case TWO:
-                setAsString16(value, kindPadding);
+                setAsString16(value, supplier);
                 break;
             case THREE:
-                setAsString32(value, kindPadding);
+                setAsString32(value, supplier);
                 break;
             }
+            valuePadding(size + valuePadding());
             return this;
         }
 
@@ -326,14 +339,14 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
             switch (highestByteIndex)
             {
             case 0:
-                setAsString8(value, 0);
+                setAsString8(value, this::limit);
                 break;
             case 1:
-                setAsString16(value, 0);
+                setAsString16(value, this::limit);
                 break;
             case 2:
             case 3:
-                setAsString32(value, 0);
+                setAsString32(value, this::limit);
                 break;
             default:
                 throw new IllegalArgumentException("Illegal value: " + value);
@@ -349,6 +362,34 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
         {
             super.wrap(buffer, offset, maxLimit);
             return this;
+        }
+
+        public Builder wrap(
+            ArrayFW.Builder array)
+        {
+            super.wrap(array);
+            offset(array.offset() + array.fieldsOffset());
+            return this;
+        }
+
+        @Override
+        public int[] relayout(
+            ArrayFW.Builder array,
+            int maxLength,
+            int originalPadding,
+            int rearrangePadding)
+        {
+            EnumWithInt8 kind = kindFromLength(maxLength);
+            if (maxLength > 0 && !maxKind().equals(kind))
+            {
+                VariantEnumKindWithString32FW itemRO = build(array.limit());
+                StringFW originalItem = itemRO.getAs(maxKind(), originalPadding);
+                originalPadding += originalItem.sizeof();
+                setAs(kind, originalItem, rearrangePadding);
+                StringFW rearrangedItem = itemRO.getAs(kind, rearrangePadding);
+                rearrangePadding += rearrangedItem.sizeof();
+            }
+            return new int[] { originalPadding, rearrangePadding};
         }
 
         @Override

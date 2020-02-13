@@ -17,6 +17,11 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctets16FW;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctets32FW;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctets8FW;
+import org.reaktivity.reaktor.internal.test.types.BoundedOctetsFW;
+import org.reaktivity.reaktor.internal.test.types.VariantOfFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
