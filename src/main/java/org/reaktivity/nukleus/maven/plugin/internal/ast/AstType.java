@@ -17,7 +17,11 @@ package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public final class AstType
 {
@@ -54,7 +58,7 @@ public final class AstType
     public static final AstType LIST32 = new AstType("list32");
 
     public static final AstType VARIANT = new AstType("variant");
-    public static final AstType VARIANT_OF = new AstType("variantOf");
+    public static final AstType VARIANT_OF = new AstType("variant of");
     public static final AstType VARIANT_ARRAY = new AstType("variantArray");
     public static final AstType VARIANT_ARRAY8 = new AstType("variantArray8");
     public static final AstType VARIANT_ARRAY16 = new AstType("variantArray16");
@@ -65,8 +69,20 @@ public final class AstType
     public static final AstType MAP16 = new AstType("map16");
     public static final AstType MAP32 = new AstType("map32");
 
+    private static final Set<AstType> AST_TYPES;
+
     private final String name;
     private final int bits;
+
+    static
+    {
+        Set<AstType> astTypes = Collections.newSetFromMap(new IdentityHashMap<>());
+        astTypes.addAll(List.of(INT8, INT16, INT24, INT32, INT64, VARINT32, VARINT64, UINT8, UINT16, UINT24, UINT32, UINT64,
+            VARBYTEUINT32, OCTETS, BOUNDED_OCTETS, BOUNDED_OCTETS8, BOUNDED_OCTETS16, BOUNDED_OCTETS32, STRING, STRING8,
+            STRING16, STRING32, ARRAY, FLYWEIGHT, LIST, LIST8, LIST32, VARIANT, VARIANT_OF, VARIANT_ARRAY, VARIANT_ARRAY8,
+            VARIANT_ARRAY16, VARIANT_ARRAY32, MAP, MAP8, MAP16, MAP32));
+        AST_TYPES = astTypes;
+    }
 
     private AstType(
         String name)
@@ -130,12 +146,7 @@ public final class AstType
 
     public boolean isDynamicType()
     {
-        return !isSignedInt() && !isUnsignedInt() && this != OCTETS && this != STRING && this != STRING8 && this != STRING16 &&
-            this != STRING32 && this != ARRAY && this != FLYWEIGHT && this != LIST && this != LIST0 && this != LIST8 &&
-            this != LIST32 && this != VARIANT && this != VARIANT_OF && this != VARIANT_ARRAY && this != VARIANT_ARRAY8 &&
-            this != VARIANT_ARRAY16 && this != VARIANT_ARRAY32 && this != MAP && this != MAP8 && this != MAP16 &&
-            this != MAP32 && this != BOUNDED_OCTETS  && this != BOUNDED_OCTETS8 && this != BOUNDED_OCTETS16 &&
-            this != BOUNDED_OCTETS32;
+        return !AST_TYPES.contains(this);
     }
 
     @Override
