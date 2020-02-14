@@ -88,23 +88,9 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
             return fieldCount;
         }
 
-        protected void relayout()
+        public int maxLength()
         {
-            int originalPadding = 0;
-            int rearrangePadding = 0;
-            try
-            {
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    int[] padding = itemRW.relayout(this, maxLength, originalPadding, rearrangePadding);
-                    originalPadding = padding[0];
-                    rearrangePadding = padding[1];
-                }
-            }
-            catch (UnsupportedOperationException ignored)
-            {
-            }
-            limit(itemRW.limit());
+            return maxLength;
         }
     }
 }

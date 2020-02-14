@@ -262,13 +262,13 @@ public abstract class Flyweight
             return this;
         }
 
-        public int[] relayout(
-            ArrayFW.Builder array,
+        public int rebuild(
+            int itemOffset,
             int maxLength,
-            int originalPadding,
-            int rearrangePadding)
+            ArrayFW.Builder array,
+            int newItemOffset)
         {
-            throw new UnsupportedOperationException();
+            return 0;
         }
 
         @FunctionalInterface

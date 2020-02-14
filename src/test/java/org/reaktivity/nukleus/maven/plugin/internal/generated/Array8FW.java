@@ -130,8 +130,6 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
     public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
         extends ArrayFW.Builder<Array8FW<V>, B, V>
     {
-        private int kindPadding;
-
         public Builder(
             B itemRW,
             V itemRO)
@@ -186,7 +184,16 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
         public Array8FW<V> build()
         {
             itemRW.valuePadding(0);
-            relayout();
+
+            int newItemOffset = 0;
+            int itemOffset = 0;
+            for (int i = 0; i < fieldCount(); i++)
+            {
+                itemOffset = itemRW.rebuild(itemOffset, maxLength(), this, newItemOffset);
+                newItemOffset = itemRW.limit();
+            }
+            limit(itemRW.limit());
+
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount() <= LENGTH_MAX_VALUE : "Field count is too large";

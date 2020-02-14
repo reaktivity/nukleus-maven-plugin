@@ -69,11 +69,11 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
         switch (kind)
         {
         case ONE:
-            return string8RO.wrap(buffer(), enumWithInt8RO.limit() + kindPadding, maxLimit());
+            return string8RO.wrap(buffer(), kindPadding, maxLimit());
         case TWO:
-            return string16RO.wrap(buffer(), enumWithInt8RO.limit() + kindPadding, maxLimit());
+            return string16RO.wrap(buffer(), kindPadding, maxLimit());
         case THREE:
-            return string32RO.wrap(buffer(), enumWithInt8RO.limit() + kindPadding, maxLimit());
+            return string32RO.wrap(buffer(), kindPadding, maxLimit());
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind);
         }
@@ -313,7 +313,7 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
             int kindPadding)
         {
             Supplier<Integer> supplier = kindPadding == 0 ? valuePadding() == 0 ? this::limit : () -> limit() + valuePadding() :
-                () -> limit() + kindPadding;
+                () -> kindPadding;
             switch (kind)
             {
             case ONE:
@@ -372,24 +372,23 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
             return this;
         }
 
-        @Override
-        public int[] relayout(
-            ArrayFW.Builder array,
+        public int rebuild(
+            int itemOffset,
             int maxLength,
-            int originalPadding,
-            int rearrangePadding)
+            ArrayFW.Builder array,
+            int newItemOffset)
         {
-            EnumWithInt8 kind = kindFromLength(maxLength);
-            if (maxLength > 0 && !maxKind().equals(kind))
+            EnumWithInt8 maxKind = kindFromLength(maxLength);
+            int originalItemLimit = 0;
+            if (!maxKind().equals(maxKind))
             {
-                VariantEnumKindWithString32FW itemRO = build(array.limit());
-                StringFW originalItem = itemRO.getAs(maxKind(), originalPadding);
-                originalPadding += originalItem.sizeof();
-                setAs(kind, originalItem, rearrangePadding);
-                StringFW rearrangedItem = itemRO.getAs(kind, rearrangePadding);
-                rearrangePadding += rearrangedItem.sizeof();
+                VariantEnumKindWithString32FW originalItemRO = build(array.limit());
+                originalItemLimit = itemOffset == 0 ? enumWithInt8RW.limit() : itemOffset;
+                StringFW originalItem = originalItemRO.getAs(maxKind(), originalItemLimit);
+                originalItemLimit = originalItem.limit();
+                setAs(maxKind, originalItem, newItemOffset);
             }
-            return new int[] { originalPadding, rearrangePadding};
+            return originalItemLimit;
         }
 
         @Override
