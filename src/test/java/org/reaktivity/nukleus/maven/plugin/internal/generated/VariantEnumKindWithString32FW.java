@@ -312,8 +312,8 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
             StringFW value,
             int kindPadding)
         {
-            Supplier<Integer> supplier = kindPadding == 0 ? valuePadding() == 0 ? this::limit : () -> limit() + valuePadding() :
-                () -> kindPadding;
+            int limit = limit();
+            Supplier<Integer> supplier = kindPadding == 0  ? limit == offset() ? this::limit : () -> limit : () -> kindPadding;
             switch (kind)
             {
             case ONE:
@@ -326,7 +326,6 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
                 setAsString32(value, supplier);
                 break;
             }
-            valuePadding(size + valuePadding());
             return this;
         }
 
@@ -367,8 +366,8 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
         public Builder wrap(
             ArrayFW.Builder array)
         {
-            super.wrap(array);
-            offset(array.offset() + array.fieldsOffset());
+            super.wrap(array.buffer(), array.offset() + array.fieldsOffset(), array.maxLimit());
+            limit(array.limit());
             return this;
         }
 
@@ -382,6 +381,7 @@ public final class VariantEnumKindWithString32FW extends VariantOfFW<EnumWithInt
             int originalItemLimit = 0;
             if (!maxKind().equals(maxKind))
             {
+                limit(array.offset() + array.fieldsOffset());
                 VariantEnumKindWithString32FW originalItemRO = build(array.limit());
                 originalItemLimit = itemOffset == 0 ? enumWithInt8RW.limit() : itemOffset;
                 StringFW originalItem = originalItemRO.getAs(maxKind(), originalItemLimit);

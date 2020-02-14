@@ -160,8 +160,6 @@ public abstract class Flyweight
 
         private int maxLimit;
 
-        private int valuePadding;
-
         protected Builder(T flyweight)
         {
             this.flyweight = flyweight;
@@ -204,11 +202,6 @@ public abstract class Flyweight
             return offset;
         }
 
-        protected final int valuePadding()
-        {
-            return valuePadding;
-        }
-
         public int sizeWithoutKind()
         {
             return 0;
@@ -218,18 +211,6 @@ public abstract class Flyweight
             int limit)
         {
             this.limit = limit;
-        }
-
-        protected final void offset(
-            int offset)
-        {
-            this.offset = offset;
-        }
-
-        public void valuePadding(
-            int valueOffset)
-        {
-            this.valuePadding = valueOffset;
         }
 
         public Builder<T> wrap(

@@ -183,8 +183,6 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
         @Override
         public Array8FW<V> build()
         {
-            itemRW.valuePadding(0);
-
             int newItemOffset = 0;
             int itemOffset = 0;
             for (int i = 0; i < fieldCount(); i++)
