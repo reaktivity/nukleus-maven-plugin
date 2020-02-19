@@ -34,57 +34,16 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
     public abstract static class Builder<T extends ArrayFW<V>, B extends Flyweight.Builder<V>,
         V extends Flyweight> extends Flyweight.Builder<T>
     {
-        protected final T array;
-
-        protected final B itemRW;
-
-        protected final V itemRO;
-
-        private int maxLength;
-
-        private int fieldCount;
-
         public Builder(
-            T flyweight,
-            B itemRW,
-            V itemRO)
+            T flyweight)
         {
             super(flyweight);
-            this.array = flyweight;
-            this.itemRW = itemRW;
-            this.itemRO = itemRO;
         }
 
-        public Builder<T, B, V> item(
-            Consumer<B> consumer)
-        {
-            maxLength = Math.max(maxLength, itemRW.sizeof(this));
-            checkLimit(itemRW.limit(), maxLimit());
-            limit(itemRW.limit());
-            fieldCount++;
-            return this;
-        }
+        public abstract Builder<T, B, V> item(Consumer<B> consumer);
 
-        public Builder<T, B, V> items(
-            DirectBuffer buffer,
-            int srcOffset,
-            int length,
-            int fieldCount)
-        {
-            this.fieldCount = fieldCount;
-            return this;
-        }
+        public abstract Builder<T, B, V> items(DirectBuffer buffer, int srcOffset, int length, int fieldCount);
 
         public abstract int fieldsOffset();
-
-        public int fieldCount()
-        {
-            return fieldCount;
-        }
-
-        public int maxLength()
-        {
-            return maxLength;
-        }
     }
 }

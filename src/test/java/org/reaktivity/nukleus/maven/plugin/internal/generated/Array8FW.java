@@ -130,13 +130,24 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
     public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
         extends ArrayFW.Builder<Array8FW<V>, B, V>
     {
+        private final B itemRW;
+
+        private final V itemRO;
+
+        private int fieldCount;
+
+        private int maxLength;
+
         public Builder(
             B itemRW,
             V itemRO)
         {
-            super(new Array8FW<>(itemRO), itemRW, itemRO);
+            super(new Array8FW<>(itemRO));
+            this.itemRW = itemRW;
+            this.itemRO = itemRO;
         }
 
+        @Override
         public int fieldsOffset()
         {
             return offset() + FIELDS_OFFSET;
@@ -148,7 +159,10 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
         {
             itemRW.wrap(this);
             consumer.accept(itemRW);
-            super.item(consumer);
+            maxLength = Math.max(maxLength, itemRW.sizeof(this));
+            checkLimit(itemRW.limit(), maxLimit());
+            limit(itemRW.limit());
+            fieldCount++;
             return this;
         }
 
@@ -163,7 +177,7 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
             int newLimit = offset() + FIELDS_OFFSET + length;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
-            super.items(buffer, srcOffset, length, fieldCount);
+            this.fieldCount = fieldCount;
             return this;
         }
 
@@ -184,13 +198,11 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
         public Array8FW<V> build()
         {
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
-            int fieldCount = fieldCount();
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
             buffer().putByte(offset() + LENGTH_OFFSET, (byte) length);
             buffer().putByte(offset() + FIELD_COUNT_OFFSET, (byte) fieldCount);
             final ArrayFW<V> array = super.build();
-            final int maxLength = maxLength();
             final int maxLimit = maxLimit();
 
             limit(fieldsOffset());
