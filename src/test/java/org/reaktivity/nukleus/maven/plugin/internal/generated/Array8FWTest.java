@@ -42,12 +42,12 @@ public class Array8FWTest
     };
 
     private final Array8FW.Builder
-        <VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW>
-        flyweightRW = new Array8FW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
-        new VariantEnumKindWithString32FW());
+        <VariantEnumKindOfStringFW.Builder, VariantEnumKindOfStringFW>
+        flyweightRW = new Array8FW.Builder<>(new VariantEnumKindOfStringFW.Builder(),
+        new VariantEnumKindOfStringFW());
 
-    private final Array8FW<VariantEnumKindWithString32FW> flyweightRO =
-        new Array8FW<>(new VariantEnumKindWithString32FW());
+    private final Array8FW<VariantEnumKindOfStringFW> flyweightRO =
+        new Array8FW<>(new VariantEnumKindOfStringFW());
 
     private final int lengthSize = Byte.BYTES;
     private final int fieldCountSize = Byte.BYTES;
@@ -79,7 +79,7 @@ public class Array8FWTest
     }
 
     static void assertAllTestValuesReadCaseVariantItems(
-        Array8FW<VariantEnumKindWithString32FW> flyweight,
+        Array8FW<VariantEnumKindOfStringFW> flyweight,
         int offset)
     {
         List<String> arrayItems = new ArrayList<>();
@@ -142,7 +142,7 @@ public class Array8FWTest
     {
         int length = setVariantItems(buffer, 10);
 
-        final Array8FW<VariantEnumKindWithString32FW> array8 =
+        final Array8FW<VariantEnumKindOfStringFW> array8 =
             flyweightRO.wrap(buffer, 10, 10 + length);
 
         assertSame(flyweightRO, array8);
@@ -154,7 +154,7 @@ public class Array8FWTest
     {
         int length = setVariantItems(buffer, 10);
 
-        final Array8FW<VariantEnumKindWithString32FW> array8 =
+        final Array8FW<VariantEnumKindOfStringFW> array8 =
             flyweightRO.tryWrap(buffer, 10, 10 + length);
 
         assertNotNull(array8);
@@ -186,19 +186,19 @@ public class Array8FWTest
     public void shouldSetVariantItemsUsingItemMethod() throws Exception
     {
         Array8FW.Builder
-            <VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW>
-            flyweightRW = new Array8FW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
-            new VariantEnumKindWithString32FW());
+            <VariantEnumKindOfStringFW.Builder, VariantEnumKindOfStringFW>
+            flyweightRW = new Array8FW.Builder<>(new VariantEnumKindOfStringFW.Builder(),
+            new VariantEnumKindOfStringFW());
 
-        Array8FW<VariantEnumKindWithString32FW> flyweightRO = new Array8FW<>(new VariantEnumKindWithString32FW());
+        Array8FW<VariantEnumKindOfStringFW> flyweightRO = new Array8FW<>(new VariantEnumKindOfStringFW());
 
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .item(b -> b.setAs(b.maxKind(), asStringFW("symbolA"), 0))
-            .item(b -> b.setAs(b.maxKind(), asStringFW("symbolB"), 0))
+            .item(b -> b.setAs(b.maxKind(), asStringFW("symbolA"), flyweightRW))
+            .item(b -> b.setAs(b.maxKind(), asStringFW("symbolB"), flyweightRW))
             .build()
             .limit();
 
-        final Array8FW<VariantEnumKindWithString32FW> array = flyweightRO.wrap(buffer,  0,  limit);
+        final Array8FW<VariantEnumKindOfStringFW> array = flyweightRO.wrap(buffer,  0,  limit);
 
         assertAllTestValuesReadCaseVariantItems(array, 0);
     }
@@ -206,7 +206,23 @@ public class Array8FWTest
     private static StringFW asStringFW(
         String value)
     {
-        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.length()));
-        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        int length = value.length();
+        int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(length)) >> 3;
+        MutableDirectBuffer buffer;
+        switch (highestByteIndex)
+        {
+        case 0:
+            buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.length()));
+            return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        case 1:
+            buffer = new UnsafeBuffer(allocateDirect(Short.BYTES + value.length()));
+            return new String16FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        case 2:
+        case 3:
+            buffer = new UnsafeBuffer(allocateDirect(Integer.BYTES + value.length()));
+            return new String32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        default:
+            throw new IllegalArgumentException("Illegal value: " + value);
+        }
     }
 }

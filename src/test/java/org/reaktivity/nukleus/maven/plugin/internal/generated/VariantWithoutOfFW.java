@@ -36,7 +36,7 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
 
     private final VariantOfInt32FW variantOfInt32RO = new VariantOfInt32FW();
 
-    private final VariantEnumKindWithString32FW variantEnumKindWithString32RO = new VariantEnumKindWithString32FW();
+    private final VariantEnumKindOfStringFW variantEnumKindWithString32RO = new VariantEnumKindOfStringFW();
 
     public EnumWithInt8 kind()
     {
@@ -48,7 +48,7 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
         return variantOfInt32RO;
     }
 
-    public VariantEnumKindWithString32FW getAsVariantEnumKindWithString32()
+    public VariantEnumKindOfStringFW getAsVariantEnumKindWithString32()
     {
         return variantEnumKindWithString32RO;
     }
@@ -159,8 +159,8 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
     {
         private final VariantOfInt32FW.Builder variantOfInt32RW = new VariantOfInt32FW.Builder();
 
-        private final VariantEnumKindWithString32FW.Builder variantEnumKindWithString32RW =
-            new VariantEnumKindWithString32FW.Builder();
+        private final VariantEnumKindOfStringFW.Builder variantEnumKindWithString32RW =
+            new VariantEnumKindOfStringFW.Builder();
 
         public Builder()
         {
@@ -178,9 +178,9 @@ public final class VariantWithoutOfFW extends VariantFW<EnumWithInt8>
         }
 
         public Builder setAsVariantEnumKindWithString32(
-            VariantEnumKindWithString32FW value)
+            VariantEnumKindOfStringFW value)
         {
-            VariantEnumKindWithString32FW.Builder variantEnumKindWithString32 = variantEnumKindWithString32RW.wrap(buffer(),
+            VariantEnumKindOfStringFW.Builder variantEnumKindWithString32 = variantEnumKindWithString32RW.wrap(buffer(),
                 offset(), maxLimit());
             variantEnumKindWithString32.set(value.get());
             limit(variantEnumKindWithString32.build().limit());

@@ -90,7 +90,7 @@ public abstract class Flyweight
         DirectBuffer buffer,
         int offset,
         int maxLimit,
-        ArrayFW array)
+        int fieldsOffset)
     {
         wrap(buffer, offset, maxLimit);
         return this;
@@ -202,9 +202,10 @@ public abstract class Flyweight
             return offset;
         }
 
-        public int sizeWithoutKind()
+        public int sizeof(
+            ArrayFW.Builder array)
         {
-            return 0;
+            return limit - offset;
         }
 
         protected final void limit(
@@ -243,13 +244,12 @@ public abstract class Flyweight
             return this;
         }
 
-        public int rebuild(
-            int itemOffset,
+        public T rebuild(
+            T item,
             int maxLength,
-            ArrayFW.Builder array,
-            int newItemOffset)
+            ArrayFW.Builder arrayBuilder)
         {
-            return 0;
+            return null;
         }
 
         @FunctionalInterface

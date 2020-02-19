@@ -23,6 +23,8 @@ import org.agrona.MutableDirectBuffer;
 
 public abstract class StringFW extends Flyweight
 {
+    public abstract int fieldSizeLength();
+
     public abstract String asString();
 
     public abstract int length();
@@ -49,7 +51,7 @@ public abstract class StringFW extends Flyweight
         }
 
         public Builder set(
-            T value)
+            StringFW value)
         {
             valueSet = true;
             return this;

@@ -25,12 +25,9 @@ import static org.junit.Assert.assertSame;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
-public class VariantEnumKindWithString32FWTest
+public class VariantEnumKindOfStringFWTest
 {
     private static final int LENGTH_SIZE_STRING = 1;
     private static final int LENGTH_SIZE_STRING16 = 2;
@@ -53,8 +50,8 @@ public class VariantEnumKindWithString32FWTest
         }
     };
 
-    private final VariantEnumKindWithString32FW.Builder flyweightRW = new VariantEnumKindWithString32FW.Builder();
-    private final VariantEnumKindWithString32FW flyweightRO = new VariantEnumKindWithString32FW();
+    private final VariantEnumKindOfStringFW.Builder flyweightRW = new VariantEnumKindOfStringFW.Builder();
+    private final VariantEnumKindOfStringFW flyweightRO = new VariantEnumKindOfStringFW();
 
 
     static int setAllTestValues(
@@ -107,7 +104,7 @@ public class VariantEnumKindWithString32FWTest
     {
         final int offset = 1;
         setAllTestValues(buffer, offset);
-        VariantEnumKindWithString32FW flyweight = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+        VariantEnumKindOfStringFW flyweight = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
         assertNotNull(flyweight);
         assertEquals("valueOfString1", flyweight.get().asString());
         assertEquals(EnumWithInt8.ONE, flyweight.kind());
@@ -118,7 +115,7 @@ public class VariantEnumKindWithString32FWTest
     {
         final int offset = 1;
         setAllTestValues(buffer, offset);
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals("valueOfString1", flyweight.get().asString());
         assertEquals(EnumWithInt8.ONE, flyweight.kind());
     }
@@ -127,10 +124,10 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString32()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString32(asStringFW("value1"), 0)
+            .setAsString32(asStringFW("value1"))
             .build()
             .limit();
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
+        VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING32 + 6, flyweight.limit());
         assertEquals("value1", flyweight.get().asString());
         assertEquals(EnumWithInt8.THREE, flyweight.kind());
@@ -140,10 +137,10 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString16()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString16(asStringFW("value1"), 0)
+            .setAsString16(asStringFW("value1"))
             .build()
             .limit();
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
+        VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING16 + 6, flyweight.limit());
         assertEquals("value1", flyweight.get().asString());
         assertEquals(EnumWithInt8.TWO, flyweight.kind());
@@ -153,10 +150,10 @@ public class VariantEnumKindWithString32FWTest
     public void shouldSetAsString()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString8(asStringFW("value1"), 0)
+            .setAsString8(asStringFW("value1"))
             .build()
             .limit();
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
+        VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweight.limit());
         assertEquals("value1", flyweight.get().asString());
         assertEquals(EnumWithInt8.ONE, flyweight.kind());
@@ -169,56 +166,9 @@ public class VariantEnumKindWithString32FWTest
             .set(asStringFW("value1"))
             .build()
             .limit();
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
+        VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweight.limit());
         assertEquals("value1", flyweight.get().asString());
-    }
-
-    @Test
-    public void shouldSetAsString8Kind()
-    {
-        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.ONE, asStringFW("value1"), 0)
-            .build()
-            .limit();
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweight.limit());
-        assertEquals(EnumWithInt8.ONE, flyweight.kind());
-        assertEquals("value1", flyweight.get().asString());
-    }
-
-    @Test
-    public void shouldSetAsString16Kind()
-    {
-        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.TWO, asStringFW("value1"), 0)
-            .build()
-            .limit();
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(KIND_SIZE + 2 + "value1".length(), flyweight.limit());
-        assertEquals(EnumWithInt8.TWO, flyweight.kind());
-        assertEquals("value1", flyweight.get().asString());
-    }
-
-    @Test
-    public void shouldSetAsString32Kind()
-    {
-        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.THREE, asStringFW("value1"), 0)
-            .build()
-            .limit();
-        VariantEnumKindWithString32FW flyweight = flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(KIND_SIZE + 4 + 6, flyweight.limit());
-        assertEquals(EnumWithInt8.THREE, flyweight.kind());
-        assertEquals("value1", flyweight.get().asString());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldFailToSetAsString8KindWithLargeString()
-    {
-        flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAs(EnumWithInt8.ONE, asStringFW(String.format("%65535s", "0")), 0)
-            .build();
     }
 
     private static StringFW asStringFW(

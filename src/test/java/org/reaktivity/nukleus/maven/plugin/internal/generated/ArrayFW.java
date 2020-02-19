@@ -21,8 +21,6 @@ import org.agrona.DirectBuffer;
 
 public abstract class ArrayFW<V extends Flyweight> extends Flyweight
 {
-    private int valuePadding;
-
     public abstract int length();
 
     public abstract int fieldCount();
@@ -31,23 +29,14 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
 
     public abstract DirectBuffer items();
 
-    public abstract int fieldsOffset();
-
-    public final int valuePadding()
-    {
-        return valuePadding;
-    }
-
-    public void valuePadding(
-        int valuePadding)
-    {
-        this.valuePadding = valuePadding;
-    }
-
     public abstract static class Builder<T extends ArrayFW<V>, B extends Flyweight.Builder<V>,
         V extends Flyweight> extends Flyweight.Builder<T>
     {
+        protected final T array;
+
         protected final B itemRW;
+
+        protected final V itemRO;
 
         private int maxLength;
 
@@ -55,16 +44,19 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
 
         public Builder(
             T flyweight,
-            B itemRW)
+            B itemRW,
+            V itemRO)
         {
             super(flyweight);
+            this.array = flyweight;
             this.itemRW = itemRW;
+            this.itemRO = itemRO;
         }
 
         public Builder<T, B, V> item(
             Consumer<B> consumer)
         {
-            maxLength = Math.max(maxLength, itemRW.sizeWithoutKind());
+            maxLength = Math.max(maxLength, itemRW.sizeof(this));
             checkLimit(itemRW.limit(), maxLimit());
             limit(itemRW.limit());
             fieldCount++;

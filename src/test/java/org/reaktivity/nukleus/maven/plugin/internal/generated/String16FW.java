@@ -54,6 +54,12 @@ public final class String16FW extends StringFW
         wrap(buffer, 0, buffer.capacity());
     }
 
+    @Override
+    public int fieldSizeLength()
+    {
+        return FIELD_SIZE_LENGTH;
+    }
+
     public String16FW(ByteOrder byteOrder)
     {
         this.byteOrder = byteOrder;
@@ -154,8 +160,9 @@ public final class String16FW extends StringFW
             return this;
         }
 
+        @Override
         public Builder set(
-            String16FW value)
+            StringFW value)
         {
             if (value == null)
             {
@@ -166,10 +173,10 @@ public final class String16FW extends StringFW
             }
             else
             {
-                int newLimit = offset() + value.sizeof();
+                int newLimit = offset() + FIELD_SIZE_LENGTH + value.length();
                 checkLimit(newLimit, maxLimit());
                 buffer().putShort(offset(), (short) value.length(), byteOrder);
-                buffer().putBytes(offset() + 2, value.buffer(), value.offset() + 2, value.length());
+                buffer().putBytes(offset() + 2, value.buffer(), value.offset() + value.fieldSizeLength(), value.length());
                 limit(newLimit);
             }
             super.set(value);

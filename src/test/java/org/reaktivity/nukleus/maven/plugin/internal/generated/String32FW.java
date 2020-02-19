@@ -60,6 +60,12 @@ public final class String32FW extends StringFW
     }
 
     @Override
+    public int fieldSizeLength()
+    {
+        return FIELD_SIZE_LENGTH;
+    }
+
+    @Override
     public int limit()
     {
         return offset() + FIELD_SIZE_LENGTH + Math.max(length(), 0);
@@ -155,7 +161,7 @@ public final class String32FW extends StringFW
         }
 
         public Builder set(
-            String32FW value)
+            StringFW value)
         {
             if (value == null)
             {
@@ -166,10 +172,10 @@ public final class String32FW extends StringFW
             }
             else
             {
-                int newLimit = offset() + value.sizeof();
+                int newLimit = offset() + FIELD_SIZE_LENGTH + value.length();
                 checkLimit(newLimit, maxLimit());
                 buffer().putInt(offset(), value.length(), byteOrder);
-                buffer().putBytes(offset() + 4, value.buffer(), value.offset() + 4, value.length());
+                buffer().putBytes(offset() + 4, value.buffer(), value.offset() + value.fieldSizeLength(), value.length());
                 limit(newLimit);
             }
             super.set(value);

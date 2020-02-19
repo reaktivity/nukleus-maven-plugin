@@ -33,7 +33,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
-import org.reaktivity.reaktor.internal.test.types.String16FW;
 
 @RunWith(Parameterized.class)
 public class String16FWTest
