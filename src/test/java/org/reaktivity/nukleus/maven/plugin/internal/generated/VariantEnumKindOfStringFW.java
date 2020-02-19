@@ -142,8 +142,9 @@ public final class VariantEnumKindOfStringFW extends VariantOfFW<EnumWithInt8, S
         DirectBuffer buffer,
         int offset,
         int maxLimit,
-        int fieldsOffset)
+        ArrayFW array)
     {
+        final int fieldsOffset = array.fieldsOffset();
         super.wrap(buffer, fieldsOffset, maxLimit);
         final EnumWithInt8FW enumWithInt8 = enumWithInt8RO.wrap(buffer, fieldsOffset, maxLimit);
         final int kindPadding = offset == fieldsOffset ? 0 :
@@ -175,13 +176,13 @@ public final class VariantEnumKindOfStringFW extends VariantOfFW<EnumWithInt8, S
         switch (kind())
         {
         case ONE:
-            return String.format("VARIANTENUMKINDWITHSTRING32 [string8=%s]", string8RO.asString());
+            return String.format("VARIANT_ENUM_KIND_OF_STRING [string8=%s]", string8RO.asString());
         case TWO:
-            return String.format("VARIANTENUMKINDWITHSTRING32 [string16=%s]", string16RO.asString());
+            return String.format("VARIANT_ENUM_KIND_OF_STRING [string16=%s]", string16RO.asString());
         case THREE:
-            return String.format("VARIANTENUMKINDWITHSTRING32 [string32=%s]", string32RO.asString());
+            return String.format("VARIANT_ENUM_KIND_OF_STRING [string32=%s]", string32RO.asString());
         default:
-            return String.format("VARIANTENUMKINDWITHSTRING32 [unknown]");
+            return String.format("VARIANT_ENUM_KIND_OF_STRING [unknown]");
         }
     }
 
@@ -373,18 +374,19 @@ public final class VariantEnumKindOfStringFW extends VariantOfFW<EnumWithInt8, S
         public VariantEnumKindOfStringFW rebuild(
             VariantEnumKindOfStringFW item,
             int maxLength,
-            ArrayFW.Builder array)
+            ArrayFW array,
+            ArrayFW.Builder arrayBuilder)
         {
             EnumWithInt8 rebuildKind = kindFromLength(maxLength);
             VariantEnumKindOfStringFW newItem = item;
             StringFW value = item.get();
-            final int valueOffset = array.limit() == array.fieldsOffset() ? array.fieldsOffset() + item.enumWithInt8RO.sizeof() :
-                array.limit();
+            final int valueOffset = arrayBuilder.limit() == arrayBuilder.fieldsOffset() ?
+                arrayBuilder.fieldsOffset() + item.enumWithInt8RO.sizeof() : arrayBuilder.limit();
 
             if (value.offset() != valueOffset || !item.kind().equals(rebuildKind))
             {
-                setAs(rebuildKind, value, array);
-                newItem = flyweight().wrap(buffer(), array.limit(), limit(), array.fieldsOffset());
+                setAs(rebuildKind, value, arrayBuilder);
+                newItem = build(array, arrayBuilder);
             }
             return newItem;
         }

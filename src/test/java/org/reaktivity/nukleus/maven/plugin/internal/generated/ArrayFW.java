@@ -25,6 +25,8 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
 
     public abstract int fieldCount();
 
+    public abstract int fieldsOffset();
+
     public abstract void forEach(Consumer<V> consumer);
 
     public abstract DirectBuffer items();

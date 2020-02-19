@@ -53,6 +53,12 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
     }
 
     @Override
+    public int fieldsOffset()
+    {
+        return offset() + FIELDS_OFFSET;
+    }
+
+    @Override
     public int fieldCount()
     {
         return buffer().getByte(offset() + FIELD_COUNT_OFFSET);
@@ -65,7 +71,7 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
         int offset = offset() + FIELDS_OFFSET;
         for (int i = 0; i < fieldCount(); i++)
         {
-            itemRO.wrap(buffer(), offset, limit(), offset() + FIELDS_OFFSET);
+            itemRO.wrap(buffer(), offset, limit(), this);
             consumer.accept(itemRO);
             offset = itemRO.limit();
         }
@@ -191,11 +197,11 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
             int itemOffset = fieldsOffset();
             for (int i = 0; i < fieldCount; i++)
             {
-                final Flyweight item = itemRO.wrap(buffer(), itemOffset, maxLimit, fieldsOffset());
+                final Flyweight item = itemRO.wrap(buffer(), itemOffset, maxLimit, array);
                 itemOffset = item.limit();
 
                 final Flyweight newItem = itemRW.wrap(this)
-                                                .rebuild((V) item, maxLength, this);
+                                                .rebuild((V) item, maxLength, array, this);
                 final int newLimit = newItem == null ? itemOffset : newItem.limit();
                 assert newLimit <= itemOffset;
                 limit(newLimit);

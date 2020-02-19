@@ -90,7 +90,7 @@ public abstract class Flyweight
         DirectBuffer buffer,
         int offset,
         int maxLimit,
-        int fieldsOffset)
+        ArrayFW array)
     {
         wrap(buffer, offset, maxLimit);
         return this;
@@ -181,6 +181,14 @@ public abstract class Flyweight
             return flyweight;
         }
 
+        public T build(
+            ArrayFW array,
+            ArrayFW.Builder arrayBuilder)
+        {
+            flyweight.wrap(buffer, arrayBuilder.limit(), limit, array);
+            return flyweight;
+        }
+
         public Builder<T> rewrap()
         {
             this.limit = this.offset;
@@ -247,6 +255,7 @@ public abstract class Flyweight
         public T rebuild(
             T item,
             int maxLength,
+            ArrayFW array,
             ArrayFW.Builder arrayBuilder)
         {
             return null;
