@@ -202,7 +202,7 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
 
                 final Flyweight newItem = itemRW.wrap(this)
                                                 .rebuild((V) item, maxLength, array, this);
-                final int newLimit = newItem == null ? itemOffset : newItem.limit();
+                final int newLimit = newItem.limit();
                 assert newLimit <= itemOffset;
                 limit(newLimit);
             }

@@ -258,7 +258,7 @@ public abstract class Flyweight
             ArrayFW array,
             ArrayFW.Builder arrayBuilder)
         {
-            return null;
+            return item;
         }
 
         @FunctionalInterface
