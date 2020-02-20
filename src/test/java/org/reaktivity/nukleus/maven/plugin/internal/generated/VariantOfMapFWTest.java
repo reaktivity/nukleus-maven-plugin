@@ -28,12 +28,7 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public class VariantOfMapFWTest
 {
@@ -45,11 +40,11 @@ public class VariantOfMapFWTest
         }
     };
 
-    private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW, VariantEnumKindWithString32FW.Builder,
-        TypedefStringFW.Builder> flyweightRW = new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(),
-        new TypedefStringFW(), new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
-    private final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> flyweightRO =
-        new VariantOfMapFW<>(new VariantEnumKindWithString32FW(), new TypedefStringFW());
+    private final VariantOfMapFW.Builder<VariantEnumKindOfStringFW, TypedefStringFW, VariantEnumKindOfStringFW.Builder,
+        TypedefStringFW.Builder> flyweightRW = new VariantOfMapFW.Builder<>(new VariantEnumKindOfStringFW(),
+        new TypedefStringFW(), new VariantEnumKindOfStringFW.Builder(), new TypedefStringFW.Builder());
+    private final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> flyweightRO =
+        new VariantOfMapFW<>(new VariantEnumKindOfStringFW(), new TypedefStringFW());
     private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
     private final int kindSize = Byte.BYTES;
     private final int lengthSize = Byte.BYTES;
@@ -104,7 +99,7 @@ public class VariantOfMapFWTest
     }
 
     static void assertAllTestValuesRead(
-        VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> flyweight,
+        VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> flyweight,
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
@@ -153,7 +148,7 @@ public class VariantOfMapFWTest
     {
         final int offset = 10;
         int size = setTwoEntries(buffer, offset);
-        final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap = flyweightRO.wrap(buffer, offset,
+        final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMap = flyweightRO.wrap(buffer, offset,
             buffer.capacity());
 
         assertSame(flyweightRO, variantOfMap);
@@ -165,7 +160,7 @@ public class VariantOfMapFWTest
     {
         final int offset = 10;
         int size = setTwoEntries(buffer, offset);
-        final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap =
+        final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMap =
             flyweightRO.tryWrap(buffer, offset, buffer.capacity());
 
         assertNotNull(variantOfMap);
@@ -178,7 +173,7 @@ public class VariantOfMapFWTest
     {
         final int offset = 10;
         int size = setTwoEntries(buffer, offset);
-        final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap =
+        final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMap =
             flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals(offset + size, variantOfMap.limit());
 
@@ -192,7 +187,7 @@ public class VariantOfMapFWTest
             .build()
             .limit();
 
-        final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap =
+        final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMap =
             flyweightRO.wrap(buffer, 0, limit);
 
         List<String> mapItems = new ArrayList<>();
@@ -217,7 +212,7 @@ public class VariantOfMapFWTest
             .build()
             .limit();
 
-        final VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMap =
+        final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMap =
             flyweightRO.wrap(buffer, 0, limit);
 
         assertAllTestValuesRead(variantOfMap, 0);

@@ -22,7 +22,6 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public final class Map16FW<K extends Flyweight, V extends Flyweight> extends MapFW<K, V>
 {
@@ -132,13 +131,21 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
     public static final class Builder<K extends Flyweight, V extends Flyweight, KB extends Flyweight.Builder<K>,
         VB extends Flyweight.Builder<V>> extends MapFW.Builder<Map16FW, K, V, KB, VB>
     {
+        private int fieldCount;
+
+        private final KB keyRW;
+
+        private final VB valueRW;
+
         public Builder(
             K keyRO,
             V valueRO,
             KB keyRW,
             VB valueRW)
         {
-            super(new Map16FW<>(keyRO, valueRO), keyRW, valueRW);
+            super(new Map16FW<>(keyRO, valueRO));
+            this.keyRW = keyRW;
+            this.valueRW = valueRW;
         }
 
         @Override
@@ -155,6 +162,24 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
         }
 
         @Override
+        public Builder<K, V, KB, VB> entry(
+            Consumer<KB> key,
+            Consumer<VB> value)
+        {
+            keyRW.wrap(buffer(), limit(), maxLimit());
+            key.accept(keyRW);
+            checkLimit(keyRW.limit(), maxLimit());
+            limit(keyRW.limit());
+            fieldCount++;
+            valueRW.wrap(buffer(), limit(), maxLimit());
+            value.accept(valueRW);
+            checkLimit(valueRW.limit(), maxLimit());
+            limit(valueRW.limit());
+            fieldCount++;
+            return this;
+        }
+
+        @Override
         public Builder<K, V, KB, VB> entries(
             DirectBuffer buffer,
             int srcOffset,
@@ -165,7 +190,7 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
             int newLimit = offset() + FIELDS_OFFSET + length;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
-            super.entries(buffer, srcOffset, length, fieldCount);
+            this.fieldCount = fieldCount;
             return this;
         }
 
@@ -174,9 +199,9 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
         {
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
-            assert fieldCount() <= LENGTH_MAX_VALUE : "Field count is too large";
+            assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
             buffer().putShort(offset() + LENGTH_OFFSET, (short) length);
-            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount());
+            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount);
             return super.build();
         }
     }

@@ -125,6 +125,8 @@ public final class String8FW extends StringFW
 
     public static final class Builder extends StringFW.Builder<String8FW>
     {
+        private boolean valueSet;
+
         public Builder()
         {
             super(new String8FW());
@@ -138,9 +140,11 @@ public final class String8FW extends StringFW
         {
             checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit);
             super.wrap(buffer, offset, maxLimit);
+            this.valueSet = false;
             return this;
         }
 
+        @Override
         public Builder set(
             StringFW value)
         {
@@ -159,10 +163,11 @@ public final class String8FW extends StringFW
                 buffer().putBytes(offset() + 1, value.buffer(), value.offset() + value.fieldSizeLength(), value.length());
                 limit(newLimit);
             }
-            super.set(value);
+            valueSet = true;
             return this;
         }
 
+        @Override
         public Builder set(
             DirectBuffer srcBuffer,
             int srcOffset,
@@ -175,10 +180,11 @@ public final class String8FW extends StringFW
             buffer().putByte(offset, (byte) length);
             buffer().putBytes(offset + 1, srcBuffer, srcOffset, length);
             limit(newLimit);
-            super.set(srcBuffer, srcOffset, length);
+            valueSet = true;
             return this;
         }
 
+        @Override
         public Builder set(
             String value,
             Charset charset)
@@ -200,7 +206,7 @@ public final class String8FW extends StringFW
                 buffer().putBytes(offset() + 1, charBytes);
                 limit(newLimit);
             }
-            super.set(value, charset);
+            valueSet = true;
             return this;
         }
 
@@ -218,6 +224,10 @@ public final class String8FW extends StringFW
         @Override
         public String8FW build()
         {
+            if (!valueSet)
+            {
+                set(null, StandardCharsets.UTF_8);
+            }
             return super.build();
         }
     }

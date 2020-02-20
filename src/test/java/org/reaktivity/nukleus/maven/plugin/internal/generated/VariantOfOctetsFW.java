@@ -17,11 +17,6 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.BoundedOctets16FW;
-import org.reaktivity.reaktor.internal.test.types.BoundedOctets32FW;
-import org.reaktivity.reaktor.internal.test.types.BoundedOctets8FW;
-import org.reaktivity.reaktor.internal.test.types.BoundedOctetsFW;
-import org.reaktivity.reaktor.internal.test.types.VariantOfFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
@@ -61,14 +56,6 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
-    }
-
-    @Override
-    public BoundedOctetsFW getAs(
-        EnumWithInt8 kind,
-        int kindPadding)
-    {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -143,16 +130,6 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
     }
 
     @Override
-    public VariantOfOctetsFW wrapWithKindPadding(
-        DirectBuffer buffer,
-        int elementsOffset,
-        int maxLimit,
-        int kindPadding)
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public String toString()
     {
         return get().toString();
@@ -210,41 +187,6 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
         }
 
         @Override
-        public EnumWithInt8 maxKind()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int size()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public EnumWithInt8 kindFromLength(
-            int length)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public VariantOfOctetsFW build(
-            int maxLimit)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Builder setAs(
-            EnumWithInt8 kind,
-            BoundedOctetsFW value,
-            int kindPadding)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public Builder set(
             BoundedOctetsFW value)
         {
@@ -266,6 +208,28 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
                 throw new IllegalArgumentException("Illegal value: " + value);
             }
             return this;
+        }
+
+        @Override
+        public Builder setAs(
+            EnumWithInt8 kind,
+            BoundedOctetsFW value,
+            ArrayFW.Builder array)
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public EnumWithInt8 maxKind()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public EnumWithInt8 kindFromLength(
+            int length)
+        {
+            throw new UnsupportedOperationException();
         }
 
         @Override

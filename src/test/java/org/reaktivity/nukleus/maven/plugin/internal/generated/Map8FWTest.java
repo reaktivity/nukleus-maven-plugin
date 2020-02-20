@@ -29,12 +29,7 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.Map8FW;
-import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class Map8FWTest
 {
@@ -46,12 +41,12 @@ public class Map8FWTest
         }
     };
 
-    private final Map8FW.Builder<TypedefStringFW, VariantEnumKindWithString32FW, TypedefStringFW.Builder,
-        VariantEnumKindWithString32FW.Builder> flyweightRW = new Map8FW.Builder<>(new TypedefStringFW(),
-        new VariantEnumKindWithString32FW(), new TypedefStringFW.Builder(), new VariantEnumKindWithString32FW.Builder());
+    private final Map8FW.Builder<TypedefStringFW, VariantEnumKindOfStringFW, TypedefStringFW.Builder,
+        VariantEnumKindOfStringFW.Builder> flyweightRW = new Map8FW.Builder<>(new TypedefStringFW(),
+        new VariantEnumKindOfStringFW(), new TypedefStringFW.Builder(), new VariantEnumKindOfStringFW.Builder());
 
-    private final Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweightRO =
-        new Map8FW<>(new TypedefStringFW(), new VariantEnumKindWithString32FW());
+    private final Map8FW<TypedefStringFW, VariantEnumKindOfStringFW> flyweightRO =
+        new Map8FW<>(new TypedefStringFW(), new VariantEnumKindOfStringFW());
 
     private final int lengthSize = Byte.BYTES;
     private final int fieldCountSize = Byte.BYTES;
@@ -103,7 +98,7 @@ public class Map8FWTest
     }
 
     static void assertAllTestValuesRead(
-        Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweight,
+        Map8FW<TypedefStringFW, VariantEnumKindOfStringFW> flyweight,
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
@@ -158,7 +153,7 @@ public class Map8FWTest
     {
         int length = setAllItems(buffer, 10);
 
-        final Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map8 =
+        final Map8FW<TypedefStringFW, VariantEnumKindOfStringFW> map8 =
             flyweightRO.wrap(buffer, 10, 10 + length);
 
         assertSame(flyweightRO, map8);
@@ -170,7 +165,7 @@ public class Map8FWTest
     {
         int length = setAllItems(buffer, 10);
 
-        final Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map8 =
+        final Map8FW<TypedefStringFW, VariantEnumKindOfStringFW> map8 =
             flyweightRO.tryWrap(buffer, 10, 10 + length);
 
         assertNotNull(map8);
@@ -183,7 +178,7 @@ public class Map8FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        Map8FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals(offset + size, map.limit());
 
         assertAllTestValuesRead(map, offset);
@@ -196,7 +191,7 @@ public class Map8FWTest
             .build()
             .limit();
 
-        final Map8FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer,  0,  limit);
+        final Map8FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer,  0,  limit);
 
         List<String> mapItems = new ArrayList<>();
         map.forEach(kv -> vv ->

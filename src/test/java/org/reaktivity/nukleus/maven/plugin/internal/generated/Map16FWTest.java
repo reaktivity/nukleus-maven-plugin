@@ -29,12 +29,7 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.Map16FW;
-import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class Map16FWTest
 {
@@ -46,12 +41,12 @@ public class Map16FWTest
         }
     };
 
-    private final Map16FW.Builder<TypedefStringFW, VariantEnumKindWithString32FW, TypedefStringFW.Builder,
-        VariantEnumKindWithString32FW.Builder> flyweightRW = new Map16FW.Builder<>(new TypedefStringFW(),
-        new VariantEnumKindWithString32FW(), new TypedefStringFW.Builder(), new VariantEnumKindWithString32FW.Builder());
+    private final Map16FW.Builder<TypedefStringFW, VariantEnumKindOfStringFW, TypedefStringFW.Builder,
+        VariantEnumKindOfStringFW.Builder> flyweightRW = new Map16FW.Builder<>(new TypedefStringFW(),
+        new VariantEnumKindOfStringFW(), new TypedefStringFW.Builder(), new VariantEnumKindOfStringFW.Builder());
 
-    private final Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweightRO =
-        new Map16FW<>(new TypedefStringFW(), new VariantEnumKindWithString32FW());
+    private final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> flyweightRO =
+        new Map16FW<>(new TypedefStringFW(), new VariantEnumKindOfStringFW());
 
     private final int lengthSize = Short.BYTES;
     private final int fieldCountSize = Short.BYTES;
@@ -103,7 +98,7 @@ public class Map16FWTest
     }
 
     static void assertAllTestValuesRead(
-        Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweight,
+        Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> flyweight,
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
@@ -158,7 +153,7 @@ public class Map16FWTest
     {
         int length = setAllItems(buffer, 10);
 
-        final Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map16 =
+        final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map16 =
             flyweightRO.wrap(buffer, 10, 10 + length);
 
         assertSame(flyweightRO, map16);
@@ -170,7 +165,7 @@ public class Map16FWTest
     {
         int length = setAllItems(buffer, 10);
 
-        final Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map16 =
+        final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map16 =
             flyweightRO.tryWrap(buffer, 10, 10 + length);
 
         assertNotNull(map16);
@@ -183,7 +178,7 @@ public class Map16FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals(offset + size, map.limit());
 
         assertAllTestValuesRead(map, offset);
@@ -196,7 +191,7 @@ public class Map16FWTest
             .build()
             .limit();
 
-        final Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer,  0,  limit);
+        final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer,  0,  limit);
 
         List<String> mapItems = new ArrayList<>();
         map.forEach(kv -> vv ->

@@ -18,7 +18,6 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public final class BoundedOctets8FW extends BoundedOctetsFW
 {

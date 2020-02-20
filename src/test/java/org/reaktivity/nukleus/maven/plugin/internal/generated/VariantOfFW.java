@@ -27,32 +27,14 @@ public abstract class VariantOfFW<K, V extends Flyweight> extends VariantFW<K>
             super(flyweight);
         }
 
-        public Builder<T, K, V> set(
-            V value)
-        {
-            return this;
-        }
+        public abstract Builder<T, K, V> set(V value);
 
-        public Builder<T, K, V> setAs(
-            K kind,
-            V value,
-            ArrayFW.Builder array)
-        {
-            return this;
-        }
+        public abstract Builder<T, K, V> setAs(K kind, V value, ArrayFW.Builder array);
 
-        public K maxKind()
-        {
-            return null;
-        }
+        public abstract K maxKind();
 
-        public K kindFromLength(
-            int length)
-        {
-            return null;
-        }
+        public abstract K kindFromLength(int length);
 
-        public abstract Builder<T, K, V> kind(
-            K value);
+        public abstract Builder<T, K, V> kind(K value);
     }
 }

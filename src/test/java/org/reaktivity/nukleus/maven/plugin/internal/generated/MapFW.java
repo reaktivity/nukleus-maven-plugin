@@ -19,7 +19,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.agrona.DirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public abstract class MapFW<K extends Flyweight, V extends Flyweight> extends Flyweight
 {
@@ -34,52 +33,14 @@ public abstract class MapFW<K extends Flyweight, V extends Flyweight> extends Fl
     public abstract static class Builder<T extends MapFW, K extends Flyweight, V extends Flyweight,
         KB extends Flyweight.Builder<K>, VB extends Flyweight.Builder<V>> extends Flyweight.Builder<T>
     {
-        private int fieldCount;
-
-        protected final KB keyRW;
-
-        protected final VB valueRW;
-
         public Builder(
-            T flyweight,
-            KB keyRW,
-            VB valueRW)
+            T flyweight)
         {
             super(flyweight);
-            this.keyRW = keyRW;
-            this.valueRW = valueRW;
         }
 
-        public Builder<T, K, V, KB, VB> entry(
-            Consumer<KB> key,
-            Consumer<VB> value)
-        {
-            keyRW.wrap(buffer(), limit(), maxLimit());
-            key.accept(keyRW);
-            checkLimit(keyRW.limit(), maxLimit());
-            limit(keyRW.limit());
-            fieldCount++;
-            valueRW.wrap(buffer(), limit(), maxLimit());
-            value.accept(valueRW);
-            checkLimit(valueRW.limit(), maxLimit());
-            limit(valueRW.limit());
-            fieldCount++;
-            return this;
-        }
+        public abstract Builder<T, K, V, KB, VB> entry(Consumer<KB> key, Consumer<VB> value);
 
-        public Builder<T, K, V, KB, VB> entries(
-            DirectBuffer buffer,
-            int srcOffset,
-            int length,
-            int fieldCount)
-        {
-            this.fieldCount = fieldCount;
-            return this;
-        }
-
-        public int fieldCount()
-        {
-            return fieldCount;
-        }
+        public abstract Builder<T, K, V, KB, VB> entries(DirectBuffer buffer, int srcOffset, int length, int fieldCount);
     }
 }

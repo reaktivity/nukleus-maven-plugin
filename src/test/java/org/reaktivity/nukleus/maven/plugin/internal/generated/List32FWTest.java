@@ -24,14 +24,9 @@ import static org.junit.Assert.assertSame;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.List32FW;
-import org.reaktivity.reaktor.internal.test.types.ListFW;
-import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class List32FWTest
 {
@@ -152,7 +147,7 @@ public class List32FWTest
                 setMemory(0, capacity(), (byte) 0xab);
             }
         };
-        VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List32FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
@@ -181,7 +176,7 @@ public class List32FWTest
                 setMemory(0, capacity(), (byte) 0xab);
             }
         };
-        VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List32FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
@@ -208,7 +203,7 @@ public class List32FWTest
     @Test
     public void shouldSetFieldsUsingFieldMethod() throws Exception
     {
-        VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         int limit = list32RW.wrap(buffer, 0, buffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())

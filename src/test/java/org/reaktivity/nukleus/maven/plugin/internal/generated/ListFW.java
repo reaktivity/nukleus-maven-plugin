@@ -16,8 +16,6 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
-import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public abstract class ListFW extends Flyweight
 {
@@ -29,66 +27,17 @@ public abstract class ListFW extends Flyweight
 
     public abstract static class Builder<T extends ListFW> extends Flyweight.Builder<T>
     {
-        private int fieldCount;
-
         public Builder(
             T flyweight)
         {
             super(flyweight);
         }
 
-        @Override
-        public Builder<T> wrap(
-            MutableDirectBuffer buffer,
-            int offset,
-            int maxLimit)
-        {
-            super.wrap(buffer, offset, maxLimit);
-            fieldCount = 0;
-            return this;
-        }
+        public abstract Builder<T> field(Flyweight.Builder.Visitor visitor);
 
-        public Builder<T> field(
-            Flyweight.Builder.Visitor visitor)
-        {
-            int length = visitor.visit(buffer(), limit(), maxLimit());
-            fieldCount++;
-            int newLimit = limit() + length;
-            checkLimit(newLimit, maxLimit());
-            limit(newLimit);
-            return this;
-        }
+        public abstract Builder<T> fields(int fieldCount, Flyweight.Builder.Visitor visitor);
 
-        public Builder<T> fields(
-            int fieldCount,
-            Flyweight.Builder.Visitor visitor)
-        {
-            int length = visitor.visit(buffer(), limit(), maxLimit());
-            this.fieldCount += fieldCount;
-            int newLimit = limit() + length;
-            checkLimit(newLimit, maxLimit());
-            limit(newLimit);
-            return this;
-        }
-
-        public Builder<T> fields(
-            int fieldCount,
-            DirectBuffer buffer,
-            int index,
-            int length)
-        {
-            this.fieldCount += fieldCount;
-            int newLimit = limit() + length;
-            checkLimit(newLimit, maxLimit());
-            buffer().putBytes(limit(), buffer, index, length);
-            limit(newLimit);
-            return this;
-        }
-
-        protected int fieldCount()
-        {
-            return fieldCount;
-        }
+        public abstract Builder<T> fields(int fieldCount, DirectBuffer buffer, int index, int length);
     }
 }
 

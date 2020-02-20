@@ -15,33 +15,52 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
-import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 
-public final class BoundedOctets32FW extends BoundedOctetsFW
+public final class List0FW extends ListFW
 {
-    private static final int LENGTH_SIZE = BitUtil.SIZE_OF_INT;
+    private static final DirectBuffer FIELDS_EMPTY_VALUE = new UnsafeBuffer(0L, 0);
+
+    private static final int LENGTH_SIZE = 0;
+
+    private static final int FIELD_COUNT_SIZE = 0;
 
     private static final int LENGTH_OFFSET = 0;
 
-    private static final int VALUE_OFFSET = LENGTH_OFFSET + LENGTH_SIZE;
+    private static final int FIELD_COUNT_OFFSET = LENGTH_OFFSET + LENGTH_SIZE;
+
+    private static final int LENGTH_VALUE = 0;
+
+    private static final int FIELD_COUNT_VALUE = 0;
 
     @Override
-    public <T> T get(
-        Flyweight.Visitor<T> visitor)
+    public int limit()
     {
-        return visitor.visit(buffer(), offset() + VALUE_OFFSET, limit());
+        return offset() + LENGTH_SIZE + length();
     }
 
     @Override
     public int length()
     {
-        return buffer().getInt(offset() + LENGTH_OFFSET);
+        return LENGTH_VALUE;
     }
 
     @Override
-    public BoundedOctets32FW tryWrap(
+    public int fieldCount()
+    {
+        return FIELD_COUNT_VALUE;
+    }
+
+    @Override
+    public DirectBuffer fields()
+    {
+        return FIELDS_EMPTY_VALUE;
+    }
+
+    @Override
+    public List0FW tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -58,7 +77,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
     }
 
     @Override
-    public BoundedOctets32FW wrap(
+    public List0FW wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -69,58 +88,56 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
     }
 
     @Override
-    public int limit()
-    {
-        return offset() + LENGTH_SIZE + length();
-    }
-
-    @Override
     public String toString()
     {
-        return String.format("boundedOctets32[%d]", length());
+        return String.format("list0<%d, %d>", length(), fieldCount());
     }
 
-    public static final class Builder extends BoundedOctetsFW.Builder<BoundedOctets32FW>
+    public static final class Builder extends ListFW.Builder<List0FW>
     {
+        private int fieldCount;
+
         public Builder()
         {
-            super(new BoundedOctets32FW());
+            super(new List0FW());
         }
 
         @Override
-        public Builder set(
-            BoundedOctetsFW value)
+        public Builder field(
+            Flyweight.Builder.Visitor visitor)
         {
-            int newLimit = offset() + LENGTH_SIZE + value.length();
+            int length = visitor.visit(buffer(), limit(), maxLimit());
+            fieldCount++;
+            int newLimit = limit() + length;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, value.length());
-            buffer().putBytes(offset() + VALUE_OFFSET, value.buffer(), value.offset() + VALUE_OFFSET, value.length());
             limit(newLimit);
             return this;
         }
 
         @Override
-        public Builder set(
-            DirectBuffer value,
-            int offset,
+        public Builder fields(
+            int fieldCount,
+            Flyweight.Builder.Visitor visitor)
+        {
+            int length = visitor.visit(buffer(), limit(), maxLimit());
+            this.fieldCount += fieldCount;
+            int newLimit = limit() + length;
+            checkLimit(newLimit, maxLimit());
+            limit(newLimit);
+            return this;
+        }
+
+        @Override
+        public Builder fields(
+            int fieldCount,
+            DirectBuffer buffer,
+            int index,
             int length)
         {
-            int newLimit = offset() + LENGTH_SIZE + length;
+            this.fieldCount += fieldCount;
+            int newLimit = limit() + length;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, length);
-            buffer().putBytes(offset() + VALUE_OFFSET, value, offset, length);
-            limit(newLimit);
-            return this;
-        }
-
-        @Override
-        public Builder set(
-            byte[] value)
-        {
-            int newLimit = offset() + LENGTH_SIZE + value.length;
-            checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, value.length);
-            buffer().putBytes(offset() + VALUE_OFFSET, value);
+            buffer().putBytes(limit(), buffer, index, length);
             limit(newLimit);
             return this;
         }
@@ -131,9 +148,16 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
             int offset,
             int maxLimit)
         {
-            checkLimit(offset + LENGTH_SIZE, maxLimit);
             super.wrap(buffer, offset, maxLimit);
+            fieldCount = 0;
+            checkLimit(limit(), maxLimit);
             return this;
+        }
+
+        @Override
+        public List0FW build()
+        {
+            return super.build();
         }
     }
 }

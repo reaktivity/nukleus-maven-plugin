@@ -137,6 +137,8 @@ public final class String16FW extends StringFW
     {
         private final ByteOrder byteOrder;
 
+        private boolean valueSet;
+
         public Builder()
         {
             super(new String16FW());
@@ -157,6 +159,7 @@ public final class String16FW extends StringFW
         {
             checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit);
             super.wrap(buffer, offset, maxLimit);
+            this.valueSet = false;
             return this;
         }
 
@@ -179,10 +182,11 @@ public final class String16FW extends StringFW
                 buffer().putBytes(offset() + 2, value.buffer(), value.offset() + value.fieldSizeLength(), value.length());
                 limit(newLimit);
             }
-            super.set(value);
+            valueSet = true;
             return this;
         }
 
+        @Override
         public Builder set(
             DirectBuffer srcBuffer,
             int srcOffset,
@@ -195,10 +199,11 @@ public final class String16FW extends StringFW
             buffer().putShort(offset, (short) length, byteOrder);
             buffer().putBytes(offset + 2, srcBuffer, srcOffset, length);
             limit(newLimit);
-            super.set(srcBuffer, srcOffset, length);
+            valueSet = true;
             return this;
         }
 
+        @Override
         public Builder set(
             String value,
             Charset charset)
@@ -220,7 +225,7 @@ public final class String16FW extends StringFW
                 buffer().putBytes(offset() + 2, charBytes);
                 limit(newLimit);
             }
-            super.set(value, charset);
+            valueSet = true;
             return this;
         }
 
@@ -238,6 +243,10 @@ public final class String16FW extends StringFW
         @Override
         public String16FW build()
         {
+            if (!valueSet)
+            {
+                set(null, StandardCharsets.UTF_8);
+            }
             return super.build();
         }
     }

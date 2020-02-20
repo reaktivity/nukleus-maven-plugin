@@ -16,7 +16,6 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public abstract class BoundedOctetsFW extends Flyweight
 {

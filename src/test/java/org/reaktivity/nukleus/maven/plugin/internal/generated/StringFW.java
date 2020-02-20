@@ -16,10 +16,8 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import org.agrona.DirectBuffer;
-import org.agrona.MutableDirectBuffer;
 
 public abstract class StringFW extends Flyweight
 {
@@ -31,57 +29,16 @@ public abstract class StringFW extends Flyweight
 
     public abstract static class Builder<T extends StringFW> extends Flyweight.Builder<T>
     {
-        private boolean valueSet;
-
         public Builder(
             T flyweight)
         {
             super(flyweight);
         }
 
-        @Override
-        public Builder<T> wrap(
-            MutableDirectBuffer buffer,
-            int offset,
-            int maxLimit)
-        {
-            super.wrap(buffer, offset, maxLimit);
-            this.valueSet = false;
-            return this;
-        }
+        public abstract Builder set(StringFW value);
 
-        public Builder set(
-            StringFW value)
-        {
-            valueSet = true;
-            return this;
-        }
+        public abstract Builder set(DirectBuffer srcBuffer, int srcOffset, int length);
 
-        public Builder set(
-            DirectBuffer srcBuffer,
-            int srcOffset,
-            int length)
-        {
-            valueSet = true;
-            return this;
-        }
-
-        public Builder set(
-            String value,
-            Charset charset)
-        {
-            valueSet = true;
-            return this;
-        }
-
-        @Override
-        public T build()
-        {
-            if (!valueSet)
-            {
-                set(null, StandardCharsets.UTF_8);
-            }
-            return super.build();
-        }
+        public abstract Builder set(String value, Charset charset);
     }
 }

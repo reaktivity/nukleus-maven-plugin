@@ -19,12 +19,6 @@ import java.util.function.Consumer;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
-import org.reaktivity.reaktor.internal.test.types.Map16FW;
-import org.reaktivity.reaktor.internal.test.types.Map32FW;
-import org.reaktivity.reaktor.internal.test.types.Map8FW;
-import org.reaktivity.reaktor.internal.test.types.MapFW;
-import org.reaktivity.reaktor.internal.test.types.VariantOfFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
@@ -73,14 +67,6 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
-    }
-
-    @Override
-    public MapFW<K, V> getAs(
-        EnumWithInt8 kind,
-        int kindPadding)
-    {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -155,16 +141,6 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
     }
 
     @Override
-    public VariantOfMapFW<K, V> wrapWithKindPadding(
-        DirectBuffer buffer,
-        int elementsOffset,
-        int maxLimit,
-        int kindPadding)
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public String toString()
     {
         return get().toString();
@@ -199,25 +175,6 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
             map8RW = new Map8FW.Builder<>(keyRO, valueRO, keyRW, valueRW);
         }
 
-        @Override
-        public EnumWithInt8 maxKind()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int size()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public EnumWithInt8 kindFromLength(
-            int length)
-        {
-            throw new UnsupportedOperationException();
-        }
-
         public Builder<K, V, KB, VB> entry(
             Consumer<KB> key,
             Consumer<VB> value)
@@ -239,8 +196,8 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         }
 
         @Override
-        public VariantOfMapFW<K, V> build(
-            int maxLimit)
+        public Builder<K, V, KB, VB> set(
+            MapFW value)
         {
             throw new UnsupportedOperationException();
         }
@@ -249,14 +206,20 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         public Builder<K, V, KB, VB> setAs(
             EnumWithInt8 kind,
             MapFW value,
-            int kindPadding)
+            ArrayFW.Builder array)
         {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Builder<K, V, KB, VB> set(
-            MapFW value)
+        public EnumWithInt8 maxKind()
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public EnumWithInt8 kindFromLength(
+            int length)
         {
             throw new UnsupportedOperationException();
         }

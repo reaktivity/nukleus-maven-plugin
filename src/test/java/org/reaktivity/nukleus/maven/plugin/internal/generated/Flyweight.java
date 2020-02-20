@@ -160,7 +160,8 @@ public abstract class Flyweight
 
         private int maxLimit;
 
-        protected Builder(T flyweight)
+        protected Builder(
+            T flyweight)
         {
             this.flyweight = flyweight;
         }
