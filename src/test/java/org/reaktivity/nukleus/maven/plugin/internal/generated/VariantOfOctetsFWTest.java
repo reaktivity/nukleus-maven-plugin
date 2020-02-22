@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
@@ -69,6 +70,8 @@ public class VariantOfOctetsFWTest
         assertEquals(offset + kindSize + Integer.BYTES + flyweight.get().length(), flyweight.limit());
         assertEquals(String.format("%70000s", "0"), flyweight.get().get((b, o, l) -> b.getStringWithoutLengthUtf8(o, l - o)));
         assertEquals(70000, flyweight.get().length());
+        assertEquals(String.format("%70000s", "0"), flyweight.get((b, o, l) -> b.getStringWithoutLengthUtf8(o, l - o)));
+        assertEquals(70000, flyweight.length());
     }
 
     private void assertAllTestValuesReadCaseOctets16(
@@ -80,6 +83,9 @@ public class VariantOfOctetsFWTest
         assertEquals(String.format("%65535s", "0"),
             flyweight.get().get((b, o, l) -> b.getStringWithoutLengthUtf8(o, l - o)));
         assertEquals(65535, flyweight.get().length());
+        assertEquals(String.format("%65535s", "0"),
+            flyweight.get((b, o, l) -> b.getStringWithoutLengthUtf8(o, l - o)));
+        assertEquals(65535, flyweight.length());
     }
 
     private void assertAllTestValuesReadCaseOctets8(
@@ -183,6 +189,92 @@ public class VariantOfOctetsFWTest
         final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
 
         assertAllTestValuesReadCaseOctets8(variantOfOctets, 0);
+    }
+
+    @Test
+    public void shouldSetWithBoundedOctets32FWUsingBuffer() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(asBuffer(String.format("%70000s", "0")), 0, 70000)
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesReadCaseOctets32(variantOfOctets, 0);
+    }
+
+    @Test
+    public void shouldSetWithBoundedOctets16FWUsingBuffer() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(asBuffer(String.format("%65535s", "0")), 0, 65535)
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesReadCaseOctets16(variantOfOctets, 0);
+    }
+
+    @Test
+    public void shouldSetWithBoundedOctets8FWUsingBuffer() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(asBuffer("value1"), 0, 6)
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesReadCaseOctets8(variantOfOctets, 0);
+    }
+
+    @Test
+    public void shouldSetWithBoundedOctets32FWUsingByteArray() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(String.format("%70000s", "0").getBytes(UTF_8))
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesReadCaseOctets32(variantOfOctets, 0);
+    }
+
+    @Test
+    public void shouldSetWithBoundedOctets16FWUsingByteArray() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(String.format("%65535s", "0").getBytes(UTF_8))
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesReadCaseOctets16(variantOfOctets, 0);
+    }
+
+    @Test
+    public void shouldSetWithBoundedOctets8FWUsingByteArray() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set("value1".getBytes(UTF_8))
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesReadCaseOctets8(variantOfOctets, 0);
+    }
+
+    private static DirectBuffer asBuffer(
+        String value)
+    {
+        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(value.length()));
+        valueBuffer.putStringWithoutLengthUtf8(0, value);
+        return valueBuffer;
     }
 
     private static BoundedOctetsFW asBoundedOctetsFW(

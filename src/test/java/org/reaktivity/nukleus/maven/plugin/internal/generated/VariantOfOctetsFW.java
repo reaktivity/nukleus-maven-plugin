@@ -17,10 +17,11 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
+import org.reaktivity.nukleus.maven.plugin.internal.generated.BoundedOctetsFW.Builder;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOctetsFW>
+public final class VariantOfOctetsFW extends BoundedOctetsFW
 {
     public static final EnumWithInt8 KIND_BOUNDED_OCTETS32 = EnumWithInt8.ONE;
 
@@ -36,13 +37,11 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
 
     private final BoundedOctets8FW boundedOctets8RO = new BoundedOctets8FW();
 
-    @Override
     public EnumWithInt8 kind()
     {
         return enumWithInt8RO.get();
     }
 
-    @Override
     public BoundedOctetsFW get()
     {
         switch (kind())
@@ -141,7 +140,20 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
         return get().limit();
     }
 
-    public static final class Builder extends VariantOfFW.Builder<VariantOfOctetsFW, EnumWithInt8, BoundedOctetsFW>
+    @Override
+    public <T> T get(
+        Visitor<T> visitor)
+    {
+        return get().get(visitor);
+    }
+
+    @Override
+    public int length()
+    {
+        return get().length();
+    }
+
+    public static final class Builder extends BoundedOctetsFW.Builder<VariantOfOctetsFW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
@@ -156,37 +168,6 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
             super(new VariantOfOctetsFW());
         }
 
-        public Builder setAsBoundedOctets32(
-            BoundedOctetsFW value)
-        {
-            kind(KIND_BOUNDED_OCTETS32);
-            BoundedOctets32FW.Builder boundedOctets32 = boundedOctets32RW.wrap(buffer(), limit(), maxLimit());
-            boundedOctets32.set(value);
-            limit(boundedOctets32.build().limit());
-            return this;
-        }
-
-        public Builder setAsBoundedOctets16(
-            BoundedOctetsFW value)
-        {
-            kind(KIND_BOUNDED_OCTETS16);
-            BoundedOctets16FW.Builder boundedOctets16 = boundedOctets16RW.wrap(buffer(), limit(), maxLimit());
-            boundedOctets16.set(value);
-            limit(boundedOctets16.build().limit());
-            return this;
-        }
-
-        public Builder setAsBoundedOctets8(
-            BoundedOctetsFW value)
-        {
-            kind(KIND_BOUNDED_OCTETS8);
-            BoundedOctets8FW.Builder boundedOctets8 = boundedOctets8RW.wrap(buffer(), limit(), maxLimit());
-            boundedOctets8.set(value);
-            limit(boundedOctets8.build().limit());
-            return this;
-        }
-
-        @Override
         public Builder set(
             BoundedOctetsFW value)
         {
@@ -210,26 +191,148 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
             return this;
         }
 
-        @Override
-        public Builder setAs(
-            EnumWithInt8 kind,
-            BoundedOctetsFW value,
-            ArrayFW.Builder array)
+        private Builder setAsBoundedOctets32(
+            BoundedOctetsFW value)
         {
-            throw new UnsupportedOperationException();
+            kind(KIND_BOUNDED_OCTETS32);
+            BoundedOctets32FW.Builder boundedOctets32 = boundedOctets32RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets32.set(value);
+            limit(boundedOctets32.build().limit());
+            return this;
+        }
+
+        private Builder setAsBoundedOctets16(
+            BoundedOctetsFW value)
+        {
+            kind(KIND_BOUNDED_OCTETS16);
+            BoundedOctets16FW.Builder boundedOctets16 = boundedOctets16RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets16.set(value);
+            limit(boundedOctets16.build().limit());
+            return this;
+        }
+
+        private Builder setAsBoundedOctets8(
+            BoundedOctetsFW value)
+        {
+            kind(KIND_BOUNDED_OCTETS8);
+            BoundedOctets8FW.Builder boundedOctets8 = boundedOctets8RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets8.set(value);
+            limit(boundedOctets8.build().limit());
+            return this;
         }
 
         @Override
-        public EnumWithInt8 maxKind()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public EnumWithInt8 kindFromLength(
+        public Builder set(
+            DirectBuffer value,
+            int offset,
             int length)
         {
-            throw new UnsupportedOperationException();
+            int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(length)) >> 3;
+            switch (highestByteIndex)
+            {
+            case 0:
+                setAsBoundedOctets8(value, offset, length);
+                break;
+            case 1:
+                setAsBoundedOctets16(value, offset, length);
+                break;
+            case 2:
+            case 3:
+                setAsBoundedOctets32(value, offset, length);
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal value: " + value);
+            }
+            return this;
+        }
+
+        private Builder setAsBoundedOctets32(
+            DirectBuffer value,
+            int offset,
+            int length)
+        {
+            kind(KIND_BOUNDED_OCTETS32);
+            BoundedOctets32FW.Builder boundedOctets32 = boundedOctets32RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets32.set(value, offset, length);
+            limit(boundedOctets32.build().limit());
+            return this;
+        }
+
+        private Builder setAsBoundedOctets16(
+            DirectBuffer value,
+            int offset,
+            int length)
+        {
+            kind(KIND_BOUNDED_OCTETS16);
+            BoundedOctets16FW.Builder boundedOctets16 = boundedOctets16RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets16.set(value, offset, length);
+            limit(boundedOctets16.build().limit());
+            return this;
+        }
+
+        private Builder setAsBoundedOctets8(
+            DirectBuffer value,
+            int offset,
+            int length)
+        {
+            kind(KIND_BOUNDED_OCTETS8);
+            BoundedOctets8FW.Builder boundedOctets8 = boundedOctets8RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets8.set(value, offset, length);
+            limit(boundedOctets8.build().limit());
+            return this;
+        }
+
+        @Override
+        public BoundedOctetsFW.Builder<VariantOfOctetsFW> set(
+            byte[] value)
+        {
+            int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(value.length)) >> 3;
+            switch (highestByteIndex)
+            {
+            case 0:
+                setAsBoundedOctets8(value);
+                break;
+            case 1:
+                setAsBoundedOctets16(value);
+                break;
+            case 2:
+            case 3:
+                setAsBoundedOctets32(value);
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal value: " + value);
+            }
+            return this;
+        }
+
+        private Builder setAsBoundedOctets32(
+            byte[] value)
+        {
+            kind(KIND_BOUNDED_OCTETS32);
+            BoundedOctets32FW.Builder boundedOctets32 = boundedOctets32RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets32.set(value);
+            limit(boundedOctets32.build().limit());
+            return this;
+        }
+
+        private Builder setAsBoundedOctets16(
+            byte[] value)
+        {
+            kind(KIND_BOUNDED_OCTETS16);
+            BoundedOctets16FW.Builder boundedOctets16 = boundedOctets16RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets16.set(value);
+            limit(boundedOctets16.build().limit());
+            return this;
+        }
+
+        private Builder setAsBoundedOctets8(
+            byte[] value)
+        {
+            kind(KIND_BOUNDED_OCTETS8);
+            BoundedOctets8FW.Builder boundedOctets8 = boundedOctets8RW.wrap(buffer(), limit(), maxLimit());
+            boundedOctets8.set(value);
+            limit(boundedOctets8.build().limit());
+            return this;
         }
 
         @Override
@@ -242,8 +345,7 @@ public final class VariantOfOctetsFW extends VariantOfFW<EnumWithInt8, BoundedOc
             return this;
         }
 
-        @Override
-        public Builder kind(
+        private Builder kind(
             EnumWithInt8 value)
         {
             enumWithInt8RW.wrap(buffer(), offset(), maxLimit());

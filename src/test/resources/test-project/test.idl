@@ -341,7 +341,7 @@ scope test
             case THREE: list<0, 0>;
         }
 
-        variant VariantOfVariantArray switch (EnumWithInt8) of array
+        variant VariantOfArray switch (EnumWithInt8) of array
         {
             case ONE: array<uint32, uint32>;
             case TWO: array<uint8, uint8>;
@@ -444,7 +444,7 @@ scope test
         list ListWithArray using VariantOfList
         {
             required VariantEnumKindWithString32 field1;
-            VariantOfVariantArray<VariantEnumKindWithString32> arrayOfString;
+            VariantOfArray<VariantEnumKindWithString32> arrayOfString;
         }
 
         list ListWithMap using VariantOfList

@@ -103,7 +103,7 @@ public class VariantOfMapFWTest
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.get().forEach(kv -> vv ->
+        flyweight.forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());
@@ -117,6 +117,8 @@ public class VariantOfMapFWTest
         assertEquals(4, flyweight.get().fieldCount());
         assertEquals(offset + 51, flyweight.limit());
         assertEquals(KIND_MAP8, flyweight.kind());
+        assertEquals(49, flyweight.length());
+        assertEquals(4, flyweight.fieldCount());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

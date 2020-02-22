@@ -16,36 +16,29 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> extends MapFW<K, V>
+public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
 {
-    private static final EnumWithInt8 KIND_MAP32 = EnumWithInt8.ONE;
+    public static final EnumWithInt8 KIND_ARRAY32 = EnumWithInt8.ONE;
 
-    private static final EnumWithInt8 KIND_MAP16 = EnumWithInt8.TWO;
-
-    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
+    public static final EnumWithInt8 KIND_ARRAY8 = EnumWithInt8.TWO;
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
-    private final Map32FW<K, V> map32RO;
+    private final Array32FW<V> array32RO;
 
-    private final Map16FW<K, V> map16RO;
+    private final Array8FW<V> array8RO;
 
-    private final Map8FW<K, V> map8RO;
-
-    public VariantOfMapFW(
-        K keyType,
-        V valueType)
+    public VariantOfArrayFW(
+        V type)
     {
-        map32RO = new Map32FW<>(keyType, valueType);
-        map16RO = new Map16FW<>(keyType, valueType);
-        map8RO = new Map8FW<>(keyType, valueType);
+        array32RO = new Array32FW<>(type);
+        array8RO = new Array8FW<>(type);
     }
 
     public EnumWithInt8 kind()
@@ -53,23 +46,21 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         return enumWithInt8RO.get();
     }
 
-    public MapFW<K, V> get()
+    public ArrayFW<V> get()
     {
         switch (kind())
         {
         case ONE:
-            return map32RO;
+            return array32RO;
         case TWO:
-            return map16RO;
-        case THREE:
-            return map8RO;
+            return array8RO;
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }
     }
 
     @Override
-    public VariantOfMapFW<K, V> tryWrap(
+    public VariantOfArrayFW<V> tryWrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -86,19 +77,13 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         switch (kind())
         {
         case ONE:
-            if (map32RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
+            if (array32RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
         case TWO:
-            if (map16RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
-            {
-                return null;
-            }
-            break;
-        case THREE:
-            if (map8RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
+            if (array8RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
@@ -114,7 +99,7 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
     }
 
     @Override
-    public VariantOfMapFW<K, V> wrap(
+    public VariantOfArrayFW<V> wrap(
         DirectBuffer buffer,
         int offset,
         int maxLimit)
@@ -124,13 +109,10 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         switch (kind())
         {
         case ONE:
-            map32RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
+            array32RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         case TWO:
-            map16RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
-            break;
-        case THREE:
-            map8RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
+            array8RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         default:
             break;
@@ -164,101 +146,101 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
     }
 
     @Override
-    public void forEach(Function<K, Consumer<V>> consumer)
+    public int fieldsOffset()
+    {
+        return get().fieldsOffset();
+    }
+
+    @Override
+    public void forEach(
+        Consumer<V> consumer)
     {
         get().forEach(consumer);
     }
 
     @Override
-    public DirectBuffer entries()
+    public DirectBuffer items()
     {
-        return get().entries();
+        return null;
     }
 
-    public static final class Builder<K extends Flyweight, V extends Flyweight, KB extends Flyweight.Builder<K>,
-        VB extends Flyweight.Builder<V>> extends MapFW.Builder<VariantOfMapFW<K, V>, K, V, KB, VB>
+    public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
+        extends ArrayFW.Builder<VariantOfArrayFW<V>, B, V>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
-        private final Map32FW.Builder<K, V, KB, VB> map32RW;
+        private final Array32FW.Builder<B, V> array32RW;
 
-        private final Map16FW.Builder<K, V, KB, VB> map16RW;
-
-        private final Map8FW.Builder<K, V, KB, VB> map8RW;
+        private final Array8FW.Builder<B, V> array8RW;
 
         public Builder(
-            K keyRO,
-            V valueRO,
-            KB keyRW,
-            VB valueRW)
+            B itemRW,
+            V itemRO)
         {
-            super(new VariantOfMapFW<>(keyRO, valueRO));
-            map32RW = new Map32FW.Builder<>(keyRO, valueRO, keyRW, valueRW);
-            map16RW = new Map16FW.Builder<>(keyRO, valueRO, keyRW, valueRW);
-            map8RW = new Map8FW.Builder<>(keyRO, valueRO, keyRW, valueRW);
+            super(new VariantOfArrayFW<>(itemRO));
+            array32RW = new Array32FW.Builder<>(itemRW, itemRO);
+            array8RW = new Array8FW.Builder<>(itemRW, itemRO);
         }
 
-        @Override
-        public Builder<K, V, KB, VB> entry(
-            Consumer<KB> key,
-            Consumer<VB> value)
+        public Builder<B, V> item(
+            Consumer<B> consumer)
         {
-            map32RW.entry(key, value);
-            limit(map32RW.limit());
+            array32RW.item(consumer);
+            limit(array32RW.limit());
             return this;
         }
 
         @Override
-        public Builder<K, V, KB, VB> entries(
+        public Builder<B, V> items(
             DirectBuffer buffer,
-            int index,
+            int srcOffset,
             int length,
             int fieldCount)
         {
-            map32RW.entries(buffer, index, length, fieldCount);
-            limit(map32RW.limit());
+            array32RW.items(buffer, srcOffset, length, fieldCount);
+            limit(array32RW.limit());
             return this;
         }
 
         @Override
-        public Builder<K, V, KB, VB> wrap(
+        public int fieldsOffset()
+        {
+            return array32RW.fieldsOffset();
+        }
+
+        @Override
+        public Builder<B, V> wrap(
             MutableDirectBuffer buffer,
             int offset,
             int maxLimit)
         {
             super.wrap(buffer, offset, maxLimit);
-            kind(KIND_MAP32);
-            map32RW.wrap(buffer, limit(), maxLimit);
+            kind(KIND_ARRAY32);
+            array32RW.wrap(buffer, limit(), maxLimit);
             return this;
         }
 
         @Override
-        public VariantOfMapFW<K, V> build()
+        public VariantOfArrayFW<V> build()
         {
-            Map32FW map32 = map32RW.build();
-            long length = Math.max(map32.length(), map32.fieldCount());
+            Array32FW array32 = array32RW.build();
+            long length = Math.max(array32.length(), array32.fieldCount());
             int highestByteIndex = Long.numberOfTrailingZeros(Long.highestOneBit(length)) >> 3;
-            int fieldCount = map32.fieldCount();
             switch (highestByteIndex)
             {
             case 0:
             case 8:
                 enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
-                enumWithInt8RW.set(KIND_MAP8);
-                map8RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
-                map8RW.entries(map32.entries(), 0, map32.entries().capacity(), fieldCount);
-                limit(map8RW.build().limit());
+                enumWithInt8RW.set(KIND_ARRAY8);
+                int fieldCount = array32.fieldCount();
+                array8RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
+                array8RW.items(array32.items(), 0, array32.items().capacity(), fieldCount);
+                limit(array8RW.limit());
                 break;
             case 1:
-                enumWithInt8RW.wrap(buffer(), offset(), maxLimit());
-                enumWithInt8RW.set(KIND_MAP16);
-                map16RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
-                map16RW.entries(map32.entries(), 0, map32.entries().capacity(), fieldCount);
-                limit(map16RW.build().limit());
-                break;
             case 2:
             case 3:
-                limit(map32.limit());
+                limit(array32.limit());
                 break;
             default:
                 throw new IllegalArgumentException("Illegal length: " + length);
@@ -266,7 +248,7 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
             return super.build();
         }
 
-        private Builder<K, V, KB, VB> kind(
+        public Builder<B, V> kind(
             EnumWithInt8 value)
         {
             enumWithInt8RW.wrap(buffer(), offset(), maxLimit());

@@ -20,7 +20,7 @@ import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
-public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
+public final class VariantOfListFW extends ListFW
 {
     public static final EnumWithInt8 KIND_LIST32 = EnumWithInt8.ONE;
 
@@ -38,13 +38,11 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
 
     private final List0FW list0RO = new List0FW();
 
-    @Override
     public EnumWithInt8 kind()
     {
         return enumWithInt8RO.get();
     }
 
-    @Override
     public ListFW get()
     {
         switch (kind())
@@ -143,7 +141,25 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
         return get().limit();
     }
 
-    public static final class Builder extends VariantOfFW.Builder<VariantOfListFW, EnumWithInt8, ListFW>
+    @Override
+    public int length()
+    {
+        return get().length();
+    }
+
+    @Override
+    public int fieldCount()
+    {
+        return get().fieldCount();
+    }
+
+    @Override
+    public DirectBuffer fields()
+    {
+        return get().fields();
+    }
+
+    public static final class Builder extends ListFW.Builder<VariantOfListFW>
     {
         private final EnumWithInt8FW.Builder enumWithInt8RW = new EnumWithInt8FW.Builder();
 
@@ -158,7 +174,8 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
             super(new VariantOfListFW());
         }
 
-        public Builder setAsList32(ListFW list)
+        public Builder setAsList32(
+            ListFW list)
         {
             kind(KIND_LIST32);
             List32FW.Builder list32 = list32RW.wrap(buffer(), limit(), maxLimit());
@@ -168,7 +185,8 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
             return this;
         }
 
-        public Builder setAsList8(ListFW list)
+        public Builder setAsList8(
+            ListFW list)
         {
             kind(KIND_LIST8);
             List8FW.Builder list8 = list8RW.wrap(buffer(), limit(), maxLimit());
@@ -178,7 +196,8 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
             return this;
         }
 
-        public Builder setAsList0(ListFW list)
+        public Builder setAsList0(
+            ListFW list)
         {
             kind(KIND_LIST0);
             List0FW.Builder list0 = list0RW.wrap(buffer(), limit(), maxLimit());
@@ -188,7 +207,6 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
             return this;
         }
 
-        @Override
         public Builder set(
             ListFW list)
         {
@@ -214,31 +232,32 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
         }
 
         @Override
-        public Builder setAs(
-            EnumWithInt8 kind,
-            ListFW value,
-            ArrayFW.Builder array)
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public EnumWithInt8 maxKind()
-        {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public EnumWithInt8 kindFromLength(
-            int length)
-        {
-            throw new UnsupportedOperationException();
-        }
-
         public Builder field(
             Flyweight.Builder.Visitor mutator)
         {
             list32RW.field(mutator);
+            limit(list32RW.limit());
+            return this;
+        }
+
+        @Override
+        public Builder fields(
+            int fieldCount,
+            Visitor visitor)
+        {
+            list32RW.fields(fieldCount, visitor);
+            limit(list32RW.limit());
+            return this;
+        }
+
+        @Override
+        public Builder fields(
+            int fieldCount,
+            DirectBuffer buffer,
+            int index,
+            int length)
+        {
+            list32RW.fields(fieldCount, buffer, index, length);
             limit(list32RW.limit());
             return this;
         }
@@ -302,8 +321,7 @@ public final class VariantOfListFW extends VariantOfFW<EnumWithInt8, ListFW>
             return fields.capacity();
         }
 
-        @Override
-        public Builder kind(
+        private Builder kind(
             EnumWithInt8 value)
         {
             enumWithInt8RW.wrap(buffer(), offset(), maxLimit());

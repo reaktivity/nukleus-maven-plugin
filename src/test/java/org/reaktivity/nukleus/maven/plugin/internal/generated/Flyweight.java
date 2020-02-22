@@ -182,14 +182,6 @@ public abstract class Flyweight
             return flyweight;
         }
 
-        public T build(
-            ArrayFW array,
-            ArrayFW.Builder arrayBuilder)
-        {
-            flyweight.wrap(buffer, arrayBuilder.limit(), limit, array);
-            return flyweight;
-        }
-
         public Builder<T> rewrap()
         {
             this.limit = this.offset;
@@ -211,8 +203,7 @@ public abstract class Flyweight
             return offset;
         }
 
-        public int sizeof(
-            ArrayFW.Builder array)
+        public int sizeof()
         {
             return limit - offset;
         }
@@ -236,7 +227,7 @@ public abstract class Flyweight
         }
 
         public Builder<T> wrap(
-            ArrayFW.Builder array)
+            ArrayFW.Builder<? extends ArrayFW<T>, ? extends Flyweight.Builder<T>, T> array)
         {
             this.buffer = array.buffer();
             this.offset = array.limit();
@@ -255,9 +246,7 @@ public abstract class Flyweight
 
         public T rebuild(
             T item,
-            int maxLength,
-            ArrayFW array,
-            ArrayFW.Builder arrayBuilder)
+            int maxLength)
         {
             return item;
         }

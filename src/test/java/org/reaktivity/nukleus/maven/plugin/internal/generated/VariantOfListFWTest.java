@@ -130,6 +130,8 @@ public class VariantOfListFWTest
         assertSame(variantOfListRO, variantOfList);
         assertEquals(length, variantOfList.get().length());
         assertEquals(fieldCount, variantOfList.get().fieldCount());
+        assertEquals(length, variantOfList.length());
+        assertEquals(fieldCount, variantOfList.fieldCount());
         assertEquals(length - fieldCount, variantOfList.get().fields().capacity());
     }
 
@@ -149,6 +151,8 @@ public class VariantOfListFWTest
         assertSame(variantOfListRO, variantOfList);
         assertEquals(length, variantOfList.get().length());
         assertEquals(fieldCount, variantOfList.get().fieldCount());
+        assertEquals(length, variantOfList.length());
+        assertEquals(fieldCount, variantOfList.fieldCount());
         assertEquals(length - fieldCount, variantOfList.get().fields().capacity());
     }
 
@@ -257,6 +261,72 @@ public class VariantOfListFWTest
         int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof())
+            .build()
+            .limit();
+
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
+
+        assertEquals(EnumWithInt8.TWO, variantOfList.kind());
+        assertEquals(18, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(20, variantOfList.limit());
+    }
+
+    @Test
+    public void shouldSetFieldsUsingFieldsMethodWithVisitor() throws Exception
+    {
+        final MutableDirectBuffer listBuffer = new UnsafeBuffer(allocateDirect(100))
+        {
+            {
+                // Make sure the code is not secretly relying upon memory being initialized to 0
+                setMemory(0, capacity(), (byte) 0xab);
+            }
+        };
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
+        VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
+        ListFW.Builder listRW = new List8FW.Builder()
+            .wrap(listBuffer, 0, listBuffer.capacity())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
+            .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
+        List8FW list8RO = (List8FW) listRW.build();
+
+        int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
+            .fields(2, (b, o, m) ->
+            {
+                b.putBytes(o, list8RO.fields(), 0, list8RO.fields().capacity());
+                return list8RO.fields().capacity();
+            })
+            .build()
+            .limit();
+
+        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
+
+        assertEquals(EnumWithInt8.TWO, variantOfList.kind());
+        assertEquals(18, variantOfList.get().length());
+        assertEquals(2, variantOfList.get().fieldCount());
+        assertEquals(20, variantOfList.limit());
+    }
+
+    @Test
+    public void shouldSetFieldsUsingFieldsMethodWithDirectBuffer() throws Exception
+    {
+        final MutableDirectBuffer listBuffer = new UnsafeBuffer(allocateDirect(100))
+        {
+            {
+                // Make sure the code is not secretly relying upon memory being initialized to 0
+                setMemory(0, capacity(), (byte) 0xab);
+            }
+        };
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
+        VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
+        ListFW.Builder listRW = new List8FW.Builder()
+            .wrap(listBuffer, 0, listBuffer.capacity())
+            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
+            .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
+        List8FW list8RO = (List8FW) listRW.build();
+
+        int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
+            .fields(2, list8RO.buffer(), 0, list8RO.length() - 1)
             .build()
             .limit();
 

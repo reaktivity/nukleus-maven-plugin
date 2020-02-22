@@ -36,7 +36,7 @@ import org.reaktivity.reaktor.internal.test.types.VariantArrayFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithArrayFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfVariantArrayFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfArrayFW;
 
 public class ListWithArrayFWTest
 {
@@ -284,9 +284,9 @@ public class ListWithArrayFWTest
     private static VariantArrayFW<VariantEnumKindWithString32FW> asVariantArrayFW(
         List<StringFW> values)
     {
-        VariantOfVariantArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
+        VariantOfArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
             StringFW> variantOfVariantArrayRW =
-            new VariantOfVariantArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
+            new VariantOfArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
                 new VariantEnumKindWithString32FW());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
         variantOfVariantArrayRW.wrap(buffer, 0, buffer.capacity());
@@ -294,7 +294,7 @@ public class ListWithArrayFWTest
         {
             variantOfVariantArrayRW.item(value);
         }
-        VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfVariantArrayRO =
+        VariantOfArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfVariantArrayRO =
             variantOfVariantArrayRW.build();
         return variantOfVariantArrayRO.get();
     }
