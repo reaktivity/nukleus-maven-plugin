@@ -24,9 +24,15 @@ import static org.junit.Assert.assertSame;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.List8FW;
+import org.reaktivity.reaktor.internal.test.types.ListFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
 
 public class VariantOfListFWTest
 {
@@ -154,80 +160,6 @@ public class VariantOfListFWTest
         assertEquals(length, variantOfList.length());
         assertEquals(fieldCount, variantOfList.fieldCount());
         assertEquals(length - fieldCount, variantOfList.get().fields().capacity());
-    }
-
-    @Test
-    public void shouldSetFieldsUsingSetAsList0Method() throws Exception
-    {
-        List0FW.Builder listRW = new List0FW.Builder()
-            .wrap(buffer, 1, buffer.capacity());
-
-        int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .setAsList0(listRW.build())
-            .build()
-            .limit();
-
-        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
-
-        assertEquals(EnumWithInt8.THREE, variantOfList.kind());
-        assertEquals(0, variantOfList.get().length());
-        assertEquals(0, variantOfList.get().fieldCount());
-        assertEquals(1, variantOfList.limit());
-        assertEquals(0, variantOfList.get().length());
-        assertEquals(0, variantOfList.get().fieldCount());
-    }
-
-    @Test
-    public void shouldSetFieldsUsingSetAsList8Method() throws Exception
-    {
-        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
-        VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
-        ListFW.Builder listRW = new List8FW.Builder()
-            .wrap(buffer, 1, buffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
-            .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
-
-        int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .setAsList8((ListFW) listRW.build())
-            .build()
-            .limit();
-
-        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
-
-        assertEquals(EnumWithInt8.TWO, variantOfList.kind());
-        assertEquals(18, variantOfList.get().length());
-        assertEquals(2, variantOfList.get().fieldCount());
-        assertEquals(20, variantOfList.limit());
-    }
-
-    @Test
-    public void shouldSetFieldsUsingSetAsList32Method() throws Exception
-    {
-        final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(300))
-        {
-            {
-                // Make sure the code is not secretly relying upon memory being initialized to 0
-                setMemory(0, capacity(), (byte) 0xab);
-            }
-        };
-        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
-        VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
-        ListFW.Builder listRW = new List32FW.Builder()
-            .wrap(buffer, 1, buffer.capacity())
-            .field((b, o, m) -> field1RW.wrap(b, o, m).set(createStringWithSpecifiedSize(250)).build().sizeof())
-            .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
-
-        int limit = variantOfListRW.wrap(buffer, 0, buffer.capacity())
-            .setAsList32((ListFW) listRW.build())
-            .build()
-            .limit();
-
-        final VariantOfListFW variantOfList = variantOfListRO.wrap(buffer,  0,  limit);
-
-        assertEquals(EnumWithInt8.ONE, variantOfList.kind());
-        assertEquals(264, variantOfList.get().length());
-        assertEquals(2, variantOfList.get().fieldCount());
-        assertEquals(269, variantOfList.limit());
     }
 
     @Test

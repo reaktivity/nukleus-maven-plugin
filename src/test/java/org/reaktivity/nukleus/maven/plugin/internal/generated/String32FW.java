@@ -145,7 +145,8 @@ public final class String32FW extends StringFW
             this.byteOrder = ByteOrder.nativeOrder();
         }
 
-        public Builder(ByteOrder byteOrder)
+        public Builder(
+            ByteOrder byteOrder)
         {
             super(new String32FW(byteOrder));
             this.byteOrder = byteOrder;

@@ -44,6 +44,7 @@ public class ListWithMissingFieldByteFWTest
     private final ListWithMissingFieldByteFW listWithMissingFieldByteRO = new ListWithMissingFieldByteFW();
     private final int lengthSize = Integer.BYTES;
     private final int fieldCountSize = Integer.BYTES;
+    private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.NINE;
 
     private void setAllFields(
         MutableDirectBuffer buffer)
@@ -56,14 +57,14 @@ public class ListWithMissingFieldByteFWTest
         buffer.putInt(offsetFieldCount, fieldCount);
 
         int offsetVariantOfString1Kind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetVariantOfString1Kind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetVariantOfString1Kind, KIND_STRING8.value());
         int offsetVariantOfString1Length = offsetVariantOfString1Kind + Byte.BYTES;
         buffer.putByte(offsetVariantOfString1Length, (byte) "string1".length());
         int offsetVariantOfString1 = offsetVariantOfString1Length + Byte.BYTES;
         buffer.putBytes(offsetVariantOfString1, "string1".getBytes());
 
         int offsetVariantOfString2Kind = offsetVariantOfString1 + "string1".length();
-        buffer.putByte(offsetVariantOfString2Kind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetVariantOfString2Kind, KIND_STRING8.value());
         int offsetVariantOfString2Length = offsetVariantOfString2Kind + Byte.BYTES;
         buffer.putByte(offsetVariantOfString2Length, (byte) "string2".length());
         int offsetVariantOfString2 = offsetVariantOfString2Length + Byte.BYTES;

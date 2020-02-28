@@ -27,9 +27,13 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
 
     public abstract int fieldsOffset();
 
+    public abstract int maxLength();
+
     public abstract void forEach(Consumer<V> consumer);
 
     public abstract DirectBuffer items();
+
+    protected abstract void maxLength(int maxLength);
 
     public abstract static class Builder<T extends ArrayFW<V>, B extends Flyweight.Builder<V>,
         V extends Flyweight> extends Flyweight.Builder<T>
@@ -42,7 +46,7 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
 
         public abstract Builder<T, B, V> item(Consumer<B> consumer);
 
-        public abstract Builder<T, B, V> items(DirectBuffer buffer, int srcOffset, int length, int fieldCount);
+        public abstract Builder<T, B, V> items(DirectBuffer buffer, int srcOffset, int length, int fieldCount, int maxLength);
 
         public abstract int fieldsOffset();
     }

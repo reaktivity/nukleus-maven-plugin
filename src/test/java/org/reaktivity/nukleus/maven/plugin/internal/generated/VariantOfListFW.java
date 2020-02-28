@@ -174,7 +174,7 @@ public final class VariantOfListFW extends ListFW
             super(new VariantOfListFW());
         }
 
-        public Builder setAsList32(
+        private Builder setAsList32(
             ListFW list)
         {
             kind(KIND_LIST32);
@@ -185,7 +185,7 @@ public final class VariantOfListFW extends ListFW
             return this;
         }
 
-        public Builder setAsList8(
+        private Builder setAsList8(
             ListFW list)
         {
             kind(KIND_LIST8);
@@ -196,7 +196,7 @@ public final class VariantOfListFW extends ListFW
             return this;
         }
 
-        public Builder setAsList0(
+        private Builder setAsList0(
             ListFW list)
         {
             kind(KIND_LIST0);
@@ -243,7 +243,7 @@ public final class VariantOfListFW extends ListFW
         @Override
         public Builder fields(
             int fieldCount,
-            Visitor visitor)
+            Flyweight.Builder.Visitor visitor)
         {
             list32RW.fields(fieldCount, visitor);
             limit(list32RW.limit());

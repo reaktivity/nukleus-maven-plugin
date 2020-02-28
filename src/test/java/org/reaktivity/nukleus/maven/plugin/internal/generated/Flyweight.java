@@ -188,12 +188,12 @@ public abstract class Flyweight
             return this;
         }
 
-        protected final T flyweight()
+        public final T flyweight()
         {
             return flyweight;
         }
 
-        protected final MutableDirectBuffer buffer()
+        public final MutableDirectBuffer buffer()
         {
             return buffer;
         }

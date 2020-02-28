@@ -101,10 +101,9 @@ public final class TypeResolver
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.STRING32, ClassName.get(packageName, "String32FW"));
         namesByType.put(AstType.ARRAY, ClassName.get(packageName, "ArrayFW"));
-        namesByType.put(AstType.VARIANT_ARRAY, ClassName.get(packageName, "VariantArrayFW"));
-        namesByType.put(AstType.VARIANT_ARRAY8, ClassName.get(packageName, "VariantArray8FW"));
-        namesByType.put(AstType.VARIANT_ARRAY16, ClassName.get(packageName, "VariantArray16FW"));
-        namesByType.put(AstType.VARIANT_ARRAY32, ClassName.get(packageName, "VariantArray32FW"));
+        namesByType.put(AstType.ARRAY8, ClassName.get(packageName, "Array8FW"));
+        namesByType.put(AstType.ARRAY16, ClassName.get(packageName, "Array16FW"));
+        namesByType.put(AstType.ARRAY32, ClassName.get(packageName, "Array32FW"));
         namesByType.put(AstType.LIST, ClassName.get(packageName, "ListFW"));
         namesByType.put(AstType.LIST0, ClassName.get(packageName, "List0FW"));
         namesByType.put(AstType.LIST8, ClassName.get(packageName, "List8FW"));
@@ -114,8 +113,6 @@ public final class TypeResolver
         namesByType.put(AstType.BOUNDED_OCTETS8, ClassName.get(packageName, "BoundedOctets8FW"));
         namesByType.put(AstType.BOUNDED_OCTETS16, ClassName.get(packageName, "BoundedOctets16FW"));
         namesByType.put(AstType.BOUNDED_OCTETS32, ClassName.get(packageName, "BoundedOctets32FW"));
-        namesByType.put(AstType.VARIANT, ClassName.get(packageName, "VariantFW"));
-        namesByType.put(AstType.VARIANT_OF, ClassName.get(packageName, "VariantOfFW"));
         namesByType.put(AstType.MAP, ClassName.get(packageName, "MapFW"));
         namesByType.put(AstType.MAP8, ClassName.get(packageName, "Map8FW"));
         namesByType.put(AstType.MAP16, ClassName.get(packageName, "Map16FW"));

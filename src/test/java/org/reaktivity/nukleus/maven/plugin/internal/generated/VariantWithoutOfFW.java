@@ -19,14 +19,15 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 
 public final class VariantWithoutOfFW extends Flyweight
 {
-    public static final EnumWithInt8 KIND_ONE = EnumWithInt8.ONE;
+    public static final EnumWithInt8 KIND_NINE = EnumWithInt8.NINE;
 
-    public static final EnumWithInt8 KIND_TWO = EnumWithInt8.TWO;
+    public static final EnumWithInt8 KIND_TEN = EnumWithInt8.TEN;
 
-    public static final EnumWithInt8 KIND_THREE = EnumWithInt8.THREE;
+    public static final EnumWithInt8 KIND_ELEVEN = EnumWithInt8.ELEVEN;
 
     public static final EnumWithInt8 KIND_FOUR = EnumWithInt8.FOUR;
 
@@ -70,9 +71,9 @@ public final class VariantWithoutOfFW extends Flyweight
         }
         switch (kind())
         {
-        case ONE:
-        case TWO:
-        case THREE:
+        case NINE:
+        case TEN:
+        case ELEVEN:
             if (variantEnumKindWithString32RO.tryWrap(buffer, offset, maxLimit) == null)
             {
                 return null;
@@ -105,9 +106,9 @@ public final class VariantWithoutOfFW extends Flyweight
         enumWithInt8RO.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
-        case ONE:
-        case TWO:
-        case THREE:
+        case NINE:
+        case TEN:
+        case ELEVEN:
             variantEnumKindWithString32RO.wrap(buffer, offset, maxLimit);
             break;
         case FOUR:
@@ -126,9 +127,9 @@ public final class VariantWithoutOfFW extends Flyweight
     {
         switch (kind())
         {
-        case ONE:
-        case TWO:
-        case THREE:
+        case NINE:
+        case TEN:
+        case ELEVEN:
             return variantEnumKindWithString32RO.limit();
         case FOUR:
         case FIVE:
@@ -143,9 +144,9 @@ public final class VariantWithoutOfFW extends Flyweight
     {
         switch (kind())
         {
-        case ONE:
-        case TWO:
-        case THREE:
+        case NINE:
+        case TEN:
+        case ELEVEN:
             return variantEnumKindWithString32RO.toString();
         case FOUR:
         case FIVE:

@@ -309,11 +309,30 @@ public final class Map32FWGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
+                .addField(fieldCountField())
+                .addField(keyRWField())
+                .addField(valueRWField())
                 .addMethod(constructor())
                 .addMethod(wrapMethod())
+                .addMethod(entryMethod())
                 .addMethod(entriesMethod())
                 .addMethod(buildMethod())
                 .build();
+        }
+
+        private FieldSpec fieldCountField()
+        {
+            return FieldSpec.builder(int.class, "fieldCount", PRIVATE).build();
+        }
+
+        private FieldSpec keyRWField()
+        {
+            return FieldSpec.builder(typeVarKB, "keyRW", PRIVATE, FINAL).build();
+        }
+
+        private FieldSpec valueRWField()
+        {
+            return FieldSpec.builder(typeVarVB, "valueRW", PRIVATE, FINAL).build();
         }
 
         private MethodSpec constructor()
@@ -324,7 +343,9 @@ public final class Map32FWGenerator extends ClassSpecGenerator
                 .addParameter(typeVarV, "valueRO")
                 .addParameter(typeVarKB, "keyRW")
                 .addParameter(typeVarVB, "valueRW")
-                .addStatement("super(new Map32FW<>(keyRO, valueRO), keyRW, valueRW)")
+                .addStatement("super(new Map32FW<>(keyRO, valueRO))")
+                .addStatement("this.keyRW = keyRW")
+                .addStatement("this.valueRW = valueRW")
                 .build();
         }
 
@@ -345,6 +366,30 @@ public final class Map32FWGenerator extends ClassSpecGenerator
                 .build();
         }
 
+        private MethodSpec entryMethod()
+        {
+            TypeName parameterizedConsumerTypeKey = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarKB);
+            TypeName parameterizedConsumerTypeValue = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarVB);
+            return methodBuilder("entry")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(parameterizedBuilderType)
+                .addParameter(parameterizedConsumerTypeKey, "key")
+                .addParameter(parameterizedConsumerTypeValue, "value")
+                .addStatement("keyRW.wrap(buffer(), limit(), maxLimit())")
+                .addStatement("key.accept(keyRW)")
+                .addStatement("checkLimit(keyRW.limit(), maxLimit())")
+                .addStatement("limit(keyRW.limit())")
+                .addStatement("fieldCount++")
+                .addStatement("valueRW.wrap(buffer(), limit(), maxLimit())")
+                .addStatement("value.accept(valueRW)")
+                .addStatement("checkLimit(valueRW.limit(), maxLimit())")
+                .addStatement("limit(valueRW.limit())")
+                .addStatement("fieldCount++")
+                .addStatement("return this")
+                .build();
+        }
+
         private MethodSpec entriesMethod()
         {
             return methodBuilder("entries")
@@ -352,14 +397,14 @@ public final class Map32FWGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .returns(parameterizedBuilderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
-                .addParameter(int.class, "index")
+                .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")
                 .addParameter(int.class, "fieldCount")
-                .addStatement("buffer().putBytes(offset() + FIELDS_OFFSET, buffer, index, length)")
+                .addStatement("buffer().putBytes(offset() + FIELDS_OFFSET, buffer, srcOffset, length)")
                 .addStatement("int newLimit = offset() + FIELDS_OFFSET + length")
                 .addStatement("checkLimit(newLimit, maxLimit())")
                 .addStatement("limit(newLimit)")
-                .addStatement("super.entries(buffer, index, length, fieldCount)")
+                .addStatement("this.fieldCount = fieldCount")
                 .addStatement("return this")
                 .build();
         }
@@ -372,7 +417,7 @@ public final class Map32FWGenerator extends ClassSpecGenerator
                 .returns(map32Type)
                 .addStatement("int length = limit() - offset() - FIELD_COUNT_OFFSET")
                 .addStatement("buffer().putInt(offset() + LENGTH_OFFSET, length)")
-                .addStatement("buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount())")
+                .addStatement("buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount)")
                 .addStatement("return super.build()")
                 .build();
         }

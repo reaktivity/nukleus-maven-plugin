@@ -360,7 +360,7 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(valueTypeName, "valueRO")
                 .addParameter(keyBuilderTypeName, "keyRW")
                 .addParameter(valueBuilderTypeName, "valueRW")
-                .addStatement("super(new $T<>(keyRO, valueRO), keyRW, valueRW)", mapName)
+                .addStatement("super(new $T<>(keyRO, valueRO))", mapName)
                 .addStatement("$LRW = new $T.Builder<>(keyRO, valueRO, keyRW, valueRW)",
                     fieldName(templateMapTypeName), templateMapTypeName)
                 .build();

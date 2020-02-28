@@ -20,11 +20,9 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
-import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -110,11 +108,9 @@ public final class ListFWGenerator extends ClassSpecGenerator
         {
             return classBuilder.addField(fieldCountField())
                 .addMethod(constructor())
-                .addMethod(wrapMethod())
                 .addMethod(fieldMethod())
                 .addMethod(fieldsMethodViaVisitor())
                 .addMethod(fieldsMethodViaBuffer())
-                .addMethod(fieldCountMethod())
                 .build();
         }
 
@@ -132,76 +128,34 @@ public final class ListFWGenerator extends ClassSpecGenerator
                 .build();
         }
 
-        private MethodSpec wrapMethod()
-        {
-            return methodBuilder("wrap")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .returns(parameterizedListBuildertype)
-                .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
-                .addParameter(int.class, "offset")
-                .addParameter(int.class, "maxLimit")
-                .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("fieldCount = 0")
-                .addStatement("return this")
-                .build();
-        }
-
         private MethodSpec fieldMethod()
         {
             return methodBuilder("field")
-                .addModifiers(PUBLIC)
+                .addModifiers(PUBLIC, ABSTRACT)
                 .returns(parameterizedListBuildertype)
                 .addParameter(visitorType, "visitor")
-                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
-                .addStatement("fieldCount++")
-                .addStatement("int newLimit = limit() + length")
-                .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("limit(newLimit)")
-                .addStatement("return this")
                 .build();
         }
 
         private MethodSpec fieldsMethodViaVisitor()
         {
             return methodBuilder("fields")
-                .addModifiers(PUBLIC)
+                .addModifiers(PUBLIC, ABSTRACT)
                 .returns(parameterizedListBuildertype)
                 .addParameter(int.class, "fieldCount")
                 .addParameter(visitorType, "visitor")
-                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
-                .addStatement("this.fieldCount += fieldCount")
-                .addStatement("int newLimit = limit() + length")
-                .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("limit(newLimit)")
-                .addStatement("return this")
                 .build();
         }
 
         private MethodSpec fieldsMethodViaBuffer()
         {
             return methodBuilder("fields")
-                .addModifiers(PUBLIC)
+                .addModifiers(PUBLIC, ABSTRACT)
                 .returns(parameterizedListBuildertype)
                 .addParameter(int.class, "fieldCount")
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "index")
                 .addParameter(int.class, "length")
-                .addStatement("this.fieldCount += fieldCount")
-                .addStatement("int newLimit = limit() + length")
-                .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("buffer().putBytes(limit(), buffer, index, length)")
-                .addStatement("limit(newLimit)")
-                .addStatement("return this")
-                .build();
-        }
-
-        private MethodSpec fieldCountMethod()
-        {
-            return methodBuilder("fieldCount")
-                .addModifiers(PROTECTED)
-                .returns(int.class)
-                .addStatement("return fieldCount")
                 .build();
         }
     }

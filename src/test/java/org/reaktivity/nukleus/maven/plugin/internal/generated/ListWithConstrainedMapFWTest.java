@@ -37,7 +37,7 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.ConstrainedMapFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithConstrainedMapFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
 
@@ -54,8 +54,8 @@ public class ListWithConstrainedMapFWTest
     private final ListWithConstrainedMapFW.Builder flyweightRW = new ListWithConstrainedMapFW.Builder();
     private final ListWithConstrainedMapFW flyweightRO = new ListWithConstrainedMapFW();
 
-    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
-    private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
+    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.SIX;
+    private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.NINE;
     private static final EnumWithInt8 KIND_LIST8 = EnumWithInt8.TWO;
     private final int kindSize = Byte.BYTES;
     private final int lengthSize = Byte.BYTES;
@@ -88,28 +88,28 @@ public class ListWithConstrainedMapFWTest
         buffer.putByte(offsetFieldCount, mapFieldCount);
 
         int offsetMapEntry1KeyKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetMapEntry1KeyKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry1KeyKind, KIND_STRING8.value());
         int offsetEntry1KeyLength = offsetMapEntry1KeyKind + Byte.BYTES;
         buffer.putByte(offsetEntry1KeyLength, (byte) entry1Key.length());
         int offsetEntry1Key = offsetEntry1KeyLength + Byte.BYTES;
         buffer.putBytes(offsetEntry1Key, entry1Key.getBytes());
 
         int offsetMapEntry1ValueKind = offsetEntry1Key + entry1Key.length();
-        buffer.putByte(offsetMapEntry1ValueKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry1ValueKind, KIND_STRING8.value());
         int offsetEntry1ValueLength = offsetMapEntry1ValueKind + Byte.BYTES;
         buffer.putByte(offsetEntry1ValueLength, (byte) entry1Value.length());
         int offsetEntry1Value = offsetEntry1ValueLength + Byte.BYTES;
         buffer.putBytes(offsetEntry1Value, entry1Value.getBytes());
 
         int offsetMapEntry2KeyKind = offsetEntry1Value + entry1Value.length();
-        buffer.putByte(offsetMapEntry2KeyKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry2KeyKind, KIND_STRING8.value());
         int offsetEntry2KeyLength = offsetMapEntry2KeyKind + Byte.BYTES;
         buffer.putByte(offsetEntry2KeyLength, (byte) entry2Key.length());
         int offsetEntry2Key = offsetEntry2KeyLength + Byte.BYTES;
         buffer.putBytes(offsetEntry2Key, entry2Key.getBytes());
 
         int offsetMapEntry2ValueKind = offsetEntry2Key + entry2Key.length();
-        buffer.putByte(offsetMapEntry2ValueKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry2ValueKind, KIND_STRING8.value());
         int offsetEntry2ValueLength = offsetMapEntry2ValueKind + Byte.BYTES;
         buffer.putByte(offsetEntry2ValueLength, (byte) entry2Value.length());
         int offsetEntry2Value = offsetEntry2ValueLength + Byte.BYTES;
@@ -129,7 +129,7 @@ public class ListWithConstrainedMapFWTest
         flyweight.constrainedMap().forEach(kv -> vv ->
         {
             mapItems.add(kv.get().asString());
-            mapItems.add(vv.getAsVariantEnumKindWithString32().get().asString());
+            mapItems.add(vv.getAsVariantEnumKindOfString().get().asString());
         });
         assertEquals(49, flyweight.constrainedMap().length());
         assertEquals(4, flyweight.constrainedMap().fieldCount());
@@ -292,11 +292,11 @@ public class ListWithConstrainedMapFWTest
         }
     }
 
-    private static VariantEnumKindWithString32FW asVariantEnumKindWithString32FW(
+    private static VariantEnumKindOfStringFW asVariantEnumKindOfStringFW(
         StringFW value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.sizeof()));
-        return new VariantEnumKindWithString32FW.Builder().wrap(buffer, 0, buffer.capacity())
+        return new VariantEnumKindOfStringFW.Builder().wrap(buffer, 0, buffer.capacity())
             .set(value).build();
     }
 
@@ -312,8 +312,8 @@ public class ListWithConstrainedMapFWTest
         List<StringFW> values)
     {
         ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> constrainedMapRW =
-            new ConstrainedMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
-                new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
+            new ConstrainedMapFW.Builder<>(new VariantEnumKindOfStringFW(), new VariantWithoutOfFW(),
+                new VariantEnumKindOfStringFW.Builder(), new VariantWithoutOfFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
         constrainedMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)
@@ -321,7 +321,7 @@ public class ListWithConstrainedMapFWTest
             StringFW key = keys.get(i);
             StringFW value = values.get(i);
             constrainedMapRW.entry(k -> k.set(key),
-                v -> v.setAsVariantEnumKindWithString32(asVariantEnumKindWithString32FW(value)));
+                v -> v.setAsVariantEnumKindOfString(asVariantEnumKindOfStringFW(value)));
         }
         return constrainedMapRW.build();
     }
@@ -331,8 +331,8 @@ public class ListWithConstrainedMapFWTest
         List<Integer> values)
     {
         ConstrainedMapFW.Builder<VariantWithoutOfFW, VariantWithoutOfFW.Builder> constrainedMapRW =
-            new ConstrainedMapFW.Builder<>(new VariantEnumKindWithString32FW(), new VariantWithoutOfFW(),
-                new VariantEnumKindWithString32FW.Builder(), new VariantWithoutOfFW.Builder());
+            new ConstrainedMapFW.Builder<>(new VariantEnumKindOfStringFW(), new VariantWithoutOfFW(),
+                new VariantEnumKindOfStringFW.Builder(), new VariantWithoutOfFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
         constrainedMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)

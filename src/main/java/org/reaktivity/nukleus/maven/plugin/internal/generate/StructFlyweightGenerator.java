@@ -1629,7 +1629,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
                 if ("ListFW".equals(parameterizedType.rawType.simpleName()) ||
-                        "ArrayFW".equals(parameterizedType.rawType.simpleName()))
+                        "Array32FW".equals(parameterizedType.rawType.simpleName()))
                 {
                     result = true;
                 }
@@ -3114,7 +3114,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         .addCode(code.build())
                         .build());
 
-                if ("ArrayFW".equals(rawType.simpleName()))
+                if ("Array32FW".equals(rawType.simpleName()))
                 {
                     // Add a method to append list items
                     code = CodeBlock.builder();

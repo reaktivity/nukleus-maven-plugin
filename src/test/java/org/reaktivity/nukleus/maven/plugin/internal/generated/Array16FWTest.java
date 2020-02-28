@@ -29,7 +29,13 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.Array16FW;
+import org.reaktivity.reaktor.internal.test.types.String16FW;
+import org.reaktivity.reaktor.internal.test.types.String32FW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 
 public class Array16FWTest
 {
@@ -68,7 +74,7 @@ public class Array16FWTest
         buffer.putShort(offsetFieldCount, (short) fieldCount);
 
         int offsetArrayItemKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetArrayItemKind, EnumWithInt8.TWO.value());
+        buffer.putByte(offsetArrayItemKind, EnumWithInt8.TEN.value());
 
         int offsetItem1Length = offsetArrayItemKind + Byte.BYTES;
         buffer.putShort(offsetItem1Length, (short) item1.length());

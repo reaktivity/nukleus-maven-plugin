@@ -22,7 +22,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 
-public class Array32FW<V extends Flyweight> extends ArrayFW<V>
+public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_INT;
 
@@ -39,6 +39,8 @@ public class Array32FW<V extends Flyweight> extends ArrayFW<V>
     private final V itemRO;
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
+
+    private int maxLength;
 
     public Array32FW(
         V itemRO)
@@ -62,6 +64,12 @@ public class Array32FW<V extends Flyweight> extends ArrayFW<V>
     public int fieldCount()
     {
         return buffer().getInt(offset() + FIELD_COUNT_OFFSET);
+    }
+
+    @Override
+    public int maxLength()
+    {
+        return maxLength;
     }
 
     @Override
@@ -127,6 +135,13 @@ public class Array32FW<V extends Flyweight> extends ArrayFW<V>
         return String.format("array32<%d, %d>", length(), fieldCount());
     }
 
+    @Override
+    protected void maxLength(
+        int maxLength)
+    {
+        this.maxLength = maxLength;
+    }
+
     public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
         extends ArrayFW.Builder<Array32FW<V>, B, V>
     {
@@ -171,13 +186,15 @@ public class Array32FW<V extends Flyweight> extends ArrayFW<V>
             DirectBuffer buffer,
             int srcOffset,
             int length,
-            int fieldCount)
+            int fieldCount,
+            int maxLength)
         {
             buffer().putBytes(offset() + FIELDS_OFFSET, buffer, srcOffset, length);
             int newLimit = offset() + FIELDS_OFFSET + length;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
             this.fieldCount = fieldCount;
+            this.maxLength = maxLength;
             buffer().putInt(offset() + LENGTH_OFFSET, length);
             buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount + FIELD_COUNT_SIZE);
             return this;
@@ -221,7 +238,9 @@ public class Array32FW<V extends Flyweight> extends ArrayFW<V>
 
             length = limit() - offset() - FIELD_COUNT_OFFSET;
             buffer().putInt(offset() + LENGTH_OFFSET, length);
-            return super.build();
+            final Array32FW<V> array32 = super.build();
+            array32.maxLength(maxLength);
+            return array32;
         }
     }
 }

@@ -20,14 +20,6 @@ import java.text.MessageFormat;
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
-import org.reaktivity.reaktor.internal.test.types.ListFW;
-import org.reaktivity.reaktor.internal.test.types.MapFW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public final class ListWithMapFW extends ListFW
 {
@@ -43,10 +35,10 @@ public final class ListWithMapFW extends ListFW
 
     private static final int MISSING_FIELD_BYTE_SIZE = BitUtil.SIZE_OF_BYTE;
 
-    private VariantEnumKindWithString32FW field1RO = new VariantEnumKindWithString32FW();
+    private VariantEnumKindOfStringFW field1RO = new VariantEnumKindOfStringFW();
 
-    private VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> mapOfStringRO =
-        new VariantOfMapFW<>(new VariantEnumKindWithString32FW(), new TypedefStringFW());
+    private VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> mapOfStringRO =
+        new VariantOfMapFW<>(new VariantEnumKindOfStringFW(), new TypedefStringFW());
 
     private VariantOfListFW variantOfListRO = new VariantOfListFW();
 
@@ -58,7 +50,7 @@ public final class ListWithMapFW extends ListFW
         return field1RO.get();
     }
 
-    public MapFW<VariantEnumKindWithString32FW, TypedefStringFW> mapOfString()
+    public MapFW<VariantEnumKindOfStringFW, TypedefStringFW> mapOfString()
     {
         assert (bitmask & MASK_MAP_OF_STRING) != 0L : "Field \"mapOfString\" is not set";
         return mapOfStringRO.get();
@@ -211,12 +203,12 @@ public final class ListWithMapFW extends ListFW
 
     public static final class Builder extends Flyweight.Builder<ListWithMapFW>
     {
-        private final VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
+        private final VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
 
-        private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW,
-            VariantEnumKindWithString32FW.Builder, TypedefStringFW.Builder> mapOfStringRW =
-            new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(), new TypedefStringFW(),
-                new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
+        private final VariantOfMapFW.Builder<VariantEnumKindOfStringFW, TypedefStringFW,
+            VariantEnumKindOfStringFW.Builder, TypedefStringFW.Builder> mapOfStringRW =
+            new VariantOfMapFW.Builder<>(new VariantEnumKindOfStringFW(), new TypedefStringFW(),
+                new VariantEnumKindOfStringFW.Builder(), new TypedefStringFW.Builder());
 
         private int lastFieldSet = -1;
 
@@ -237,14 +229,14 @@ public final class ListWithMapFW extends ListFW
         }
 
         public Builder mapOfString(
-            MapFW<VariantEnumKindWithString32FW, TypedefStringFW> value)
+            MapFW<VariantEnumKindOfStringFW, TypedefStringFW> value)
         {
             assert lastFieldSet < INDEX_MAP_OF_STRING : "Field \"mapOfString\" cannot be set out of order";
             assert lastFieldSet == INDEX_FIELD1 : "Prior required field \"field1\" is not set";
             variantOfListRW.field((b, o, m) ->
             {
-                VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW,
-                    VariantEnumKindWithString32FW.Builder, TypedefStringFW.Builder> mapOfString = mapOfStringRW.wrap(b, o, m);
+                VariantOfMapFW.Builder<VariantEnumKindOfStringFW, TypedefStringFW,
+                    VariantEnumKindOfStringFW.Builder, TypedefStringFW.Builder> mapOfString = mapOfStringRW.wrap(b, o, m);
                 value.forEach(kv -> vv -> mapOfString.entry(k -> k.set(kv.get()), v -> v.set(vv.get())));
                 return mapOfString.build().sizeof();
             });

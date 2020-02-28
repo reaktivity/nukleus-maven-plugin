@@ -22,11 +22,11 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
 public final class TypedefStringFW extends Flyweight
 {
-    public static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
+    public static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.NINE;
 
-    public static final EnumWithInt8 KIND_STRING16 = EnumWithInt8.TWO;
+    public static final EnumWithInt8 KIND_STRING16 = EnumWithInt8.TEN;
 
-    public static final EnumWithInt8 KIND_STRING32 = EnumWithInt8.THREE;
+    public static final EnumWithInt8 KIND_STRING32 = EnumWithInt8.ELEVEN;
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
@@ -47,11 +47,11 @@ public final class TypedefStringFW extends Flyweight
     {
         switch (kind())
         {
-        case ONE:
+        case NINE:
             return string8RO;
-        case TWO:
+        case TEN:
             return string16RO;
-        case THREE:
+        case ELEVEN:
             return string32RO;
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
@@ -77,19 +77,19 @@ public final class TypedefStringFW extends Flyweight
 
         switch (kind)
         {
-        case ONE:
+        case NINE:
             if (string8RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
-        case TWO:
+        case TEN:
             if (string16RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
-        case THREE:
+        case ELEVEN:
             if (string32RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
@@ -117,13 +117,13 @@ public final class TypedefStringFW extends Flyweight
 
         switch (kind)
         {
-        case ONE:
+        case NINE:
             string8RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
-        case TWO:
+        case TEN:
             string16RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
-        case THREE:
+        case ELEVEN:
             string32RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         default:
@@ -151,13 +151,13 @@ public final class TypedefStringFW extends Flyweight
         }
         switch (kind())
         {
-        case ONE:
+        case NINE:
             string8RO.wrap(buffer, enumWithInt8.limit() + kindPadding, maxLimit);
             break;
-        case TWO:
+        case TEN:
             string16RO.wrap(buffer, enumWithInt8.limit() + kindPadding, maxLimit);
             break;
-        case THREE:
+        case ELEVEN:
             string32RO.wrap(buffer, enumWithInt8.limit() + kindPadding, maxLimit);
             break;
         default:
@@ -171,11 +171,11 @@ public final class TypedefStringFW extends Flyweight
     {
         switch (kind())
         {
-        case ONE:
+        case NINE:
             return String.format("TYPEDEF_STRING [string8=%s]", string8RO.asString());
-        case TWO:
+        case TEN:
             return String.format("TYPEDEF_STRING [string16=%s]", string16RO.asString());
-        case THREE:
+        case ELEVEN:
             return String.format("TYPEDEF_STRING [string32=%s]", string32RO.asString());
         default:
             return String.format("TYPEDEF_STRING [unknown]");
@@ -240,13 +240,13 @@ public final class TypedefStringFW extends Flyweight
         {
             switch (kind)
             {
-            case ONE:
+            case NINE:
                 setAsString8(value);
                 break;
-            case TWO:
+            case TEN:
                 setAsString16(value);
                 break;
-            case THREE:
+            case ELEVEN:
                 setAsString32(value);
                 break;
             }

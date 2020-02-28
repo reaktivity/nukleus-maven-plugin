@@ -24,9 +24,9 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
 public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
 {
-    public static final EnumWithInt8 KIND_ARRAY32 = EnumWithInt8.ONE;
+    public static final EnumWithInt8 KIND_ARRAY32 = EnumWithInt8.SEVEN;
 
-    public static final EnumWithInt8 KIND_ARRAY8 = EnumWithInt8.TWO;
+    public static final EnumWithInt8 KIND_ARRAY8 = EnumWithInt8.EIGHT;
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
@@ -50,9 +50,9 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
     {
         switch (kind())
         {
-        case ONE:
+        case SEVEN:
             return array32RO;
-        case TWO:
+        case EIGHT:
             return array8RO;
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
@@ -76,13 +76,13 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
         }
         switch (kind())
         {
-        case ONE:
+        case SEVEN:
             if (array32RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
-        case TWO:
+        case EIGHT:
             if (array8RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
@@ -108,10 +108,10 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
         EnumWithInt8FW enumWithInt8 = enumWithInt8RO.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
-        case ONE:
+        case SEVEN:
             array32RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
-        case TWO:
+        case EIGHT:
             array8RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         default:
@@ -152,6 +152,12 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
     }
 
     @Override
+    public int maxLength()
+    {
+        return get().maxLength();
+    }
+
+    @Override
     public void forEach(
         Consumer<V> consumer)
     {
@@ -161,7 +167,14 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
     @Override
     public DirectBuffer items()
     {
-        return null;
+        return get().items();
+    }
+
+    @Override
+    protected void maxLength(
+        int maxLength)
+    {
+        get().maxLength(maxLength);
     }
 
     public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
@@ -182,6 +195,7 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
             array8RW = new Array8FW.Builder<>(itemRW, itemRO);
         }
 
+        @Override
         public Builder<B, V> item(
             Consumer<B> consumer)
         {
@@ -195,9 +209,10 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
             DirectBuffer buffer,
             int srcOffset,
             int length,
-            int fieldCount)
+            int fieldCount,
+            int maxLength)
         {
-            array32RW.items(buffer, srcOffset, length, fieldCount);
+            array32RW.items(buffer, srcOffset, length, fieldCount, maxLength);
             limit(array32RW.limit());
             return this;
         }
@@ -234,7 +249,7 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
                 enumWithInt8RW.set(KIND_ARRAY8);
                 int fieldCount = array32.fieldCount();
                 array8RW.wrap(buffer(), enumWithInt8RW.limit(), maxLimit());
-                array8RW.items(array32.items(), 0, array32.items().capacity(), fieldCount);
+                array8RW.items(array32.items(), 0, array32.items().capacity(), fieldCount, array32.maxLength());
                 limit(array8RW.limit());
                 break;
             case 1:
@@ -245,7 +260,9 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
             default:
                 throw new IllegalArgumentException("Illegal length: " + length);
             }
-            return super.build();
+            final VariantOfArrayFW<V> variant = super.build();
+            variant.maxLength(array32.maxLength());
+            return variant;
         }
 
         public Builder<B, V> kind(

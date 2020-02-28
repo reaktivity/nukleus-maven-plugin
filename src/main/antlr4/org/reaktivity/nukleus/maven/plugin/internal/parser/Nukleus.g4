@@ -388,7 +388,16 @@ variant_member
 
 variant_member_without_of
    : variant_member
-   | type_spec
+   | defined_variant_member
+   | defined_variant_member_with_parametric_type
+   ;
+
+defined_variant_member
+   : declarator
+   ;
+
+defined_variant_member_with_parametric_type
+   :  membertype=declarator LEFT_ANG_BRACKET param1=declarator (COMMA param2=declarator)? RIGHT_ANG_BRACKET
    ;
 
 variant_list_member

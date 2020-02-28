@@ -20,17 +20,13 @@ import java.util.function.Function;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.reaktor.internal.test.types.Flyweight;
-import org.reaktivity.reaktor.internal.test.types.MapFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
-public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEnumKindWithString32FW, V>
+public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEnumKindOfStringFW, V>
 {
-    private final VariantOfMapFW<VariantEnumKindWithString32FW, V> variantOfMapRO;
+    private final VariantOfMapFW<VariantEnumKindOfStringFW, V> variantOfMapRO;
 
     public ConstrainedMapFW(
-        VariantEnumKindWithString32FW keyRO,
+        VariantEnumKindOfStringFW keyRO,
         V valueRO)
     {
         variantOfMapRO = new VariantOfMapFW<>(keyRO, valueRO);
@@ -56,7 +52,7 @@ public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEn
 
     @Override
     public void forEach(
-        Function<VariantEnumKindWithString32FW, Consumer<V>> consumer)
+        Function<VariantEnumKindOfStringFW, Consumer<V>> consumer)
     {
         variantOfMapRO.get().forEach(consumer);
     }
@@ -108,18 +104,18 @@ public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEn
     }
 
     public static final class Builder<V extends Flyweight, VB extends Flyweight.Builder<V>>
-        extends MapFW.Builder<ConstrainedMapFW<V>, VariantEnumKindWithString32FW, V, VariantEnumKindWithString32FW.Builder, VB>
+        extends MapFW.Builder<ConstrainedMapFW<V>, VariantEnumKindOfStringFW, V, VariantEnumKindOfStringFW.Builder, VB>
     {
-        private final VariantOfMapFW.Builder<VariantEnumKindWithString32FW, V, VariantEnumKindWithString32FW.Builder, VB>
+        private final VariantOfMapFW.Builder<VariantEnumKindOfStringFW, V, VariantEnumKindOfStringFW.Builder, VB>
             variantOfMapRW;
 
         public Builder(
-            VariantEnumKindWithString32FW keyRO,
+            VariantEnumKindOfStringFW keyRO,
             V valueRO,
-            VariantEnumKindWithString32FW.Builder keyRW,
+            VariantEnumKindOfStringFW.Builder keyRW,
             VB valueRW)
         {
-            super(new ConstrainedMapFW<>(keyRO, valueRO), keyRW, valueRW);
+            super(new ConstrainedMapFW<>(keyRO, valueRO));
             variantOfMapRW = new VariantOfMapFW.Builder<>(keyRO, valueRO, keyRW, valueRW);
         }
 
@@ -136,7 +132,7 @@ public final class ConstrainedMapFW<V extends Flyweight> extends MapFW<VariantEn
 
         @Override
         public Builder<V, VB> entry(
-            Consumer<VariantEnumKindWithString32FW.Builder> key,
+            Consumer<VariantEnumKindOfStringFW.Builder> key,
             Consumer<VB> value)
         {
             variantOfMapRW.entry(key, value);

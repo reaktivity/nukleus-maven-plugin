@@ -24,7 +24,6 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -33,25 +32,21 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
-public final class MapFWGenerator extends ClassSpecGenerator
+public final class ArrayFWGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
-    private final TypeVariableName typeVarK;
-    private final TypeVariableName typeVarV;
     private final BuilderClassBuilder builderClassBuilder;
+    private final TypeVariableName typeVarV;
 
-    public MapFWGenerator(
+    public ArrayFWGenerator(
         ClassName flyweightType)
     {
-        super(flyweightType.peerClass("MapFW"));
-        this.typeVarK = TypeVariableName.get("K", flyweightType);
+        super(flyweightType.peerClass("ArrayFW"));
         this.typeVarV = TypeVariableName.get("V", flyweightType);
         this.classBuilder = classBuilder(thisName)
             .superclass(flyweightType)
             .addModifiers(PUBLIC, ABSTRACT)
-            .addTypeVariable(typeVarK)
             .addTypeVariable(typeVarV);
-
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
     }
 
@@ -61,8 +56,11 @@ public final class MapFWGenerator extends ClassSpecGenerator
         return classBuilder
             .addMethod(lengthMethod())
             .addMethod(fieldCountMethod())
+            .addMethod(fieldsOffsetMethod())
+            .addMethod(maxLengthMethod())
             .addMethod(forEachMethod())
-            .addMethod(entriesMethod())
+            .addMethod(itemsMethod())
+            .addMethod(maxLengthMutatorMethod())
             .addType(builderClassBuilder.build())
             .build();
     }
@@ -83,65 +81,81 @@ public final class MapFWGenerator extends ClassSpecGenerator
             .build();
     }
 
-    private MethodSpec forEachMethod()
+    private MethodSpec fieldsOffsetMethod()
     {
-        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
-        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarK,
-            parameterizedConsumerType);
-        return methodBuilder("forEach")
+        return methodBuilder("fieldsOffset")
             .addModifiers(PUBLIC, ABSTRACT)
-            .addParameter(parameterizedFunctionType, "consumer")
+            .returns(int.class)
             .build();
     }
 
-    private MethodSpec entriesMethod()
+    private MethodSpec maxLengthMethod()
     {
-        return methodBuilder("entries")
+        return methodBuilder("maxLength")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(int.class)
+            .build();
+    }
+
+    private MethodSpec forEachMethod()
+    {
+        TypeName consumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
+        return methodBuilder("forEach")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(void.class)
+            .addParameter(consumerType, "consumer")
+            .build();
+    }
+
+    private MethodSpec itemsMethod()
+    {
+        return methodBuilder("items")
             .addModifiers(PUBLIC, ABSTRACT)
             .returns(DIRECT_BUFFER_TYPE)
+            .build();
+    }
+
+    private MethodSpec maxLengthMutatorMethod()
+    {
+        return methodBuilder("maxLength")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(void.class)
+            .addParameter(int.class, "maxLength")
             .build();
     }
 
     private static final class BuilderClassBuilder
     {
         private final TypeSpec.Builder classBuilder;
+        private final TypeVariableName typeVarB;
         private final TypeVariableName typeVarT;
-        private final TypeVariableName typeVarKB;
-        private final TypeVariableName typeVarVB;
-
         private final TypeName parameterizedBuilderType;
 
         private BuilderClassBuilder(
-            ClassName mapType,
+            ClassName arrayType,
             ClassName flyweightType)
         {
-            ClassName builderType = mapType.nestedClass("Builder");
-            ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
-
-            TypeVariableName typeVarK = TypeVariableName.get("K", flyweightType);
-            this.typeVarKB = TypeVariableName.get("KB", ParameterizedTypeName.get(flyweightBuilderType, typeVarK));
             TypeVariableName typeVarV = TypeVariableName.get("V", flyweightType);
-            this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(flyweightBuilderType, typeVarV));
-            this.typeVarT = TypeVariableName.get("T", mapType);
-            this.parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarK, typeVarV, typeVarKB,
-                typeVarVB);
-
-            this.classBuilder = classBuilder(builderType.simpleName())
+            this.typeVarT = TypeVariableName.get("T", ParameterizedTypeName.get(arrayType, typeVarV));
+            ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
+            ClassName arrayBuilderType = arrayType.nestedClass("Builder");
+            this.typeVarB = TypeVariableName.get("B", ParameterizedTypeName.get(flyweightBuilderType, typeVarV));
+            this.parameterizedBuilderType = ParameterizedTypeName.get(arrayBuilderType, typeVarT, typeVarB, typeVarV);
+            this.classBuilder = classBuilder(arrayBuilderType.simpleName())
                 .addModifiers(PUBLIC, ABSTRACT, STATIC)
                 .superclass(ParameterizedTypeName.get(flyweightBuilderType, typeVarT))
                 .addTypeVariable(typeVarT)
-                .addTypeVariable(typeVarK)
-                .addTypeVariable(typeVarV)
-                .addTypeVariable(typeVarKB)
-                .addTypeVariable(typeVarVB);
+                .addTypeVariable(typeVarB)
+                .addTypeVariable(typeVarV);
         }
 
         public TypeSpec build()
         {
             return classBuilder
                 .addMethod(constructor())
-                .addMethod(entryMethod())
-                .addMethod(entriesMethod())
+                .addMethod(itemMethod())
+                .addMethod(itemsMethod())
+                .addMethod(fieldsOffsetMethod())
                 .build();
         }
 
@@ -154,29 +168,34 @@ public final class MapFWGenerator extends ClassSpecGenerator
                 .build();
         }
 
-        private MethodSpec entryMethod()
+        private MethodSpec itemMethod()
         {
-            ClassName consumerRawType = ClassName.get(Consumer.class);
-            TypeName consumerKeyType = ParameterizedTypeName.get(consumerRawType, typeVarKB);
-            TypeName consumerValueType = ParameterizedTypeName.get(consumerRawType, typeVarVB);
-
-            return methodBuilder("entry")
+            TypeName consumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarB);
+            return methodBuilder("item")
                 .addModifiers(PUBLIC, ABSTRACT)
+                .addParameter(consumerType, "consumer")
                 .returns(parameterizedBuilderType)
-                .addParameter(consumerKeyType, "key")
-                .addParameter(consumerValueType, "value")
                 .build();
         }
 
-        private MethodSpec entriesMethod()
+        private MethodSpec itemsMethod()
         {
-            return methodBuilder("entries")
+            return methodBuilder("items")
                 .addModifiers(PUBLIC, ABSTRACT)
                 .returns(parameterizedBuilderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")
                 .addParameter(int.class, "fieldCount")
+                .addParameter(int.class, "maxLength")
+                .build();
+        }
+
+        private MethodSpec fieldsOffsetMethod()
+        {
+            return methodBuilder("fieldsOffset")
+                .addModifiers(PUBLIC, ABSTRACT)
+                .returns(int.class)
                 .build();
         }
     }

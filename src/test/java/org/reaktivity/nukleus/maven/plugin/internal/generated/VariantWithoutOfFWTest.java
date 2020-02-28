@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
 
@@ -45,7 +45,7 @@ public class VariantWithoutOfFWTest
 
     private final VariantWithoutOfFW.Builder flyweightRW = new VariantWithoutOfFW.Builder();
     private final VariantWithoutOfFW flyweightRO = new VariantWithoutOfFW();
-    public static final EnumWithInt8 KIND_ONE = EnumWithInt8.ONE;
+    public static final EnumWithInt8 KIND_NINE = EnumWithInt8.NINE;
     public static final EnumWithInt8 KIND_FOUR = EnumWithInt8.FOUR;
     public static final EnumWithInt8 KIND_FIVE = EnumWithInt8.FIVE;
 
@@ -54,7 +54,7 @@ public class VariantWithoutOfFWTest
         final int offset)
     {
         String value = "stringValue";
-        buffer.putByte(offset, KIND_ONE.value());
+        buffer.putByte(offset, KIND_NINE.value());
         int offsetValueLength = offset + Byte.BYTES;
         buffer.putByte(offsetValueLength, (byte) value.length());
         int offsetValue = offsetValueLength + Byte.BYTES;
@@ -136,18 +136,18 @@ public class VariantWithoutOfFWTest
     }
 
     @Test
-    public void shouldSetAsVariantEnumKindWithString32()
+    public void shouldSetAsVariantEnumKindOfString()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsVariantEnumKindWithString32(asVariantEnumKindWithString32FW(asStringFW("stringValue")))
+            .setAsVariantEnumKindOfString(asVariantEnumKindOfStringFW(asStringFW("stringValue")))
             .build()
             .limit();
 
         VariantWithoutOfFW variantWithoutOf = flyweightRO.wrap(buffer, 0, limit);
 
-        assertNotNull(variantWithoutOf.getAsVariantEnumKindWithString32());
-        assertEquals("stringValue", variantWithoutOf.getAsVariantEnumKindWithString32().get().asString());
-        assertEquals(KIND_ONE, variantWithoutOf.kind());
+        assertNotNull(variantWithoutOf.getAsVariantEnumKindOfString());
+        assertEquals("stringValue", variantWithoutOf.getAsVariantEnumKindOfString().get().asString());
+        assertEquals(KIND_NINE, variantWithoutOf.kind());
     }
 
     private static VariantOfInt32FW asVariantOfInt32FW(
@@ -157,11 +157,11 @@ public class VariantWithoutOfFWTest
         return new VariantOfInt32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value).build();
     }
 
-    private static VariantEnumKindWithString32FW asVariantEnumKindWithString32FW(
+    private static VariantEnumKindOfStringFW asVariantEnumKindOfStringFW(
         StringFW value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.sizeof()));
-        return new VariantEnumKindWithString32FW.Builder().wrap(buffer, 0, buffer.capacity())
+        return new VariantEnumKindOfStringFW.Builder().wrap(buffer, 0, buffer.capacity())
             .set(value).build();
     }
 

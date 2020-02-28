@@ -40,6 +40,8 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
 
+    private int maxLength;
+
     public Array8FW(
         V itemRO)
     {
@@ -62,6 +64,12 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
     public int fieldCount()
     {
         return buffer().getByte(offset() + FIELD_COUNT_OFFSET);
+    }
+
+    @Override
+    public int maxLength()
+    {
+        return maxLength;
     }
 
     @Override
@@ -127,6 +135,13 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
         return String.format("array8<%d, %d>", length(), fieldCount());
     }
 
+    @Override
+    protected void maxLength(
+        int maxLength)
+    {
+        this.maxLength = maxLength;
+    }
+
     public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
         extends ArrayFW.Builder<Array8FW<V>, B, V>
     {
@@ -171,13 +186,15 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
             DirectBuffer buffer,
             int srcOffset,
             int length,
-            int fieldCount)
+            int fieldCount,
+            int maxLength)
         {
             buffer().putBytes(offset() + FIELDS_OFFSET, buffer, srcOffset, length);
             int newLimit = offset() + FIELDS_OFFSET + length;
             checkLimit(newLimit, maxLimit());
             limit(newLimit);
             this.fieldCount = fieldCount;
+            this.maxLength = maxLength;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
             buffer().putByte(offset() + LENGTH_OFFSET, (byte) (length + FIELD_COUNT_SIZE));
@@ -225,7 +242,9 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
 
             length = limit() - offset() - FIELD_COUNT_OFFSET;
             buffer().putByte(offset() + LENGTH_OFFSET, (byte) length);
-            return super.build();
+            final Array8FW<V> array8 = super.build();
+            array8.maxLength(maxLength);
+            return array8;
         }
     }
 }

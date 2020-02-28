@@ -17,7 +17,6 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.reaktivity.nukleus.maven.plugin.internal.generated.BoundedOctetsFW.Builder;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
@@ -168,6 +167,7 @@ public final class VariantOfOctetsFW extends BoundedOctetsFW
             super(new VariantOfOctetsFW());
         }
 
+        @Override
         public Builder set(
             BoundedOctetsFW value)
         {
@@ -283,7 +283,7 @@ public final class VariantOfOctetsFW extends BoundedOctetsFW
         }
 
         @Override
-        public BoundedOctetsFW.Builder<VariantOfOctetsFW> set(
+        public Builder set(
             byte[] value)
         {
             int highestByteIndex = Integer.numberOfTrailingZeros(Integer.highestOneBit(value.length)) >> 3;

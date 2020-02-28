@@ -51,19 +51,14 @@ public final class AstType
     public static final AstType STRING32 = new AstType("string32");
 
     public static final AstType ARRAY = new AstType("array");
+    public static final AstType ARRAY8 = new AstType("array8");
+    public static final AstType ARRAY16 = new AstType("array16");
+    public static final AstType ARRAY32 = new AstType("array32");
     public static final AstType FLYWEIGHT = new AstType("flyweight");
     public static final AstType LIST = new AstType("list");
     public static final AstType LIST0 = new AstType("list0");
     public static final AstType LIST8 = new AstType("list8");
     public static final AstType LIST32 = new AstType("list32");
-
-    public static final AstType VARIANT = new AstType("variant");
-    public static final AstType VARIANT_OF = new AstType("variant of");
-    public static final AstType VARIANT_ARRAY = new AstType("variantArray");
-    public static final AstType VARIANT_ARRAY8 = new AstType("variantArray8");
-    public static final AstType VARIANT_ARRAY16 = new AstType("variantArray16");
-    public static final AstType VARIANT_ARRAY32 = new AstType("variantArray32");
-
     public static final AstType MAP = new AstType("map");
     public static final AstType MAP8 = new AstType("map8");
     public static final AstType MAP16 = new AstType("map16");
@@ -79,8 +74,7 @@ public final class AstType
         Set<AstType> astTypes = Collections.newSetFromMap(new IdentityHashMap<>());
         astTypes.addAll(List.of(INT8, INT16, INT24, INT32, INT64, VARINT32, VARINT64, UINT8, UINT16, UINT24, UINT32, UINT64,
             VARBYTEUINT32, OCTETS, BOUNDED_OCTETS, BOUNDED_OCTETS8, BOUNDED_OCTETS16, BOUNDED_OCTETS32, STRING, STRING8,
-            STRING16, STRING32, ARRAY, FLYWEIGHT, LIST, LIST8, LIST32, VARIANT, VARIANT_OF, VARIANT_ARRAY, VARIANT_ARRAY8,
-            VARIANT_ARRAY16, VARIANT_ARRAY32, MAP, MAP8, MAP16, MAP32));
+            STRING16, STRING32, ARRAY, ARRAY8, ARRAY16, ARRAY32, FLYWEIGHT, LIST, LIST8, LIST32, MAP, MAP8, MAP16, MAP32));
         AST_TYPES = astTypes;
     }
 

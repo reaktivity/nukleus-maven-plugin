@@ -48,6 +48,7 @@ public class ListWithVariantFWTest
     private final int lengthSize = Byte.BYTES;
     private final int logicalLengthSize = Byte.BYTES;
     private final int bitmaskSize = Long.BYTES;
+    private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.NINE;
 
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
@@ -195,7 +196,7 @@ public class ListWithVariantFWTest
         buffer.putInt(offsetVariantOfUint32, (int) 4000000000L);
 
         int offsetKindVariantOfString32 = offsetVariantOfUint32 + Integer.BYTES;
-        buffer.putByte(offsetKindVariantOfString32, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetKindVariantOfString32, KIND_STRING8.value());
         int offsetVariantOfString32 = offsetKindVariantOfString32 + Byte.BYTES;
         buffer.putByte(offsetVariantOfString32, (byte) 7);
         buffer.putBytes(offsetVariantOfString32 + 1, "variant".getBytes());
@@ -272,7 +273,7 @@ public class ListWithVariantFWTest
         buffer.putInt(offsetVariantOfUint32, (int) 4000000000L);
 
         int offsetKindVariantOfString32 = offsetVariantOfUint32 + Integer.BYTES;
-        buffer.putByte(offsetKindVariantOfString32, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetKindVariantOfString32, KIND_STRING8.value());
         int offsetVariantOfString32 = offsetKindVariantOfString32 + Byte.BYTES;
         buffer.putByte(offsetVariantOfString32, (byte) 7);
         buffer.putBytes(offsetVariantOfString32 + 1, "variant".getBytes());

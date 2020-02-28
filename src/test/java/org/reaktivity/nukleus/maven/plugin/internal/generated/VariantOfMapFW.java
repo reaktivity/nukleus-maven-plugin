@@ -25,11 +25,11 @@ import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8FW;
 
 public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> extends MapFW<K, V>
 {
-    private static final EnumWithInt8 KIND_MAP32 = EnumWithInt8.ONE;
+    private static final EnumWithInt8 KIND_MAP32 = EnumWithInt8.FOUR;
 
-    private static final EnumWithInt8 KIND_MAP16 = EnumWithInt8.TWO;
+    private static final EnumWithInt8 KIND_MAP16 = EnumWithInt8.FIVE;
 
-    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
+    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.SIX;
 
     private final EnumWithInt8FW enumWithInt8RO = new EnumWithInt8FW();
 
@@ -57,11 +57,11 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
     {
         switch (kind())
         {
-        case ONE:
+        case FOUR:
             return map32RO;
-        case TWO:
+        case FIVE:
             return map16RO;
-        case THREE:
+        case SIX:
             return map8RO;
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
@@ -85,19 +85,19 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         }
         switch (kind())
         {
-        case ONE:
+        case FOUR:
             if (map32RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
-        case TWO:
+        case FIVE:
             if (map16RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
             }
             break;
-        case THREE:
+        case SIX:
             if (map8RO.tryWrap(buffer, offset + enumWithInt8.sizeof(), maxLimit) == null)
             {
                 return null;
@@ -123,13 +123,13 @@ public final class VariantOfMapFW<K extends Flyweight, V extends Flyweight> exte
         EnumWithInt8FW enumWithInt8 = enumWithInt8RO.wrap(buffer, offset, maxLimit);
         switch (kind())
         {
-        case ONE:
+        case FOUR:
             map32RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
-        case TWO:
+        case FIVE:
             map16RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
-        case THREE:
+        case SIX:
             map8RO.wrap(buffer, offset + enumWithInt8.sizeof(), maxLimit);
             break;
         default:

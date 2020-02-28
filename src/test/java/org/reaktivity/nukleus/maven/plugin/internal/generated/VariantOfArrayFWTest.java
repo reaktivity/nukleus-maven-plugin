@@ -28,7 +28,11 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfArrayFW;
 
 public class VariantOfArrayFWTest
 {
@@ -53,16 +57,19 @@ public class VariantOfArrayFWTest
         MutableDirectBuffer buffer,
         int offset)
     {
+        EnumWithInt8 kindOfArray = EnumWithInt8.EIGHT;
+        EnumWithInt8 kinfOfArrayItem = EnumWithInt8.NINE;
+
         int physicalLength = 18;
         int logicalLength = 2;
-        buffer.putByte(offset, EnumWithInt8.TWO.value());
+        buffer.putByte(offset, kindOfArray.value());
         int offsetLength = offset + kindSize;
         buffer.putByte(offsetLength, (byte) physicalLength);
         int offsetFieldCount = offsetLength + lengthSize;
         buffer.putByte(offsetFieldCount, (byte) logicalLength);
 
         int offsetArrayItemKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetArrayItemKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetArrayItemKind, kinfOfArrayItem.value());
 
         int offsetItem1Length = offsetArrayItemKind + Byte.BYTES;
         buffer.putByte(offsetItem1Length, (byte) "symbolA".length());
@@ -81,12 +88,13 @@ public class VariantOfArrayFWTest
         VariantOfArrayFW<VariantEnumKindOfStringFW> flyweight,
         int offset)
     {
+        EnumWithInt8 kindOfArray = EnumWithInt8.EIGHT;
         List<String> arrayItems = new ArrayList<>();
         flyweight.get().forEach(v -> arrayItems.add(v.get().asString()));
         assertEquals(2, arrayItems.size());
         assertEquals("symbolA", arrayItems.get(0));
         assertEquals("symbolB", arrayItems.get(1));
-        assertEquals(EnumWithInt8.TWO, flyweight.kind());
+        assertEquals(kindOfArray, flyweight.kind());
         assertEquals(18, flyweight.get().length());
         assertEquals(2, flyweight.get().fieldCount());
         assertEquals(offset + 20, flyweight.limit());

@@ -57,32 +57,36 @@ public class IntegerVariableArraysFWTest
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    static int setAllTestValues(MutableDirectBuffer buffer, int offset)
+    static int setAllTestValues(
+        MutableDirectBuffer buffer,
+        int offset)
     {
         buffer.putByte(offset + 0, (byte) 11); // fixed1
         buffer.putInt(offset + 1, 3); // lengthUnsigned64
         buffer.putShort(offset + 5, (short) 22); // fixed2
-        buffer.putInt(offset + 7, 2); // varint32Array
-        buffer.putByte(offset + 11, (byte) 1);
-        buffer.putByte(offset + 12, (byte) 2);
-        buffer.putLong(offset + 13, 10); // unsigned64Array
-        buffer.putLong(offset + 21, 112345); // unsigned64Array
-        buffer.putLong(offset + 29, 11234567); // unsigned64Array
-        buffer.putByte(offset + 37, (byte) 2); // lengthSigned16
-        buffer.putShort(offset + 38,  (short) 2); // signed16Array
-        buffer.putShort(offset + 40,  (short) -500); // signed16Array
-        buffer.putByte(offset + 42, (byte) 2); // lengthSigned24
-        putMediumInt(buffer, offset + 43,  (short) 2); // signed24Array
-        putMediumInt(buffer, offset + 46,  (short) -500); // signed24Array
-        buffer.putInt(offset + 49, 1); // varint64Array
-        buffer.putByte(offset + 53, (byte) 0x18);
-        buffer.putByte(offset + 54, (byte) 1);
-        buffer.putInt(offset + 55, 123);
-        buffer.putShort(offset + 59, (short) 1);
-        buffer.putInt(offset + 61, 124);
-        putMediumInt(buffer, offset + 65, 1);
-        buffer.putInt(offset + 68, 125);
-        return 68 + Integer.BYTES;
+        buffer.putInt(offset + 7, 6); // varint32Array length
+        buffer.putInt(offset + 11, 2); // varint32Array field count
+        buffer.putByte(offset + 15, (byte) 1); // varint32Array first item
+        buffer.putByte(offset + 16, (byte) 2); // varint32Array second item
+        buffer.putLong(offset + 17, 10); // unsigned64Array
+        buffer.putLong(offset + 25, 112345); // unsigned64Array
+        buffer.putLong(offset + 33, 11234567); // unsigned64Array
+        buffer.putByte(offset + 41, (byte) 2); // lengthSigned16
+        buffer.putShort(offset + 42,  (short) 2); // signed16Array
+        buffer.putShort(offset + 44,  (short) -500); // signed16Array
+        buffer.putByte(offset + 46, (byte) 2); // lengthSigned24
+        putMediumInt(buffer, offset + 47,  (short) 2); // signed24Array
+        putMediumInt(buffer, offset + 50,  (short) -500); // signed24Array
+        buffer.putInt(offset + 53, 5); // varint64Array length
+        buffer.putInt(offset + 57, 1); // field count?
+        buffer.putByte(offset + 61, (byte) 0x18); // TODO: why 0x18?
+        buffer.putByte(offset + 62, (byte) 1); // lengthInt8
+        buffer.putInt(offset + 63, 123); // arrayWithInt8Size
+        buffer.putShort(offset + 67, (short) 1); // lengthInt16
+        buffer.putInt(offset + 69, 124); // arrayWithInt16Size
+        putMediumInt(buffer, offset + 73, 1); // lengthInt24
+        buffer.putInt(offset + 76, 125); // arrayWithInt24Size
+        return 76 + Integer.BYTES;
     }
 
     static void assertAllTestValuesRead(IntegerVariableArraysFW flyweight)
@@ -173,16 +177,18 @@ public class IntegerVariableArraysFWTest
         expected.putByte(0, (byte) 0); // fixed1
         expected.putInt(1, 1); // lengthUnsigned64
         expected.putShort(5, (short) 0); // fixed2
-        expected.putInt(7, 0); // varint64Array
-        expected.putLong(11, Long.MAX_VALUE); // unsigned64Array
-        expected.putByte(19, (byte) 1); // lengthSigned16
-        expected.putShort(20,  (short) 0); // signed16Array
-        expected.putByte(22, (byte) 1); // lengthSigned24
-        putMediumInt(expected, 23,  (short) 0); // signed24Array
-        expected.putInt(26, 0); // varint64Array
-        expected.putByte(30,  (byte) -1);
-        expected.putShort(31,  (short) -1);
-        putMediumInt(expected, 33, -1);
+        expected.putInt(7, 4); // varint64Array length
+        expected.putInt(11, 0); // varint64Array field count
+        expected.putLong(15, Long.MAX_VALUE); // unsigned64Array
+        expected.putByte(23, (byte) 1); // lengthSigned16
+        expected.putShort(24,  (short) 0); // signed16Array
+        expected.putByte(26, (byte) 1); // lengthSigned24
+        putMediumInt(expected, 27,  (short) 0); // signed24Array
+        expected.putInt(30, 4); // varint64Array length
+        expected.putInt(34, 0); // varint64Array field count
+        expected.putByte(38,  (byte) -1);
+        expected.putShort(39,  (short) -1);
+        putMediumInt(expected, 41, -1);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  limit);
@@ -201,16 +207,18 @@ public class IntegerVariableArraysFWTest
         expected.putByte(0, (byte) 0); // fixed1
         expected.putInt(1, 1); // lengthUnsigned64
         expected.putShort(5, (short) 0); // fixed2
-        expected.putInt(7, 0); // varint32Array
-        expected.putLong(11, 0L); // unsigned64Array
-        expected.putByte(19, (byte) 1); // lengthSigned16
-        expected.putShort(20,  (short) 0); // signed16Array
-        expected.putByte(22, (byte) 1); // lengthSigned24
-        putMediumInt(expected, 23,  (short) 0); // signed24Array
-        expected.putInt(26, 0); // varint64Array
-        expected.putByte(30,  (byte) -1);
-        expected.putShort(31,  (short) -1);
-        putMediumInt(expected, 33,  -1);
+        expected.putInt(7, 4); // varint32Array length
+        expected.putInt(11, 0); // varint32Array field count
+        expected.putLong(15, 0L); // unsigned64Array
+        expected.putByte(23, (byte) 1); // lengthSigned16
+        expected.putShort(24,  (short) 0); // signed16Array
+        expected.putByte(26, (byte) 1); // lengthSigned24
+        putMediumInt(expected, 27,  (short) 0); // signed24Array
+        expected.putInt(30, 4); // varint64Array length
+        expected.putInt(34, 0); // varint64Array count
+        expected.putByte(38,  (byte) -1);
+        expected.putShort(39,  (short) -1);
+        putMediumInt(expected, 41,  -1);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
         flyweightRO.wrap(buffer,  0,  limit);
@@ -298,15 +306,17 @@ public class IntegerVariableArraysFWTest
         expected.putByte(0, (byte) 0); // fixed1
         expected.putInt(1, -1); // lengthUnsigned64
         expected.putShort(5, (short) 0); // fixed2
-        expected.putInt(7, 0); // varint32Array
-        expected.putByte(11, (byte) 1); // lengthSigned16
-        expected.putShort(12,  (short) 0); // signed16Array
-        expected.putByte(14, (byte) 1); // lengthSigned24
-        putMediumInt(expected, 15,  (short) 0); // signed24Array
-        expected.putInt(18, 0); // varint64Array
-        expected.putByte(22, (byte) -1);
-        expected.putShort(23, (short) -1);
-        putMediumInt(expected, 25, -1);
+        expected.putInt(7, 4); // varint32Array length
+        expected.putInt(11, 0); // varint32Array field count
+        expected.putByte(15, (byte) 1); // lengthSigned16
+        expected.putShort(16,  (short) 0); // signed16Array
+        expected.putByte(18, (byte) 1); // lengthSigned24
+        putMediumInt(expected, 19,  (short) 0); // signed24Array
+        expected.putInt(22, 4); // varint64Array length
+        expected.putInt(26, 0); // varint64Array field count
+        expected.putByte(30, (byte) -1);
+        expected.putShort(31, (short) -1);
+        putMediumInt(expected, 33, -1);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
@@ -339,16 +349,18 @@ public class IntegerVariableArraysFWTest
         expected.putByte(0, (byte) 0); // fixed1
         expected.putInt(1, -1); // lengthUnsigned64
         expected.putShort(5, (short) 0); // fixed2
-        expected.putInt(7, 0); // varint32Array
-        expected.putByte(11, (byte) 1); // lengthSigned16
-        expected.putShort(12,  (short) 0); // signed16Array
-        expected.putByte(14, (byte) 1); // lengthSigned24
-        putMediumInt(expected, 15,  0); // signed24Array
-        expected.putInt(18, 1); // varint64Array
-        expected.putByte(22, (byte) 0x18);
-        expected.putByte(23, (byte) -1);
-        expected.putShort(24, (short) -1);
-        putMediumInt(expected, 26,  -1);
+        expected.putInt(7, 4); // varint32Array length
+        expected.putInt(11, 0); // varint32Array field count
+        expected.putByte(15, (byte) 1); // lengthSigned16
+        expected.putShort(16,  (short) 0); // signed16Array
+        expected.putByte(18, (byte) 1); // lengthSigned24
+        putMediumInt(expected, 19,  0); // signed24Array
+        expected.putInt(22, 5); // varint64Array length
+        expected.putInt(26, 1); // varint64Array field count
+        expected.putByte(30, (byte) 0x18);
+        expected.putByte(31, (byte) -1);
+        expected.putShort(32, (short) -1);
+        putMediumInt(expected, 34,  -1);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 

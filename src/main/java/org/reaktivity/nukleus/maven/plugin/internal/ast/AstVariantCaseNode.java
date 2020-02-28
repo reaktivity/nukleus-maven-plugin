@@ -15,6 +15,10 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
 public final class AstVariantCaseNode extends AstNode
@@ -22,6 +26,7 @@ public final class AstVariantCaseNode extends AstNode
     private final Object value;
     private final AstType type;
     private final int missingFieldValue;
+    private final List<AstType> typeParams;
 
     @Override
     public <R> R accept(
@@ -45,10 +50,15 @@ public final class AstVariantCaseNode extends AstNode
         return missingFieldValue;
     }
 
+    public List<AstType> typeParams()
+    {
+        return typeParams;
+    }
+
     @Override
     public int hashCode()
     {
-        return Objects.hash(value, type, missingFieldValue);
+        return Objects.hash(value, type, missingFieldValue, typeParams);
     }
 
     @Override
@@ -68,23 +78,27 @@ public final class AstVariantCaseNode extends AstNode
         AstVariantCaseNode that = (AstVariantCaseNode) o;
         return Objects.equals(this.value, that.value) &&
             Objects.equals(this.type, that.type) &&
-            this.missingFieldValue == that.missingFieldValue;
+            this.missingFieldValue == that.missingFieldValue &&
+            Objects.equals(this.typeParams, that.typeParams);
     }
 
     private AstVariantCaseNode(
         Object value,
         AstType type,
-        int missingFieldValue)
+        int missingFieldValue,
+        List<AstType> typeParams)
     {
         this.value = value;
         this.type = type;
         this.missingFieldValue = missingFieldValue;
+        this.typeParams = typeParams;
     }
 
     @Override
     public String toString()
     {
-        return String.format("CASE [value=%s, type=%s]", value, type);
+        return String.format("CASE [value=%s, type=%s, missingFieldValue=%s, typeParams=%s]",
+            value, type, missingFieldValue, typeParams);
     }
 
     public static final class Builder extends AstNode.Builder<AstVariantCaseNode>
@@ -92,6 +106,13 @@ public final class AstVariantCaseNode extends AstNode
         private Object value;
         private AstType type;
         private int missingFieldValue;
+        private List<AstType> typeParams;
+
+        public Builder()
+        {
+            super();
+            this.typeParams = new LinkedList<>();
+        }
 
         public Builder value(
             Object value)
@@ -107,6 +128,13 @@ public final class AstVariantCaseNode extends AstNode
             return this;
         }
 
+        public Builder typeParam(
+            AstType typeParam)
+        {
+            typeParams.add(requireNonNull(typeParam));
+            return this;
+        }
+
         public Builder missingFieldValue(
             int missingFieldValue)
         {
@@ -117,7 +145,7 @@ public final class AstVariantCaseNode extends AstNode
         @Override
         public AstVariantCaseNode build()
         {
-            return new AstVariantCaseNode(value, type, missingFieldValue);
+            return new AstVariantCaseNode(value, type, missingFieldValue, typeParams);
         }
     }
 }

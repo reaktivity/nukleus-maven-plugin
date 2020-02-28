@@ -44,33 +44,35 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
     private final BuilderClassBuilder builderClassBuilder;
 
     public String32FlyweightGenerator(
-        ClassName flyweightType)
+        ClassName stringType)
     {
-        super(flyweightType.peerClass("String32FW"));
+        super(stringType.peerClass("String32FW"));
 
-        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
+        this.classBuilder = classBuilder(thisName).superclass(stringType).addModifiers(PUBLIC, FINAL);
+        this.builderClassBuilder = new BuilderClassBuilder(stringType, thisName, stringType.nestedClass("Builder"));
     }
 
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldSizeLengthConstant())
-                           .addField(fieldByteOrder())
-                           .addField(valueField())
-                           .addMethod(constructor())
-                           .addMethod(constructorByteOrder())
-                           .addMethod(constructorString())
-                           .addMethod(constructorStringAndCharset())
-                           .addMethod(limitMethod())
-                           .addMethod(valueMethod())
-                           .addMethod(asStringMethod())
-                           .addMethod(tryWrapMethod())
-                           .addMethod(wrapMethod())
-                           .addMethod(toStringMethod())
-                           .addMethod(lengthMethod())
-                           .addType(builderClassBuilder.build())
-                           .build();
+        return classBuilder
+            .addField(fieldSizeLengthConstant())
+            .addField(fieldByteOrder())
+            .addField(valueField())
+            .addMethod(constructor())
+            .addMethod(constructorByteOrder())
+            .addMethod(constructorString())
+            .addMethod(constructorStringAndCharset())
+            .addMethod(fieldSizeLengthMethod())
+            .addMethod(limitMethod())
+            .addMethod(valueMethod())
+            .addMethod(asStringMethod())
+            .addMethod(tryWrapMethod())
+            .addMethod(wrapMethod())
+            .addMethod(toStringMethod())
+            .addMethod(lengthMethod())
+            .addType(builderClassBuilder.build())
+            .build();
     }
 
     private FieldSpec fieldSizeLengthConstant()
@@ -132,6 +134,16 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
             .addModifiers(PUBLIC)
             .addParameter(ByteOrder.class, "byteOrder")
             .addStatement("this.byteOrder = byteOrder")
+            .build();
+    }
+
+    private MethodSpec fieldSizeLengthMethod()
+    {
+        return methodBuilder("fieldSizeLength")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(int.class)
+            .addStatement("return FIELD_SIZE_LENGTH")
             .build();
     }
 
@@ -234,15 +246,18 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final ClassName classType;
         private final ClassName stringType;
+        private final ClassName string32Type;
 
         private BuilderClassBuilder(
             ClassName stringType,
+            ClassName string32Type,
             ClassName builderRawType)
         {
-            TypeName builderType = ParameterizedTypeName.get(builderRawType, stringType);
+            TypeName builderType = ParameterizedTypeName.get(builderRawType, string32Type);
 
             this.stringType = stringType;
-            this.classType = stringType.nestedClass("Builder");
+            this.string32Type = string32Type;
+            this.classType = string32Type.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL)
                 .superclass(builderType);
@@ -252,6 +267,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
         {
             return classBuilder
                 .addField(fieldByteOrder())
+                .addField(valueSetField())
                 .addMethod(constructor())
                 .addMethod(constructorByteOrder())
                 .addMethod(wrapMethod())
@@ -269,11 +285,17 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                 .build();
         }
 
+        private FieldSpec valueSetField()
+        {
+            return FieldSpec.builder(boolean.class, "valueSet", PRIVATE)
+                .build();
+        }
+
         private MethodSpec constructor()
         {
             return constructorBuilder()
                 .addModifiers(PUBLIC)
-                .addStatement("super(new $T())", stringType)
+                .addStatement("super(new $T())", string32Type)
                 .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
                 .build();
         }
@@ -283,7 +305,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addParameter(ByteOrder.class, "byteOrder")
-                .addStatement("super(new $T(byteOrder))", stringType)
+                .addStatement("super(new $T(byteOrder))", string32Type)
                 .addStatement("this.byteOrder = byteOrder")
                 .build();
         }
@@ -299,6 +321,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .addStatement("checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit)")
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
+                .addStatement("this.valueSet = false")
                 .addStatement("return this")
                 .build();
         }
@@ -306,6 +329,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec setMethod()
         {
             return methodBuilder("set")
+                .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(classType)
                 .addParameter(stringType, "value")
@@ -315,13 +339,14 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("buffer().putInt(offset(), -1, byteOrder)")
                 .addStatement("limit(newLimit)")
                 .nextControlFlow("else")
-                .addStatement("int newLimit = offset() + value.sizeof()")
+                .addStatement("int newLimit = offset() + FIELD_SIZE_LENGTH + value.length()")
                 .addStatement("checkLimit(newLimit, maxLimit())")
                 .addStatement("buffer().putInt(offset(), value.length(), byteOrder)")
-                .addStatement("buffer().putBytes(offset() + 4, value.buffer(), value.offset() + 4, value.length())")
+                .addStatement("buffer().putBytes(offset() + 4, value.buffer(), value.offset() + value.fieldSizeLength(), " +
+                    "value.length())")
                 .addStatement("limit(newLimit)")
                 .endControlFlow()
-                .addStatement("super.set(value)")
+                .addStatement("valueSet = true")
                 .addStatement("return this")
                 .build();
         }
@@ -329,6 +354,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec setDirectBufferMethod()
         {
             return methodBuilder("set")
+                .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(classType)
                 .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
@@ -341,7 +367,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("buffer().putInt(offset, length, byteOrder)")
                 .addStatement("buffer().putBytes(offset + 4, srcBuffer, srcOffset, length)")
                 .addStatement("limit(newLimit)")
-                .addStatement("super.set(srcBuffer, srcOffset, length)")
+                .addStatement("valueSet = true")
                 .addStatement("return this")
                 .build();
         }
@@ -349,6 +375,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec setStringMethod()
         {
             return methodBuilder("set")
+                .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(classType)
                 .addParameter(String.class, "value")
@@ -367,7 +394,7 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("buffer().putBytes(offset() + 4, charBytes)")
                 .addStatement("limit(newLimit)")
                 .endControlFlow()
-                .addStatement("super.set(value, charset)")
+                .addStatement("valueSet = true")
                 .addStatement("return this")
                 .build();
         }
@@ -391,8 +418,11 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("build")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
+                .returns(string32Type)
+                .beginControlFlow("if (!valueSet)")
+                .addStatement("set(null, $T.UTF_8)", StandardCharsets.class)
+                .endControlFlow()
                 .addStatement("return super.build()")
-                .returns(stringType)
                 .build();
         }
     }

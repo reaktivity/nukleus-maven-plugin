@@ -34,44 +34,51 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import com.squareup.javapoet.WildcardTypeName;
 
 public final class FlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
+    private final ClassName arrayType;
     private final BuilderClassBuilder builderClassBuilder;
 
     public FlyweightGenerator(
-        ClassName flyweightType)
+        ClassName flyweightType,
+        ClassName arrayType)
     {
         super(flyweightType);
 
         this.classBuilder = classBuilder(thisName).addModifiers(PUBLIC, ABSTRACT);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName);
+        this.arrayType = arrayType;
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, arrayType);
     }
 
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(bufferField())
-                .addField(emptyBytesField())
-                    .addField(offsetField())
-                    .addField(maxLimitField())
-                    .addField(compareBufferField())
-                    .addMethod(offsetMethod())
-                    .addMethod(bufferMethod())
-                    .addMethod(limitMethod())
-                    .addMethod(sizeofMethod())
-                    .addMethod(maxLimitMethod())
-                    .addMethod(tryWrapMethod())
-                    .addMethod(wrapMethod())
-                    .addMethod(checkLimitMethod())
-                    .addMethod(equalsMethod())
-                    .addMethod(hashCodeMethod())
-                    .addType(visitorInterface())
-                    .addType(builderClassBuilder.build())
-                    .build();
+        return classBuilder
+            .addField(bufferField())
+            .addField(emptyBytesField())
+            .addField(offsetField())
+            .addField(maxLimitField())
+            .addField(compareBufferField())
+            .addMethod(offsetMethod())
+            .addMethod(bufferMethod())
+            .addMethod(limitMethod())
+            .addMethod(sizeofMethod())
+            .addMethod(maxLimitMethod())
+            .addMethod(tryWrapMethod())
+            .addMethod(wrapMethod())
+            .addMethod(wrapWithArrayMethod())
+            .addMethod(checkLimitMethod())
+            .addMethod(equalsMethod())
+            .addMethod(hashCodeMethod())
+            .addType(visitorInterface())
+            .addType(builderClassBuilder.build())
+            .build();
     }
 
     private TypeSpec visitorInterface()
@@ -202,6 +209,20 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                   .build();
     }
 
+    private MethodSpec wrapWithArrayMethod()
+    {
+        return methodBuilder("wrap")
+            .addModifiers(PUBLIC)
+            .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+            .addParameter(int.class, "offset")
+            .addParameter(int.class, "maxLimit")
+            .addParameter(arrayType, "array")
+            .returns(thisName)
+            .addStatement("wrap(buffer, offset, maxLimit)")
+            .addStatement("return this")
+            .build();
+    }
+
     private MethodSpec checkLimitMethod()
     {
         return methodBuilder("checkLimit")
@@ -254,13 +275,16 @@ public final class FlyweightGenerator extends ClassSpecGenerator
     {
         private final TypeSpec.Builder classBuilder;
         private final ClassName thisRawName;
+        private final ClassName arrayType;
         private final ParameterizedTypeName thisName;
         private final TypeVariableName typeVarT;
 
         private BuilderClassBuilder(
-            ClassName flyweightType)
+            ClassName flyweightType,
+            ClassName arrayType)
         {
             this.thisRawName = flyweightType.nestedClass("Builder");
+            this.arrayType = arrayType;
 
             this.typeVarT = TypeVariableName.get("T");
             this.thisName = ParameterizedTypeName.get(thisRawName, typeVarT);
@@ -272,24 +296,28 @@ public final class FlyweightGenerator extends ClassSpecGenerator
 
         public TypeSpec build()
         {
-            return classBuilder.addField(flyweightField())
-                    .addField(bufferField())
-                    .addField(offsetField())
-                    .addField(limitField())
-                    .addField(maxLimitField())
-                    .addMethod(limitAccessor())
-                    .addMethod(maxLimitAccessor())
-                    .addMethod(buildMethod())
-                    .addMethod(rewrapMethod())
-                    .addMethod(constructor())
-                    .addMethod(flyweightAccessor())
-                    .addMethod(bufferAccessor())
-                    .addMethod(offsetAccessor())
-                    .addMethod(limitMutator())
-                    .addMethod(wrapMethod())
-                    .addMethod(iterateMethod())
-                    .addType(visitorInterface())
-                    .build();
+            return classBuilder
+                .addField(flyweightField())
+                .addField(bufferField())
+                .addField(offsetField())
+                .addField(limitField())
+                .addField(maxLimitField())
+                .addMethod(limitAccessor())
+                .addMethod(maxLimitAccessor())
+                .addMethod(buildMethod())
+                .addMethod(rewrapMethod())
+                .addMethod(constructor())
+                .addMethod(flyweightAccessor())
+                .addMethod(bufferAccessor())
+                .addMethod(offsetAccessor())
+                .addMethod(sizeofAccessor())
+                .addMethod(limitMutator())
+                .addMethod(wrapMethod())
+                .addMethod(wrapWithArrayMethod())
+                .addMethod(iterateMethod())
+                .addMethod(rebuildMethod())
+                .addType(visitorInterface())
+                .build();
         }
 
         private TypeSpec visitorInterface()
@@ -382,7 +410,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec flyweightAccessor()
         {
             return methodBuilder("flyweight")
-                      .addModifiers(PROTECTED, FINAL)
+                      .addModifiers(PUBLIC, FINAL)
                       .returns(typeVarT)
                       .addStatement("return flyweight")
                       .build();
@@ -391,7 +419,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec bufferAccessor()
         {
             return methodBuilder("buffer")
-                      .addModifiers(PROTECTED, FINAL)
+                      .addModifiers(PUBLIC, FINAL)
                       .returns(MUTABLE_DIRECT_BUFFER_TYPE)
                       .addStatement("return buffer")
                       .build();
@@ -404,6 +432,15 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                       .returns(int.class)
                       .addStatement("return offset")
                       .build();
+        }
+
+        private MethodSpec sizeofAccessor()
+        {
+            return methodBuilder("sizeof")
+                .addModifiers(PUBLIC)
+                .returns(int.class)
+                .addStatement("return limit - offset")
+                .build();
         }
 
         private MethodSpec limitMutator()
@@ -431,6 +468,25 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                       .build();
         }
 
+        private MethodSpec wrapWithArrayMethod()
+        {
+            ClassName arrayBuilderRawType = arrayType.nestedClass("Builder");
+            TypeName arrayParametricTypeT = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(arrayType, typeVarT));
+            TypeName arrayParametricTypeB = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(thisRawName, typeVarT));
+            TypeName parameterizedArrayBuilderType = ParameterizedTypeName.get(arrayBuilderRawType, arrayParametricTypeT,
+                arrayParametricTypeB, typeVarT);
+            return methodBuilder("wrap")
+                .addModifiers(PUBLIC)
+                .returns(thisName)
+                .addParameter(parameterizedArrayBuilderType, "array")
+                .addStatement("this.buffer = array.buffer()")
+                .addStatement("this.offset = array.limit()")
+                .addStatement("this.limit = array.limit()")
+                .addStatement("this.maxLimit = array.maxLimit()")
+                .addStatement("return this")
+                .build();
+        }
+
         private MethodSpec iterateMethod()
         {
             TypeVariableName typeVarE = TypeVariableName.get("E");
@@ -446,6 +502,17 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                     .addStatement("iterable.forEach(action)")
                     .addStatement("return this")
                     .build();
+        }
+
+        private MethodSpec rebuildMethod()
+        {
+            return methodBuilder("rebuild")
+                .addModifiers(PUBLIC)
+                .returns(typeVarT)
+                .addParameter(typeVarT, "item")
+                .addParameter(int.class, "maxLength")
+                .addStatement("return item")
+                .build();
         }
     }
 }

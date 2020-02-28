@@ -157,7 +157,13 @@ scope test
             TWO (2),
             THREE (3),
             FOUR (4),
-            FIVE (5)
+            FIVE (5),
+            SIX (6),
+            SEVEN (7),
+            EIGHT (8),
+            NINE (9),
+            TEN (10),
+            ELEVEN (11)
         }
 
         enum EnumWithInt16 (int16)
@@ -268,11 +274,11 @@ scope test
             case 0x61: int16;
         }
 
-        variant VariantEnumKindWithString32 switch (EnumWithInt8) of string
+        variant VariantEnumKindOfString switch (EnumWithInt8) of string
         {
-            case ONE: string8;
-            case TWO: string16;
-            case THREE: string32;
+            case NINE: string8;
+            case TEN: string16;
+            case ELEVEN: string32;
         }
 
         variant VariantEnumKindOfInt8 switch (EnumWithInt8) of int8
@@ -343,15 +349,15 @@ scope test
 
         variant VariantOfArray switch (EnumWithInt8) of array
         {
-            case ONE: array<uint32, uint32>;
-            case TWO: array<uint8, uint8>;
+            case SEVEN: array<uint32, uint32>;
+            case EIGHT: array<uint8, uint8>;
         }
 
         variant VariantOfMap switch (EnumWithInt8) of map
         {
-            case ONE: map<uint32>;
-            case TWO: map<uint16>;
-            case THREE: map<uint8>;
+            case FOUR: map<uint32>;
+            case FIVE: map<uint16>;
+            case SIX: map<uint8>;
         }
 
         variant VariantOfOctets switch (EnumWithInt8) of octets[]
@@ -363,10 +369,10 @@ scope test
 
         variant VariantWithoutOf switch (EnumWithInt8)
         {
-            case ONE:
-            case TWO:
-            case THREE:
-               VariantEnumKindWithString32;
+            case NINE:
+            case TEN:
+            case ELEVEN:
+               VariantEnumKindOfString;
             case FOUR:
             case FIVE:
                VariantOfInt32;
@@ -390,7 +396,7 @@ scope test
             required VariantEnumKindOfUint8 variantOfUint8;
             VariantEnumKindOfUint16 variantOfUint16 = 60000;
             VariantEnumKindOfUint32 variantOfUint32 = 0;
-            VariantEnumKindWithString32 variantOfString32;
+            VariantEnumKindOfString variantOfString32;
         }
 
         list<uint8, uint8> ListWithEnum
@@ -411,29 +417,29 @@ scope test
 
         list<uint32, uint32, 0x40> ListWithMissingFieldByte
         {
-            required VariantEnumKindWithString32 variantOfString1;
-            VariantEnumKindWithString32 variantOfString2;
+            required VariantEnumKindOfString variantOfString1;
+            VariantEnumKindOfString variantOfString2;
             VariantEnumKindOfUint32 variantOfUint = 4000000000L;
             VariantEnumKindWithInt32 variantOfInt;
         }
 
         list ListFromVariantOfList using VariantOfList
         {
-            required VariantEnumKindWithString32 variantOfString1;
-            VariantEnumKindWithString32 variantOfString2;
+            required VariantEnumKindOfString variantOfString1;
+            VariantEnumKindOfString variantOfString2;
             VariantEnumKindOfUint32 variantOfUint = 4000000000L;
             VariantEnumKindWithInt32 variantOfInt;
         }
 
         typedef VariantEnumKindOfUint32 as TypedefUint32;
-        typedef VariantEnumKindWithString32 as TypedefString;
+        typedef VariantEnumKindOfString as TypedefString;
         typedef TypedefUint32 as TypedefFromTypedef;
         typedef Flat as TypedefStruct;
         typedef UnionOctets as TypedefUnion;
         typedef ListWithVariant as TypedefList;
         typedef EnumWithInt8 as TypedefEnum;
 
-        map ConstrainedMap<VariantEnumKindWithString32, V> using VariantOfMap;
+        map ConstrainedMap<VariantEnumKindOfString, V> using VariantOfMap;
 
         list ListWithTypedef using VariantOfList
         {
@@ -443,19 +449,35 @@ scope test
 
         list ListWithArray using VariantOfList
         {
-            required VariantEnumKindWithString32 field1;
-            VariantOfArray<VariantEnumKindWithString32> arrayOfString;
+            required VariantEnumKindOfString field1;
+            VariantOfArray<VariantEnumKindOfString> arrayOfString;
         }
 
         list ListWithMap using VariantOfList
         {
-            required VariantEnumKindWithString32 field1;
-            VariantOfMap<VariantEnumKindWithString32, TypedefString> mapOfString;
+            required VariantEnumKindOfString field1;
+            VariantOfMap<VariantEnumKindOfString, TypedefString> mapOfString;
         }
 
         list ListWithConstrainedMap using VariantOfList
         {
             ConstrainedMap<VariantWithoutOf> constrainedMap;
+        }
+
+        variant VariantWithFourTypes switch (EnumWithInt8)
+        {
+            case ONE:
+            case TWO:
+            case THREE:
+                VariantOfList;
+            case FOUR:
+            case FIVE:
+            case SIX:
+                VariantOfMap<VariantWithFourTypes, VariantWithFourTypes>;
+            case NINE:
+            case TEN:
+            case ELEVEN:
+                VariantEnumKindOfString;
         }
     }
 }

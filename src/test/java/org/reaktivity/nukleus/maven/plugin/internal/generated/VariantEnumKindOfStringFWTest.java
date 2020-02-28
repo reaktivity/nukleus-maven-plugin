@@ -25,7 +25,10 @@ import static org.junit.Assert.assertSame;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 
 public class VariantEnumKindOfStringFWTest
 {
@@ -59,7 +62,7 @@ public class VariantEnumKindOfStringFWTest
         final int offset)
     {
         int pos = offset;
-        buffer.putByte(pos,  (byte) EnumWithInt8.ONE.value());
+        buffer.putByte(pos,  (byte) EnumWithInt8.NINE.value());
         buffer.putByte(pos += 1, (byte) "valueOfString1".length());
         buffer.putStringWithoutLengthUtf8(pos += 1, "valueOfString1");
         return pos - offset + "valueOfString1".length();
@@ -107,7 +110,7 @@ public class VariantEnumKindOfStringFWTest
         VariantEnumKindOfStringFW flyweight = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
         assertNotNull(flyweight);
         assertEquals("valueOfString1", flyweight.get().asString());
-        assertEquals(EnumWithInt8.ONE, flyweight.kind());
+        assertEquals(EnumWithInt8.NINE, flyweight.kind());
     }
 
     @Test
@@ -117,7 +120,7 @@ public class VariantEnumKindOfStringFWTest
         setAllTestValues(buffer, offset);
         VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals("valueOfString1", flyweight.get().asString());
-        assertEquals(EnumWithInt8.ONE, flyweight.kind());
+        assertEquals(EnumWithInt8.NINE, flyweight.kind());
     }
 
     @Test
@@ -130,7 +133,7 @@ public class VariantEnumKindOfStringFWTest
         VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING32 + 6, flyweight.limit());
         assertEquals("value1", flyweight.get().asString());
-        assertEquals(EnumWithInt8.THREE, flyweight.kind());
+        assertEquals(EnumWithInt8.ELEVEN, flyweight.kind());
     }
 
     @Test
@@ -143,7 +146,7 @@ public class VariantEnumKindOfStringFWTest
         VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING16 + 6, flyweight.limit());
         assertEquals("value1", flyweight.get().asString());
-        assertEquals(EnumWithInt8.TWO, flyweight.kind());
+        assertEquals(EnumWithInt8.TEN, flyweight.kind());
     }
 
     @Test
@@ -156,7 +159,7 @@ public class VariantEnumKindOfStringFWTest
         VariantEnumKindOfStringFW flyweight = flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweight.limit());
         assertEquals("value1", flyweight.get().asString());
-        assertEquals(EnumWithInt8.ONE, flyweight.kind());
+        assertEquals(EnumWithInt8.NINE, flyweight.kind());
     }
 
     @Test

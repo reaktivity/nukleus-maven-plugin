@@ -37,7 +37,7 @@ import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithMapFW;
 import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public class ListWithMapFWTest
@@ -53,8 +53,8 @@ public class ListWithMapFWTest
     private final ListWithMapFW.Builder flyweightRW = new ListWithMapFW.Builder();
     private final ListWithMapFW flyweightRO = new ListWithMapFW();
 
-    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.THREE;
-    private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.ONE;
+    private static final EnumWithInt8 KIND_MAP8 = EnumWithInt8.SIX;
+    private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.NINE;
     private static final EnumWithInt8 KIND_LIST8 = EnumWithInt8.TWO;
     private final int kindSize = Byte.BYTES;
     private final int lengthSize = Byte.BYTES;
@@ -95,28 +95,28 @@ public class ListWithMapFWTest
         buffer.putByte(offsetFieldCount, mapFieldCount);
 
         int offsetMapEntry1KeyKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetMapEntry1KeyKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry1KeyKind, KIND_STRING8.value());
         int offsetEntry1KeyLength = offsetMapEntry1KeyKind + Byte.BYTES;
         buffer.putByte(offsetEntry1KeyLength, (byte) entry1Key.length());
         int offsetEntry1Key = offsetEntry1KeyLength + Byte.BYTES;
         buffer.putBytes(offsetEntry1Key, entry1Key.getBytes());
 
         int offsetMapEntry1ValueKind = offsetEntry1Key + entry1Key.length();
-        buffer.putByte(offsetMapEntry1ValueKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry1ValueKind, KIND_STRING8.value());
         int offsetEntry1ValueLength = offsetMapEntry1ValueKind + Byte.BYTES;
         buffer.putByte(offsetEntry1ValueLength, (byte) entry1Value.length());
         int offsetEntry1Value = offsetEntry1ValueLength + Byte.BYTES;
         buffer.putBytes(offsetEntry1Value, entry1Value.getBytes());
 
         int offsetMapEntry2KeyKind = offsetEntry1Value + entry1Value.length();
-        buffer.putByte(offsetMapEntry2KeyKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry2KeyKind, KIND_STRING8.value());
         int offsetEntry2KeyLength = offsetMapEntry2KeyKind + Byte.BYTES;
         buffer.putByte(offsetEntry2KeyLength, (byte) entry2Key.length());
         int offsetEntry2Key = offsetEntry2KeyLength + Byte.BYTES;
         buffer.putBytes(offsetEntry2Key, entry2Key.getBytes());
 
         int offsetMapEntry2ValueKind = offsetEntry2Key + entry2Key.length();
-        buffer.putByte(offsetMapEntry2ValueKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry2ValueKind, KIND_STRING8.value());
         int offsetEntry2ValueLength = offsetMapEntry2ValueKind + Byte.BYTES;
         buffer.putByte(offsetEntry2ValueLength, (byte) entry2Value.length());
         int offsetEntry2Value = offsetEntry2ValueLength + Byte.BYTES;
@@ -290,14 +290,14 @@ public class ListWithMapFWTest
         }
     }
 
-    private static MapFW<VariantEnumKindWithString32FW, TypedefStringFW> asMapFW(
+    private static MapFW<VariantEnumKindOfStringFW, TypedefStringFW> asMapFW(
         List<StringFW> keys,
         List<StringFW> values)
     {
-        VariantOfMapFW.Builder<VariantEnumKindWithString32FW, TypedefStringFW,
-            VariantEnumKindWithString32FW.Builder, TypedefStringFW.Builder> variantOfMapRW =
-            new VariantOfMapFW.Builder<>(new VariantEnumKindWithString32FW(), new TypedefStringFW(),
-                new VariantEnumKindWithString32FW.Builder(), new TypedefStringFW.Builder());
+        VariantOfMapFW.Builder<VariantEnumKindOfStringFW, TypedefStringFW,
+            VariantEnumKindOfStringFW.Builder, TypedefStringFW.Builder> variantOfMapRW =
+            new VariantOfMapFW.Builder<>(new VariantEnumKindOfStringFW(), new TypedefStringFW(),
+                new VariantEnumKindOfStringFW.Builder(), new TypedefStringFW.Builder());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
         variantOfMapRW.wrap(buffer, 0, buffer.capacity());
         for (int i = 0; i < keys.size(); i++)
@@ -306,7 +306,7 @@ public class ListWithMapFWTest
             StringFW value = values.get(i);
             variantOfMapRW.entry(k -> k.set(key), v -> v.set(value));
         }
-        VariantOfMapFW<VariantEnumKindWithString32FW, TypedefStringFW> variantOfMapRO = variantOfMapRW.build();
+        VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMapRO = variantOfMapRW.build();
         return variantOfMapRO.get();
     }
 }

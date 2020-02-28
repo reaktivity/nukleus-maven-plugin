@@ -54,15 +54,15 @@ public final class String16FW extends StringFW
         wrap(buffer, 0, buffer.capacity());
     }
 
+    public String16FW(ByteOrder byteOrder)
+    {
+        this.byteOrder = byteOrder;
+    }
+
     @Override
     public int fieldSizeLength()
     {
         return FIELD_SIZE_LENGTH;
-    }
-
-    public String16FW(ByteOrder byteOrder)
-    {
-        this.byteOrder = byteOrder;
     }
 
     @Override
