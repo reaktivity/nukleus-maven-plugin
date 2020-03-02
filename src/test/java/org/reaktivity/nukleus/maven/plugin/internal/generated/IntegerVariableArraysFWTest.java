@@ -78,8 +78,8 @@ public class IntegerVariableArraysFWTest
         putMediumInt(buffer, offset + 47,  (short) 2); // signed24Array
         putMediumInt(buffer, offset + 50,  (short) -500); // signed24Array
         buffer.putInt(offset + 53, 5); // varint64Array length
-        buffer.putInt(offset + 57, 1); // field count?
-        buffer.putByte(offset + 61, (byte) 0x18); // TODO: why 0x18?
+        buffer.putInt(offset + 57, 1);
+        buffer.putByte(offset + 61, (byte) 0x18);
         buffer.putByte(offset + 62, (byte) 1); // lengthInt8
         buffer.putInt(offset + 63, 123); // arrayWithInt8Size
         buffer.putShort(offset + 67, (short) 1); // lengthInt16

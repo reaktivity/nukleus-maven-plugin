@@ -69,6 +69,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addField(fieldCountOffsetConstant())
             .addField(fieldsOffsetConstant())
             .addField(lengthMaxValueConstant())
+            .addField(emptyBufferConstant())
             .addField(itemField())
             .addField(itemsField())
             .addField(maxLengthField())
@@ -127,6 +128,13 @@ public final class Array16FWGenerator extends ClassSpecGenerator
     {
         return FieldSpec.builder(int.class, "LENGTH_MAX_VALUE", PRIVATE, STATIC, FINAL)
             .initializer("0xFFFF")
+            .build();
+    }
+
+    private FieldSpec emptyBufferConstant()
+    {
+        return FieldSpec.builder(DIRECT_BUFFER_TYPE, "EMPTY_BUFFER", PRIVATE, STATIC, FINAL)
+            .initializer("new $T()", UNSAFE_BUFFER_TYPE)
             .build();
     }
 
@@ -237,7 +245,12 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .returns(parameterizedArray16Type)
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("final int itemsSize = limit() - fieldsOffset()")
+            .beginControlFlow("if (itemsSize == 0)")
+            .addStatement("itemsRO.wrap(EMPTY_BUFFER, 0, 0)")
+            .endControlFlow()
+            .beginControlFlow("else")
             .addStatement("itemsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize)")
+            .endControlFlow()
             .addStatement("checkLimit(limit(), maxLimit)")
             .addStatement("return this")
             .build();
@@ -256,7 +269,12 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addStatement("return null")
             .endControlFlow()
             .addStatement("final int itemsSize = limit() - fieldsOffset()")
+            .beginControlFlow("if (itemsSize == 0)")
+            .addStatement("itemsRO.wrap(EMPTY_BUFFER, 0, 0)")
+            .endControlFlow()
+            .beginControlFlow("else")
             .addStatement("itemsRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize)")
+            .endControlFlow()
             .beginControlFlow("if (limit() > maxLimit)")
             .addStatement("return null")
             .endControlFlow()

@@ -61,6 +61,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.WildcardTypeName;
 
 public final class StructFlyweightGenerator extends ClassSpecGenerator
 {
@@ -104,7 +105,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     public StructFlyweightGenerator(
         ClassName structName,
         ClassName flyweightName,
-        String baseName)
+        String baseName,
+        TypeResolver resolver)
     {
         super(structName);
 
@@ -119,7 +121,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         this.wrapMethod = new WrapMethodGenerator(structName);
         this.limitMethod = new LimitMethodGenerator();
         this.toStringMethod = new ToStringMethodGenerator();
-        this.builderClass = new BuilderClassGenerator(structName, flyweightName);
+        this.builderClass = new BuilderClassGenerator(structName, flyweightName, resolver);
     }
 
     public StructFlyweightGenerator typeId(
@@ -1471,6 +1473,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private final MemberAccessorGenerator memberAccessor;
         private final MemberMutatorGenerator memberMutator;
         private final WrapMethodGenerator wrapMethod;
+        private final WrapMethodWithArrayGenerator wrapMethodWithArray;
         private String priorFieldIfDefaulted;
         private boolean priorDefaultedIsPrimitive;
         private Object priorDefaultValue;
@@ -1479,15 +1482,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
         private BuilderClassGenerator(
             ClassName structType,
-            ClassName flyweightType)
+            ClassName flyweightType,
+            TypeResolver resolver)
         {
-            this(structType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), structType);
+            this(structType.nestedClass("Builder"), flyweightType.nestedClass("Builder"), structType, resolver);
         }
 
         private BuilderClassGenerator(
             ClassName thisType,
             ClassName builderRawType,
-            ClassName structType)
+            ClassName structType,
+            TypeResolver resolver)
         {
             super(thisType);
             this.builder = classBuilder(thisType.simpleName())
@@ -1499,6 +1504,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder);
             this.memberMutator = new MemberMutatorGenerator(thisType, builder);
             this.wrapMethod = new WrapMethodGenerator(thisType, builder);
+            this.wrapMethodWithArray = new WrapMethodWithArrayGenerator(structType, resolver);
         }
 
         private void addMember(
@@ -1528,6 +1534,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
             wrapMethod.addMember(name, typeName, unsignedTypeName, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
+            wrapMethodWithArray.addMember(name, typeName, usedAsSize, size, sizeName);
             if (defaultValue != null || isImplicitlyDefaulted(typeName, size, sizeName))
             {
                 priorFieldIfDefaulted = name;
@@ -1551,6 +1558,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             memberMutator.build();
             return builder.addMethod(constructor())
                           .addMethod(wrapMethod.generate())
+                          .addMethod(wrapMethodWithArray.generate())
                           .addMethod(rewrapMethod())
                           .addMethod(buildMethod())
                           .build();
@@ -3144,8 +3152,6 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
         }
 
-
-
         private final class WrapMethodGenerator extends MethodSpecGenerator
         {
 
@@ -3189,10 +3195,59 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             public MethodSpec generate()
             {
                 return builder.addStatement("lastFieldSet = -1")
-                              .addStatement("super.wrap(buffer, offset, maxLimit)")
                               .addStatement("limit(offset)")
                               .addStatement("return this")
                               .build();
+            }
+        }
+
+        private final class WrapMethodWithArrayGenerator extends MethodSpecGenerator
+        {
+            private final TypeName parameterizedArrayBuilderType;
+
+            private WrapMethodWithArrayGenerator(
+                ClassName structType,
+                TypeResolver resolver)
+            {
+                super(methodBuilder("wrap")
+                    .addAnnotation(Override.class)
+                    .addModifiers(PUBLIC)
+                    .returns(thisName)
+                    .addStatement("super.wrap(array)"));
+
+                ClassName arrayClassName = resolver.resolveClass(AstType.ARRAY);
+                ClassName arrayBuilderClassName = arrayClassName.nestedClass("Builder");
+                ClassName flyweightBuilderClassName = resolver.flyweightName().nestedClass("Builder");
+                TypeName typeParamT = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(arrayClassName, structType));
+                TypeName typeParamB = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(flyweightBuilderClassName,
+                    structType));
+                parameterizedArrayBuilderType = ParameterizedTypeName.get(arrayBuilderClassName, typeParamT, typeParamB,
+                    structType);
+            }
+
+            public WrapMethodWithArrayGenerator addMember(
+                String name,
+                TypeName type,
+                boolean usedAsSize,
+                int size,
+                String sizeName)
+            {
+
+                if ((usedAsSize && !isVarintType(type) && !isVarbyteuintType(type)) ||
+                    (type.isPrimitive() && (size != -1 || sizeName != null)))
+                {
+                    builder.addStatement("$L = -1", dynamicOffset(name));
+                }
+                return this;
+            }
+
+            @Override
+            public MethodSpec generate()
+            {
+                return builder.addParameter(parameterizedArrayBuilderType, "array")
+                    .addStatement("lastFieldSet = -1")
+                    .addStatement("return this")
+                    .build();
             }
         }
     }

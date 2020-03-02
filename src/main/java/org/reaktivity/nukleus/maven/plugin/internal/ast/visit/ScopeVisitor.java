@@ -101,7 +101,8 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = structNode.name();
         AstType structType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName structName = resolver.resolveClass(structType);
-        StructFlyweightGenerator generator = new StructFlyweightGenerator(structName, resolver.flyweightName(), baseName);
+        StructFlyweightGenerator generator = new StructFlyweightGenerator(structName, resolver.flyweightName(), baseName,
+            resolver);
         generator.typeId(findTypeId(structNode));
 
         return new StructVisitor(generator, resolver).visitStruct(structNode);
