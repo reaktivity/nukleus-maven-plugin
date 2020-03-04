@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
@@ -83,6 +84,45 @@ public final class Array8FW<V extends Flyweight> extends ArrayFW<V>
             consumer.accept(itemRO);
             offset = itemRO.limit();
         }
+    }
+
+    @Override
+    public boolean anyMatch(
+        Predicate<V> predicate)
+    {
+        int offset = offset() + FIELDS_OFFSET;
+        for (int i = 0; i < fieldCount(); i++)
+        {
+            itemRO.wrap(buffer(), offset, maxLimit(), this);
+            if (predicate.test(itemRO))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public V matchFirst(
+        Predicate<V> predicate)
+    {
+        int offset = offset() + FIELDS_OFFSET;
+        for (int i = 0; i < fieldCount(); i++)
+        {
+            itemRO.wrap(buffer(), offset, maxLimit(), this);
+            if (predicate.test(itemRO))
+            {
+                return itemRO;
+            }
+            offset = itemRO.limit();
+        }
+        return null;
+    }
+
+    @Override
+    public boolean isEmpty()
+    {
+        return length() == 0;
     }
 
     @Override

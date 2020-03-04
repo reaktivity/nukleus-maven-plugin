@@ -43,6 +43,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
@@ -999,6 +1000,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             if (isArrayType(ofType) && !kindTypeName.isPrimitive())
             {
                 TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
+                TypeName parameterizedPredicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
                 builder
                     .addMethod(methodBuilder("length")
                         .addAnnotation(Override.class)
@@ -1030,6 +1032,26 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         .returns(void.class)
                         .addParameter(parameterizedConsumerType, "consumer")
                         .addStatement("get().forEach(consumer)")
+                        .build())
+                    .addMethod(methodBuilder("anyMatch")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .returns(boolean.class)
+                        .addParameter(parameterizedPredicateType, "predicate")
+                        .addStatement("return get().anyMatch(predicate)")
+                        .build())
+                    .addMethod(methodBuilder("matchFirst")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .returns(typeVarV)
+                        .addParameter(parameterizedPredicateType, "predicate")
+                        .addStatement("return get().matchFirst(predicate)")
+                        .build())
+                    .addMethod(methodBuilder("isEmpty")
+                        .addAnnotation(Override.class)
+                        .addModifiers(PUBLIC)
+                        .returns(boolean.class)
+                        .addStatement("return get().isEmpty()")
                         .build())
                     .addMethod(methodBuilder("items")
                         .addAnnotation(Override.class)

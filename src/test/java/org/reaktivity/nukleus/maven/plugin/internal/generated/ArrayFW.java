@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.agrona.DirectBuffer;
 
@@ -30,6 +31,12 @@ public abstract class ArrayFW<V extends Flyweight> extends Flyweight
     public abstract int maxLength();
 
     public abstract void forEach(Consumer<V> consumer);
+
+    public abstract boolean anyMatch(Predicate<V> predicate);
+
+    public abstract V matchFirst(Predicate<V> predicate);
+
+    public abstract boolean isEmpty();
 
     public abstract DirectBuffer items();
 

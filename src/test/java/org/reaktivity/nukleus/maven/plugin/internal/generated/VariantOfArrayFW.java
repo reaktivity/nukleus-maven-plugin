@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -162,6 +163,26 @@ public class VariantOfArrayFW<V extends Flyweight> extends ArrayFW<V>
         Consumer<V> consumer)
     {
         get().forEach(consumer);
+    }
+
+    @Override
+    public boolean anyMatch(
+        Predicate<V> predicate)
+    {
+        return get().anyMatch(predicate);
+    }
+
+    @Override
+    public V matchFirst(
+        Predicate<V> predicate)
+    {
+        return get().matchFirst(predicate);
+    }
+
+    @Override
+    public boolean isEmpty()
+    {
+        return get().isEmpty();
     }
 
     @Override

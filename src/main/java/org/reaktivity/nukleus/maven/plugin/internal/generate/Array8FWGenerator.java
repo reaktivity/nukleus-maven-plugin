@@ -28,6 +28,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MU
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -78,6 +79,9 @@ public final class Array8FWGenerator extends ClassSpecGenerator
             .addMethod(fieldCountMethod())
             .addMethod(maxLengthMethod())
             .addMethod(forEachMethod())
+            .addMethod(anyMatchMethod())
+            .addMethod(matchFirstMethod())
+            .addMethod(isEmptyMethod())
             .addMethod(itemsMethod())
             .addMethod(wrapMethod())
             .addMethod(tryWrapMethod())
@@ -220,6 +224,57 @@ public final class Array8FWGenerator extends ClassSpecGenerator
             .addStatement("consumer.accept(itemRO)")
             .addStatement("offset = itemRO.limit()")
             .endControlFlow()
+            .build();
+    }
+
+    private MethodSpec anyMatchMethod()
+    {
+        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
+
+        return methodBuilder("anyMatch")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .addParameter(predicateType, "predicate")
+            .returns(boolean.class)
+            .addStatement("int offset = offset() + FIELDS_OFFSET")
+            .beginControlFlow("for (int i = 0; i < fieldCount(); i++)")
+            .addStatement("itemRO.wrap(buffer(), offset, maxLimit(), this)")
+            .beginControlFlow("if (predicate.test(itemRO))")
+            .addStatement("return true")
+            .endControlFlow()
+            .endControlFlow()
+            .addStatement("return false")
+            .build();
+    }
+
+    private MethodSpec matchFirstMethod()
+    {
+        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
+
+        return methodBuilder("matchFirst")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .addParameter(predicateType, "predicate")
+            .returns(typeVarV)
+            .addStatement("int offset = offset() + FIELDS_OFFSET")
+            .beginControlFlow("for (int i = 0; i < fieldCount(); i++)")
+            .addStatement("itemRO.wrap(buffer(), offset, maxLimit(), this)")
+            .beginControlFlow("if (predicate.test(itemRO))")
+            .addStatement("return itemRO")
+            .endControlFlow()
+            .addStatement("offset = itemRO.limit()")
+            .endControlFlow()
+            .addStatement("return null")
+            .build();
+    }
+
+    private MethodSpec isEmptyMethod()
+    {
+        return methodBuilder("isEmpty")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(boolean.class)
+            .addStatement("return length() == 0")
             .build();
     }
 

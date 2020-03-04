@@ -24,6 +24,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -59,6 +60,9 @@ public final class ArrayFWGenerator extends ClassSpecGenerator
             .addMethod(fieldsOffsetMethod())
             .addMethod(maxLengthMethod())
             .addMethod(forEachMethod())
+            .addMethod(anyMatchMethod())
+            .addMethod(matchFirstMethod())
+            .addMethod(isEmptyMethod())
             .addMethod(itemsMethod())
             .addMethod(maxLengthMutatorMethod())
             .addType(builderClassBuilder.build())
@@ -104,6 +108,34 @@ public final class ArrayFWGenerator extends ClassSpecGenerator
             .addModifiers(PUBLIC, ABSTRACT)
             .returns(void.class)
             .addParameter(consumerType, "consumer")
+            .build();
+    }
+
+    private MethodSpec anyMatchMethod()
+    {
+        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
+        return methodBuilder("anyMatch")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(boolean.class)
+            .addParameter(predicateType, "predicate")
+            .build();
+    }
+
+    private MethodSpec matchFirstMethod()
+    {
+        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
+        return methodBuilder("matchFirst")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(typeVarV)
+            .addParameter(predicateType, "predicate")
+            .build();
+    }
+
+    private MethodSpec isEmptyMethod()
+    {
+        return methodBuilder("isEmpty")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(boolean.class)
             .build();
     }
 
