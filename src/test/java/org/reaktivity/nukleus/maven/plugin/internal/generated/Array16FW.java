@@ -98,6 +98,7 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
             {
                 return true;
             }
+            offset = itemRO.limit();
         }
         return false;
     }
@@ -122,7 +123,7 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
     @Override
     public boolean isEmpty()
     {
-        return length() == 0;
+        return fieldCount() == 0;
     }
 
     @Override
@@ -252,6 +253,8 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
             int newLimit = offset + FIELDS_OFFSET;
             checkLimit(newLimit, maxLimit);
             limit(newLimit);
+            fieldCount = 0;
+            maxLength = 0;
             return this;
         }
 

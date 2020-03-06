@@ -243,6 +243,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .beginControlFlow("if (predicate.test(itemRO))")
             .addStatement("return true")
             .endControlFlow()
+            .addStatement("offset = itemRO.limit()")
             .endControlFlow()
             .addStatement("return false")
             .build();
@@ -275,7 +276,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(boolean.class)
-            .addStatement("return length() == 0")
+            .addStatement("return fieldCount() == 0")
             .build();
     }
 
@@ -515,6 +516,8 @@ public final class Array16FWGenerator extends ClassSpecGenerator
                 .addStatement("int newLimit = offset + FIELDS_OFFSET")
                 .addStatement("checkLimit(newLimit, maxLimit)")
                 .addStatement("limit(newLimit)")
+                .addStatement("fieldCount = 0")
+                .addStatement("maxLength = 0")
                 .addStatement("return this")
                 .build();
         }
