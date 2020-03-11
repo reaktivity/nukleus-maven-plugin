@@ -15,6 +15,8 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import java.nio.ByteOrder;
+
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -32,6 +34,19 @@ public final class List32FW extends ListFW
 
     private static final int FIELDS_OFFSET = FIELD_COUNT_OFFSET + FIELD_COUNT_SIZE;
 
+    private final ByteOrder byteOrder;
+
+    public List32FW()
+    {
+        this.byteOrder = ByteOrder.nativeOrder();
+    }
+
+    public List32FW(
+        ByteOrder byteOrder)
+    {
+        this.byteOrder = byteOrder;
+    }
+
     private final DirectBuffer fieldsRO = new UnsafeBuffer(0L, 0);
 
     @Override
@@ -43,13 +58,13 @@ public final class List32FW extends ListFW
     @Override
     public int length()
     {
-        return buffer().getInt(offset() + LENGTH_OFFSET);
+        return buffer().getInt(offset() + LENGTH_OFFSET, byteOrder);
     }
 
     @Override
     public int fieldCount()
     {
-        return buffer().getInt(offset() + FIELD_COUNT_OFFSET);
+        return buffer().getInt(offset() + FIELD_COUNT_OFFSET, byteOrder);
     }
 
     @Override
@@ -98,11 +113,21 @@ public final class List32FW extends ListFW
 
     public static final class Builder extends ListFW.Builder<List32FW>
     {
+        private final ByteOrder byteOrder;
+
         private int fieldCount;
 
         public Builder()
         {
             super(new List32FW());
+            this.byteOrder = ByteOrder.nativeOrder();
+        }
+
+        public Builder(
+            ByteOrder byteOrder)
+        {
+            super(new List32FW());
+            this.byteOrder = byteOrder;
         }
 
         @Override
@@ -161,8 +186,8 @@ public final class List32FW extends ListFW
         @Override
         public List32FW build()
         {
-            buffer().putInt(offset() + LENGTH_OFFSET, limit() - offset() - FIELD_COUNT_OFFSET);
-            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount);
+            buffer().putInt(offset() + LENGTH_OFFSET, limit() - offset() - FIELD_COUNT_OFFSET, byteOrder);
+            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount, byteOrder);
             return super.build();
         }
     }

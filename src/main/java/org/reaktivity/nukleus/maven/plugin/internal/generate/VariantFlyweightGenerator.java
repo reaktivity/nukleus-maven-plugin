@@ -23,6 +23,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BUFFER_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
@@ -45,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
 import com.squareup.javapoet.ClassName;
@@ -151,7 +153,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         AstType ofType,
         TypeName ofTypeName,
         TypeName unsignedOfTypeName,
-        TypeResolver resolver)
+        TypeResolver resolver,
+        AstByteOrder byteOrder)
     {
         super(variantName);
         this.anyType = TypeVariableName.get("?");
@@ -162,13 +165,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         this.baseName = baseName;
         this.builder = builder(variantName, kindTypeName, ofType, resolver);
         this.memberField = new MemberFieldGenerator(variantName, kindTypeName, ofType, typeVarV, typeVarKV, typeVarVV, builder,
-            resolver);
+            resolver, byteOrder);
         this.memberKindConstant = new KindConstantGenerator(variantName, kindTypeName, ofType, builder);
         this.memberSizeConstant = new MemberSizeConstantGenerator(variantName, kindTypeName, builder);
         this.memberOffsetConstant = new MemberOffsetConstantGenerator(variantName, kindTypeName, builder);
         this.memberFieldValueConstant = new MemberFieldValueConstantGenerator(variantName, builder);
         this.missingFieldPlaceholderConstant = new MissingFieldPlaceholderConstantGenerator(variantName, builder);
-        this.constructor = new ConstructorGenerator(ofType, typeVarV, typeVarKV, typeVarVV);
+        this.constructor = new ConstructorGenerator(ofType, typeVarV, typeVarKV, typeVarVV, byteOrder);
         this.tryWrapMethod = new TryWrapMethodGenerator(kindTypeName, ofType);
         this.wrapMethod = new WrapMethodGenerator(kindTypeName, ofType);
         this.wrapMethodWithArray = new WrapMethodWithArrayGenerator(kindTypeName, ofType, resolver);
@@ -178,13 +181,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         this.arrayOfTypeMethods = new ArrayOfTypeMethodsGenerator(variantName, builder, kindTypeName, typeVarV, ofType);
         this.octetsOfTypeMethods = new OctetsOfTypeMethodsGenerator(variantName, flyweightName, builder, kindTypeName, ofType);
         this.kindAccessor = new KindAccessorGenerator(variantName, kindTypeName, ofType, builder);
-        this.memberAccessor = new MemberAccessorGenerator(variantName, kindTypeName, ofType, builder, resolver);
+        this.memberAccessor = new MemberAccessorGenerator(variantName, kindTypeName, ofType, builder, resolver, byteOrder);
         this.limitMethod = new LimitMethodGenerator(kindTypeName, ofType);
         this.mapOfTypeMethods = new MapOfTypeMethodsGenerator(variantName, ofType, builder);
         this.getMethod = new GetMethodGenerator(kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver);
         this.bitMaskConstant = new BitMaskConstantGenerator(variantName, ofTypeName, builder);
         this.builderClass = new BuilderClassGenerator(variantName, flyweightName, kindTypeName, ofType, ofTypeName,
-            unsignedOfTypeName, resolver, typeVarO);
+            unsignedOfTypeName, resolver, typeVarO, byteOrder);
     }
 
     public VariantFlyweightGenerator addMember(
@@ -200,10 +203,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         memberKindConstant.addMember(kindValue, memberName);
         memberOffsetConstant.addMember(memberName, memberTypeName);
         memberFieldValueConstant.addMember(memberName, memberTypeName);
-        memberField.addMember(memberName, memberTypeName, mapKeyType, mapValueType);
+        memberField.addMember(memberName, memberType, memberTypeName, mapKeyType, mapValueType);
         memberSizeConstant.addMember(memberName, memberTypeName, unsignedMemberTypeName);
         missingFieldPlaceholderConstant.addMember(memberType, missingFieldValue);
-        constructor.addMember(memberName, memberTypeName);
+        constructor.addMember(memberName, memberType, memberTypeName);
         wrapMethod.addMember(kindValue, memberName, memberTypeName, mapKeyType);
         wrapMethodWithArray.addMember(kindValue, memberName);
         tryWrapMethod.addMember(kindValue, memberName, memberTypeName, mapKeyType);
@@ -284,6 +287,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final TypeVariableName typeVarKV;
         private final TypeVariableName typeVarVV;
         private final TypeResolver resolver;
+        private final AstByteOrder byteOrder;
 
         private MemberFieldGenerator(
             ClassName thisType,
@@ -293,7 +297,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             TypeVariableName typeVarKV,
             TypeVariableName typeVarVV,
             TypeSpec.Builder builder,
-            TypeResolver resolver)
+            TypeResolver resolver,
+            AstByteOrder byteOrder)
         {
             super(thisType, builder);
             this.ofType = ofType;
@@ -301,6 +306,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.typeVarKV = typeVarKV;
             this.typeVarVV = typeVarVV;
             this.resolver = resolver;
+            this.byteOrder = byteOrder;
             if (!kindName.isPrimitive())
             {
                 String kindTypeVariableName = enumRO(kindName);
@@ -312,35 +318,49 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
         public MemberFieldGenerator addMember(
             String name,
-            TypeName type,
+            AstType memberType,
+            TypeName memberTypeName,
             AstType mapKeyType,
             AstType mapValueType)
         {
-            if (type != null && !type.isPrimitive())
+            if (memberTypeName != null && !memberTypeName.isPrimitive())
             {
-                String fieldRO = String.format("%sRO", ofType != null ? name : fieldName(type));
+                String fieldRO = String.format("%sRO", ofType != null ? name : fieldName(memberTypeName));
                 Builder fieldBuilder;
                 if (isArrayType(ofType))
                 {
-                    TypeName parameterizedArrayType = ParameterizedTypeName.get((ClassName) type, typeVarV);
+                    TypeName parameterizedArrayType = ParameterizedTypeName.get((ClassName) memberTypeName, typeVarV);
                     fieldBuilder = FieldSpec.builder(parameterizedArrayType, fieldRO, PRIVATE, FINAL);
                 }
                 else if (isMapType(ofType))
                 {
-                    TypeName parameterizedMapType = ParameterizedTypeName.get((ClassName) type, typeVarKV, typeVarVV);
+                    TypeName parameterizedMapType = ParameterizedTypeName.get((ClassName) memberTypeName, typeVarKV, typeVarVV);
                     fieldBuilder = FieldSpec.builder(parameterizedMapType, fieldRO, PRIVATE, FINAL);
                 }
                 else if (mapKeyType != null)
                 {
                     TypeName parameterizedMapTypeName =
-                        ParameterizedTypeName.get((ClassName) type, resolver.resolveClass(mapKeyType),
+                        ParameterizedTypeName.get((ClassName) memberTypeName, resolver.resolveClass(mapKeyType),
                             resolver.resolveClass(mapValueType));
                     fieldBuilder = FieldSpec.builder(parameterizedMapTypeName, fieldRO, PRIVATE);
                 }
+                else if (isListType(ofType) || isBoundedOctetsType(ofType))
+                {
+                    fieldBuilder = FieldSpec.builder(memberTypeName, fieldRO, PRIVATE, FINAL);
+                    if (byteOrder == NATIVE || memberType.equals(AstType.LIST0) || memberType.equals(AstType.LIST8) ||
+                        memberType.equals(AstType.BOUNDED_OCTETS8))
+                    {
+                        fieldBuilder.initializer("new $T()", memberTypeName);
+                    }
+                    else
+                    {
+                        fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", memberTypeName, ByteOrder.class);
+                    }
+                }
                 else
                 {
-                    fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL)
-                        .initializer("new $T()", type);
+                    fieldBuilder = FieldSpec.builder(memberTypeName, fieldRO, PRIVATE, FINAL)
+                        .initializer("new $T()", memberTypeName);
                 }
                 builder.addField(fieldBuilder.build());
             }
@@ -523,12 +543,14 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final TypeVariableName typeVarV;
         private final TypeVariableName typeVarKV;
         private final TypeVariableName typeVarVV;
+        private final AstByteOrder byteOrder;
 
         private ConstructorGenerator(
             AstType ofType,
             TypeVariableName typeVarV,
             TypeVariableName typeVarKV,
-            TypeVariableName typeVarVV)
+            TypeVariableName typeVarVV,
+            AstByteOrder byteOrder)
         {
             super(constructorBuilder()
                 .addModifiers(PUBLIC));
@@ -536,19 +558,36 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.typeVarV = typeVarV;
             this.typeVarKV = typeVarKV;
             this.typeVarVV = typeVarVV;
+            this.byteOrder = byteOrder;
         }
 
         public ConstructorGenerator addMember(
             String memberName,
+            AstType memberType,
             TypeName memberTypeName)
         {
             if (isArrayType(ofType))
             {
-                builder.addStatement("$LRO = new $T<>(type)", memberName, memberTypeName);
+                if (byteOrder == NATIVE || memberType.equals(AstType.ARRAY8))
+                {
+                    builder.addStatement("$LRO = new $T<>(type)", memberName, memberTypeName);
+                }
+                else
+                {
+                    builder.addStatement("$LRO = new $T<>(type, $T.BIG_ENDIAN)", memberName, memberTypeName, ByteOrder.class);
+                }
             }
             else if (isMapType(ofType))
             {
-                builder.addStatement("$LRO = new $T<>(keyType, valueType)", memberName, memberTypeName);
+                if (byteOrder == NATIVE || memberType.equals(AstType.MAP8))
+                {
+                    builder.addStatement("$LRO = new $T<>(keyType, valueType)", memberName, memberTypeName);
+                }
+                else
+                {
+                    builder.addStatement("$LRO = new $T<>(keyType, valueType, $T.BIG_ENDIAN)", memberName, memberTypeName,
+                        ByteOrder.class);
+                }
             }
             return this;
         }
@@ -1159,18 +1198,21 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final TypeName kindTypeName;
         private final AstType ofType;
         private final TypeResolver resolver;
+        private final AstByteOrder byteOrder;
 
         private MemberAccessorGenerator(
             ClassName thisType,
             TypeName kindTypeName,
             AstType ofType,
             TypeSpec.Builder builder,
-            TypeResolver resolver)
+            TypeResolver resolver,
+            AstByteOrder byteOrder)
         {
             super(thisType, builder);
             this.kindTypeName = kindTypeName;
             this.ofType = ofType;
             this.resolver = resolver;
+            this.byteOrder = byteOrder;
         }
 
         public MemberAccessorGenerator addMember(
@@ -1214,13 +1256,37 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                         unsignedHex = " & 0xFFFF_FFFFL";
                     }
                 }
+                String byteOrderStatement = "";
+                if (byteOrder == AstByteOrder.NETWORK)
+                {
+                    if (memberTypeName == TypeName.SHORT || memberTypeName == TypeName.INT || memberTypeName == TypeName.LONG)
+                    {
+                        byteOrderStatement = ", $T.BIG_ENDIAN";
+                    }
+                }
+                String getStatement = String.format(kindTypeName.isPrimitive() ? "return buffer().$L(offset() + $L%s)$L" :
+                            "return buffer().$L($L.limit()%s)$L", byteOrderStatement);
                 if (kindTypeName.isPrimitive())
                 {
-                    codeBlock.addStatement("return buffer().$L(offset() + $L)$L", getterName, offset(name), unsignedHex);
+                    if ("".equals(byteOrderStatement))
+                    {
+                        codeBlock.addStatement(getStatement, getterName, offset(name), unsignedHex);
+                    }
+                    else
+                    {
+                        codeBlock.addStatement(getStatement, getterName, offset(name), ByteOrder.class, unsignedHex);
+                    }
                 }
                 else
                 {
-                    codeBlock.addStatement("return buffer().$L($L.limit())$L", getterName, enumRO(kindTypeName), unsignedHex);
+                    if ("".equals(byteOrderStatement))
+                    {
+                        codeBlock.addStatement(getStatement, getterName, enumRO(kindTypeName), unsignedHex);
+                    }
+                    else
+                    {
+                        codeBlock.addStatement(getStatement, getterName, enumRO(kindTypeName), ByteOrder.class, unsignedHex);
+                    }
                 }
             }
             else
@@ -1622,10 +1688,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             TypeName ofTypeName,
             TypeName unsignedOfTypeName,
             TypeResolver resolver,
-            TypeVariableName typeVarO)
+            TypeVariableName typeVarO,
+            AstByteOrder byteOrder)
         {
             this(thisVariantType.nestedClass("Builder"), flyweightType, flyweightType.nestedClass("Builder"), thisVariantType,
-                kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver, typeVarO);
+                kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver, typeVarO, byteOrder);
         }
 
         private BuilderClassGenerator(
@@ -1638,7 +1705,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             TypeName ofTypeName,
             TypeName unsignedOfTypeName,
             TypeResolver resolver,
-            TypeVariableName typeVarO)
+            TypeVariableName typeVarO,
+            AstByteOrder byteOrder)
         {
             super(thisVariantBuilderType);
 
@@ -1668,7 +1736,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.sizeOfMethod = new SizeOfMethodGenerator(thisVariantType, kindTypeName, ofType, builder);
             this.rebuildMethod = new RebuildMethodGenerator(thisVariantType, kindTypeName, ofType, ofTypeName, builder);
             this.setAsFieldMethod = new SetAsFieldMethodGenerator(thisVariantBuilderType, kindTypeName, ofType, ofTypeName,
-                builder, resolver);
+                builder, resolver, byteOrder);
             this.setAsFieldMethodForStringOfType = new SetAsFieldMethodForStringOfTypeGenerator(thisVariantBuilderType,
                 kindTypeName, ofType, ofTypeName, builder);
             this.setAsFieldMethodForOctetsOfType = new SetAsFieldMethodForOctetsOfTypeGenerator(thisVariantBuilderType,
@@ -2649,6 +2717,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private final AstType ofType;
             private final TypeName ofTypeName;
             private final TypeResolver resolver;
+            private final AstByteOrder byteOrder;
 
             private SetAsFieldMethodGenerator(
                 ClassName thisType,
@@ -2656,13 +2725,15 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 AstType ofType,
                 TypeName ofTypeName,
                 TypeSpec.Builder builder,
-                TypeResolver resolver)
+                TypeResolver resolver,
+                AstByteOrder byteOrder)
             {
                 super(thisType, builder);
                 this.kindTypeName = kindTypeName;
                 this.ofType = ofType;
                 this.ofTypeName = ofTypeName;
                 this.resolver = resolver;
+                this.byteOrder = byteOrder;
             }
 
             public SetAsFieldMethodGenerator addMember(
@@ -2781,18 +2852,41 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     }
                 }
 
-                String primitiveKindMemberPutStatement = "buffer().%s(offset() + $L, %svalue%s)";
-                String nonPrimitiveKindMemberPutStatement = "buffer().%s(limit(), %svalue%s)";
+                String primitiveKindMemberPutStatement = "buffer().%s(offset() + $L, %svalue%s%s)";
+                String nonPrimitiveKindMemberPutStatement = "buffer().%s(limit(), %svalue%s%s)";
+                String byteOrderMark = "";
+
+                if (byteOrder == AstByteOrder.NETWORK)
+                {
+                    if (memberTypeName == TypeName.SHORT || memberTypeName == TypeName.INT || memberTypeName == TypeName.LONG)
+                    {
+                        byteOrderMark = ", $T.BIG_ENDIAN";
+                    }
+                }
 
                 String putStatement = String.format(kindTypeName.isPrimitive() ? primitiveKindMemberPutStatement :
-                    nonPrimitiveKindMemberPutStatement, putterName, castType, unsignedHex);
+                    nonPrimitiveKindMemberPutStatement, putterName, castType, unsignedHex, byteOrderMark);
                 if (kindTypeName.isPrimitive())
                 {
-                    code.addStatement(putStatement, offset(memberName));
+                    if ("".equals(byteOrderMark))
+                    {
+                        code.addStatement(putStatement, offset(memberName));
+                    }
+                    else
+                    {
+                        code.addStatement(putStatement, offset(memberName), ByteOrder.class);
+                    }
                 }
                 else
                 {
-                    code.addStatement(putStatement);
+                    if ("".equals(byteOrderMark))
+                    {
+                        code.addStatement(putStatement);
+                    }
+                    else
+                    {
+                        code.addStatement(putStatement, ByteOrder.class);
+                    }
                 }
                 code.addStatement("limit(newLimit)");
                 return code;

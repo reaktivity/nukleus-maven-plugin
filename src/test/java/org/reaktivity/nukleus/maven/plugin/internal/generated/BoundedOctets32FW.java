@@ -15,6 +15,8 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import java.nio.ByteOrder;
+
 import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -27,6 +29,19 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
 
     private static final int VALUE_OFFSET = LENGTH_OFFSET + LENGTH_SIZE;
 
+    private final ByteOrder byteOrder;
+
+    public BoundedOctets32FW()
+    {
+        this.byteOrder = ByteOrder.nativeOrder();
+    }
+
+    public BoundedOctets32FW(
+        ByteOrder byteOrder)
+    {
+        this.byteOrder = byteOrder;
+    }
+
     @Override
     public <T> T get(
         Flyweight.Visitor<T> visitor)
@@ -37,7 +52,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
     @Override
     public int length()
     {
-        return buffer().getInt(offset() + LENGTH_OFFSET);
+        return buffer().getInt(offset() + LENGTH_OFFSET, byteOrder);
     }
 
     @Override
@@ -82,9 +97,19 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
 
     public static final class Builder extends BoundedOctetsFW.Builder<BoundedOctets32FW>
     {
+        private final ByteOrder byteOrder;
+
         public Builder()
         {
             super(new BoundedOctets32FW());
+            this.byteOrder = ByteOrder.nativeOrder();
+        }
+
+        public Builder(
+            ByteOrder byteOrder)
+        {
+            super(new BoundedOctets32FW());
+            this.byteOrder = byteOrder;
         }
 
         @Override
@@ -93,7 +118,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
         {
             int newLimit = offset() + LENGTH_SIZE + value.length();
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, value.length());
+            buffer().putInt(offset() + LENGTH_OFFSET, value.length(), byteOrder);
             buffer().putBytes(offset() + VALUE_OFFSET, value.buffer(), value.offset() + VALUE_OFFSET, value.length());
             limit(newLimit);
             return this;
@@ -107,7 +132,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
         {
             int newLimit = offset() + LENGTH_SIZE + length;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, length);
+            buffer().putInt(offset() + LENGTH_OFFSET, length, byteOrder);
             buffer().putBytes(offset() + VALUE_OFFSET, value, offset, length);
             limit(newLimit);
             return this;
@@ -119,7 +144,7 @@ public final class BoundedOctets32FW extends BoundedOctetsFW
         {
             int newLimit = offset() + LENGTH_SIZE + value.length;
             checkLimit(newLimit, maxLimit());
-            buffer().putInt(offset() + LENGTH_OFFSET, value.length);
+            buffer().putInt(offset() + LENGTH_OFFSET, value.length, byteOrder);
             buffer().putBytes(offset() + VALUE_OFFSET, value);
             limit(newLimit);
             return this;

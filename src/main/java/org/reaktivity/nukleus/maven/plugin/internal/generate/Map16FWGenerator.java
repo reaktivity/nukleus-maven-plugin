@@ -27,6 +27,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DI
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -72,10 +73,12 @@ public final class Map16FWGenerator extends ClassSpecGenerator
             .addField(fieldCountOffsetConstant())
             .addField(fieldsOffsetConstant())
             .addField(lengthMaxValueConstant())
+            .addField(byteOrderField())
             .addField(keyField())
             .addField(valueField())
             .addField(entriesField())
             .addMethod(constructor())
+            .addMethod(constructorWithByteOrder())
             .addMethod(lengthMethod())
             .addMethod(fieldCountMethod())
             .addMethod(entriesMethod())
@@ -130,6 +133,12 @@ public final class Map16FWGenerator extends ClassSpecGenerator
             .build();
     }
 
+    private FieldSpec byteOrderField()
+    {
+        return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL)
+            .build();
+    }
+
     private FieldSpec keyField()
     {
         return FieldSpec.builder(typeVarK, "keyRO", PRIVATE, FINAL)
@@ -157,6 +166,20 @@ public final class Map16FWGenerator extends ClassSpecGenerator
             .addParameter(typeVarV, "valueRO")
             .addStatement("this.keyRO = keyRO")
             .addStatement("this.valueRO = valueRO")
+            .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+            .build();
+    }
+
+    private MethodSpec constructorWithByteOrder()
+    {
+        return constructorBuilder()
+            .addModifiers(PUBLIC)
+            .addParameter(typeVarK, "keyRO")
+            .addParameter(typeVarV, "valueRO")
+            .addParameter(ByteOrder.class, "byteOrder")
+            .addStatement("this.keyRO = keyRO")
+            .addStatement("this.valueRO = valueRO")
+            .addStatement("this.byteOrder = byteOrder")
             .build();
     }
 
@@ -166,7 +189,7 @@ public final class Map16FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getShort(offset() + LENGTH_OFFSET)")
+            .addStatement("return buffer().getShort(offset() + LENGTH_OFFSET, byteOrder)")
             .build();
     }
 
@@ -176,7 +199,7 @@ public final class Map16FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getShort(offset() + FIELD_COUNT_OFFSET)")
+            .addStatement("return buffer().getShort(offset() + FIELD_COUNT_OFFSET, byteOrder)")
             .build();
     }
 
@@ -309,10 +332,12 @@ public final class Map16FWGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
-                .addField(fieldCountField())
+                .addField(byteOrderField())
                 .addField(keyRWField())
                 .addField(valueRWField())
+                .addField(fieldCountField())
                 .addMethod(constructor())
+                .addMethod(constructorWithByteOrder())
                 .addMethod(wrapMethod())
                 .addMethod(entryMethod())
                 .addMethod(entriesMethod())
@@ -320,9 +345,9 @@ public final class Map16FWGenerator extends ClassSpecGenerator
                 .build();
         }
 
-        private FieldSpec fieldCountField()
+        private FieldSpec byteOrderField()
         {
-            return FieldSpec.builder(int.class, "fieldCount", PRIVATE).build();
+            return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL).build();
         }
 
         private FieldSpec keyRWField()
@@ -333,6 +358,11 @@ public final class Map16FWGenerator extends ClassSpecGenerator
         private FieldSpec valueRWField()
         {
             return FieldSpec.builder(typeVarVB, "valueRW", PRIVATE, FINAL).build();
+        }
+
+        private FieldSpec fieldCountField()
+        {
+            return FieldSpec.builder(int.class, "fieldCount", PRIVATE).build();
         }
 
         private MethodSpec constructor()
@@ -346,6 +376,23 @@ public final class Map16FWGenerator extends ClassSpecGenerator
                 .addStatement("super(new Map16FW<>(keyRO, valueRO))")
                 .addStatement("this.keyRW = keyRW")
                 .addStatement("this.valueRW = valueRW")
+                .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+                .build();
+        }
+
+        private MethodSpec constructorWithByteOrder()
+        {
+            return constructorBuilder()
+                .addModifiers(PUBLIC)
+                .addParameter(typeVarK, "keyRO")
+                .addParameter(typeVarV, "valueRO")
+                .addParameter(typeVarKB, "keyRW")
+                .addParameter(typeVarVB, "valueRW")
+                .addParameter(ByteOrder.class, "byteOrder")
+                .addStatement("super(new Map16FW<>(keyRO, valueRO))")
+                .addStatement("this.keyRW = keyRW")
+                .addStatement("this.valueRW = valueRW")
+                .addStatement("this.byteOrder = byteOrder")
                 .build();
         }
 
@@ -418,8 +465,8 @@ public final class Map16FWGenerator extends ClassSpecGenerator
                 .addStatement("int length = limit() - offset() - FIELD_COUNT_OFFSET")
                 .addStatement("assert length <= LENGTH_MAX_VALUE : \"Length is too large\"")
                 .addStatement("assert fieldCount <= LENGTH_MAX_VALUE : \"Field count is too large\"")
-                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length)")
-                .addStatement("buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount)")
+                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder)")
+                .addStatement("buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount, byteOrder)")
                 .addStatement("return super.build()")
                 .build();
         }

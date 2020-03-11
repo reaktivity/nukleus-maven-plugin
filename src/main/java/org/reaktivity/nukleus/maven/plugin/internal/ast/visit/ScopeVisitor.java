@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMapNode;
@@ -225,8 +226,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         ClassName flyweightName = resolver.flyweightName();
         TypeName ofTypeName = resolver.resolveType(variantNode.of());
         TypeName unsignedOfTypeName = resolver.resolveUnsignedType(variantNode.of());
+        AstByteOrder byteOrder = variantNode.byteOrder();
         VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, flyweightName, baseName,
-            kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver);
+            kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver, byteOrder);
         return new VariantVisitor(generator, resolver).visitVariant(variantNode);
     }
 
@@ -246,8 +248,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         TypeName lengthTypeName = resolver.resolveType(listNode.lengthType());
         TypeName fieldCountTypeName = resolver.resolveType(listNode.fieldCountType());
         Byte missingFieldByte = listNode.missingFieldByte();
+        AstByteOrder byteOrder = listNode.byteOrder();
         ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
-            templateType, lengthTypeName, fieldCountTypeName, missingFieldByte, resolver);
+            templateType, lengthTypeName, fieldCountTypeName, missingFieldByte, resolver, byteOrder);
         return new ListVisitor(generator, resolver).visitList(listNode);
     }
 

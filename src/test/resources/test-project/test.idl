@@ -17,7 +17,7 @@ scope test
 {
 
     scope inner {
-        //option byte_order native;
+        //option byteorder native;
         
         struct FlatParent
         {

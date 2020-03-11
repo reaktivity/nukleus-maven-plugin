@@ -27,6 +27,8 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DI
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
+import java.nio.ByteOrder;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -59,6 +61,9 @@ public final class List32FWGenerator extends ClassSpecGenerator
             .addField(lengthOffsetConstant())
             .addField(fieldCountOffsetConstant())
             .addField(fieldsOffsetConstant())
+            .addField(byteOrderField())
+            .addMethod(constructor())
+            .addMethod(constructorWithByteOrder())
             .addMethod(limitMethod())
             .addMethod(lengthMethod())
             .addMethod(fieldCountMethod())
@@ -112,6 +117,29 @@ public final class List32FWGenerator extends ClassSpecGenerator
             .build();
     }
 
+    private FieldSpec byteOrderField()
+    {
+        return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL)
+            .build();
+    }
+
+    private MethodSpec constructor()
+    {
+        return constructorBuilder()
+            .addModifiers(PUBLIC)
+            .addStatement("this.byteOrder = ByteOrder.nativeOrder()")
+            .build();
+    }
+
+    private MethodSpec constructorWithByteOrder()
+    {
+        return constructorBuilder()
+            .addModifiers(PUBLIC)
+            .addParameter(ByteOrder.class, "byteOrder")
+            .addStatement("this.byteOrder = byteOrder")
+            .build();
+    }
+
     private MethodSpec limitMethod()
     {
         return methodBuilder("limit")
@@ -128,7 +156,7 @@ public final class List32FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getInt(offset() + LENGTH_OFFSET)")
+            .addStatement("return buffer().getInt(offset() + LENGTH_OFFSET, byteOrder)")
             .build();
     }
 
@@ -138,7 +166,7 @@ public final class List32FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getInt(offset() + FIELD_COUNT_OFFSET)")
+            .addStatement("return buffer().getInt(offset() + FIELD_COUNT_OFFSET, byteOrder)")
             .build();
     }
 
@@ -224,13 +252,21 @@ public final class List32FWGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
+                .addField(byteOrder())
                 .addField(fieldCount())
                 .addMethod(constructor())
+                .addMethod(constructorWithByteOrder())
                 .addMethod(fieldMethod())
                 .addMethod(fieldsMethodViaVisitor())
                 .addMethod(fieldsMethodViaBuffer())
                 .addMethod(wrapMethod())
                 .addMethod(buildMethod())
+                .build();
+        }
+
+        private FieldSpec byteOrder()
+        {
+            return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL)
                 .build();
         }
 
@@ -245,6 +281,17 @@ public final class List32FWGenerator extends ClassSpecGenerator
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addStatement("super(new List32FW())")
+                .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+                .build();
+        }
+
+        private MethodSpec constructorWithByteOrder()
+        {
+            return constructorBuilder()
+                .addModifiers(PUBLIC)
+                .addParameter(ByteOrder.class, "byteOrder")
+                .addStatement("super(new List32FW())")
+                .addStatement("this.byteOrder = byteOrder")
                 .build();
         }
 
@@ -323,8 +370,8 @@ public final class List32FWGenerator extends ClassSpecGenerator
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(listType)
-                .addStatement("buffer().putInt(offset() + LENGTH_OFFSET, limit() - offset() - FIELD_COUNT_OFFSET)")
-                .addStatement("buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount)")
+                .addStatement("buffer().putInt(offset() + LENGTH_OFFSET, limit() - offset() - FIELD_COUNT_OFFSET, byteOrder)")
+                .addStatement("buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount, byteOrder)")
                 .addStatement("return super.build()")
                 .build();
         }

@@ -24,6 +24,7 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
@@ -134,7 +135,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         TypeName lengthTypeName,
         TypeName fieldCountTypeName,
         Byte missingFieldByte,
-        TypeResolver resolver)
+        TypeResolver resolver,
+        AstByteOrder byteOrder)
     {
         super(listName);
         this.baseName = baseName;
@@ -151,12 +153,13 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         this.memberField = new MemberFieldGenerator(listName, builder, resolver);
         this.optionalOffsets = new OptionalOffsetsFieldGenerator(listName, builder, templateType, missingFieldByte);
         this.lengthMethod = new LengthMethodGenerator(listName, builder, templateType, resolver);
-        this.fieldCountMethod = new FieldCountMethodGenerator(listName, builder, templateType, fieldCountTypeName, resolver);
+        this.fieldCountMethod = new FieldCountMethodGenerator(listName, builder, templateType, fieldCountTypeName, resolver,
+            byteOrder);
         this.fieldsMethod = new FieldsMethodGenerator(listName, builder, templateType, resolver);
-        this.memberAccessor = new MemberAccessorGenerator(listName, builder, templateType, resolver, missingFieldByte);
+        this.memberAccessor = new MemberAccessorGenerator(listName, builder, templateType, resolver, missingFieldByte, byteOrder);
         this.wrapMethod = new WrapMethodGenerator(missingFieldByte, templateType, resolver);
         this.tryWrapMethod = new TryWrapMethodGenerator(missingFieldByte, templateType, resolver);
-        this.limitMethod = new LimitMethodGenerator(lengthTypeName, templateType, resolver);
+        this.limitMethod = new LimitMethodGenerator(lengthTypeName, templateType, resolver, byteOrder);
         this.toStringMethod = new ToStringMethodGenerator(missingFieldByte, templateType);
         this.builderClass = new BuilderClassGenerator(listName, flyweightName, templateType, lengthTypeName,
             fieldCountTypeName, resolver, missingFieldByte);
@@ -703,37 +706,46 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         private final AstType templateType;
         private final TypeName fieldCountType;
         private final TypeResolver resolver;
+        private final AstByteOrder byteOrder;
 
         private FieldCountMethodGenerator(
             ClassName thisType,
             Builder builder,
             AstType templateType,
             TypeName fieldCountType,
-            TypeResolver resolver)
+            TypeResolver resolver,
+            AstByteOrder byteOrder)
         {
             super(thisType, builder);
             this.templateType = templateType;
             this.fieldCountType = fieldCountType;
             this.resolver = resolver;
+            this.byteOrder = byteOrder;
         }
 
         @Override
         public Builder build()
         {
+            MethodSpec.Builder fieldCountMethodBuilder = methodBuilder("fieldCount")
+                .addModifiers(PUBLIC)
+                .returns(int.class);
             if (templateType == null)
             {
-                builder.addMethod(methodBuilder("fieldCount")
-                    .addModifiers(PUBLIC)
-                    .returns(int.class)
-                    .addStatement("return buffer().$L(offset() + $L)", GETTER_NAMES.get(fieldCountType),
-                        offset(FIELD_COUNT))
-                    .build());
+                if (byteOrder == NATIVE)
+                {
+                    fieldCountMethodBuilder.addStatement("return buffer().$L(offset() + $L)", GETTER_NAMES.get(fieldCountType),
+                        offset(FIELD_COUNT));
+                }
+                else
+                {
+                    fieldCountMethodBuilder.addStatement("return buffer().$L(offset() + $L, $T.BIG_ENDIAN)",
+                        GETTER_NAMES.get(fieldCountType), offset(FIELD_COUNT), ByteOrder.class);
+                }
+                builder.addMethod(fieldCountMethodBuilder.build());
             }
             else
             {
-                builder.addMethod(methodBuilder("fieldCount")
-                    .addModifiers(PUBLIC)
-                    .returns(int.class)
+                builder.addMethod(fieldCountMethodBuilder
                     .addAnnotation(Override.class)
                     .addStatement("return $L.get().fieldCount()", variantRO(resolver.resolveClass(templateType)))
                     .build());
@@ -779,18 +791,21 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         private final TypeResolver resolver;
         private final Byte nullValue;
         private final AstType templateType;
+        private final AstByteOrder byteOrder;
 
         private MemberAccessorGenerator(
             ClassName thisType,
             TypeSpec.Builder builder,
             AstType templateType,
             TypeResolver resolver,
-            Byte nullValue)
+            Byte nullValue,
+            AstByteOrder byteOrder)
         {
             super(thisType, builder);
             this.resolver = resolver;
             this.nullValue = nullValue;
             this.templateType = templateType;
+            this.byteOrder = byteOrder;
         }
 
         public MemberAccessorGenerator addMember(
@@ -823,11 +838,19 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         {
             if (nullValue == null && templateType == null)
             {
-                builder.addMethod(methodBuilder("bitmask")
+                MethodSpec.Builder bitmaskMethodBuilder = methodBuilder("bitmask")
                     .addModifiers(PRIVATE)
-                    .returns(long.class)
-                    .addStatement("return buffer().getLong(offset() + $L)", offset(BIT_MASK))
-                    .build());
+                    .returns(long.class);
+                if (byteOrder == NATIVE)
+                {
+                    bitmaskMethodBuilder.addStatement("return buffer().getLong(offset() + $L)", offset(BIT_MASK));
+                }
+                else
+                {
+                    bitmaskMethodBuilder.addStatement("return buffer().getLong(offset() + $L, $T.BIG_ENDIAN)", offset(BIT_MASK),
+                        ByteOrder.class);
+                }
+                builder.addMethod(bitmaskMethodBuilder.build());
             }
             return super.build();
         }
@@ -1367,17 +1390,20 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         private final TypeName lengthTypeName;
         private final AstType templateType;
         private final TypeResolver resolver;
+        private final AstByteOrder byteOrder;
 
         private LimitMethodGenerator(
             TypeName lengthTypeName,
             AstType templateType,
-            TypeResolver resolver)
+            TypeResolver resolver,
+            AstByteOrder byteOrder)
         {
             super(methodBuilder("limit"));
 
             this.lengthTypeName = lengthTypeName;
             this.templateType = templateType;
             this.resolver = resolver;
+            this.byteOrder = byteOrder;
         }
 
         @Override
@@ -1388,8 +1414,16 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 .returns(int.class);
             if (templateType == null)
             {
-                builder.addStatement("return offset() + buffer().$L(offset() + $L)", GETTER_NAMES.get(lengthTypeName),
-                    offset(LENGTH));
+                if (byteOrder == NATIVE)
+                {
+                    builder.addStatement("return offset() + buffer().$L(offset() + $L)", GETTER_NAMES.get(lengthTypeName),
+                        offset(LENGTH));
+                }
+                else
+                {
+                    builder.addStatement("return offset() + buffer().$L(offset() + $L, $T.BIG_ENDIAN)",
+                        GETTER_NAMES.get(lengthTypeName), offset(LENGTH), ByteOrder.class);
+                }
             }
             else
             {
@@ -1553,7 +1587,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             memberAccessor.addMember(name, type, typeName, isRequired);
             memberMutator.addMember(name, type, typeName, unsignedType, usedAsSize, byteOrder, isRequired, arrayItemTypeName,
                 mapKeyType, mapValueType, mapParamName);
-            buildMethod.addMember(name, isRequired);
+            buildMethod.addMember(name, isRequired, byteOrder);
         }
 
         @Override
@@ -2506,6 +2540,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             private final TypeName lengthTypeName;
             private final TypeName fieldCountTypeName;
             private final Byte nullValue;
+            private AstByteOrder byteOrder;
             private int position;
             private Map<String, Integer> requiredFieldPosition;
 
@@ -2526,12 +2561,18 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 this.lengthTypeName = lengthTypeName;
                 this.fieldCountTypeName = fieldCountTypeName;
                 this.nullValue = nullValue;
+                this.byteOrder = NATIVE;
             }
 
             public BuildMethodGenerator addMember(
                 String name,
-                boolean isRequired)
+                boolean isRequired,
+                AstByteOrder byteOrder)
             {
+                if (this.byteOrder == NATIVE && byteOrder == NETWORK)
+                {
+                    this.byteOrder = byteOrder;
+                }
                 if (isRequired)
                 {
                     if (nullValue == null && templateType == null)
@@ -2561,7 +2602,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                         .build();
                 }
                 final String putLength = lengthTypeName.equals(TypeName.BYTE) ? "buffer().$L(offset()" +
-                    " + $L, (byte) (limit() - offset()))" : "buffer().$L(offset() + $L, limit() - offset())";
+                    " + $L, (byte) (limit() - offset()))" : String.format("buffer().$L(offset() + $L, limit() - offset()%s)",
+                    byteOrder == NATIVE ? "" : ", $T.BIG_ENDIAN");
                 if (nullValue == null)
                 {
                     return generateBuild(putLength);
@@ -2573,10 +2615,24 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 String putLength)
             {
                 final String putFieldCount = fieldCountTypeName.equals(TypeName.BYTE) ? "buffer().$L(offset() " +
-                    "+ $L, (byte) (Long.bitCount(fieldsMask)))" : "buffer().$L(offset() + $L, Long.bitCount(fieldsMask))";
-                return builder.addStatement(putLength, PUTTER_NAMES.get(lengthTypeName), offset(LENGTH))
-                    .addStatement(putFieldCount, PUTTER_NAMES.get(fieldCountTypeName), offset(FIELD_COUNT))
-                    .addStatement("buffer().putLong(offset() + $L, fieldsMask)", offset(BIT_MASK))
+                    "+ $L, (byte) (Long.bitCount(fieldsMask)))" : String.format("buffer().$L(offset() + $L, Long.bitCount" +
+                    "(fieldsMask)%s)", byteOrder == NATIVE ? "" : ", $T.BIG_ENDIAN");
+                if (byteOrder == NETWORK && !fieldCountTypeName.equals(TypeName.BYTE))
+                {
+                    builder
+                        .addStatement(putLength, PUTTER_NAMES.get(lengthTypeName), offset(LENGTH), ByteOrder.class)
+                        .addStatement(putFieldCount, PUTTER_NAMES.get(fieldCountTypeName), offset(FIELD_COUNT), ByteOrder.class)
+                        .addStatement("buffer().putLong(offset() + $L, fieldsMask, $T.BIG_ENDIAN)", offset(BIT_MASK),
+                            ByteOrder.class);
+                }
+                else
+                {
+                    builder
+                        .addStatement(putLength, PUTTER_NAMES.get(lengthTypeName), offset(LENGTH))
+                        .addStatement(putFieldCount, PUTTER_NAMES.get(fieldCountTypeName), offset(FIELD_COUNT))
+                        .addStatement("buffer().putLong(offset() + $L, fieldsMask)", offset(BIT_MASK));
+                }
+                return builder
                     .addStatement("return super.build()")
                     .build();
             }
@@ -2585,9 +2641,20 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 String putLength)
             {
                 final String putFieldCount = fieldCountTypeName.equals(TypeName.BYTE) ? "buffer().$L(offset() " +
-                    "+ $L, (byte) (lastFieldSet + 1))" : "buffer().$L(offset() + $L, lastFieldSet + 1)";
-                return builder.addStatement(putLength, PUTTER_NAMES.get(lengthTypeName), offset(LENGTH))
-                    .addStatement(putFieldCount, PUTTER_NAMES.get(fieldCountTypeName), offset(FIELD_COUNT))
+                    "+ $L, (byte) (lastFieldSet + 1))" : String.format("buffer().$L(offset() + $L, lastFieldSet + 1%s)",
+                    byteOrder == NATIVE ? "" : ", $T.BIG_ENDIAN");
+                if (byteOrder == NETWORK && !fieldCountTypeName.equals(TypeName.BYTE))
+                {
+                    builder.addStatement(putLength, PUTTER_NAMES.get(lengthTypeName), offset(LENGTH), ByteOrder.class)
+                        .addStatement(putFieldCount, PUTTER_NAMES.get(fieldCountTypeName), offset(FIELD_COUNT), ByteOrder.class);
+                }
+                else
+                {
+                    builder
+                        .addStatement(putLength, PUTTER_NAMES.get(lengthTypeName), offset(LENGTH))
+                        .addStatement(putFieldCount, PUTTER_NAMES.get(fieldCountTypeName), offset(FIELD_COUNT));
+                }
+                return builder
                     .addStatement("return super.build()")
                     .build();
             }

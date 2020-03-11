@@ -15,6 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -37,6 +38,8 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
 
     private static final int LENGTH_MAX_VALUE = 0xFFFF;
 
+    private final ByteOrder byteOrder;
+
     private final V itemRO;
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
@@ -47,12 +50,21 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
         V itemRO)
     {
         this.itemRO = itemRO;
+        this.byteOrder = ByteOrder.nativeOrder();
+    }
+
+    public Array16FW(
+        V itemRO,
+        ByteOrder byteOrder)
+    {
+        this.itemRO = itemRO;
+        this.byteOrder = byteOrder;
     }
 
     @Override
     public int length()
     {
-        return buffer().getShort(offset() + LENGTH_OFFSET);
+        return buffer().getShort(offset() + LENGTH_OFFSET, byteOrder);
     }
 
     @Override
@@ -64,7 +76,7 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
     @Override
     public int fieldCount()
     {
-        return buffer().getShort(offset() + FIELD_COUNT_OFFSET);
+        return buffer().getShort(offset() + FIELD_COUNT_OFFSET, byteOrder);
     }
 
     @Override
@@ -186,6 +198,8 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
     public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
         extends ArrayFW.Builder<Array16FW<V>, B, V>
     {
+        private final ByteOrder byteOrder;
+
         private final B itemRW;
 
         private final V itemRO;
@@ -199,6 +213,18 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
             V itemRO)
         {
             super(new Array16FW<>(itemRO));
+            this.byteOrder = ByteOrder.nativeOrder();
+            this.itemRW = itemRW;
+            this.itemRO = itemRO;
+        }
+
+        public Builder(
+            B itemRW,
+            V itemRO,
+            ByteOrder byteOrder)
+        {
+            super(new Array16FW<>(itemRO));
+            this.byteOrder = byteOrder;
             this.itemRW = itemRW;
             this.itemRO = itemRO;
         }
@@ -238,8 +264,8 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
             this.maxLength = maxLength;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
-            buffer().putShort(offset() + LENGTH_OFFSET, (short) length);
-            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) (fieldCount  + FIELD_COUNT_SIZE));
+            buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder);
+            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) (fieldCount  + FIELD_COUNT_SIZE), byteOrder);
             return this;
         }
 
@@ -264,8 +290,8 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
-            buffer().putShort(offset() + LENGTH_OFFSET, (short) length);
-            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount);
+            buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder);
+            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount, byteOrder);
             final ArrayFW<V> array = super.build();
             final int maxLimit = maxLimit();
 
@@ -284,7 +310,7 @@ public final class Array16FW<V extends Flyweight> extends ArrayFW<V>
             }
 
             length = limit() - offset() - FIELD_COUNT_OFFSET;
-            buffer().putShort(offset() + LENGTH_OFFSET, (short) length);
+            buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder);
             final Array16FW<V> array16 = super.build();
             array16.maxLength(maxLength);
             return array16;

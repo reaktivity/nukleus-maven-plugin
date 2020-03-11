@@ -841,6 +841,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             final String qualifiedListName = String.format("%s%s", prefix, listName);
             astTypesByQualifiedName.put(qualifiedListName, AstType.dynamicType(qualifiedListName));
             listBuilder.name(listName);
+            listBuilder.byteOrder(byteOrder);
             return super.visitList_type(ctx);
         }
 
@@ -1169,6 +1170,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public VariantVisitor()
         {
             this.variantBuilder = new AstVariantNode.Builder();
+            this.variantBuilder.byteOrder(byteOrder);
         }
 
         @Override

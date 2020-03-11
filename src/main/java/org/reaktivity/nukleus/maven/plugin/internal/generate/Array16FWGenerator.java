@@ -27,6 +27,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DI
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -71,10 +72,12 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addField(fieldsOffsetConstant())
             .addField(lengthMaxValueConstant())
             .addField(emptyBufferConstant())
+            .addField(byteOrderField())
             .addField(itemField())
             .addField(itemsField())
             .addField(maxLengthField())
             .addMethod(constructor())
+            .addMethod(constructorWithByteOrder())
             .addMethod(lengthMethod())
             .addMethod(fieldsOffsetMethod())
             .addMethod(fieldCountMethod())
@@ -142,6 +145,12 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .build();
     }
 
+    private FieldSpec byteOrderField()
+    {
+        return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL)
+            .build();
+    }
+
     private FieldSpec itemField()
     {
         return FieldSpec.builder(typeVarV, "itemRO", PRIVATE, FINAL)
@@ -167,6 +176,18 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addModifiers(PUBLIC)
             .addParameter(typeVarV, "itemRO")
             .addStatement("this.itemRO = itemRO")
+            .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+            .build();
+    }
+
+    private MethodSpec constructorWithByteOrder()
+    {
+        return constructorBuilder()
+            .addModifiers(PUBLIC)
+            .addParameter(typeVarV, "itemRO")
+            .addParameter(ByteOrder.class, "byteOrder")
+            .addStatement("this.itemRO = itemRO")
+            .addStatement("this.byteOrder = byteOrder")
             .build();
     }
 
@@ -176,7 +197,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getShort(offset() + LENGTH_OFFSET)")
+            .addStatement("return buffer().getShort(offset() + LENGTH_OFFSET, byteOrder)")
             .build();
     }
 
@@ -196,7 +217,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getShort(offset() + FIELD_COUNT_OFFSET)")
+            .addStatement("return buffer().getShort(offset() + FIELD_COUNT_OFFSET, byteOrder)")
             .build();
     }
 
@@ -401,16 +422,24 @@ public final class Array16FWGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
+                .addField(byteOrderField())
                 .addField(itemRWField())
                 .addField(itemROField())
                 .addField(fieldCountField())
                 .addField(maxLengthField())
                 .addMethod(constructor())
+                .addMethod(constructorWithByteOrder())
                 .addMethod(fieldsOffsetMethod())
                 .addMethod(itemMethod())
                 .addMethod(itemsMethod())
                 .addMethod(wrapMethod())
                 .addMethod(buildMethod())
+                .build();
+        }
+
+        private FieldSpec byteOrderField()
+        {
+            return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL)
                 .build();
         }
 
@@ -445,6 +474,21 @@ public final class Array16FWGenerator extends ClassSpecGenerator
                 .addParameter(typeVarB, "itemRW")
                 .addParameter(typeVarV, "itemRO")
                 .addStatement("super(new Array16FW<>(itemRO))")
+                .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+                .addStatement("this.itemRW = itemRW")
+                .addStatement("this.itemRO = itemRO")
+                .build();
+        }
+
+        private MethodSpec constructorWithByteOrder()
+        {
+            return constructorBuilder()
+                .addModifiers(PUBLIC)
+                .addParameter(typeVarB, "itemRW")
+                .addParameter(typeVarV, "itemRO")
+                .addParameter(ByteOrder.class, "byteOrder")
+                .addStatement("super(new Array16FW<>(itemRO))")
+                .addStatement("this.byteOrder = byteOrder")
                 .addStatement("this.itemRW = itemRW")
                 .addStatement("this.itemRO = itemRO")
                 .build();
@@ -497,8 +541,9 @@ public final class Array16FWGenerator extends ClassSpecGenerator
                 .addStatement("this.maxLength = maxLength")
                 .addStatement("assert length <= LENGTH_MAX_VALUE : \"Length is too large\"")
                 .addStatement("assert fieldCount <= LENGTH_MAX_VALUE : \"Field count is too large\"")
-                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length)")
-                .addStatement("buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) (fieldCount  + FIELD_COUNT_SIZE))")
+                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder)")
+                .addStatement("buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) (fieldCount  + FIELD_COUNT_SIZE)" +
+                    ", byteOrder)")
                 .addStatement("return this")
                 .build();
         }
@@ -531,8 +576,8 @@ public final class Array16FWGenerator extends ClassSpecGenerator
                 .addStatement("int length = limit() - offset() - FIELD_COUNT_OFFSET")
                 .addStatement("assert length <= LENGTH_MAX_VALUE : \"Length is too large\"")
                 .addStatement("assert fieldCount <= LENGTH_MAX_VALUE : \"Field count is too large\"")
-                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length)")
-                .addStatement("buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount)")
+                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder)")
+                .addStatement("buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount, byteOrder)")
                 .addStatement("final ArrayFW<V> array = super.build()")
                 .addStatement("final int maxLimit = maxLimit()")
                 .addStatement("limit(fieldsOffset())")
@@ -546,7 +591,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
                 .addStatement("limit(newLimit)")
                 .endControlFlow()
                 .addStatement("length = limit() - offset() - FIELD_COUNT_OFFSET")
-                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length)")
+                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder)")
                 .addStatement("final Array16FW<V> array16 = super.build()")
                 .addStatement("array16.maxLength(maxLength)")
                 .addStatement("return array16")

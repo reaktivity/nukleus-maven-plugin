@@ -26,6 +26,8 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BI
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
+import java.nio.ByteOrder;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -59,6 +61,9 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
             .addField(lengthSizeConstant())
             .addField(lengthOffsetConstant())
             .addField(valueOffsetConstant())
+            .addField(byteOrderField())
+            .addMethod(constructor())
+            .addMethod(constructorWithByteOrder())
             .addMethod(getMethod())
             .addMethod(lengthMethod())
             .addMethod(tryWrapMethod())
@@ -91,6 +96,29 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
             .build();
     }
 
+    private FieldSpec byteOrderField()
+    {
+        return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL)
+            .build();
+    }
+
+    private MethodSpec constructor()
+    {
+        return constructorBuilder()
+            .addModifiers(PUBLIC)
+            .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+            .build();
+    }
+
+    private MethodSpec constructorWithByteOrder()
+    {
+        return constructorBuilder()
+            .addModifiers(PUBLIC)
+            .addParameter(ByteOrder.class, "byteOrder")
+            .addStatement("this.byteOrder = byteOrder")
+            .build();
+    }
+
     private MethodSpec getMethod()
     {
         TypeVariableName typeVarT = TypeVariableName.get("T");
@@ -110,7 +138,7 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getShort(offset() + LENGTH_OFFSET) & 0xFFFF")
+            .addStatement("return buffer().getShort(offset() + LENGTH_OFFSET, byteOrder) & 0xFFFF")
             .build();
     }
 
@@ -189,7 +217,9 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
+                .addField(byteOrderField())
                 .addMethod(constructor())
+                .addMethod(constructorWithByteOrder())
                 .addMethod(setWithFlyweight())
                 .addMethod(setWithBuffer())
                 .addMethod(setWithByteArray())
@@ -197,11 +227,27 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
                 .build();
         }
 
+        private FieldSpec byteOrderField()
+        {
+            return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL).build();
+        }
+
         private MethodSpec constructor()
         {
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addStatement("super(new BoundedOctets16FW())")
+                .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+                .build();
+        }
+
+        private MethodSpec constructorWithByteOrder()
+        {
+            return constructorBuilder()
+                .addModifiers(PUBLIC)
+                .addParameter(ByteOrder.class, "byteOrder")
+                .addStatement("super(new BoundedOctets16FW())")
+                .addStatement("this.byteOrder = byteOrder")
                 .build();
         }
 
@@ -214,7 +260,7 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
                 .addParameter(boundedOctetsType, "value")
                 .addStatement("int newLimit = offset() + LENGTH_SIZE + value.length()")
                 .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) (value.length() & 0xFFFF))")
+                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) (value.length() & 0xFFFF), byteOrder)")
                 .addStatement("buffer().putBytes(offset() + VALUE_OFFSET, value.buffer(), value.offset() + VALUE_OFFSET, value" +
                     ".length())")
                 .addStatement("limit(newLimit)")
@@ -233,7 +279,7 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "length")
                 .addStatement("int newLimit = offset() + LENGTH_SIZE + length")
                 .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) (length & 0xFFFF))")
+                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) (length & 0xFFFF), byteOrder)")
                 .addStatement("buffer().putBytes(offset() + VALUE_OFFSET, value, offset, length)")
                 .addStatement("limit(newLimit)")
                 .addStatement("return this")
@@ -249,7 +295,7 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
                 .addParameter(byte[].class, "value")
                 .addStatement("int newLimit = offset() + LENGTH_SIZE + value.length")
                 .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) (value.length & 0xFFFF))")
+                .addStatement("buffer().putShort(offset() + LENGTH_OFFSET, (short) (value.length & 0xFFFF), byteOrder)")
                 .addStatement("buffer().putBytes(offset() + VALUE_OFFSET, value)")
                 .addStatement("limit(newLimit)")
                 .addStatement("return this")

@@ -15,6 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -37,6 +38,8 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
 
     private static final long LENGTH_MAX_VALUE = 0xFFFFFFFFL;
 
+    private final ByteOrder byteOrder;
+
     private final V itemRO;
 
     private final DirectBuffer itemsRO = new UnsafeBuffer(0L, 0);
@@ -47,12 +50,21 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
         V itemRO)
     {
         this.itemRO = itemRO;
+        this.byteOrder = ByteOrder.nativeOrder();
+    }
+
+    public Array32FW(
+        V itemRO,
+        ByteOrder byteOrder)
+    {
+        this.itemRO = itemRO;
+        this.byteOrder = byteOrder;
     }
 
     @Override
     public int length()
     {
-        return buffer().getInt(offset() + LENGTH_OFFSET);
+        return buffer().getInt(offset() + LENGTH_OFFSET, byteOrder);
     }
 
     @Override
@@ -64,7 +76,7 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
     @Override
     public int fieldCount()
     {
-        return buffer().getInt(offset() + FIELD_COUNT_OFFSET);
+        return buffer().getInt(offset() + FIELD_COUNT_OFFSET, byteOrder);
     }
 
     @Override
@@ -186,6 +198,8 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
     public static final class Builder<B extends Flyweight.Builder<V>, V extends Flyweight>
         extends ArrayFW.Builder<Array32FW<V>, B, V>
     {
+        private final ByteOrder byteOrder;
+
         private final B itemRW;
 
         private final V itemRO;
@@ -199,6 +213,18 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
             V itemRO)
         {
             super(new Array32FW<>(itemRO));
+            this.byteOrder = ByteOrder.nativeOrder();
+            this.itemRW = itemRW;
+            this.itemRO = itemRO;
+        }
+
+        public Builder(
+            B itemRW,
+            V itemRO,
+            ByteOrder byteOrder)
+        {
+            super(new Array32FW<>(itemRO));
+            this.byteOrder = byteOrder;
             this.itemRW = itemRW;
             this.itemRO = itemRO;
         }
@@ -236,8 +262,8 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
             limit(newLimit);
             this.fieldCount = fieldCount;
             this.maxLength = maxLength;
-            buffer().putInt(offset() + LENGTH_OFFSET, length);
-            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount + FIELD_COUNT_SIZE);
+            buffer().putInt(offset() + LENGTH_OFFSET, length, byteOrder);
+            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount + FIELD_COUNT_SIZE, byteOrder);
             return this;
         }
 
@@ -260,8 +286,8 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
         public Array32FW<V> build()
         {
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
-            buffer().putInt(offset() + LENGTH_OFFSET, length);
-            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount);
+            buffer().putInt(offset() + LENGTH_OFFSET, length, byteOrder);
+            buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount, byteOrder);
             final ArrayFW<V> array = super.build();
             final int maxLimit = maxLimit();
 
@@ -280,7 +306,7 @@ public final class Array32FW<V extends Flyweight> extends ArrayFW<V>
             }
 
             length = limit() - offset() - FIELD_COUNT_OFFSET;
-            buffer().putInt(offset() + LENGTH_OFFSET, length);
+            buffer().putInt(offset() + LENGTH_OFFSET, length, byteOrder);
             final Array32FW<V> array32 = super.build();
             array32.maxLength(maxLength);
             return array32;

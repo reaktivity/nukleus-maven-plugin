@@ -15,6 +15,7 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -37,6 +38,8 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
 
     private static final int LENGTH_MAX_VALUE = 0xFFFF;
 
+    private final ByteOrder byteOrder;
+
     private final K keyRO;
 
     private final V valueRO;
@@ -49,18 +52,29 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
     {
         this.keyRO = keyRO;
         this.valueRO = valueRO;
+        this.byteOrder = ByteOrder.nativeOrder();
+    }
+
+    public Map16FW(
+        K keyRO,
+        V valueRO,
+        ByteOrder byteOrder)
+    {
+        this.keyRO = keyRO;
+        this.valueRO = valueRO;
+        this.byteOrder = byteOrder;
     }
 
     @Override
     public int length()
     {
-        return buffer().getShort(offset() + LENGTH_OFFSET);
+        return buffer().getShort(offset() + LENGTH_OFFSET, byteOrder);
     }
 
     @Override
     public int fieldCount()
     {
-        return buffer().getShort(offset() + FIELD_COUNT_OFFSET);
+        return buffer().getShort(offset() + FIELD_COUNT_OFFSET, byteOrder);
     }
 
     @Override
@@ -131,6 +145,8 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
     public static final class Builder<K extends Flyweight, V extends Flyweight, KB extends Flyweight.Builder<K>,
         VB extends Flyweight.Builder<V>> extends MapFW.Builder<Map16FW, K, V, KB, VB>
     {
+        private final ByteOrder byteOrder;
+
         private int fieldCount;
 
         private final KB keyRW;
@@ -146,6 +162,20 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
             super(new Map16FW<>(keyRO, valueRO));
             this.keyRW = keyRW;
             this.valueRW = valueRW;
+            this.byteOrder = ByteOrder.nativeOrder();
+        }
+
+        public Builder(
+            K keyRO,
+            V valueRO,
+            KB keyRW,
+            VB valueRW,
+            ByteOrder byteOrder)
+        {
+            super(new Map16FW<>(keyRO, valueRO));
+            this.keyRW = keyRW;
+            this.valueRW = valueRW;
+            this.byteOrder = byteOrder;
         }
 
         @Override
@@ -200,8 +230,8 @@ public final class Map16FW<K extends Flyweight, V extends Flyweight> extends Map
             int length = limit() - offset() - FIELD_COUNT_OFFSET;
             assert length <= LENGTH_MAX_VALUE : "Length is too large";
             assert fieldCount <= LENGTH_MAX_VALUE : "Field count is too large";
-            buffer().putShort(offset() + LENGTH_OFFSET, (short) length);
-            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount);
+            buffer().putShort(offset() + LENGTH_OFFSET, (short) length, byteOrder);
+            buffer().putShort(offset() + FIELD_COUNT_OFFSET, (short) fieldCount, byteOrder);
             return super.build();
         }
     }
