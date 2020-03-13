@@ -2001,7 +2001,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 addVariableDefinitions();
 
                 builder.beginControlFlow("switch (highestByteIndex)");
-                int lastCaseSet = 0;
+                int lastCaseSet = -1;
                 for (TypeWidth type : kindTypeSet)
                 {
                     int width = type.width();
@@ -2009,9 +2009,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     {
                     case 8:
                         hasConstant = addCase8(type, isParameterTypeLong, hasConstant);
+                        lastCaseSet = 0;
                         break;
                     case 16:
-                        hasConstant = addCase16(type, hasConstant, isParameterTypeLong);
+                        hasConstant = addCase16(type, hasConstant, isParameterTypeLong, lastCaseSet);
                         lastCaseSet = 1;
                         break;
                     case 32:
@@ -2105,12 +2106,18 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private boolean addCase16(
                 TypeWidth type,
                 boolean hasConstant,
-                boolean isParameterTypeLong)
+                boolean isParameterTypeLong,
+                int lastCaseSet)
             {
                 if (hasConstant)
                 {
                     addDefaultCase(type, isParameterTypeLong);
                     hasConstant = false;
+                }
+                if (lastCaseSet < 0)
+                {
+                    builder.beginControlFlow("case 0:")
+                        .endControlFlow();
                 }
                 builder.beginControlFlow("case 1:");
                 if (isStringType(ofType) && !kindTypeName.isPrimitive())
@@ -2137,6 +2144,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 {
                     addDefaultCase(type, isParameterTypeLong);
                     hasConstant = false;
+                }
+                if (lastCaseSet < 0)
+                {
+                    builder.beginControlFlow("case 0:")
+                        .endControlFlow();
                 }
                 if (lastCaseSet < 1)
                 {
