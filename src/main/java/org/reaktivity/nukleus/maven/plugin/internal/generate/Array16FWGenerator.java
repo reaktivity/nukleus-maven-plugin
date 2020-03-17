@@ -38,6 +38,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import com.squareup.javapoet.WildcardTypeName;
 
 public final class Array16FWGenerator extends ClassSpecGenerator
 {
@@ -233,7 +234,8 @@ public final class Array16FWGenerator extends ClassSpecGenerator
 
     private MethodSpec forEachMethod()
     {
-        TypeName consumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
+        TypeName itemType = WildcardTypeName.supertypeOf(typeVarV);
+        TypeName consumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), itemType);
 
         return methodBuilder("forEach")
             .addAnnotation(Override.class)
@@ -251,7 +253,8 @@ public final class Array16FWGenerator extends ClassSpecGenerator
 
     private MethodSpec anyMatchMethod()
     {
-        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
+        TypeName itemType = WildcardTypeName.supertypeOf(typeVarV);
+        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), itemType);
 
         return methodBuilder("anyMatch")
             .addAnnotation(Override.class)
@@ -272,7 +275,8 @@ public final class Array16FWGenerator extends ClassSpecGenerator
 
     private MethodSpec matchFirstMethod()
     {
-        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
+        TypeName itemType = WildcardTypeName.supertypeOf(typeVarV);
+        TypeName predicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), itemType);
 
         return methodBuilder("matchFirst")
             .addAnnotation(Override.class)

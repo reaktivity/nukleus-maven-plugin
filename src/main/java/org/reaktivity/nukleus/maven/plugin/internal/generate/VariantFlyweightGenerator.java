@@ -1038,8 +1038,9 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             super(thisType, builder);
             if (isArrayType(ofType) && !kindTypeName.isPrimitive())
             {
-                TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
-                TypeName parameterizedPredicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), typeVarV);
+                TypeName itemType = WildcardTypeName.supertypeOf(typeVarV);
+                TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), itemType);
+                TypeName parameterizedPredicateType = ParameterizedTypeName.get(ClassName.get(Predicate.class), itemType);
                 builder
                     .addMethod(methodBuilder("length")
                         .addAnnotation(Override.class)
