@@ -263,13 +263,18 @@ public final class ListWithEnumAndVariantWithDefaultFW extends ListFW
 
         private Builder defaultField1()
         {
-            variantOfListRW.field((b, o, m) ->
-            {
-                b.putByte(o, MISSING_FIELD_BYTE);
-                return MISSING_FIELD_BYTE_SIZE;
-            });
+            variantOfListRW.field(Builder::missingField);
             lastFieldSet = INDEX_FIELD1;
             return this;
+        }
+
+        private static int missingField(
+            MutableDirectBuffer buffer,
+            int offset,
+            int maxLimit)
+        {
+            buffer.putByte(offset, MISSING_FIELD_BYTE);
+            return MISSING_FIELD_BYTE_SIZE;
         }
 
         @Override

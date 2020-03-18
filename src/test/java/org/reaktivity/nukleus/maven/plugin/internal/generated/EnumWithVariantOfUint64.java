@@ -33,7 +33,7 @@ public enum EnumWithVariantOfUint64
 
     static
     {
-        Long2ObjectHashMap<EnumWithVariantOfUint64> valueByLong = new Long2ObjectHashMap<>(5, 1.0f);
+        Long2ObjectHashMap<EnumWithVariantOfUint64> valueByLong = new Long2ObjectHashMap<>(5, 0.9f);
         valueByLong.put(0x10L, TYPE1);
         valueByLong.put(0x11L, TYPE2);
         valueByLong.put(0x12L, TYPE3);
