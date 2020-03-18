@@ -500,7 +500,7 @@ scope test
 //        list ListWithEnumAndVariantWithDefault using VariantOfList
 //        {
 //            EnumWithVariantOfUint64 field1 = TYPE3;
-//            VariantEnumKindOfUint8 field2 = ICHI;
+//            VariantEnumKindOfUint8 field2 = 1;
 //        }
 //
 //        // union that takes in enum

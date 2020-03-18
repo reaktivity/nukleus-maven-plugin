@@ -36,7 +36,7 @@ public final class ListWithEnumAndVariantWithDefaultFW extends ListFW
 
     private static final EnumWithVariantOfUint64 DEFAULT_VALUE_FIELD1 = EnumWithVariantOfUint64.TYPE3;
 
-    private static final EnumWithUint8 DEFAULT_VALUE_FIELD2 = EnumWithUint8.ICHI;
+    private static final int DEFAULT_VALUE_FIELD2 = 1;
 
     private static final byte MISSING_FIELD_BYTE = VariantOfListFW.MISSING_FIELD_PLACEHOLDER;
 
@@ -57,7 +57,7 @@ public final class ListWithEnumAndVariantWithDefaultFW extends ListFW
 
     public int field2()
     {
-        return (bitmask & MASK_FIELD2) != 0L ? field2RO.get() : DEFAULT_VALUE_FIELD2.value();
+        return (bitmask & MASK_FIELD2) != 0L ? field2RO.get() : DEFAULT_VALUE_FIELD2;
     }
 
     public boolean hasField1()
@@ -252,8 +252,23 @@ public final class ListWithEnumAndVariantWithDefaultFW extends ListFW
             int value)
         {
             assert lastFieldSet < INDEX_FIELD2 : "Field \"field2\" cannot be set out of order";
+            if (lastFieldSet < INDEX_FIELD1)
+            {
+                defaultField1();
+            }
             variantOfListRW.field((b, o, m) -> field2RW.wrap(b, o, m).set(value).build().sizeof());
             lastFieldSet = INDEX_FIELD2;
+            return this;
+        }
+
+        private Builder defaultField1()
+        {
+            variantOfListRW.field((b, o, m) ->
+            {
+                b.putByte(o, MISSING_FIELD_BYTE);
+                return MISSING_FIELD_BYTE_SIZE;
+            });
+            lastFieldSet = INDEX_FIELD1;
             return this;
         }
 
