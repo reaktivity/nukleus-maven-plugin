@@ -34,11 +34,15 @@ public final class EnumWithVariantOfUint64FW extends Flyweight
         int offset,
         int maxLimit)
     {
-        if (super.tryWrap(buffer, offset, maxLimit) == null || limit() > maxLimit)
+        if (super.tryWrap(buffer, offset, maxLimit) == null)
         {
             return null;
         }
         if (variantWithVariantCaseRO.tryWrap(buffer, offset, maxLimit) == null)
+        {
+            return null;
+        }
+        if (limit() > maxLimit)
         {
             return null;
         }
@@ -114,7 +118,7 @@ public final class EnumWithVariantOfUint64FW extends Flyweight
         {
             if (!valueSet)
             {
-                throw new IllegalStateException("EnumWithInt8 not set");
+                throw new IllegalStateException("EnumWithVariantOfUint64 not set");
             }
             return super.build();
         }

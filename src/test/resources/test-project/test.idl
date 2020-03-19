@@ -500,13 +500,16 @@ scope test
 //        list ListWithEnumAndVariantWithDefault using VariantOfList
 //        {
 //            EnumWithVariantOfUint64 field1 = TYPE3;
-//            VariantEnumKindOfUint8 field2 = 1;
+//            required EnumWithVariantOfUint64 field2;
+//            VariantOfInt32 field3 = 100;
+//            VariantEnumKindOfUint8 field4 = 1;
+//            VariantEnumKindOfUint8 field5;
 //        }
 //
 //        // union that takes in enum
 //        union UnionWithEnum switch (EnumWithVariantOfUint64)
 //        {
-//            case TYPE2: VariantOfList variantOfList;
+//            case TYPE2: ListWithEnumAndVariantWithDefault listValue;
 //        }
     }
 }
