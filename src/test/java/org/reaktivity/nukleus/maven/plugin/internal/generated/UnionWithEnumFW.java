@@ -150,7 +150,7 @@ public final class UnionWithEnumFW extends Flyweight
         {
             kind(KIND_VARIANT_OF_LIST);
             ListWithEnumAndVariantWithDefaultFW.Builder listWithEnumAndVariantWithDefault = listWithEnumAndVariantWithDefault();
-            listWithEnumAndVariantWithDefault.fields(value.fieldCount(), value.buffer(), value.offset(), value.sizeof());
+            listWithEnumAndVariantWithDefault.fields(value.fieldCount(), value.fields(), 0, value.fields().capacity());
             limit(listWithEnumAndVariantWithDefault.build().limit());
             return this;
         }
