@@ -34,9 +34,9 @@ public final class VariantWithVariantCaseFW  extends Flyweight
         return enumWithInt8RO.get();
     }
 
-    public long getAsVariantUint8KindOfUint64()
+    public VariantUint8KindOfUint64FW getAsVariantUint8KindOfUint64()
     {
-        return variantUint8KindOfUint64RO.get();
+        return variantUint8KindOfUint64RO;
     }
 
     public long get()
@@ -44,7 +44,7 @@ public final class VariantWithVariantCaseFW  extends Flyweight
         switch (kind())
         {
         case ONE:
-            return getAsVariantUint8KindOfUint64();
+            return getAsVariantUint8KindOfUint64().get();
         default:
             throw new IllegalStateException("Unrecognized kind: " + kind());
         }

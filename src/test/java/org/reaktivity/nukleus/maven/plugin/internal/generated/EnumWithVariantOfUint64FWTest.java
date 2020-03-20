@@ -27,6 +27,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithVariantOfUint64;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithVariantOfUint64FW;
 
 public class EnumWithVariantOfUint64FWTest
 {

@@ -479,23 +479,21 @@ scope test
             case ELEVEN:
                 VariantEnumKindOfString;
         }
-// TODO: To be generated
-//        // variant with variant as a type of field
-//        variant VariantWithVariantCase switch (EnumWithInt8) of uint64
-//        {
-//            case ONE: VariantUint8KindOfUint64;
-//        }
-//
-//        // enum with variant
-//        enum EnumWithVariantOfUint64 (VariantWithVariantCase)
-//        {
-//            TYPE1 (0x10L),
-//            TYPE2 (0x11L),
-//            TYPE3 (0x12L),
-//            TYPE4 (0x13L),
-//            TYPE5 (0x14L)
-//        }
-//
+
+        variant VariantWithVariantCase switch (EnumWithInt8) of uint64
+        {
+            case ONE: VariantUint8KindOfUint64;
+        }
+
+        enum EnumWithVariantOfUint64 (VariantWithVariantCase)
+        {
+            TYPE1 (0x10L),
+            TYPE2 (0x11L),
+            TYPE3 (0x12L),
+            TYPE4 (0x13L),
+            TYPE5 (0x14L)
+        }
+
 //        // list : allow default value of enum and variant
 //        list ListWithEnumAndVariantWithDefault using VariantOfList
 //        {

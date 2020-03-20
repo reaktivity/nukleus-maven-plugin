@@ -1901,6 +1901,16 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
+        public AstEnumNode.Builder visitDeclarator(
+            DeclaratorContext ctx)
+        {
+            String enumType = ctx.ID().getText();
+            AstType astEnumType = Objects.requireNonNullElse(astTypesByQualifiedName.get(enumType), lookUpAstType(enumType));
+            enumBuilder.valueType(astEnumType);
+            return super.visitDeclarator(ctx);
+        }
+
+        @Override
         public AstEnumNode.Builder visitEnum_value(
             Enum_valueContext ctx)
         {
@@ -1941,7 +1951,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             RuleContext ctx)
         {
             Function<RuleContext, Object> parser = parserByType.get(enumBuilder.valueType());
-            Object parsed = parser.apply(ctx);
+            Object parsed = parser != null ? parser.apply(ctx) : ctx.getText();
             valueBuilder.value(parsed);
             return defaultResult();
         }

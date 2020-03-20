@@ -195,12 +195,19 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
         String baseName = enumNode.name();
         AstType enumType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
-        TypeName valueTypeName = resolver.resolveType(enumNode.valueType());
-        TypeName unsignedValueTypeName = resolver.resolveUnsignedType(enumNode.valueType());
+        AstType valueType = enumNode.valueType();
+        TypeName valueTypeName = resolver.resolveType(valueType);
+        TypeName enumClassValueTypeName = valueTypeName;
+        if (valueType != null && valueType.isDynamicType())
+        {
+            AstVariantNode variantNode = (AstVariantNode) resolver.resolve(valueType.name());
+            enumClassValueTypeName = resolver.resolveType(variantNode.of());
+        }
+        TypeName unsignedValueTypeName = resolver.resolveUnsignedType(valueType);
         ClassName enumFlyweightName = resolver.resolveClass(enumType);
         ClassName enumTypeName = enumFlyweightName.peerClass(baseName);
 
-        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName, valueTypeName, unsignedValueTypeName);
+        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName, enumClassValueTypeName, unsignedValueTypeName);
         EnumFlyweightGenerator flyweightGenerator = new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(),
             enumTypeName, valueTypeName, unsignedValueTypeName);
 

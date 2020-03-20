@@ -78,10 +78,13 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
-        if (isValueTypeString())
+        if (isValueTypeNonPrimitive())
         {
-            classBuilder.addField(stringROConstant())
-                        .addMethod(stringMethod());
+            classBuilder.addField(nonPrimitiveField());
+            if (isStringType((ClassName) valueTypeName))
+            {
+                classBuilder.addMethod(stringMethod());
+            }
         }
         else
         {
@@ -107,14 +110,16 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         return stringValueTypeByTypeName;
     }
 
-    private boolean isValueTypeString()
+    private boolean isValueTypeNonPrimitive()
     {
         return valueTypeName != null && !valueTypeName.isPrimitive();
     }
 
-    private FieldSpec stringROConstant()
+    private FieldSpec nonPrimitiveField()
     {
-        return FieldSpec.builder(valueTypeName, "stringRO", PRIVATE, FINAL)
+        final String fieldName = isStringType((ClassName) valueTypeName) ? "stringRO" :
+            String.format("%sRO", fieldName(valueTypeName));
+        return FieldSpec.builder(valueTypeName, fieldName, PRIVATE, FINAL)
                         .initializer("new $T()", valueTypeName)
                         .build();
     }
@@ -145,8 +150,10 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
 
     private MethodSpec limitMethod()
     {
-        String returnStatement =
-            String.format("return %s", isValueTypeString() ? "stringRO.limit()" : "offset() + FIELD_SIZE_VALUE");
+        final String limitMethod = !isValueTypeNonPrimitive() ? "" : isStringType((ClassName) valueTypeName) ?
+            "stringRO.limit()" : String.format("%sRO.limit()", fieldName(valueTypeName));
+        final String returnStatement =
+            String.format("return %s", isValueTypeNonPrimitive() ? limitMethod : "offset() + FIELD_SIZE_VALUE");
         return methodBuilder("limit")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
@@ -174,8 +181,10 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                 unsignedHex = " & 0xFFFF_FFFFL";
             }
         }
-        String returnStatement = String.format("return %s", isValueTypeString() ?
+
+        String returnStatement = String.format("return %s", isValueTypeNonPrimitive() ? isStringType((ClassName) valueTypeName) ?
             "stringRO.asString() != null ? $T.valueOf(stringRO.asString().toUpperCase()) : null" :
+            String.format("$T.valueOf(%sRO.get())", fieldName(valueTypeName)) :
             String.format("$T.valueOf(buffer().get%s(offset() + FIELD_OFFSET_VALUE)%s)", bufferType, unsignedHex));
         return methodBuilder("get")
                 .addModifiers(PUBLIC)
@@ -193,12 +202,13 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                .addParameter(int.class, "offset")
                .addParameter(int.class, "maxLimit")
                .returns(thisName);
-        if (isValueTypeString())
+        if (isValueTypeNonPrimitive())
         {
+            final String fieldName = isStringType((ClassName) valueTypeName) ? "string" : fieldName(valueTypeName);
             builder.beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null)")
                    .addStatement("return null")
                    .endControlFlow()
-                   .beginControlFlow("if (stringRO.tryWrap(buffer, offset, maxLimit) == null)")
+                   .beginControlFlow("if ($LRO.tryWrap(buffer, offset, maxLimit) == null)", fieldName)
                    .addStatement("return null")
                    .endControlFlow()
                    .beginControlFlow("if (limit() > maxLimit)")
@@ -226,9 +236,10 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                .addParameter(int.class, "maxLimit")
                .returns(thisName)
                .addStatement("super.wrap(buffer, offset, maxLimit)");
-        if (isValueTypeString())
+        if (isValueTypeNonPrimitive())
         {
-            builder.addStatement("stringRO.wrap(buffer, offset, maxLimit)");
+            final String fieldName = isStringType((ClassName) valueTypeName) ? "string" : fieldName(valueTypeName);
+            builder.addStatement("$LRO.wrap(buffer, offset, maxLimit)", fieldName);
         }
         return builder.addStatement("checkLimit(limit(), maxLimit)")
                       .addStatement("return this")
@@ -280,23 +291,25 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                 .addMethod(wrapMethod())
                 .addMethod(setMethod())
                 .addMethod(setEnumMethod());
-            if (isValueTypeString())
+            if (isValueNonPrimitiveType())
             {
-                classBuilder.addField(fieldStringRW());
+                classBuilder.addField(nonPrimitiveField());
             }
             return classBuilder.addMethod(buildMethod()).build();
         }
 
-        private boolean isValueTypeString()
+        private boolean isValueNonPrimitiveType()
         {
             return valueTypeName != null && !valueTypeName.isPrimitive();
         }
 
-        private FieldSpec fieldStringRW()
+        private FieldSpec nonPrimitiveField()
         {
+            final String fieldName = isStringType((ClassName) valueTypeName) ? "stringRW" :
+                String.format("%sRW", fieldName(valueTypeName));
             ClassName classType = (ClassName) valueTypeName;
             TypeName builderType = classType.nestedClass("Builder");
-            return FieldSpec.builder(builderType, "stringRW", PRIVATE, FINAL)
+            return FieldSpec.builder(builderType, fieldName, PRIVATE, FINAL)
                             .initializer("new $T.Builder()", valueTypeName)
                             .build();
         }
@@ -323,9 +336,10 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                    .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                    .addParameter(int.class, "offset")
                    .addParameter(int.class, "maxLimit");
-            if (isValueTypeString())
+            if (isValueNonPrimitiveType())
             {
-                builder.addStatement("stringRW.wrap(buffer, offset, maxLimit)");
+                final String fieldName = isStringType((ClassName) valueTypeName) ? "string" : fieldName(valueTypeName);
+                builder.addStatement("$LRW.wrap(buffer, offset, maxLimit)", fieldName);
             }
             return builder
                     .addStatement("super.wrap(buffer, offset, maxLimit)")
@@ -339,10 +353,14 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             builder.addModifiers(PUBLIC)
                    .returns(enumName.nestedClass("Builder"))
                    .addParameter(enumName, "value");
-            if (isValueTypeString())
+            if (isValueNonPrimitiveType())
             {
-                builder.addStatement("stringRW.set(value.string())")
-                       .addStatement("limit(stringRW.build().limit())");
+                final boolean isStringType = isStringType((ClassName) valueTypeName);
+                final String fieldName = isStringType ? "string" : fieldName(valueTypeName);
+                final String value = isStringType ? ".string()" : ".get().value()";
+                final String limit = isStringType ? ".build()" : "";
+                builder.addStatement("$LRW.set(value$L)", fieldName, value)
+                       .addStatement("limit($LRW$L.limit())", fieldName, limit);
             }
             else
             {
@@ -362,11 +380,19 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             builder.addModifiers(PUBLIC)
                    .returns(enumName.nestedClass("Builder"))
                    .addParameter(enumTypeName, "value");
-            if (isValueTypeString())
+            if (isValueNonPrimitiveType())
             {
-                builder.addParameter(Charset.class, "charset")
-                       .addStatement("stringRW.set(value.value(), charset)")
-                       .addStatement("limit(stringRW.build().limit())");
+                final boolean isStringType = isStringType((ClassName) valueTypeName);
+                final String fieldName = isStringType ? "string" : fieldName(valueTypeName);
+                final String charset = isStringType ? ", charset" : "";
+                final String limit = isStringType ? ".build()" : "";
+
+                if (isStringType)
+                {
+                    builder.addParameter(Charset.class, "charset");
+                }
+                builder.addStatement("$LRW.set(value.value()$L)", fieldName, charset)
+                       .addStatement("limit($LRW$L.limit())", fieldName, limit);
             }
             else
             {
@@ -432,6 +458,40 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         {
             return valueTypeName != null && unsignedValueTypeName != null;
         }
+    }
+
+    private static boolean isStringType(
+        ClassName classType)
+    {
+        return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
+    }
+
+    private static boolean isString8Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String8FW".equals(name);
+    }
+
+    private static boolean isString16Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String16FW".equals(name);
+    }
+
+    private static boolean isString32Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "String32FW".equals(name);
+    }
+
+    private static String fieldName(
+        TypeName type)
+    {
+        String fieldName =  ((ClassName) type).simpleName();
+        return String.format("%s%s", Character.toLowerCase(fieldName.charAt(0)), fieldName.substring(1, fieldName.length() - 2));
     }
 
     private boolean isTypeByte()

@@ -187,6 +187,7 @@ enum_explicit_type
    | string8_type
    | string16_type
    | string32_type
+   | declarator
    ;
 
 enum_values
@@ -384,6 +385,7 @@ variant_member
    | variant_array_member
    | variant_map_member
    | variant_octets_member
+   | defined_variant_member
    ;
 
 variant_member_without_of
