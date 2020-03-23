@@ -21,7 +21,6 @@ import org.agrona.BitUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.ListFW;
-import org.reaktivity.reaktor.internal.test.types.ListFW.Builder;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfInt32FW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantOfListFW;
 
@@ -471,7 +470,7 @@ public final class ListWithEnumAndVariantWithDefaultFW extends ListFW
             Visitor visitor)
         {
             variantOfListRW.field(visitor);
-            lastFieldSet = INDEX_FIELD2;
+            lastFieldSet = INDEX_FIELD5;
             return this;
         }
 
@@ -481,7 +480,7 @@ public final class ListWithEnumAndVariantWithDefaultFW extends ListFW
             Visitor visitor)
         {
             variantOfListRW.fields(fieldCount, visitor);
-            lastFieldSet = INDEX_FIELD2;
+            lastFieldSet = INDEX_FIELD5;
             return this;
         }
 
@@ -493,7 +492,7 @@ public final class ListWithEnumAndVariantWithDefaultFW extends ListFW
             int length)
         {
             variantOfListRW.fields(fieldCount, buffer, index, length);
-            lastFieldSet = INDEX_FIELD2;
+            lastFieldSet = INDEX_FIELD5;
             return this;
         }
 

@@ -494,15 +494,14 @@ scope test
             TYPE5 (0x14L)
         }
 
-//        // list : allow default value of enum and variant
-//        list ListWithEnumAndVariantWithDefault using VariantOfList
-//        {
-//            EnumWithVariantOfUint64 field1 = TYPE3;
-//            required EnumWithVariantOfUint64 field2;
-//            VariantOfInt32 field3 = 100;
-//            VariantEnumKindOfUint8 field4 = 1;
-//            VariantEnumKindOfUint8 field5;
-//        }
+        list ListWithEnumAndVariantWithDefault using VariantOfList
+        {
+            EnumWithVariantOfUint64 field1 = TYPE3;
+            required EnumWithVariantOfUint64 field2;
+            VariantOfInt32 field3 = 100;
+            VariantEnumKindOfUint8 field4 = 1;
+            VariantEnumKindOfUint8 field5;
+        }
 //
 //        // union that takes in enum
 //        union UnionWithEnum switch (EnumWithVariantOfUint64)

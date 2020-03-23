@@ -256,7 +256,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         TypeName fieldCountTypeName = resolver.resolveType(listNode.fieldCountType());
         Byte missingFieldByte = listNode.missingFieldByte();
         AstByteOrder byteOrder = listNode.byteOrder();
-        ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
+        ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.resolveClass(AstType.LIST), baseName,
             templateType, lengthTypeName, fieldCountTypeName, missingFieldByte, resolver, byteOrder);
         return new ListVisitor(generator, resolver).visitList(listNode);
     }
