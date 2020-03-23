@@ -146,6 +146,7 @@ public class AstParserTest
                 .union(
                     new AstUnionNode.Builder()
                         .name("OneUnion")
+                        .kindType(AstType.UINT8)
                         .caseN(
                             new AstUnionCaseNode.Builder()
                                 .value(0)
@@ -175,6 +176,7 @@ public class AstParserTest
                         .union(
                             new AstUnionNode.Builder()
                                 .name("TwoUnion")
+                                .kindType(AstType.UINT8)
                                 .caseN(
                                     new AstUnionCaseNode.Builder()
                                         .value(0)
@@ -456,6 +458,7 @@ public class AstParserTest
 
         AstUnionNode expected = new AstUnionNode.Builder()
                 .name("Count")
+                .kindType(AstType.UINT8)
                 .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
                                       .member((AstStructMemberNode) new AstStructMemberNode.Builder()
@@ -485,6 +488,7 @@ public class AstParserTest
 
         AstUnionNode expected = new AstUnionNode.Builder()
                 .name("Count")
+                .kindType(AstType.UINT8)
                 .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
                                       .member((AstStructMemberNode) new AstStructMemberNode.Builder()

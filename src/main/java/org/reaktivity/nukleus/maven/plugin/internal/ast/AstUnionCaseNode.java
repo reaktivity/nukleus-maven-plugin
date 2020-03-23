@@ -19,7 +19,7 @@ import java.util.Objects;
 
 public final class AstUnionCaseNode extends AstNode
 {
-    private final int value;
+    private final Object value;
     private final AstStructMemberNode member;
 
     @Override
@@ -29,7 +29,7 @@ public final class AstUnionCaseNode extends AstNode
         return visitor.visitCase(this);
     }
 
-    public int value()
+    public Object value()
     {
         return value;
     }
@@ -42,7 +42,7 @@ public final class AstUnionCaseNode extends AstNode
     @Override
     public int hashCode()
     {
-        return (member.hashCode() << 11) ^ value;
+        return (member.hashCode() << 11) ^ value.hashCode();
     }
 
     @Override
@@ -64,7 +64,7 @@ public final class AstUnionCaseNode extends AstNode
     }
 
     private AstUnionCaseNode(
-        int value,
+        Object value,
         AstStructMemberNode member)
     {
         this.value = value;
@@ -79,10 +79,11 @@ public final class AstUnionCaseNode extends AstNode
 
     public static final class Builder extends AstNode.Builder<AstUnionCaseNode>
     {
-        private int value;
+        private Object value;
         private AstStructMemberNode member;
 
-        public Builder value(int value)
+        public Builder value(
+            Object value)
         {
             this.value = value;
             return this;

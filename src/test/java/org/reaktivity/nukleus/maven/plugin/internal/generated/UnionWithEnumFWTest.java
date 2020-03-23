@@ -26,6 +26,9 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
+import org.reaktivity.reaktor.internal.test.types.inner.EnumWithVariantOfUint64;
+import org.reaktivity.reaktor.internal.test.types.inner.ListWithEnumAndVariantWithDefaultFW;
+import org.reaktivity.reaktor.internal.test.types.inner.UnionWithEnumFW;
 
 public class UnionWithEnumFWTest
 {
@@ -102,7 +105,7 @@ public class UnionWithEnumFWTest
         UnionWithEnumFW unionWithEnum)
     {
         assertEquals(EnumWithVariantOfUint64.TYPE2, unionWithEnum.kind());
-        ListWithEnumAndVariantWithDefaultFW list = unionWithEnum.listWithEnumAndVariantWithDefault();
+        ListWithEnumAndVariantWithDefaultFW list = unionWithEnum.listValue();
         assertNotNull(list);
         assertEquals(12, list.length());
         assertEquals(5, list.fieldCount());
@@ -209,7 +212,7 @@ public class UnionWithEnumFWTest
                 .build();
 
         final UnionWithEnumFW unionWithEnum = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .listWithEnumAndVariantWithDefault(listWithEnumAndVariantWithDefault)
+            .listValue(listWithEnumAndVariantWithDefault)
             .build();
 
         assertAllTestValuesRead(unionWithEnum);

@@ -502,11 +502,10 @@ scope test
             VariantEnumKindOfUint8 field4 = 1;
             VariantEnumKindOfUint8 field5;
         }
-//
-//        // union that takes in enum
-//        union UnionWithEnum switch (EnumWithVariantOfUint64)
-//        {
-//            case TYPE2: ListWithEnumAndVariantWithDefault listValue;
-//        }
+
+        union UnionWithEnum switch (EnumWithVariantOfUint64)
+        {
+            case TYPE2: ListWithEnumAndVariantWithDefault listValue;
+        }
     }
 }

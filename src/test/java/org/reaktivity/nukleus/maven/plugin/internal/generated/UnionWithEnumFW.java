@@ -21,21 +21,21 @@ import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public final class UnionWithEnumFW extends Flyweight
 {
-    public static final EnumWithVariantOfUint64 KIND_VARIANT_OF_LIST = EnumWithVariantOfUint64.TYPE2;
+    public static final EnumWithVariantOfUint64 KIND_LIST_VALUE = EnumWithVariantOfUint64.TYPE2;
 
     private final EnumWithVariantOfUint64FW enumWithVariantOfUint64RO = new EnumWithVariantOfUint64FW();
 
-    private final ListWithEnumAndVariantWithDefaultFW listWithEnumAndVariantWithDefaultRO =
+    private final ListWithEnumAndVariantWithDefaultFW listValueRO =
         new ListWithEnumAndVariantWithDefaultFW();
-
-    public ListWithEnumAndVariantWithDefaultFW listWithEnumAndVariantWithDefault()
-    {
-        return listWithEnumAndVariantWithDefaultRO;
-    }
 
     public EnumWithVariantOfUint64 kind()
     {
         return enumWithVariantOfUint64RO.get();
+    }
+
+    public ListWithEnumAndVariantWithDefaultFW listValue()
+    {
+        return listValueRO;
     }
 
     @Override
@@ -57,7 +57,7 @@ public final class UnionWithEnumFW extends Flyweight
         switch (kind())
         {
         case TYPE2:
-            if (listWithEnumAndVariantWithDefaultRO.tryWrap(buffer, offset + enumWithVariantOfUint64.sizeof(),
+            if (listValueRO.tryWrap(buffer, offset + enumWithVariantOfUint64.sizeof(),
                 maxLimit) == null)
             {
                 return null;
@@ -85,7 +85,7 @@ public final class UnionWithEnumFW extends Flyweight
         switch (kind())
         {
         case TYPE2:
-            listWithEnumAndVariantWithDefaultRO.wrap(buffer, offset + enumWithVariantOfUint64.sizeof(), maxLimit);
+            listValueRO.wrap(buffer, offset + enumWithVariantOfUint64.sizeof(), maxLimit);
             break;
         default:
             break;
@@ -95,26 +95,26 @@ public final class UnionWithEnumFW extends Flyweight
     }
 
     @Override
-    public String toString()
-    {
-        switch (kind())
-        {
-        case TYPE2:
-            return String.format("UNION_WITH_ENUM [listWithEnumAndVariantWithDefault=%s]", listWithEnumAndVariantWithDefault());
-        default:
-            return String.format("UNION_WITH_ENUM [unknown]");
-        }
-    }
-
-    @Override
     public int limit()
     {
         switch (kind())
         {
         case TYPE2:
-            return listWithEnumAndVariantWithDefault().limit();
+            return listValue().limit();
         default:
             return offset();
+        }
+    }
+
+    @Override
+    public String toString()
+    {
+        switch (kind())
+        {
+        case TYPE2:
+            return String.format("UNION_WITH_ENUM [listValue=%s]", listValue());
+        default:
+            return String.format("UNION_WITH_ENUM [unknown]");
         }
     }
 
@@ -122,8 +122,7 @@ public final class UnionWithEnumFW extends Flyweight
     {
         private final EnumWithVariantOfUint64FW.Builder enumWithVariantOfUint64RW = new EnumWithVariantOfUint64FW.Builder();
 
-        private final ListWithEnumAndVariantWithDefaultFW.Builder listWithEnumAndVariantWithDefaultRW =
-            new ListWithEnumAndVariantWithDefaultFW.Builder();
+        private final ListWithEnumAndVariantWithDefaultFW.Builder listValueRW = new ListWithEnumAndVariantWithDefaultFW.Builder();
 
         public Builder()
         {
@@ -139,19 +138,19 @@ public final class UnionWithEnumFW extends Flyweight
             return this;
         }
 
-        private ListWithEnumAndVariantWithDefaultFW.Builder listWithEnumAndVariantWithDefault()
+        private ListWithEnumAndVariantWithDefaultFW.Builder listValue()
         {
-            return listWithEnumAndVariantWithDefaultRW.wrap(buffer(), offset() + enumWithVariantOfUint64RW.sizeof(),
+            return listValueRW.wrap(buffer(), offset() + enumWithVariantOfUint64RW.sizeof(),
                 maxLimit());
         }
 
-        public Builder listWithEnumAndVariantWithDefault(
+        public Builder listValue(
             ListWithEnumAndVariantWithDefaultFW value)
         {
-            kind(KIND_VARIANT_OF_LIST);
-            ListWithEnumAndVariantWithDefaultFW.Builder listWithEnumAndVariantWithDefault = listWithEnumAndVariantWithDefault();
-            listWithEnumAndVariantWithDefault.fields(value.fieldCount(), value.fields(), 0, value.fields().capacity());
-            limit(listWithEnumAndVariantWithDefault.build().limit());
+            kind(KIND_LIST_VALUE);
+            ListWithEnumAndVariantWithDefaultFW.Builder listValue = listValue();
+            listValue.fields(value.fieldCount(), value.fields(), 0, value.fields().capacity());
+            limit(listValue.build().limit());
             return this;
         }
 

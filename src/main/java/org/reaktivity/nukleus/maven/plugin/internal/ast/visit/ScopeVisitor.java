@@ -178,8 +178,10 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         AstType unionType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName unionName = resolver.resolveClass(unionType);
         AstType unionSuperType = unionNode.superType();
+        TypeName kindTypeName = unionNode.kindType().equals(AstType.UINT8) ? resolver.resolveType(AstType.UINT8) :
+            resolver.resolveClass(unionNode.kindType());
         UnionFlyweightGenerator generator = new UnionFlyweightGenerator(unionName, resolver.flyweightName(), baseName,
-            unionSuperType);
+            unionSuperType, kindTypeName, resolver);
 
         return new UnionVisitor(generator, resolver).visitUnion(unionNode);
     }

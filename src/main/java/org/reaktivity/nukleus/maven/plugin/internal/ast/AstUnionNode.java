@@ -25,6 +25,7 @@ public final class AstUnionNode extends AstNamedNode
 {
     private final List<AstUnionCaseNode> cases;
     private final AstType superType;
+    private final AstType kindType;
 
     @Override
     public <R> R accept(
@@ -37,7 +38,7 @@ public final class AstUnionNode extends AstNamedNode
     public AstNamedNode withName(
         String name)
     {
-        return new AstUnionNode(name, cases, superType);
+        return new AstUnionNode(name, cases, superType, kindType);
     }
 
     @Override
@@ -56,12 +57,17 @@ public final class AstUnionNode extends AstNamedNode
         return superType;
     }
 
+    public AstType kindType()
+    {
+        return kindType;
+    }
+
     @Override
     public int hashCode()
     {
         return superType != null
-            ? (superType.hashCode() << 11) ^ (name.hashCode() << 7) ^ cases.hashCode()
-            : (name.hashCode() << 7) ^ cases.hashCode();
+            ? (superType.hashCode() << 13) ^ (name.hashCode() << 11) ^ (cases.hashCode() << 7) ^ kindType.hashCode()
+            : (name.hashCode() << 11) ^ (cases.hashCode() << 7) ^ kindType.hashCode();
     }
 
     @Override
@@ -80,23 +86,27 @@ public final class AstUnionNode extends AstNamedNode
         AstUnionNode that = (AstUnionNode) o;
         return Objects.equals(this.name, that.name) &&
                 Objects.equals(this.cases, that.cases) &&
-                Objects.equals(this.superType, that.superType);
+                Objects.equals(this.superType, that.superType) &&
+                Objects.equals(this.kindType, that.kindType);
     }
 
     private AstUnionNode(
         String name,
         List<AstUnionCaseNode> cases,
-        AstType superType)
+        AstType superType,
+        AstType kindType)
     {
         super(name);
         this.cases = unmodifiableList(cases);
         this.superType = superType;
+        this.kindType = kindType;
     }
 
     public static final class Builder extends AstNamedNode.Builder<AstUnionNode>
     {
         private List<AstUnionCaseNode> cases;
         private AstType superType;
+        private AstType kindType;
 
         public Builder()
         {
@@ -124,10 +134,17 @@ public final class AstUnionNode extends AstNamedNode
             return this;
         }
 
+        public Builder kindType(
+            AstType kindType)
+        {
+            this.kindType = kindType;
+            return this;
+        }
+
         @Override
         public AstUnionNode build()
         {
-            return new AstUnionNode(name, cases, superType);
+            return new AstUnionNode(name, cases, superType, kindType);
         }
     }
 }

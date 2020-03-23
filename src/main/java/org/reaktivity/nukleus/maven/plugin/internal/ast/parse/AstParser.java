@@ -498,20 +498,25 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         astTypesByQualifiedName.put(qualifiedUnionName, AstType.dynamicType(qualifiedUnionName));
         unionBuilder.name(unionName);
 
-        Scoped_nameContext scopedName = ctx.scoped_name();
-        if (scopedName != null)
+        Scoped_nameContext kindType = ctx.kindtype;
+        if (kindType != null)
         {
-            final String superTypeName = scopedName.getText();
-            AstType astTypeName = astTypesByQualifiedName.get(superTypeName);
-            if (astTypeName == null)
-            {
-                astTypeName = qualifiedPrefixes.stream()
-                    .map(qp -> String.format("%s%s", qp, superTypeName))
-                    .map(astTypesByQualifiedName::get)
-                    .filter(Objects::nonNull)
-                    .findFirst()
-                    .orElse(AstType.dynamicType(superTypeName));
-            }
+            final String kindTypeName = kindType.getText();
+            AstType astTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(kindTypeName),
+                lookUpAstType(kindTypeName));
+            unionBuilder.kindType(astTypeName);
+        }
+        else
+        {
+            unionBuilder.kindType(AstType.UINT8);
+        }
+
+        Scoped_nameContext superType = ctx.supertype;
+        if (superType != null)
+        {
+            final String superTypeName = superType.getText();
+            AstType astTypeName = Objects.requireNonNullElse(astTypesByQualifiedName.get(superTypeName),
+                lookUpAstType(superTypeName));
             unionBuilder.superType(astTypeName);
         }
 
@@ -534,7 +539,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         Case_memberContext ctx)
     {
         caseBuilder = new AstUnionCaseNode.Builder()
-                .value(Integer.decode(ctx.uint_literal().getText()));
+            .value(ctx.uint_literal() != null ? Integer.decode(ctx.uint_literal().getText()) : ctx.ID().getText());
 
         super.visitCase_member(ctx);
 
