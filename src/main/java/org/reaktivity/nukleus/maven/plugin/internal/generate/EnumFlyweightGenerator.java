@@ -28,6 +28,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DI
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +64,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         ClassName flyweightName,
         ClassName enumTypeName,
         TypeName valueTypeName,
+        TypeName valueVariantOfTypeName,
         TypeName unsignedValueTypeName)
     {
         super(enumName);
@@ -70,7 +72,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         this.enumTypeName = enumTypeName;
         this.classBuilder = classBuilder(thisName).superclass(flyweightName).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightName.nestedClass("Builder"), enumTypeName,
-            valueTypeName, unsignedValueTypeName);
+            valueTypeName, valueVariantOfTypeName, unsignedValueTypeName);
         this.valueTypeName = valueTypeName;
         this.unsignedValueTypeName = unsignedValueTypeName;
     }
@@ -263,6 +265,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         private final ClassName classType;
         private final ClassName enumName;
         private final TypeName valueTypeName;
+        private final TypeName valueVariantOfTypeName;
         private final TypeName unsignedValueTypeName;
 
         private BuilderClassBuilder(
@@ -270,6 +273,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
             ClassName builderRawType,
             ClassName enumTypeName,
             TypeName valueTypeName,
+            TypeName valueVariantOfTypeName,
             TypeName unsignedValueTypeName)
         {
             TypeName builderType = ParameterizedTypeName.get(builderRawType, enumName);
@@ -281,6 +285,7 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC, STATIC, FINAL)
                     .superclass(builderType);
             this.valueTypeName = valueTypeName;
+            this.valueVariantOfTypeName = valueVariantOfTypeName;
             this.unsignedValueTypeName = unsignedValueTypeName;
         }
 
@@ -359,8 +364,16 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                 final String fieldName = isStringType ? "string" : fieldName(valueTypeName);
                 final String value = isStringType ? ".string()" : ".get().value()";
                 final String limit = isStringType ? ".build()" : "";
-                builder.addStatement("$LRW.set(value$L)", fieldName, value)
-                       .addStatement("limit($LRW$L.limit())", fieldName, limit);
+                if (valueVariantOfTypeName != valueTypeName && valueVariantOfTypeName instanceof ClassName &&
+                    isStringType((ClassName) valueVariantOfTypeName))
+                {
+                    builder.addStatement("$LRW.set(value$L, $T.UTF_8)", fieldName, value, StandardCharsets.class);
+                }
+                else
+                {
+                    builder.addStatement("$LRW.set(value$L)", fieldName, value);
+                }
+                builder.addStatement("limit($LRW$L.limit())", fieldName, limit);
             }
             else
             {
@@ -391,8 +404,16 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                 {
                     builder.addParameter(Charset.class, "charset");
                 }
-                builder.addStatement("$LRW.set(value.value()$L)", fieldName, charset)
-                       .addStatement("limit($LRW$L.limit())", fieldName, limit);
+                if (valueVariantOfTypeName != valueTypeName && valueVariantOfTypeName instanceof ClassName &&
+                    isStringType((ClassName) valueVariantOfTypeName))
+                {
+                    builder.addStatement("$LRW.set(value.value()$L, $T.UTF_8)", fieldName, charset, StandardCharsets.class);
+                }
+                else
+                {
+                    builder.addStatement("$LRW.set(value.value()$L)", fieldName, charset);
+                }
+                builder.addStatement("limit($LRW$L.limit())", fieldName, limit);
             }
             else
             {
@@ -463,7 +484,14 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
     private static boolean isStringType(
         ClassName classType)
     {
-        return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
+        return isStringFWType(classType) || isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
+    }
+
+    private static boolean isStringFWType(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "StringFW".equals(name);
     }
 
     private static boolean isString8Type(
