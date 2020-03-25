@@ -28,15 +28,15 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.ArrayFW;
 import org.reaktivity.reaktor.internal.test.types.String16FW;
 import org.reaktivity.reaktor.internal.test.types.String32FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
-import org.reaktivity.reaktor.internal.test.types.VariantArrayFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithArrayFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfVariantArrayFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantOfArrayFW;
 
 public class ListWithArrayFWTest
 {
@@ -53,11 +53,11 @@ public class ListWithArrayFWTest
     private final int fieldCountSize = Byte.BYTES;
     private final byte kindList8 = EnumWithInt8.TWO.value();
     private final int kindSize = Byte.BYTES;
-    private final byte kindArray8 = EnumWithInt8.TWO.value();
-    private final byte kindString8 = EnumWithInt8.ONE.value();
+    private final byte kindArray8 = EnumWithInt8.EIGHT.value();
+    private final byte kindString8 = EnumWithInt8.NINE.value();
 
     static void assertAllTestValuesRead(
-        VariantArrayFW<VariantEnumKindWithString32FW> flyweight)
+        ArrayFW<VariantEnumKindOfStringFW> flyweight)
     {
         List<String> arrayItems = new ArrayList<>();
         flyweight.forEach(v -> arrayItems.add(v.get().asString()));
@@ -83,7 +83,7 @@ public class ListWithArrayFWTest
         buffer.putByte(offsetListFieldCount, listFieldCount);
 
         int offsetField1Kind = offsetListFieldCount + fieldCountSize;
-        buffer.putByte(offsetField1Kind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetField1Kind, EnumWithInt8.NINE.value());
         int offsetField1Length = offsetField1Kind + Byte.BYTES;
         buffer.putByte(offsetField1Length, (byte) "field1".length());
         int offsetField1 = offsetField1Length + Byte.BYTES;
@@ -183,7 +183,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenFieldIsSetOutOfOrder() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
+            .arrayOfString(asArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
             .field1(asStringFW("field1"))
             .build();
     }
@@ -208,7 +208,7 @@ public class ListWithArrayFWTest
     public void shouldFailWhenRequiredFieldIsNotSet() throws Exception
     {
         listWithArrayRW.wrap(buffer, 0, buffer.capacity())
-            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))));
+            .arrayOfString(asArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))));
     }
 
     @Test(expected = AssertionError.class)
@@ -245,7 +245,7 @@ public class ListWithArrayFWTest
     {
         int limit = listWithArrayRW.wrap(buffer, 0, buffer.capacity())
             .field1(asStringFW("field1"))
-            .arrayOfString(asVariantArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
+            .arrayOfString(asArrayFW(Arrays.asList(asStringFW("symbolA"), asStringFW("symbolB"))))
             .build()
             .limit();
 
@@ -267,35 +267,32 @@ public class ListWithArrayFWTest
         switch (highestByteIndex)
         {
         case 0:
-            buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+            buffer = new UnsafeBuffer(allocateDirect(Byte.BYTES + value.length()));
             return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
         case 1:
-            buffer = new UnsafeBuffer(allocateDirect(Short.SIZE + value.length()));
+            buffer = new UnsafeBuffer(allocateDirect(Short.BYTES + value.length()));
             return new String16FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
         case 2:
         case 3:
-            buffer = new UnsafeBuffer(allocateDirect(Integer.SIZE + value.length()));
+            buffer = new UnsafeBuffer(allocateDirect(Integer.BYTES + value.length()));
             return new String32FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
         default:
             throw new IllegalArgumentException("Illegal value: " + value);
         }
     }
 
-    private static VariantArrayFW<VariantEnumKindWithString32FW> asVariantArrayFW(
+    private static ArrayFW<VariantEnumKindOfStringFW> asArrayFW(
         List<StringFW> values)
     {
-        VariantOfVariantArrayFW.Builder<VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8,
-            StringFW> variantOfVariantArrayRW =
-            new VariantOfVariantArrayFW.Builder<>(new VariantEnumKindWithString32FW.Builder(),
-                new VariantEnumKindWithString32FW());
+        VariantOfArrayFW.Builder<VariantEnumKindOfStringFW.Builder, VariantEnumKindOfStringFW> variantOfArrayRW =
+            new VariantOfArrayFW.Builder<>(new VariantEnumKindOfStringFW.Builder(), new VariantEnumKindOfStringFW());
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100));
-        variantOfVariantArrayRW.wrap(buffer, 0, buffer.capacity());
+        variantOfArrayRW.wrap(buffer, 0, buffer.capacity());
         for (StringFW value : values)
         {
-            variantOfVariantArrayRW.item(value);
+            variantOfArrayRW.item(b -> b.setAsString32(value));
         }
-        VariantOfVariantArrayFW<VariantEnumKindWithString32FW, StringFW> variantOfVariantArrayRO =
-            variantOfVariantArrayRW.build();
+        VariantOfArrayFW<VariantEnumKindOfStringFW> variantOfVariantArrayRO = variantOfArrayRW.build();
         return variantOfVariantArrayRO.get();
     }
 }

@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_LONG;
+import static org.agrona.BitUtil.SIZE_OF_INT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -59,8 +59,8 @@ public class EnumWithUint32FWTest
         MutableDirectBuffer buffer,
         final int offset)
     {
-        buffer.putLong(offset,  EnumWithUint32.NI.value());
-        return SIZE_OF_LONG;
+        buffer.putInt(offset, (int) EnumWithUint32.NI.value());
+        return SIZE_OF_INT;
     }
 
     void assertAllTestValuesRead(
@@ -72,8 +72,8 @@ public class EnumWithUint32FWTest
     @Test
     public void shouldNotTryWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -82,8 +82,8 @@ public class EnumWithUint32FWTest
     @Test
     public void shouldNotWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             try
             {
@@ -103,26 +103,32 @@ public class EnumWithUint32FWTest
     @Test
     public void shouldTryWrapAndReadAllValues() throws Exception
     {
-        final int offset = 1;
-        setAllTestValues(buffer, offset);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertAllTestValuesRead(flyweightRO);
+        final int offset = 10;
+        int length = setAllTestValues(buffer, offset);
+
+        final EnumWithUint32FW enumWithUint32 = flyweightRO.tryWrap(buffer, offset, length + offset);
+
+        assertNotNull(enumWithUint32);
+        assertAllTestValuesRead(enumWithUint32);
     }
 
     @Test
     public void shouldWrapAndReadAllValues() throws Exception
     {
-        int size = setAllTestValues(buffer, 10);
-        int limit = flyweightRO.wrap(buffer,  10,  buffer.capacity()).limit();
-        assertEquals(10 + size, limit);
-        assertAllTestValuesRead(flyweightRO);
+        final int offset = 10;
+        int length = setAllTestValues(buffer, offset);
+
+        final EnumWithUint32FW enumWithUint32 = flyweightRO.wrap(buffer, offset, length + offset);
+
+        assertEquals(offset + length, enumWithUint32.limit());
+        assertAllTestValuesRead(enumWithUint32);
     }
 
     @Test
     public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putLong(offset,  -2);
+        buffer.putInt(offset,  -2);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
         assertNull(flyweightRO.get());
     }
@@ -131,9 +137,11 @@ public class EnumWithUint32FWTest
     public void shouldNotWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putLong(offset,  -2);
-        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
-        assertNull(flyweightRO.get());
+        buffer.putInt(offset,  -2);
+
+        final EnumWithUint32FW enumWithUint32 =  flyweightRO.wrap(buffer, offset, buffer.capacity());
+
+        assertNull(enumWithUint32.get());
     }
 
     @Test
@@ -144,21 +152,23 @@ public class EnumWithUint32FWTest
             .build()
             .limit();
         setAllTestValues(expected,  0);
-        assertEquals(SIZE_OF_LONG, limit);
+        assertEquals(SIZE_OF_INT, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
     public void shouldSetUsingEnumWithUint32FW()
     {
-        EnumWithUint32FW enumWithUint32 = new EnumWithUint32FW().wrap(asBuffer(4000000001L), 0, SIZE_OF_LONG);
-        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_LONG)
+        EnumWithUint32FW enumWithUint32 = new EnumWithUint32FW().wrap(asBuffer(4000000001L), 0, SIZE_OF_INT);
+        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_INT)
             .set(enumWithUint32)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 10,  limit);
-        assertEquals(EnumWithUint32.ICHI, flyweightRO.get());
-        assertEquals(SIZE_OF_LONG, flyweightRO.sizeof());
+
+        final EnumWithUint32FW flyweight = flyweightRO.wrap(buffer, 10,  limit);
+
+        assertEquals(EnumWithUint32.ICHI, flyweight.get());
+        assertEquals(SIZE_OF_INT, flyweight.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -171,7 +181,7 @@ public class EnumWithUint32FWTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUsingEnumWithUint32FWWithInsufficientSpace()
     {
-        EnumWithUint32FW enumWithUint32 = new EnumWithUint32FW().wrap(asBuffer(4000000001L), 0, SIZE_OF_LONG);
+        EnumWithUint32FW enumWithUint32 = new EnumWithUint32FW().wrap(asBuffer(4000000001L), 0, SIZE_OF_INT);
         flyweightRW.wrap(buffer, 10, 10)
             .set(enumWithUint32);
     }
@@ -188,8 +198,8 @@ public class EnumWithUint32FWTest
     private static DirectBuffer asBuffer(
         long value)
     {
-        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_LONG));
-        valueBuffer.putLong(0, value);
+        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_INT));
+        valueBuffer.putInt(0, (int) (value & 0xFFFF_FFFFL));
         return valueBuffer;
     }
 }

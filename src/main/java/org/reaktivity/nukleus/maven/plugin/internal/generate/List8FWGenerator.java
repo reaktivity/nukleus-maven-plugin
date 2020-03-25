@@ -40,12 +40,14 @@ public final class List8FWGenerator extends ClassSpecGenerator
     private final BuilderClassBuilder builderClassBuilder;
 
     public List8FWGenerator(
-        ClassName flyweightType)
+        ClassName flyweightType,
+        ClassName listType)
     {
-        super(flyweightType.peerClass("List8FW"));
+        super(listType.peerClass("List8FW"));
 
-        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
+        this.classBuilder = classBuilder(thisName).superclass(listType).addModifiers(PUBLIC, FINAL);
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"),
+            listType.nestedClass("Builder"));
     }
 
     @Override
@@ -211,24 +213,38 @@ public final class List8FWGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final ClassName classType;
         private final ClassName listType;
+        private final ClassName visitorType;
 
         private BuilderClassBuilder(
             ClassName listType,
-            ClassName builderRawType)
+            ClassName flyweightBuilderRawType,
+            ClassName listBuilderRawType)
         {
-            TypeName builderType = ParameterizedTypeName.get(builderRawType, listType);
+            TypeName builderType = ParameterizedTypeName.get(listBuilderRawType, listType);
             this.listType = listType;
             this.classType = listType.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL)
                 .superclass(builderType);
+            this.visitorType = flyweightBuilderRawType.nestedClass("Visitor");
         }
 
         public TypeSpec build()
         {
-            return classBuilder.addMethod(constructor())
+            return classBuilder
+                .addField(fieldCount())
+                .addMethod(constructor())
+                .addMethod(fieldMethod())
+                .addMethod(fieldsMethodViaVisitor())
+                .addMethod(fieldsMethodViaBuffer())
                 .addMethod(wrapMethod())
                 .addMethod(buildMethod())
+                .build();
+        }
+
+        private FieldSpec fieldCount()
+        {
+            return FieldSpec.builder(int.class, "fieldCount", PRIVATE)
                 .build();
         }
 
@@ -237,6 +253,58 @@ public final class List8FWGenerator extends ClassSpecGenerator
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addStatement("super(new List8FW())")
+                .build();
+        }
+
+        private MethodSpec fieldMethod()
+        {
+            return methodBuilder("field")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(listType.nestedClass("Builder"))
+                .addParameter(visitorType, "visitor")
+                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
+                .addStatement("fieldCount++")
+                .addStatement("int newLimit = limit() + length")
+                .addStatement("checkLimit(newLimit, maxLimit())")
+                .addStatement("limit(newLimit)")
+                .addStatement("return this")
+                .build();
+        }
+
+        private MethodSpec fieldsMethodViaVisitor()
+        {
+            return methodBuilder("fields")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(listType.nestedClass("Builder"))
+                .addParameter(int.class, "fieldCount")
+                .addParameter(visitorType, "visitor")
+                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
+                .addStatement("this.fieldCount += fieldCount")
+                .addStatement("int newLimit = limit() + length")
+                .addStatement("checkLimit(newLimit, maxLimit())")
+                .addStatement("limit(newLimit)")
+                .addStatement("return this")
+                .build();
+        }
+
+        private MethodSpec fieldsMethodViaBuffer()
+        {
+            return methodBuilder("fields")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(listType.nestedClass("Builder"))
+                .addParameter(int.class, "fieldCount")
+                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "index")
+                .addParameter(int.class, "length")
+                .addStatement("this.fieldCount += fieldCount")
+                .addStatement("int newLimit = limit() + length")
+                .addStatement("checkLimit(newLimit, maxLimit())")
+                .addStatement("buffer().putBytes(limit(), buffer, index, length)")
+                .addStatement("limit(newLimit)")
+                .addStatement("return this")
                 .build();
         }
 
@@ -264,7 +332,6 @@ public final class List8FWGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .returns(listType)
                 .addStatement("int length = limit() - offset() - FIELD_COUNT_OFFSET")
-                .addStatement("int fieldCount = fieldCount()")
                 .addStatement("assert length <= LENGTH_MAX_VALUE : \"Length is too large\"")
                 .addStatement("assert fieldCount <= LENGTH_MAX_VALUE : \"Field count is too large\"")
                 .addStatement("buffer().putByte(offset() + LENGTH_OFFSET, (byte) length)")

@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_LONG;
+import static org.agrona.BitUtil.SIZE_OF_INT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -55,9 +55,9 @@ public class TypedefFromTypedefFWTest
         final int offset)
     {
         int pos = offset;
-        buffer.putLong(pos, EnumWithUint32.NI.value());
-        buffer.putLong(pos += SIZE_OF_LONG, 4000000000L);
-        return pos - offset + SIZE_OF_LONG;
+        buffer.putInt(pos, (int) EnumWithUint32.NI.value());
+        buffer.putInt(pos += SIZE_OF_INT, (int) 4000000000L);
+        return pos - offset + SIZE_OF_INT;
     }
 
     @Test

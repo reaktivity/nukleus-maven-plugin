@@ -16,10 +16,13 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.Collections.unmodifiableList;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode.Builder;
 
 public final class AstListNode extends AstNamedNode
 {
@@ -28,6 +31,7 @@ public final class AstListNode extends AstNamedNode
     private final AstType lengthType;
     private final AstType fieldCountType;
     private final Byte missingFieldByte;
+    private final AstByteOrder byteOrder;
 
     public List<AstListMemberNode> members()
     {
@@ -54,11 +58,16 @@ public final class AstListNode extends AstNamedNode
         return missingFieldByte;
     }
 
+    public AstByteOrder byteOrder()
+    {
+        return byteOrder;
+    }
+
     @Override
     public AstNamedNode withName(
         String name)
     {
-        return new AstListNode(name, members, templateType, lengthType, fieldCountType, missingFieldByte);
+        return new AstListNode(name, members, templateType, lengthType, fieldCountType, missingFieldByte, byteOrder);
     }
 
     @Override
@@ -77,7 +86,7 @@ public final class AstListNode extends AstNamedNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, members, templateType, lengthType, fieldCountType);
+        return Objects.hash(name, members, templateType, lengthType, fieldCountType, byteOrder);
     }
 
     @Override
@@ -99,7 +108,8 @@ public final class AstListNode extends AstNamedNode
             Objects.equals(this.members, that.members) &&
             Objects.equals(this.templateType, that.templateType) &&
             Objects.equals(this.lengthType, that.lengthType) &&
-            Objects.equals(this.fieldCountType, that.fieldCountType);
+            Objects.equals(this.fieldCountType, that.fieldCountType) &&
+            Objects.equals(this.byteOrder, that.byteOrder);
     }
 
     private AstListNode(
@@ -108,7 +118,8 @@ public final class AstListNode extends AstNamedNode
         AstType templateType,
         AstType lengthType,
         AstType fieldCountType,
-        Byte missingFieldByte)
+        Byte missingFieldByte,
+        AstByteOrder byteOrder)
     {
         super(name);
         this.members = unmodifiableList(members);
@@ -116,6 +127,7 @@ public final class AstListNode extends AstNamedNode
         this.lengthType = lengthType;
         this.fieldCountType = fieldCountType;
         this.missingFieldByte = missingFieldByte;
+        this.byteOrder = byteOrder;
     }
 
     public static final class Builder extends AstNamedNode.Builder<AstListNode>
@@ -125,10 +137,12 @@ public final class AstListNode extends AstNamedNode
         private AstType lengthType;
         private AstType fieldCountType;
         private Byte missingFieldByte;
+        private AstByteOrder byteOrder;
 
         public Builder()
         {
             this.members = new LinkedList<>();
+            this.byteOrder = NATIVE;
         }
 
         public Builder name(
@@ -173,10 +187,17 @@ public final class AstListNode extends AstNamedNode
             return this;
         }
 
+        public Builder byteOrder(
+            AstByteOrder byteOrder)
+        {
+            this.byteOrder = byteOrder;
+            return this;
+        }
+
         @Override
         public AstListNode build()
         {
-            return new AstListNode(name, members, templateType, lengthType, fieldCountType, missingFieldByte);
+            return new AstListNode(name, members, templateType, lengthType, fieldCountType, missingFieldByte, byteOrder);
         }
     }
 }

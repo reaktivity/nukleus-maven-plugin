@@ -15,16 +15,16 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public final class AstListMemberNode extends AstAbstractMemberNode
 {
+    private final List<AstType> typeParams;
     private final boolean required;
-    private final AstType arrayType;
-    private final AstType arrayTypeName;
-    private final AstType mapKeyType;
-    private final AstType mapValueType;
 
     private AstListMemberNode(
         String name,
@@ -33,18 +33,17 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         String sizeName,
         Object defaultValue,
         AstByteOrder byteOrder,
-        boolean required,
-        AstType arrayType,
-        AstType arrayTypeName,
-        AstType mapKeyType,
-        AstType mapValueType)
+        List<AstType> typeParams,
+        boolean required)
     {
         super(name, types, size, sizeName, defaultValue, byteOrder);
+        this.typeParams = typeParams;
         this.required = required;
-        this.arrayType = arrayType;
-        this.arrayTypeName = arrayTypeName;
-        this.mapKeyType = mapKeyType;
-        this.mapValueType = mapValueType;
+    }
+
+    public List<AstType> typeParams()
+    {
+        return typeParams;
     }
 
     public boolean isRequired()
@@ -52,30 +51,10 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         return required;
     }
 
-    public AstType arrayType()
-    {
-        return arrayType;
-    }
-
-    public AstType arrayTypeName()
-    {
-        return arrayTypeName;
-    }
-
-    public AstType mapKeyType()
-    {
-        return mapKeyType;
-    }
-
-    public AstType mapValueType()
-    {
-        return mapValueType;
-    }
-
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, defaultValue, byteOrder, required, arrayType, arrayTypeName, mapKeyType, mapValueType);
+        return Objects.hash(name, types, defaultValue, byteOrder, typeParams, required);
     }
 
     @Override
@@ -98,27 +77,33 @@ public final class AstListMemberNode extends AstAbstractMemberNode
             Objects.deepEquals(this.types, that.types) &&
             Objects.equals(this.defaultValue, that.defaultValue) &&
             Objects.equals(this.byteOrder, that.byteOrder) &&
-            Objects.equals(this.arrayType, that.arrayType) &&
-            Objects.equals(this.arrayTypeName, that.arrayTypeName) &&
-            Objects.equals(this.mapKeyType, that.mapKeyType) &&
-            Objects.equals(this.mapValueType, that.mapValueType);
+            Objects.equals(this.typeParams, that.typeParams);
     }
 
     @Override
     public String toString()
     {
-        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, required=%s, arrayType=%s, " +
-                "arrayTypeName=%s, mapKeyType=%s, mapValueType=%s]",
-            name, types, defaultValue, byteOrder, required, arrayType, arrayTypeName, mapKeyType, mapValueType);
+        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, typeParams=%s, required=%s]",
+            name, types, defaultValue, byteOrder, typeParams, required);
     }
 
     public static final class Builder extends AstAbstractMemberNode.Builder<AstListMemberNode>
     {
+        private List<AstType> typeParams;
         private boolean required;
-        private AstType arrayType;
-        private AstType arrayTypeName;
-        private AstType mapKeyType;
-        private AstType mapValueType;
+
+        public Builder()
+        {
+            super();
+            this.typeParams = new LinkedList<>();
+        }
+
+        public Builder typeParam(
+            AstType typeParam)
+        {
+            typeParams.add(requireNonNull(typeParam));
+            return this;
+        }
 
         public Builder isRequired(
             boolean required)
@@ -127,39 +112,10 @@ public final class AstListMemberNode extends AstAbstractMemberNode
             return this;
         }
 
-        public Builder arrayType(
-            AstType arrayType)
-        {
-            this.arrayType = arrayType;
-            return this;
-        }
-
-        public Builder arrayTypeName(
-            AstType arrayTypeName)
-        {
-            this.arrayTypeName = arrayTypeName;
-            return this;
-        }
-
-        public Builder mapKeyType(
-            AstType mapKeyType)
-        {
-            this.mapKeyType = mapKeyType;
-            return this;
-        }
-
-        public Builder mapValueType(
-            AstType mapValueType)
-        {
-            this.mapValueType = mapValueType;
-            return this;
-        }
-
         @Override
         public AstListMemberNode build()
         {
-            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, required, arrayType,
-                arrayTypeName, mapKeyType, mapValueType);
+            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, typeParams, required);
         }
     }
 }

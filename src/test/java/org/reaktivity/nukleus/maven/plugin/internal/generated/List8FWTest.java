@@ -30,8 +30,8 @@ import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint32;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfUint32FW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
 
 public class List8FWTest
 {
@@ -152,7 +152,7 @@ public class List8FWTest
                 setMemory(0, capacity(), (byte) 0xab);
             }
         };
-        VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List8FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
@@ -166,9 +166,9 @@ public class List8FWTest
 
         final List8FW list8 = list8RO.wrap(buffer, 0, limit);
 
-        assertEquals(26, list8.length());
+        assertEquals(18, list8.length());
         assertEquals(2, list8.fieldCount());
-        assertEquals(27, list8.limit());
+        assertEquals(19, list8.limit());
     }
 
     @Test
@@ -181,7 +181,7 @@ public class List8FWTest
                 setMemory(0, capacity(), (byte) 0xab);
             }
         };
-        VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         ListFW.Builder listRW = new List8FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
@@ -200,15 +200,15 @@ public class List8FWTest
 
         final List8FW list8 = list8RO.wrap(buffer, 0, limit);
 
-        assertEquals(26, list8.length());
+        assertEquals(18, list8.length());
         assertEquals(2, list8.fieldCount());
-        assertEquals(27, list8.limit());
+        assertEquals(19, list8.limit());
     }
 
     @Test
     public void shouldSetFieldsUsingFieldMethod() throws Exception
     {
-        VariantEnumKindWithString32FW.Builder field1RW = new VariantEnumKindWithString32FW.Builder();
+        VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
         int limit = list8RW.wrap(buffer, 0, buffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
@@ -218,9 +218,9 @@ public class List8FWTest
 
         final List8FW list8 = list8RO.wrap(buffer, 0, limit);
 
-        assertEquals(26, list8.length());
+        assertEquals(18, list8.length());
         assertEquals(2, list8.fieldCount());
-        assertEquals(27, list8.limit());
+        assertEquals(19, list8.limit());
     }
 
     private static StringFW asStringFW(

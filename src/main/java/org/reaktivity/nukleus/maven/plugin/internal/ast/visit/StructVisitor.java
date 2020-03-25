@@ -104,7 +104,7 @@ public final class StructVisitor extends AstNode.Visitor<Collection<TypeSpecGene
         Object defaultValue = memberNode.defaultValue();
         AstByteOrder byteOrder = memberNode.byteOrder();
 
-        if (memberType == AstType.ARRAY)
+        if (memberType == AstType.ARRAY32)
         {
             ClassName rawType = resolver.resolveClass(memberType);
             TypeName[] typeArguments = memberNode.types()

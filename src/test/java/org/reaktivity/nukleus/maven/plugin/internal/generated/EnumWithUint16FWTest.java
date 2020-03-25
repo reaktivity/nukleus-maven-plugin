@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_INT;
+import static org.agrona.BitUtil.SIZE_OF_SHORT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -59,8 +59,8 @@ public class EnumWithUint16FWTest
         MutableDirectBuffer buffer,
         final int offset)
     {
-        buffer.putInt(offset,  EnumWithUint16.NI.value());
-        return SIZE_OF_INT;
+        buffer.putShort(offset, (short) EnumWithUint16.NI.value());
+        return SIZE_OF_SHORT;
     }
 
     void assertAllTestValuesRead(
@@ -103,37 +103,48 @@ public class EnumWithUint16FWTest
     @Test
     public void shouldTryWrapAndReadAllValues() throws Exception
     {
-        final int offset = 1;
-        setAllTestValues(buffer, offset);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertAllTestValuesRead(flyweightRO);
+        final int offset = 10;
+        int length = setAllTestValues(buffer, offset);
+
+        final EnumWithUint16FW enumWithUint16 = flyweightRO.tryWrap(buffer, offset, offset + length);
+
+        assertNotNull(enumWithUint16);
+        assertAllTestValuesRead(enumWithUint16);
     }
 
     @Test
     public void shouldWrapAndReadAllValues() throws Exception
     {
-        int size = setAllTestValues(buffer, 10);
-        int limit = flyweightRO.wrap(buffer,  10,  buffer.capacity()).limit();
-        assertEquals(10 + size, limit);
-        assertAllTestValuesRead(flyweightRO);
+        final int offset = 10;
+        int length = setAllTestValues(buffer, offset);
+
+        final EnumWithUint16FW enumWithUint16 = flyweightRO.wrap(buffer, offset, offset + length);
+
+        assertEquals(offset + length, enumWithUint16.limit());
+        assertAllTestValuesRead(enumWithUint16);
     }
 
     @Test
     public void shouldNotTryWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putInt(offset,  -2);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertNull(flyweightRO.get());
+        buffer.putShort(offset, (short) -2);
+
+        final EnumWithUint16FW enumWithUint16 = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+
+        assertNotNull(enumWithUint16);
+        assertNull(enumWithUint16.get());
     }
 
     @Test
     public void shouldNotWrapAndReadInvalidValue() throws Exception
     {
         final int offset = 12;
-        buffer.putInt(offset,  -2);
-        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
-        assertNull(flyweightRO.get());
+        buffer.putShort(offset, (short) -2);
+
+        final EnumWithUint16FW enumWithUint16 = flyweightRO.wrap(buffer, offset, buffer.capacity());
+
+        assertNull(enumWithUint16.get());
     }
 
     @Test
@@ -144,21 +155,23 @@ public class EnumWithUint16FWTest
             .build()
             .limit();
         setAllTestValues(expected,  0);
-        assertEquals(SIZE_OF_INT, limit);
+        assertEquals(SIZE_OF_SHORT, limit);
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
 
     @Test
     public void shouldSetUsingEnumWithUint16FW()
     {
-        EnumWithUint16FW enumWithInt16 = new EnumWithUint16FW().wrap(asBuffer(60001), 0, SIZE_OF_INT);
-        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_INT)
+        EnumWithUint16FW enumWithInt16 = new EnumWithUint16FW().wrap(asBuffer(60001), 0, SIZE_OF_SHORT);
+        int limit = flyweightRW.wrap(buffer, 10, 10 + SIZE_OF_SHORT)
             .set(enumWithInt16)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 10,  limit);
-        assertEquals(EnumWithUint16.ICHI, flyweightRO.get());
-        assertEquals(SIZE_OF_INT, flyweightRO.sizeof());
+
+        final EnumWithUint16FW enumWithUint16 = flyweightRO.wrap(buffer, 10,  limit);
+
+        assertEquals(EnumWithUint16.ICHI, enumWithUint16.get());
+        assertEquals(SIZE_OF_SHORT, enumWithUint16.sizeof());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -171,7 +184,7 @@ public class EnumWithUint16FWTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUsingEnumWithUint16FWWithInsufficientSpace()
     {
-        EnumWithUint16FW enumWithInt16 = new EnumWithUint16FW().wrap(asBuffer(60001), 0, SIZE_OF_INT);
+        EnumWithUint16FW enumWithInt16 = new EnumWithUint16FW().wrap(asBuffer(60001), 0, SIZE_OF_SHORT);
         flyweightRW.wrap(buffer, 10, 10)
             .set(enumWithInt16);
     }
@@ -188,8 +201,8 @@ public class EnumWithUint16FWTest
     private static DirectBuffer asBuffer(
         int value)
     {
-        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_INT));
-        valueBuffer.putInt(0, value);
+        MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(SIZE_OF_SHORT));
+        valueBuffer.putShort(0, (short) (value & 0xFFFF));
         return valueBuffer;
     }
 }

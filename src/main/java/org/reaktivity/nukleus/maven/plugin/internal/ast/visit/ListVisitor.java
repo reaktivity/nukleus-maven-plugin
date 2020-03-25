@@ -16,9 +16,11 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
 import static java.util.Collections.singleton;
-import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind.TYPEDEF;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind.MAP;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind.VARIANT;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode;
@@ -26,17 +28,18 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMapNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstTypedefNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstUnionNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 
 public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenerator<?>>>
@@ -76,53 +79,43 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
         AstListMemberNode listMemberNode = (AstListMemberNode) memberNode;
         String memberName = listMemberNode.name();
         AstType memberType = listMemberNode.type();
-        AstType arrayItemType = listMemberNode.arrayType();
-        AstType arrayItemTypeName = listMemberNode.arrayTypeName();
-        AstType mapKeyType = listMemberNode.mapKeyType();
-        AstType mapValueType = listMemberNode.mapValueType();
-        AstVariantNode namedNode;
-        AstType arrayItemOfType = null;
-        AstType arrayItemKindType = null;
-        AstType mapKeyKindType = null;
-        AstType mapKeyOfType = null;
-        AstType mapValueKindType = null;
-        AstType mapValueOfType = null;
+        AstType arrayItemTypeName = null;
+        AstType mapKeyType = null;
+        AstType mapValueType = null;
+        ClassName mapParamName = null;
+        ClassName originalMapKeyName = null;
+        ClassName originalMapValueName = null;
 
-        if (AstType.VARIANT.equals(arrayItemType))
+        AstNamedNode memberTypeNode = resolver.resolve(memberType.name());
+        if (memberTypeNode != null)
         {
-            namedNode = (AstVariantNode) resolver.resolve(arrayItemTypeName.name());
-            arrayItemOfType = namedNode.of();
-            arrayItemKindType = namedNode.kindType();
+            if (memberTypeNode.getKind() == VARIANT)
+            {
+                AstVariantNode varNode = (AstVariantNode) memberTypeNode;
+                AstType ofType = varNode.of();
+                if (AstType.ARRAY.equals(ofType))
+                {
+                    AstType arrayType = listMemberNode.typeParams().get(0);
+                    arrayItemTypeName = arrayType;
+                }
+                else if (AstType.MAP.equals(ofType))
+                {
+                    mapKeyType = listMemberNode.typeParams().get(0);
+                    mapValueType = listMemberNode.typeParams().get(1);
+                }
+            }
+            else if (memberTypeNode.getKind() == MAP)
+            {
+                AstMapNode mapNode = (AstMapNode) memberTypeNode;
+                AstType keyType = mapNode.keyType();
+                AstType valueType = mapNode.valueType();
+                AstType mapParam = listMemberNode.typeParams().get(0);
+                mapParamName = resolver.resolveClass(mapParam);
+                originalMapKeyName = Objects.requireNonNullElse(resolver.resolveClass(keyType), mapParamName);
+                originalMapValueName = Objects.requireNonNullElse(resolver.resolveClass(valueType), mapParamName);
+            }
         }
-        if (mapKeyType != null)
-        {
-            AstVariantNode mapKeyNode;
-            AstVariantNode mapValueNode;
-            AstNamedNode mapKeyNamedNode = resolver.resolve(mapKeyType.name());
-            if (mapKeyNamedNode.getKind() == TYPEDEF)
-            {
-                AstNamedNode originalNode = resolver.resolve(((AstTypedefNode) mapKeyNamedNode).originalType().name());
-                mapKeyNode = (AstVariantNode) originalNode;
-            }
-            else
-            {
-                mapKeyNode =  (AstVariantNode) mapKeyNamedNode;
-            }
-            mapKeyKindType = mapKeyNode.kindType();
-            mapKeyOfType = mapKeyNode.of();
-            AstNamedNode mapValueNamedNode = resolver.resolve(mapValueType.name());
-            if (mapValueNamedNode.getKind() == TYPEDEF)
-            {
-                AstNamedNode originalNode = resolver.resolve(((AstTypedefNode) mapValueNamedNode).originalType().name());
-                mapValueNode = (AstVariantNode) originalNode;
-            }
-            else
-            {
-                mapValueNode =  (AstVariantNode) mapValueNamedNode;
-            }
-            mapValueKindType = mapValueNode.kindType();
-            mapValueOfType = mapValueNode.of();
-        }
+
         int size = listMemberNode.size();
         TypeName sizeTypeName = listMemberNode.sizeType() == null ? null : listMemberNode.sizeType().isUnsignedInt() ?
             resolver.resolveUnsignedType(listMemberNode.sizeType()) : resolver.resolveType(listMemberNode.sizeType());
@@ -137,9 +130,9 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
                 " Unable to resolve type %s for field %s", memberType, memberName));
         }
         TypeName memberUnsignedTypeName = memberType.isUnsignedInt() ? resolver.resolveUnsignedType(memberType) : null;
-        generator.addMember(memberName, memberType, memberTypeName, memberUnsignedTypeName, size, sizeTypeName, usedAsSize,
-            defaultValue, byteOrder, listMemberNode.isRequired(), arrayItemType, arrayItemTypeName, arrayItemOfType,
-            arrayItemKindType, mapKeyType, mapKeyKindType, mapKeyOfType, mapValueType, mapValueKindType, mapValueOfType);
+        generator.addMember(memberName, memberType, memberTypeName, memberUnsignedTypeName, usedAsSize,
+            defaultValue, byteOrder, listMemberNode.isRequired(), arrayItemTypeName, mapKeyType, mapValueType,
+            mapParamName, originalMapKeyName, originalMapValueName);
         return defaultResult();
     }
 

@@ -19,17 +19,13 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
-import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
@@ -54,9 +50,18 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         return classBuilder
+            .addMethod(fieldSizeLengthMethod())
             .addMethod(asStringMethod())
             .addMethod(lengthMethod())
             .addType(builderClassBuilder.build())
+            .build();
+    }
+
+    private MethodSpec fieldSizeLengthMethod()
+    {
+        return methodBuilder("fieldSizeLength")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(int.class)
             .build();
     }
 
@@ -101,19 +106,10 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
-                .addField(fieldValueSet())
                 .addMethod(constructor())
-                .addMethod(wrapMethod())
                 .addMethod(setMethod())
                 .addMethod(setDirectBufferMethod())
                 .addMethod(setStringMethod())
-                .addMethod(buildMethod())
-                .build();
-        }
-
-        private FieldSpec fieldValueSet()
-        {
-            return FieldSpec.builder(boolean.class, "valueSet", PRIVATE)
                 .build();
         }
 
@@ -126,67 +122,33 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
                 .build();
         }
 
-        private MethodSpec wrapMethod()
-        {
-            return methodBuilder("wrap")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .returns(ParameterizedTypeName.get(classType, parameterType))
-                .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
-                .addParameter(int.class, "offset")
-                .addParameter(int.class, "maxLimit")
-                .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("this.valueSet = false")
-                .addStatement("return this")
-                .build();
-        }
-
         private MethodSpec setMethod()
         {
             return methodBuilder("set")
-                .addModifiers(PUBLIC)
+                .addModifiers(PUBLIC, ABSTRACT)
                 .returns(classType)
-                .addParameter(parameterType, "value")
-                .addStatement("valueSet = true")
-                .addStatement("return this")
+                .addParameter(stringType, "value")
                 .build();
         }
 
         private MethodSpec setDirectBufferMethod()
         {
             return methodBuilder("set")
-                .addModifiers(PUBLIC)
+                .addModifiers(PUBLIC, ABSTRACT)
                 .returns(classType)
                 .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                 .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")
-                .addStatement("valueSet = true")
-                .addStatement("return this")
                 .build();
         }
 
         private MethodSpec setStringMethod()
         {
             return methodBuilder("set")
-                .addModifiers(PUBLIC)
+                .addModifiers(PUBLIC, ABSTRACT)
                 .returns(classType)
                 .addParameter(String.class, "value")
                 .addParameter(Charset.class, "charset")
-                .addStatement("valueSet = true")
-                .addStatement("return this")
-                .build();
-        }
-
-        private MethodSpec buildMethod()
-        {
-            return methodBuilder("build")
-                .addAnnotation(Override.class)
-                .addModifiers(PUBLIC)
-                .beginControlFlow("if (!valueSet)")
-                .addStatement("set(null, $T.UTF_8)", StandardCharsets.class)
-                .endControlFlow()
-                .addStatement("return super.build()")
-                .returns(parameterType)
                 .build();
         }
     }

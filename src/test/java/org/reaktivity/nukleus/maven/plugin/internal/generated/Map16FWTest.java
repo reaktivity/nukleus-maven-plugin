@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,7 @@ import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindWithString32FW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 
 public class Map16FWTest
 {
@@ -45,13 +46,12 @@ public class Map16FWTest
         }
     };
 
-    private final Map16FW.Builder<TypedefStringFW.Builder, TypedefStringFW, EnumWithInt8, StringFW,
-        VariantEnumKindWithString32FW.Builder, VariantEnumKindWithString32FW, EnumWithInt8, StringFW>
-        flyweightRW = new Map16FW.Builder<>(new TypedefStringFW.Builder(), new TypedefStringFW(),
-        new VariantEnumKindWithString32FW.Builder(), new VariantEnumKindWithString32FW());
+    private final Map16FW.Builder<TypedefStringFW, VariantEnumKindOfStringFW, TypedefStringFW.Builder,
+        VariantEnumKindOfStringFW.Builder> flyweightRW = new Map16FW.Builder<>(new TypedefStringFW(),
+        new VariantEnumKindOfStringFW(), new TypedefStringFW.Builder(), new VariantEnumKindOfStringFW.Builder());
 
-    private final Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweightRO =
-        new Map16FW<>(new TypedefStringFW(), new VariantEnumKindWithString32FW());
+    private final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> flyweightRO =
+        new Map16FW<>(new TypedefStringFW(), new VariantEnumKindOfStringFW());
 
     private final int lengthSize = Short.BYTES;
     private final int fieldCountSize = Short.BYTES;
@@ -72,28 +72,28 @@ public class Map16FWTest
         buffer.putShort(offsetFieldCount, (short) fieldCount);
 
         int offsetMapEntry1KeyKind = offsetFieldCount + fieldCountSize;
-        buffer.putByte(offsetMapEntry1KeyKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry1KeyKind, EnumWithInt8.NINE.value());
         int offsetEntry1KeyLength = offsetMapEntry1KeyKind + Byte.BYTES;
         buffer.putByte(offsetEntry1KeyLength, (byte) entry1Key.length());
         int offsetEntry1Key = offsetEntry1KeyLength + Byte.BYTES;
         buffer.putBytes(offsetEntry1Key, entry1Key.getBytes());
 
         int offsetMapEntry1ValueKind = offsetEntry1Key + entry1Key.length();
-        buffer.putByte(offsetMapEntry1ValueKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry1ValueKind, EnumWithInt8.NINE.value());
         int offsetEntry1ValueLength = offsetMapEntry1ValueKind + Byte.BYTES;
         buffer.putByte(offsetEntry1ValueLength, (byte) entry1Value.length());
         int offsetEntry1Value = offsetEntry1ValueLength + Byte.BYTES;
         buffer.putBytes(offsetEntry1Value, entry1Value.getBytes());
 
         int offsetMapEntry2KeyKind = offsetEntry1Value + entry1Value.length();
-        buffer.putByte(offsetMapEntry2KeyKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry2KeyKind, EnumWithInt8.NINE.value());
         int offsetEntry2KeyLength = offsetMapEntry2KeyKind + Byte.BYTES;
         buffer.putByte(offsetEntry2KeyLength, (byte) entry2Key.length());
         int offsetEntry2Key = offsetEntry2KeyLength + Byte.BYTES;
         buffer.putBytes(offsetEntry2Key, entry2Key.getBytes());
 
         int offsetMapEntry2ValueKind = offsetEntry2Key + entry2Key.length();
-        buffer.putByte(offsetMapEntry2ValueKind, EnumWithInt8.ONE.value());
+        buffer.putByte(offsetMapEntry2ValueKind, EnumWithInt8.NINE.value());
         int offsetEntry2ValueLength = offsetMapEntry2ValueKind + Byte.BYTES;
         buffer.putByte(offsetEntry2ValueLength, (byte) entry2Value.length());
         int offsetEntry2Value = offsetEntry2ValueLength + Byte.BYTES;
@@ -103,7 +103,7 @@ public class Map16FWTest
     }
 
     static void assertAllTestValuesRead(
-        Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> flyweight,
+        Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> flyweight,
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
@@ -122,51 +122,60 @@ public class Map16FWTest
         assertEquals(offset + 52, flyweight.limit());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int length = 50;
-        setAllItems(buffer, offset);
-        for (int maxLimit = offset; maxLimit <= length; maxLimit++)
+        int length = setAllItems(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
-            flyweightRO.wrap(buffer, offset, maxLimit);
+            try
+            {
+                flyweightRO.wrap(buffer, 10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch (Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
         }
     }
 
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int length = 50;
-        setAllItems(buffer, offset);
-        for (int maxLimit = offset; maxLimit <= length; maxLimit++)
+        int length = setAllItems(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
-            assertNull(flyweightRO.tryWrap(buffer, offset, maxLimit));
+            assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int size = setAllItems(buffer, offset);
-        Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        int length = setAllItems(buffer, 10);
 
-        assertSame(flyweightRO, map);
-        assertAllTestValuesRead(map, offset);
+        final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map16 =
+            flyweightRO.wrap(buffer, 10, 10 + length);
+
+        assertSame(flyweightRO, map16);
+        assertAllTestValuesRead(map16, 10);
     }
 
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        final int offset = 10;
-        int size = setAllItems(buffer, offset);
-        Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+        int length = setAllItems(buffer, 10);
 
-        assertNotNull(map);
-        assertSame(flyweightRO, map);
-        assertAllTestValuesRead(map, offset);
+        final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map16 =
+            flyweightRO.tryWrap(buffer, 10, 10 + length);
+
+        assertNotNull(map16);
+        assertSame(flyweightRO, map16);
+        assertAllTestValuesRead(map16, 10);
     }
 
     @Test
@@ -174,7 +183,7 @@ public class Map16FWTest
     {
         final int offset = 10;
         int size = setAllItems(buffer, offset);
-        Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer, offset, buffer.capacity());
         assertEquals(offset + size, map.limit());
 
         assertAllTestValuesRead(map, offset);
@@ -187,7 +196,7 @@ public class Map16FWTest
             .build()
             .limit();
 
-        final Map16FW<TypedefStringFW, VariantEnumKindWithString32FW> map = flyweightRO.wrap(buffer,  0,  limit);
+        final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer,  0,  limit);
 
         List<String> mapItems = new ArrayList<>();
         map.forEach(kv -> vv ->
@@ -201,11 +210,11 @@ public class Map16FWTest
     }
 
     @Test
-    public void shouldSetKeyValueEntrys() throws Exception
+    public void shouldSetKeyValueEntries() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .entry(asStringFW("entry1Key"), asStringFW("entry1Value"))
-            .entry(asStringFW("entry2Key"), asStringFW("entry2Value"))
+            .entry(k -> k.set(asStringFW("entry1Key")), v -> v.set(asStringFW("entry1Value")))
+            .entry(k -> k.set(asStringFW("entry2Key")), v -> v.set(asStringFW("entry2Value")))
             .build()
             .limit();
 

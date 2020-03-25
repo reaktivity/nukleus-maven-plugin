@@ -96,8 +96,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             }
             if (valueTypeName.isPrimitive())
             {
-                builder.addField(isTypeUnsignedInt() ? isTypeByte() ? TypeName.SHORT : unsignedValueTypeName : valueTypeName,
-                        "value", Modifier.PRIVATE, Modifier.FINAL);
+                builder.addField(isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName, "value", Modifier.PRIVATE,
+                    Modifier.FINAL);
             }
             else
             {
@@ -137,20 +137,15 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             else
             {
                 TypeName valueType = unsignedValueTypeName == null ? valueTypeName : unsignedValueTypeName;
-                if (unsignedValueTypeName != null && unsignedValueTypeName.equals(TypeName.INT) &&
-                    valueTypeName.equals(TypeName.BYTE))
-                {
-                    builder.addEnumConstant(name,
-                        TypeSpec.anonymousClassBuilder("(short) $L", value).build());
-                }
-                else if (valueType.equals(TypeName.BYTE) || valueType.equals(TypeName.SHORT))
+                if (valueType.equals(TypeName.BYTE) || valueType.equals(TypeName.SHORT))
                 {
                     builder.addEnumConstant(name,
                         TypeSpec.anonymousClassBuilder("($L) $L", valueType, value).build());
                 }
                 else if (valueType.equals(TypeName.LONG))
                 {
-                    builder.addEnumConstant(name, TypeSpec.anonymousClassBuilder("$LL", value).build());
+                    String longValue = value instanceof String ? "$L" : "$LL";
+                    builder.addEnumConstant(name, TypeSpec.anonymousClassBuilder(longValue, value).build());
                 }
                 else
                 {
@@ -163,7 +158,9 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
 
     private static final class LongHashMapGenerator extends ClassSpecMixinGenerator
     {
-        private final CodeBlock.Builder longHashMapBuilder;
+        private final CodeBlock.Builder putStatementsBuilder;
+        private int count;
+
         private LongHashMapGenerator(
             ClassName thisType,
             TypeSpec.Builder builder)
@@ -171,21 +168,26 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             super(thisType, builder);
             builder.addField(ParameterizedTypeName.get(LONG_2_OBJECT_HASH_MAP_TYPE, thisType), "VALUE_BY_LONG",
                 Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL);
-            longHashMapBuilder = CodeBlock.builder().addStatement("$T<$T> valueByLong = new $T<>()", LONG_2_OBJECT_HASH_MAP_TYPE,
-                thisType, LONG_2_OBJECT_HASH_MAP_TYPE);
+            putStatementsBuilder = CodeBlock.builder();
         }
 
         public LongHashMapGenerator addValue(
             String name,
             Object value)
         {
-            longHashMapBuilder.addStatement("valueByLong.put($LL, $L)", value, name);
+            String putStatement = value instanceof String ? "valueByLong.put($L, $L)" : "valueByLong.put($LL, $L)";
+            putStatementsBuilder.addStatement(putStatement, value, name);
+            count++;
             return this;
         }
 
         public TypeSpec generate()
         {
-            return builder.addStaticBlock(longHashMapBuilder.addStatement("VALUE_BY_LONG = valueByLong")
+            return builder.addStaticBlock(CodeBlock.builder()
+                .addStatement("$T<$T> valueByLong = new $T<>($L, 0.9f)", LONG_2_OBJECT_HASH_MAP_TYPE,
+                    thisType, LONG_2_OBJECT_HASH_MAP_TYPE, count)
+                .add(putStatementsBuilder.build())
+                .addStatement("VALUE_BY_LONG = valueByLong")
                 .build()).build();
         }
     }
@@ -202,9 +204,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         {
             if (valueTypeName.isPrimitive())
             {
-
-                builder.addParameter(isTypeUnsignedInt() ? (isTypeByte() ? TypeName.SHORT : unsignedValueTypeName) :
-                    valueTypeName, "value");
+                builder.addParameter(isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName, "value");
             }
             else
             {
@@ -228,7 +228,7 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         {
             if (valueTypeName.isPrimitive())
             {
-                builder.returns(isTypeUnsignedInt() ? (isTypeByte() ? TypeName.SHORT : unsignedValueTypeName) : valueTypeName);
+                builder.returns(isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName);
             }
             else
             {
@@ -270,8 +270,8 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
         {
             final String discriminant = isParameterizedType() ? "value" : "ordinal";
 
-            builder.addParameter(isParameterizedType() ? (isTypeUnsignedInt() ? (isTypeByte() ? TypeName.SHORT :
-                unsignedValueTypeName) : valueTypeName) : TypeName.INT, discriminant);
+            builder.addParameter(isParameterizedType() ? (isTypeUnsignedInt() ? unsignedValueTypeName : valueTypeName) :
+                TypeName.INT, discriminant);
 
             if (isValueTypeLong())
             {
