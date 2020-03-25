@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_LONG;
+import static org.agrona.BitUtil.SIZE_OF_INT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -54,17 +54,24 @@ public class VariantEnumKindOfUint32FWTest
         MutableDirectBuffer buffer,
         final int offset)
     {
-        int pos = offset;
-        buffer.putLong(pos, EnumWithUint32.NI.value());
-        buffer.putLong(pos += SIZE_OF_LONG, 4000000000L);
-        return pos - offset + SIZE_OF_LONG;
+        buffer.putInt(offset, (int) EnumWithUint32.NI.value());
+        buffer.putInt(offset + SIZE_OF_INT, (int) 4000000000L);
+        return SIZE_OF_INT + SIZE_OF_INT;
+    }
+
+    void assertAllTestValuesRead(
+        VariantEnumKindOfUint32FW flyweight)
+    {
+        assertEquals(4000000000L, flyweight.getAsUint32());
+        assertEquals(4000000000L, flyweight.get());
+        assertEquals(EnumWithUint32.NI, flyweight.kind());
     }
 
     @Test
     public void shouldNotTryWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             assertNull(flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -73,8 +80,8 @@ public class VariantEnumKindOfUint32FWTest
     @Test
     public void shouldNotWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             try
             {
@@ -94,37 +101,47 @@ public class VariantEnumKindOfUint32FWTest
     @Test
     public void shouldTryWrapWhenLengthSufficientCase()
     {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.tryWrap(buffer, 10, 10 + size));
+        int length = setAllTestValues(buffer, 10);
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.tryWrap(buffer, 10, 10 + length);
+
+        assertNotNull(variantEnumKindOfUint32);
+        assertSame(flyweightRO, variantEnumKindOfUint32);
+        assertAllTestValuesRead(variantEnumKindOfUint32);
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientCase()
     {
-        int size = setAllTestValues(buffer, 10);
-        assertSame(flyweightRO, flyweightRO.wrap(buffer, 10, 10 + size));
+        int length = setAllTestValues(buffer, 10);
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.wrap(buffer, 10, 10 + length);
+
+        assertSame(flyweightRO, variantEnumKindOfUint32);
+        assertAllTestValuesRead(variantEnumKindOfUint32);
     }
 
     @Test
     public void shouldTryWrapAndReadAllValuesCase() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertEquals(4000000000L, flyweightRO.getAsUint32());
-        assertEquals(4000000000L, flyweightRO.get());
-        assertEquals(EnumWithUint32.NI, flyweightRO.kind());
+        int length = setAllTestValues(buffer, offset);
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.tryWrap(buffer, offset, offset + length);
+
+        assertNotNull(variantEnumKindOfUint32);
+        assertAllTestValuesRead(variantEnumKindOfUint32);
     }
 
     @Test
     public void shouldWrapAndReadAllValuesCase() throws Exception
     {
         final int offset = 1;
-        setAllTestValues(buffer, offset);
-        flyweightRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals(4000000000L, flyweightRO.getAsUint32());
-        assertEquals(4000000000L, flyweightRO.get());
-        assertEquals(EnumWithUint32.NI, flyweightRO.kind());
+        int length = setAllTestValues(buffer, offset);
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.wrap(buffer, offset, offset + length);
+
+        assertAllTestValuesRead(variantEnumKindOfUint32);
     }
 
     @Test
@@ -134,10 +151,10 @@ public class VariantEnumKindOfUint32FWTest
             .setAsUint32(4000000000L)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(4000000000L, flyweightRO.getAsUint32());
-        assertEquals(4000000000L, flyweightRO.get());
-        assertEquals(EnumWithUint32.NI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesRead(variantEnumKindOfUint32);
     }
 
     @Test
@@ -147,10 +164,10 @@ public class VariantEnumKindOfUint32FWTest
             .set(4000000000L)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(4000000000L, flyweightRO.getAsUint32());
-        assertEquals(4000000000L, flyweightRO.get());
-        assertEquals(EnumWithUint32.NI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertAllTestValuesRead(variantEnumKindOfUint32);
     }
 
     @Test
@@ -160,10 +177,12 @@ public class VariantEnumKindOfUint32FWTest
             .set(0)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(0, flyweightRO.getAsZero());
-        assertEquals(0, flyweightRO.get());
-        assertEquals(EnumWithUint32.ICHI, flyweightRO.kind());
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertEquals(0, variantEnumKindOfUint32.getAsZero());
+        assertEquals(0, variantEnumKindOfUint32.get());
+        assertEquals(EnumWithUint32.ICHI, variantEnumKindOfUint32.kind());
     }
 
     @Test
@@ -173,9 +192,11 @@ public class VariantEnumKindOfUint32FWTest
             .set(1)
             .build()
             .limit();
-        flyweightRO.wrap(buffer, 0, limit);
-        assertEquals(1, flyweightRO.getAsOne());
-        assertEquals(1, flyweightRO.get());
-        assertEquals(EnumWithUint32.SAN, flyweightRO.kind());
+
+        final VariantEnumKindOfUint32FW variantEnumKindOfUint32 = flyweightRO.wrap(buffer, 0, limit);
+
+        assertEquals(1, variantEnumKindOfUint32.getAsOne());
+        assertEquals(1, variantEnumKindOfUint32.get());
+        assertEquals(EnumWithUint32.SAN, variantEnumKindOfUint32.kind());
     }
 }

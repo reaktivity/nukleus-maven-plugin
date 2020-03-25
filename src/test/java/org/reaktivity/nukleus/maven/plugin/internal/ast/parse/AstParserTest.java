@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -146,6 +146,7 @@ public class AstParserTest
                 .union(
                     new AstUnionNode.Builder()
                         .name("OneUnion")
+                        .kindType(AstType.UINT8)
                         .caseN(
                             new AstUnionCaseNode.Builder()
                                 .value(0)
@@ -175,6 +176,7 @@ public class AstParserTest
                         .union(
                             new AstUnionNode.Builder()
                                 .name("TwoUnion")
+                                .kindType(AstType.UINT8)
                                 .caseN(
                                     new AstUnionCaseNode.Builder()
                                         .value(0)
@@ -370,14 +372,14 @@ public class AstParserTest
     @Test
     public void shouldParseStructWithMembers()
     {
-        NukleusParser parser = newParser("struct Person { string firstName; string lastName; }");
+        NukleusParser parser = newParser("struct Person { string8 firstName; string8 lastName; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
-                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("firstName").build())
-                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("lastName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("firstName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("lastName").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -386,15 +388,15 @@ public class AstParserTest
     @Test
     public void shouldParseStructWithArrayMember()
     {
-        NukleusParser parser = newParser("struct Person { string lastName; string[] foreNames; }");
+        NukleusParser parser = newParser("struct Person { string8 lastName; string8[] foreNames; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Person")
-                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("lastName").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("lastName").build())
                 .member((AstStructMemberNode) new AstStructMemberNode.Builder()
-                    .type(AstType.ARRAY).type(AstType.STRING).name("foreNames").build())
+                    .type(AstType.ARRAY32).type(AstType.STRING8).name("foreNames").build())
                 .build();
 
         assertEquals(expected, actual);
@@ -403,13 +405,13 @@ public class AstParserTest
     @Test
     public void shouldParseStructWithUnboundedOctetsMember()
     {
-        NukleusParser parser = newParser("struct Frame { string source; octets extension; }");
+        NukleusParser parser = newParser("struct Frame { string8 source; octets extension; }");
         Struct_typeContext ctx = parser.struct_type();
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
         AstStructNode expected = new AstStructNode.Builder()
                 .name("Frame")
-                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING).name("source").build())
+                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("source").build())
                 .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.OCTETS).name("extension").build())
                 .build();
 
@@ -456,6 +458,7 @@ public class AstParserTest
 
         AstUnionNode expected = new AstUnionNode.Builder()
                 .name("Count")
+                .kindType(AstType.UINT8)
                 .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
                                       .member((AstStructMemberNode) new AstStructMemberNode.Builder()
@@ -485,6 +488,7 @@ public class AstParserTest
 
         AstUnionNode expected = new AstUnionNode.Builder()
                 .name("Count")
+                .kindType(AstType.UINT8)
                 .caseN(new AstUnionCaseNode.Builder()
                                       .value(0)
                                       .member((AstStructMemberNode) new AstStructMemberNode.Builder()
@@ -581,7 +585,7 @@ public class AstParserTest
     public void shouldParseList()
     {
         NukleusParser parser = newParser("list<uint32, uint32> ListWithPhysicalAndLogicalLength " +
-            "{ required string field0; uint32 field1; string field2; }");
+            "{ required string8 field0; uint32 field1; string8 field2; }");
 
         List_typeContext ctx = parser.list_type();
         AstListNode actual = new AstParser().visitList_type(ctx);
@@ -593,7 +597,7 @@ public class AstParserTest
                 (AstListMemberNode) new AstListMemberNode.Builder()
                     .isRequired(true)
                     .byteOrder(NATIVE)
-                    .type(AstType.STRING)
+                    .type(AstType.STRING8)
                     .name("field0")
                     .build())
             .member(
@@ -605,7 +609,7 @@ public class AstParserTest
             .member(
                 (AstListMemberNode) new AstListMemberNode.Builder()
                     .byteOrder(NATIVE)
-                    .type(AstType.STRING)
+                    .type(AstType.STRING8)
                     .name("field2")
                     .build())
             .build();
@@ -960,12 +964,12 @@ public class AstParserTest
     @Test
     public void shouldParseStringMember()
     {
-        NukleusParser parser = newParser("string field;");
+        NukleusParser parser = newParser("string8 field;");
         MemberContext ctx = parser.member();
         AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
         AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
-                .type(AstType.STRING)
+                .type(AstType.STRING8)
                 .name("field")
                 .build();
 
@@ -975,12 +979,12 @@ public class AstParserTest
     // @Test TODO: not yet supported
     public void shouldParseStringMemberWithLength()
     {
-        NukleusParser parser = newParser("string<10> field;");
+        NukleusParser parser = newParser("string8<10> field;");
         MemberContext ctx = parser.member();
         AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
         AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
-                .type(AstType.STRING)
+                .type(AstType.STRING8)
                 .name("field")
                 .build();
 
@@ -1005,14 +1009,14 @@ public class AstParserTest
     @Test
     public void shouldParseArrayMember()
     {
-        NukleusParser parser = newParser("string[] field;");
+        NukleusParser parser = newParser("string8[] field;");
 
         MemberContext ctx = parser.member();
         AstNode actual = new AstParser().visitMember(ctx);
 
         AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
-                .type(AstType.ARRAY)
-                .type(AstType.STRING)
+                .type(AstType.ARRAY32)
+                .type(AstType.STRING8)
                 .name("field")
                 .build();
 
@@ -1027,7 +1031,7 @@ public class AstParserTest
         AstStructMemberNode actual = new AstParser().visitMember(ctx);
 
         AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
-                .type(AstType.ARRAY)
+                .type(AstType.ARRAY32)
                 .type(AstType.STRING16)
                 .name("field")
                 .build();

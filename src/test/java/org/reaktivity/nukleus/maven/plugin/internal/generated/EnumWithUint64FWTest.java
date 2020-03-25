@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -72,8 +72,8 @@ public class EnumWithUint64FWTest
     @Test
     public void shouldNotTryWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             assertNull("at maxLimit " + maxLimit, flyweightRO.tryWrap(buffer,  10, maxLimit));
         }
@@ -82,8 +82,8 @@ public class EnumWithUint64FWTest
     @Test
     public void shouldNotWrapWhenIncomplete()
     {
-        int size = setAllTestValues(buffer, 10);
-        for (int maxLimit = 10; maxLimit < 10 + size; maxLimit++)
+        int length = setAllTestValues(buffer, 10);
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
             try
             {
@@ -103,19 +103,25 @@ public class EnumWithUint64FWTest
     @Test
     public void shouldTryWrapAndReadAllValues() throws Exception
     {
-        final int offset = 1;
-        setAllTestValues(buffer, offset);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertAllTestValuesRead(flyweightRO);
+        final int offset = 10;
+        int length = setAllTestValues(buffer, offset);
+
+        final EnumWithUint64FW enumWithUint64 = flyweightRO.tryWrap(buffer, offset, length + offset);
+
+        assertNotNull(enumWithUint64);
+        assertAllTestValuesRead(enumWithUint64);
     }
 
     @Test
     public void shouldWrapAndReadAllValues() throws Exception
     {
-        int size = setAllTestValues(buffer, 10);
-        int limit = flyweightRO.wrap(buffer,  10,  buffer.capacity()).limit();
-        assertEquals(10 + size, limit);
-        assertAllTestValuesRead(flyweightRO);
+        final int offset = 10;
+        int length = setAllTestValues(buffer, offset);
+
+        final EnumWithUint64FW enumWithUint64 = flyweightRO.wrap(buffer,  10,  offset + length);
+
+        assertEquals(offset + length, enumWithUint64.limit());
+        assertAllTestValuesRead(enumWithUint64);
     }
 
     @Test
@@ -123,8 +129,11 @@ public class EnumWithUint64FWTest
     {
         final int offset = 12;
         buffer.putLong(offset,  -2);
-        assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertNull(flyweightRO.get());
+
+        final EnumWithUint64FW enumWithUint64 = flyweightRO.tryWrap(buffer, offset, buffer.capacity());
+
+        assertNotNull(enumWithUint64);
+        assertNull(enumWithUint64.get());
     }
 
     @Test
@@ -132,8 +141,8 @@ public class EnumWithUint64FWTest
     {
         final int offset = 12;
         buffer.putLong(offset,  -2);
-        flyweightRO.wrap(buffer, offset, buffer.capacity()).limit();
-        assertNull(flyweightRO.get());
+        final EnumWithUint64FW enumWithUint64 = flyweightRO.wrap(buffer, offset, buffer.capacity());
+        assertNull(enumWithUint64.get());
     }
 
     @Test

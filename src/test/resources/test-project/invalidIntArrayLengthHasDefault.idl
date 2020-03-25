@@ -18,7 +18,7 @@ scope invalidIntArrayLengthFieldHasDefault
     struct InvalidIntegerArray
     {
         uint8 length = 0;
-        uint32[length] array;
+        uint32[length] arrayMember;
     }
     
 }

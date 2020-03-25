@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -16,7 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
-import static org.agrona.BitUtil.SIZE_OF_LONG;
+import static org.agrona.BitUtil.SIZE_OF_INT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -54,10 +54,9 @@ public class TypedefUint32FWTest
         MutableDirectBuffer buffer,
         final int offset)
     {
-        int pos = offset;
-        buffer.putLong(pos, EnumWithUint32.NI.value());
-        buffer.putLong(pos += SIZE_OF_LONG, 4000000000L);
-        return pos - offset + SIZE_OF_LONG;
+        buffer.putInt(offset, (int) EnumWithUint32.NI.value());
+        buffer.putInt(offset + SIZE_OF_INT, (int) 4000000000L);
+        return SIZE_OF_INT + SIZE_OF_INT;
     }
 
     @Test

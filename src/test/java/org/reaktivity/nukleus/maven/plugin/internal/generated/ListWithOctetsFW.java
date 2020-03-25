@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -24,7 +24,7 @@ import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 import org.reaktivity.reaktor.internal.test.types.OctetsFW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.Varint32FW;
 
 public final class ListWithOctetsFW extends Flyweight
@@ -75,7 +75,7 @@ public final class ListWithOctetsFW extends Flyweight
 
     private final OctetsFW octets2RO = new OctetsFW();
 
-    private final StringFW string1RO = new StringFW();
+    private final String8FW string1RO = new String8FW();
 
     private final Varint32FW lengthOctets3RO = new Varint32FW();
 
@@ -120,7 +120,7 @@ public final class ListWithOctetsFW extends Flyweight
         return octets2RO;
     }
 
-    public StringFW string1()
+    public String8FW string1()
     {
         return string1RO;
     }
@@ -288,7 +288,7 @@ public final class ListWithOctetsFW extends Flyweight
                 {
                     return null;
                 }
-                final StringFW string1 = string1RO.tryWrap(buffer, fieldLimit, maxLimit);
+                final String8FW string1 = string1RO.tryWrap(buffer, fieldLimit, maxLimit);
                 if (string1 == null)
                 {
                     return null;
@@ -397,7 +397,7 @@ public final class ListWithOctetsFW extends Flyweight
 
         private final OctetsFW.Builder octets2RW = new OctetsFW.Builder();
 
-        private final StringFW.Builder string1RW = new StringFW.Builder();
+        private final String8FW.Builder string1RW = new String8FW.Builder();
 
         private final Varint32FW.Builder lengthOctets3RW = new Varint32FW.Builder();
 
@@ -568,7 +568,7 @@ public final class ListWithOctetsFW extends Flyweight
             return this;
         }
 
-        private StringFW.Builder string1()
+        private String8FW.Builder string1()
         {
             return string1RW.wrap(buffer(), limit(), maxLimit());
         }
@@ -578,7 +578,7 @@ public final class ListWithOctetsFW extends Flyweight
         {
             assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
-            StringFW.Builder string1RW = string1();
+            String8FW.Builder string1RW = string1();
             string1RW.set(value, StandardCharsets.UTF_8);
             fieldsMask |= 1 << FIELD_INDEX_STRING1;
             limit(string1RW.build().limit());
@@ -586,11 +586,11 @@ public final class ListWithOctetsFW extends Flyweight
         }
 
         public Builder string1(
-            StringFW value)
+            String8FW value)
         {
             assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
-            StringFW.Builder string1RW = string1();
+            String8FW.Builder string1RW = string1();
             string1RW.set(value);
             fieldsMask |= 1 << FIELD_INDEX_STRING1;
             limit(string1RW.build().limit());
@@ -604,7 +604,7 @@ public final class ListWithOctetsFW extends Flyweight
         {
             assert (fieldsMask & ~0x0F) == 0 : "Field \"string1\" cannot be set out of order";
             assert (fieldsMask & 0x02) != 0 : "Prior required field \"octets1\" is not set";
-            StringFW.Builder string1RW = string1();
+            String8FW.Builder string1RW = string1();
             string1RW.set(buffer, offset, length);
             fieldsMask |= 1 << FIELD_INDEX_STRING1;
             limit(string1RW.build().limit());

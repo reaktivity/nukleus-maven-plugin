@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -31,7 +31,7 @@ import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithString;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithStringFW;
 
-public class EnumWithStringFWTest
+public class EnumWithString8FWTest
 {
     private static final int LENGTH_SIZE = BitUtil.SIZE_OF_BYTE;
 

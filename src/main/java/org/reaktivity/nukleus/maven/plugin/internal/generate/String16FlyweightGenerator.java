@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -44,53 +44,57 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
     private final BuilderClassBuilder builderClassBuilder;
 
     public String16FlyweightGenerator(
-        ClassName flyweightType)
+        ClassName stringType)
     {
-        super(flyweightType.peerClass("String16FW"));
+        super(stringType.peerClass("String16FW"));
 
-        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
+        this.classBuilder = classBuilder(thisName).superclass(stringType).addModifiers(PUBLIC, FINAL);
+        this.builderClassBuilder = new BuilderClassBuilder(stringType, thisName, stringType.nestedClass("Builder"));
     }
 
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addField(fieldSizeLengthConstant())
-                           .addField(fieldByteOrder())
-                           .addField(valueField())
-                           .addMethod(constructor())
-                           .addMethod(constructorString())
-                           .addMethod(constructorStringAndCharset())
-                           .addMethod(constructorByteOrder())
-                           .addMethod(limitMethod())
-                           .addMethod(valueMethod())
-                           .addMethod(asStringMethod())
-                           .addMethod(tryWrapMethod())
-                           .addMethod(wrapMethod())
-                           .addMethod(toStringMethod())
-                           .addMethod(length0Method())
-                           .addType(builderClassBuilder.build())
-                           .build();
+        return classBuilder
+                .addField(fieldSizeLengthConstant())
+                .addField(fieldByteOrder())
+                .addField(valueField())
+                .addMethod(constructor())
+                .addMethod(constructorString())
+                .addMethod(constructorStringAndByteOrder())
+                .addMethod(constructorStringAndCharset())
+                .addMethod(constructorStringAndCharsetAndByteOrder())
+                .addMethod(constructorByteOrder())
+                .addMethod(fieldSizeLengthMethod())
+                .addMethod(limitMethod())
+                .addMethod(valueMethod())
+                .addMethod(asStringMethod())
+                .addMethod(tryWrapMethod())
+                .addMethod(wrapMethod())
+                .addMethod(toStringMethod())
+                .addMethod(lengthMethod())
+                .addType(builderClassBuilder.build())
+                .build();
     }
 
     private FieldSpec fieldSizeLengthConstant()
     {
         return FieldSpec.builder(int.class, "FIELD_SIZE_LENGTH", PRIVATE, STATIC, FINAL)
-                .initializer("$T.SIZE_OF_SHORT", BIT_UTIL_TYPE)
-                .build();
+                        .initializer("$T.SIZE_OF_SHORT", BIT_UTIL_TYPE)
+                        .build();
     }
 
     private FieldSpec fieldByteOrder()
     {
         return FieldSpec.builder(ByteOrder.class, "byteOrder", PRIVATE, FINAL)
-                .build();
+                        .build();
     }
 
     private FieldSpec valueField()
     {
         return FieldSpec.builder(DIRECT_BUFFER_TYPE, "valueRO", PRIVATE, FINAL)
-                .initializer("new $T(0L, 0)", UNSAFE_BUFFER_TYPE)
-                .build();
+                        .initializer("new $T(0L, 0)", UNSAFE_BUFFER_TYPE)
+                        .build();
     }
 
     private MethodSpec constructor()
@@ -110,17 +114,38 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                          .build();
     }
 
+    private MethodSpec constructorStringAndByteOrder()
+    {
+        return MethodSpec.constructorBuilder()
+                         .addModifiers(PUBLIC)
+                         .addParameter(String.class, "value")
+                         .addParameter(ByteOrder.class, "byteOrder")
+                         .addStatement("this(value, $T.UTF_8, byteOrder)", StandardCharsets.class)
+                         .build();
+    }
+
     private MethodSpec constructorStringAndCharset()
     {
         return MethodSpec.constructorBuilder()
                          .addModifiers(PUBLIC)
                          .addParameter(String.class, "value")
                          .addParameter(Charset.class, "charset")
-                         .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
+                         .addStatement("this(value, $T.UTF_8, $T.nativeOrder())", StandardCharsets.class, ByteOrder.class)
+                         .build();
+    }
+
+    private MethodSpec constructorStringAndCharsetAndByteOrder()
+    {
+        return MethodSpec.constructorBuilder()
+                         .addModifiers(PUBLIC)
+                         .addParameter(String.class, "value")
+                         .addParameter(Charset.class, "charset")
+                         .addParameter(ByteOrder.class, "byteOrder")
+                         .addStatement("this.byteOrder = byteOrder")
                          .addStatement("final byte[] encoded = value.getBytes(charset)")
                          .addStatement("final $T buffer = new $T(new byte[FIELD_SIZE_LENGTH + encoded.length])",
-                                 MUTABLE_DIRECT_BUFFER_TYPE, UNSAFE_BUFFER_TYPE)
-                         .addStatement("buffer.putShort(0, (short)(encoded.length & 0xFFFF))")
+                             MUTABLE_DIRECT_BUFFER_TYPE, UNSAFE_BUFFER_TYPE)
+                         .addStatement("buffer.putShort(0, (short)(encoded.length & 0xFFFF), byteOrder)")
                          .addStatement("buffer.putBytes(FIELD_SIZE_LENGTH, encoded)")
                          .addStatement("wrap(buffer, 0, buffer.capacity())")
                          .build();
@@ -135,13 +160,23 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                 .build();
     }
 
+    private MethodSpec fieldSizeLengthMethod()
+    {
+        return methodBuilder("fieldSizeLength")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(int.class)
+                .addStatement("return FIELD_SIZE_LENGTH")
+                .build();
+    }
+
     private MethodSpec limitMethod()
     {
         return methodBuilder("limit")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
                 .returns(int.class)
-                .addStatement("return offset() + FIELD_SIZE_LENGTH + Math.max(length0(), 0)")
+                .addStatement("return offset() + FIELD_SIZE_LENGTH + Math.max(length(), 0)")
                 .build();
     }
 
@@ -149,11 +184,12 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
     {
         return methodBuilder("asString")
                 .addModifiers(PUBLIC)
+                .addAnnotation(Override.class)
                 .returns(String.class)
-                .beginControlFlow("if (maxLimit() == offset() || length0() == -1)")
+                .beginControlFlow("if (maxLimit() == offset() || length() == -1)")
                 .addStatement("return null")
                 .endControlFlow()
-                .addStatement("return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length0())")
+                .addStatement("return buffer().getStringWithoutLengthUtf8(offset() + FIELD_SIZE_LENGTH, length())")
                 .build();
     }
 
@@ -171,9 +207,9 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                                   "limit() > maxLimit)")
                 .addStatement("return null")
                 .endControlFlow()
-                .addStatement("int length0 = length0()")
-                .beginControlFlow("if (length0 != -1)")
-                .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0)")
+                .addStatement("int length = length()")
+                .beginControlFlow("if (length != -1)")
+                .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length)")
                 .endControlFlow()
                 .addStatement("return this")
                 .build();
@@ -191,9 +227,9 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
                 .addStatement("checkLimit(offset + FIELD_SIZE_LENGTH, maxLimit)")
                 .addStatement("checkLimit(limit(), maxLimit)")
-                .addStatement("int length0 = length0()")
-                .beginControlFlow("if (length0 != -1)")
-                .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length0)")
+                .addStatement("int length = length()")
+                .beginControlFlow("if (length != -1)")
+                .addStatement("valueRO.wrap(buffer, offset + FIELD_SIZE_LENGTH, length)")
                 .endControlFlow()
                 .addStatement("return this")
                 .build();
@@ -204,7 +240,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         return methodBuilder("value")
                 .addModifiers(PUBLIC)
                 .returns(DIRECT_BUFFER_TYPE)
-                .addStatement("return length0() == -1 ? null : valueRO")
+                .addStatement("return length() == -1 ? null : valueRO")
                 .build();
     }
 
@@ -218,10 +254,10 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                 .build();
     }
 
-    private MethodSpec length0Method()
+    private MethodSpec lengthMethod()
     {
-        return methodBuilder("length0")
-                .addModifiers(PRIVATE)
+        return methodBuilder("length")
+                .addModifiers(PUBLIC)
                 .returns(int.class)
                 .addStatement("int length = buffer().getShort(offset(), byteOrder) & 0xFFFF")
                 .addStatement("return length == 65535 ? -1 : length")
@@ -233,15 +269,18 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final ClassName classType;
         private final ClassName stringType;
+        private final ClassName string16Type;
 
         private BuilderClassBuilder(
             ClassName stringType,
+            ClassName string16Type,
             ClassName builderRawType)
         {
-            TypeName builderType = ParameterizedTypeName.get(builderRawType, stringType);
+            TypeName builderType = ParameterizedTypeName.get(builderRawType, string16Type);
 
             this.stringType = stringType;
-            this.classType = stringType.nestedClass("Builder");
+            this.string16Type = string16Type;
+            this.classType = string16Type.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
                     .addModifiers(PUBLIC, STATIC, FINAL)
                     .superclass(builderType);
@@ -250,8 +289,8 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
-                    .addField(fieldValueSet())
                     .addField(fieldByteOrder())
+                    .addField(valueSetField())
                     .addMethod(constructor())
                     .addMethod(constructorByteOrder())
                     .addMethod(wrapMethod())
@@ -269,17 +308,17 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .build();
         }
 
-        private FieldSpec fieldValueSet()
+        private FieldSpec valueSetField()
         {
             return FieldSpec.builder(boolean.class, "valueSet", PRIVATE)
-                    .build();
+                .build();
         }
 
         private MethodSpec constructor()
         {
             return constructorBuilder()
                     .addModifiers(PUBLIC)
-                    .addStatement("super(new $T())", stringType)
+                    .addStatement("super(new $T())", string16Type)
                     .addStatement("this.byteOrder = $T.nativeOrder()", ByteOrder.class)
                     .build();
         }
@@ -289,7 +328,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
             return constructorBuilder()
                     .addModifiers(PUBLIC)
                     .addParameter(ByteOrder.class, "byteOrder")
-                    .addStatement("super(new $T(byteOrder))", stringType)
+                    .addStatement("super(new $T(byteOrder))", string16Type)
                     .addStatement("this.byteOrder = byteOrder")
                     .build();
         }
@@ -300,7 +339,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
             return methodBuilder("wrap")
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
-                    .returns(stringType.nestedClass("Builder"))
+                    .returns(classType)
                     .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                     .addParameter(int.class, "offset")
                     .addParameter(int.class, "maxLimit")
@@ -314,8 +353,9 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec setMethod()
         {
             return methodBuilder("set")
+                    .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
-                    .returns(stringType.nestedClass("Builder"))
+                    .returns(classType)
                     .addParameter(stringType, "value")
                     .beginControlFlow("if (value == null)")
                     .addStatement("int newLimit = offset() + FIELD_SIZE_LENGTH")
@@ -323,10 +363,11 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .addStatement("buffer().putShort(offset(), (short) -1, byteOrder)")
                     .addStatement("limit(newLimit)")
                     .nextControlFlow("else")
-                    .addStatement("int newLimit = offset() + value.sizeof()")
+                    .addStatement("int newLimit = offset() + FIELD_SIZE_LENGTH + value.length()")
                     .addStatement("checkLimit(newLimit, maxLimit())")
-                    .addStatement("buffer().putShort(offset(), (short) value.length0(), byteOrder)")
-                    .addStatement("buffer().putBytes(offset() + 2, value.buffer(), value.offset() + 2, value.length0())")
+                    .addStatement("buffer().putShort(offset(), (short) value.length(), byteOrder)")
+                    .addStatement("buffer().putBytes(offset() + 2, value.buffer(), value.offset() + value.fieldSizeLength(), " +
+                        "value.length())")
                     .addStatement("limit(newLimit)")
                     .endControlFlow()
                     .addStatement("valueSet = true")
@@ -337,8 +378,9 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec setDirectBufferMethod()
         {
             return methodBuilder("set")
+                    .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
-                    .returns(stringType.nestedClass("Builder"))
+                    .returns(classType)
                     .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                     .addParameter(int.class, "srcOffset")
                     .addParameter(int.class, "length")
@@ -357,8 +399,9 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         private MethodSpec setStringMethod()
         {
             return methodBuilder("set")
+                    .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
-                    .returns(stringType.nestedClass("Builder"))
+                    .returns(classType)
                     .addParameter(String.class, "value")
                     .addParameter(Charset.class, "charset")
                     .beginControlFlow("if (value == null)")
@@ -398,12 +441,12 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
         {
             return methodBuilder("build")
                     .addAnnotation(Override.class)
+                    .returns(string16Type)
                     .addModifiers(PUBLIC)
                     .beginControlFlow("if (!valueSet)")
                     .addStatement("set(null, $T.UTF_8)", StandardCharsets.class)
                     .endControlFlow()
                     .addStatement("return super.build()")
-                    .returns(stringType)
                     .build();
         }
     }

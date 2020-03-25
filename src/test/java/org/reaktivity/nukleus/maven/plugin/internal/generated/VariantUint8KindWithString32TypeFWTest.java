@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -25,6 +26,8 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.VariantUint8KindWithString32TypeFW;
 
 public class VariantUint8KindWithString32TypeFWTest
@@ -115,8 +118,7 @@ public class VariantUint8KindWithString32TypeFWTest
         final int offset = 1;
         setAllTestValuesCaseUint8(buffer, offset);
         assertNotNull(flyweightRO.tryWrap(buffer, offset, buffer.capacity()));
-        assertEquals("valueOfString1", flyweightRO.getAsString().asString());
-        assertEquals("valueOfString1", flyweightRO.get());
+        assertEquals("valueOfString1", flyweightRO.get().asString());
         assertEquals(0xa1, flyweightRO.kind());
     }
 
@@ -126,8 +128,7 @@ public class VariantUint8KindWithString32TypeFWTest
         final int offset = 1;
         setAllTestValuesCaseUint8(buffer, offset);
         flyweightRO.wrap(buffer, offset, buffer.capacity());
-        assertEquals("valueOfString1", flyweightRO.getAsString().asString());
-        assertEquals("valueOfString1", flyweightRO.get());
+        assertEquals("valueOfString1", flyweightRO.get().asString());
         assertEquals(0xa1, flyweightRO.kind());
     }
 
@@ -135,13 +136,12 @@ public class VariantUint8KindWithString32TypeFWTest
     public void shouldSetAsString32()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString32("value1")
+            .setAsString32(asStringFW("value1"))
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING32 + 6, flyweightRO.limit());
-        assertEquals("value1", flyweightRO.get());
-        assertEquals("value1", flyweightRO.getAsString32().asString());
+        assertEquals("value1", flyweightRO.get().asString());
         assertEquals(0xb1, flyweightRO.kind());
     }
 
@@ -149,13 +149,12 @@ public class VariantUint8KindWithString32TypeFWTest
     public void shouldSetAsString16()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString16("value1")
+            .setAsString16(asStringFW("value1"))
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING16 + 6, flyweightRO.limit());
-        assertEquals("value1", flyweightRO.get());
-        assertEquals("value1", flyweightRO.getAsString16().asString());
+        assertEquals("value1", flyweightRO.get().asString());
         assertEquals(0x16, flyweightRO.kind());
     }
 
@@ -163,13 +162,12 @@ public class VariantUint8KindWithString32TypeFWTest
     public void shouldSetAsString()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .setAsString("value1")
+            .setAsString8(asStringFW("value1"))
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweightRO.limit());
-        assertEquals("value1", flyweightRO.get());
-        assertEquals("value1", flyweightRO.getAsString().asString());
+        assertEquals("value1", flyweightRO.get().asString());
         assertEquals(0xa1, flyweightRO.kind());
     }
 
@@ -177,21 +175,25 @@ public class VariantUint8KindWithString32TypeFWTest
     public void shouldSetString()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .set("value1")
+            .set(asStringFW("value1"))
             .build()
             .limit();
         flyweightRO.wrap(buffer, 0, limit);
         assertEquals(KIND_SIZE + LENGTH_SIZE_STRING + 6, flyweightRO.limit());
-        assertEquals("value1", flyweightRO.get());
-        assertEquals("value1", flyweightRO.getAsString().asString());
-        assertNull(flyweightRO.getAsString16().asString());
-        assertNull(flyweightRO.getAsString32().asString());
+        assertEquals("value1", flyweightRO.get().asString());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetUint32WithInsufficientSpace()
     {
         flyweightRW.wrap(buffer, 10, 11)
-            .set("value1");
+            .set(asStringFW("value1"));
+    }
+
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

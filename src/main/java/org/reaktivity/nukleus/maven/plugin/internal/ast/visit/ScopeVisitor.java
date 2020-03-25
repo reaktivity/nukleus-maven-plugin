@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -21,8 +21,10 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMapNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
@@ -35,6 +37,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.EnumTypeGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.MapFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StructFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -99,7 +102,8 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         String baseName = structNode.name();
         AstType structType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName structName = resolver.resolveClass(structType);
-        StructFlyweightGenerator generator = new StructFlyweightGenerator(structName, resolver.flyweightName(), baseName);
+        StructFlyweightGenerator generator = new StructFlyweightGenerator(structName, resolver.flyweightName(), baseName,
+            resolver);
         generator.typeId(findTypeId(structNode));
 
         return new StructVisitor(generator, resolver).visitStruct(structNode);
@@ -136,6 +140,32 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
     }
 
     @Override
+    public Collection<TypeSpecGenerator<?>> visitMap(
+        AstMapNode mapNode)
+    {
+        if (!targetScopes.stream().anyMatch(this::shouldVisit))
+        {
+            return defaultResult();
+        }
+
+        AstVariantNode templateNode = (AstVariantNode) resolver.resolve(mapNode.templateMapType().name());
+        if (AstType.MAP.equals(templateNode.of()))
+        {
+            String baseName = mapNode.name();
+            AstType mapType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
+            ClassName mapName = resolver.resolveClass(mapType);
+            ClassName templateMapTypeName = resolver.resolveClass(mapNode.templateMapType());
+            ClassName mapKeyTypeName = resolver.resolveClass(mapNode.keyType());
+            ClassName mapValueTypeName = resolver.resolveClass(mapNode.valueType());
+
+            MapFlyweightGenerator generator = new MapFlyweightGenerator(mapName, resolver.flyweightName(), baseName,
+                templateMapTypeName, mapNode.keyType(), mapKeyTypeName, mapNode.valueType(), mapValueTypeName, resolver);
+            defaultResult.add(generator);
+        }
+        return defaultResult();
+    }
+
+    @Override
     public Collection<TypeSpecGenerator<?>> visitUnion(
         AstUnionNode unionNode)
     {
@@ -148,8 +178,10 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         AstType unionType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
         ClassName unionName = resolver.resolveClass(unionType);
         AstType unionSuperType = unionNode.superType();
+        TypeName kindTypeName = unionNode.kindType().equals(AstType.UINT8) ? resolver.resolveType(AstType.UINT8) :
+            resolver.resolveClass(unionNode.kindType());
         UnionFlyweightGenerator generator = new UnionFlyweightGenerator(unionName, resolver.flyweightName(), baseName,
-            unionSuperType);
+            unionSuperType, kindTypeName, resolver);
 
         return new UnionVisitor(generator, resolver).visitUnion(unionNode);
     }
@@ -165,14 +197,22 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
 
         String baseName = enumNode.name();
         AstType enumType = AstType.dynamicType(String.format("%s::%s", scopeName, baseName));
-        TypeName valueTypeName = resolver.resolveType(enumNode.valueType());
-        TypeName unsignedValueTypeName = resolver.resolveUnsignedType(enumNode.valueType());
+        AstType valueType = enumNode.valueType();
+        TypeName valueTypeName = resolver.resolveType(valueType);
+        TypeName enumClassValueTypeName = valueTypeName;
+        TypeName unsignedValueTypeName = resolver.resolveUnsignedType(valueType);
+        if (valueType != null && valueType.isDynamicType())
+        {
+            AstVariantNode variantNode = (AstVariantNode) resolver.resolve(valueType.name());
+            enumClassValueTypeName = resolver.resolveType(variantNode.of());
+            unsignedValueTypeName = resolver.resolveUnsignedType(variantNode.of());
+        }
         ClassName enumFlyweightName = resolver.resolveClass(enumType);
         ClassName enumTypeName = enumFlyweightName.peerClass(baseName);
 
-        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName, valueTypeName, unsignedValueTypeName);
+        EnumTypeGenerator typeGenerator = new EnumTypeGenerator(enumTypeName, enumClassValueTypeName, unsignedValueTypeName);
         EnumFlyweightGenerator flyweightGenerator = new EnumFlyweightGenerator(enumFlyweightName, resolver.flyweightName(),
-            enumTypeName, valueTypeName, unsignedValueTypeName);
+            enumTypeName, valueTypeName, enumClassValueTypeName, unsignedValueTypeName);
 
         return new EnumVisitor(typeGenerator, flyweightGenerator).visitEnum(enumNode);
     }
@@ -196,8 +236,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         ClassName flyweightName = resolver.flyweightName();
         TypeName ofTypeName = resolver.resolveType(variantNode.of());
         TypeName unsignedOfTypeName = resolver.resolveUnsignedType(variantNode.of());
+        AstByteOrder byteOrder = variantNode.byteOrder();
         VariantFlyweightGenerator generator = new VariantFlyweightGenerator(variantName, flyweightName, baseName,
-            kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver);
+            kindTypeName, ofType, ofTypeName, unsignedOfTypeName, resolver, byteOrder);
         return new VariantVisitor(generator, resolver).visitVariant(variantNode);
     }
 
@@ -217,8 +258,9 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         TypeName lengthTypeName = resolver.resolveType(listNode.lengthType());
         TypeName fieldCountTypeName = resolver.resolveType(listNode.fieldCountType());
         Byte missingFieldByte = listNode.missingFieldByte();
-        ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.flyweightName(), baseName,
-            templateType, lengthTypeName, fieldCountTypeName, missingFieldByte, resolver);
+        AstByteOrder byteOrder = listNode.byteOrder();
+        ListFlyweightGenerator generator = new ListFlyweightGenerator(listName, resolver.resolveClass(AstType.LIST), baseName,
+            templateType, lengthTypeName, fieldCountTypeName, missingFieldByte, resolver, byteOrder);
         return new ListVisitor(generator, resolver).visitList(listNode);
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -33,6 +33,7 @@ public final class AstScopeNode extends AstNode
     private final List<AstVariantNode> variants;
     private final List<AstListNode> lists;
     private final List<AstTypedefNode> typedefs;
+    private final List<AstMapNode> maps;
 
     private AstScopeNode(
         int depth,
@@ -43,7 +44,8 @@ public final class AstScopeNode extends AstNode
         List<AstScopeNode> scopes,
         List<AstVariantNode> variants,
         List<AstListNode> lists,
-        List<AstTypedefNode> typedefs)
+        List<AstTypedefNode> typedefs,
+        List<AstMapNode> maps)
     {
         this.depth = depth;
         this.name = requireNonNull(name);
@@ -54,6 +56,7 @@ public final class AstScopeNode extends AstNode
         this.variants = unmodifiableList(variants);
         this.lists = unmodifiableList(lists);
         this.typedefs = typedefs;
+        this.maps = maps;
     }
 
     @Override
@@ -108,13 +111,19 @@ public final class AstScopeNode extends AstNode
         return typedefs;
     }
 
+    public List<AstMapNode> maps()
+    {
+        return maps;
+    }
+
     @Override
     public int hashCode()
     {
-        return (name.hashCode() << 19) ^ (scopes.hashCode() << 17) ^
-            (enums.hashCode() << 13) ^ (structs.hashCode() << 11) ^
-            (unions.hashCode() << 7) ^ (variants.hashCode() << 5) ^
-            (lists.hashCode() << 3) ^ typedefs.hashCode();
+        return (name.hashCode() << 23) ^ (scopes.hashCode() << 19) ^
+            (enums.hashCode() << 17) ^ (structs.hashCode() << 13) ^
+            (unions.hashCode() << 11) ^ (variants.hashCode() << 7) ^
+            (lists.hashCode() << 5) ^ (typedefs.hashCode() << 3) ^
+            maps.hashCode();
     }
 
     @Override
@@ -139,7 +148,8 @@ public final class AstScopeNode extends AstNode
                 Objects.equals(this.scopes, that.scopes) &&
                 Objects.equals(this.variants, that.variants) &&
                 Objects.equals(this.lists, that.lists) &&
-                Objects.equals(this.typedefs, that.typedefs);
+                Objects.equals(this.typedefs, that.typedefs) &&
+                Objects.equals(this.maps, that.maps);
     }
 
     public static final class Builder extends AstNode.Builder<AstScopeNode>
@@ -153,6 +163,7 @@ public final class AstScopeNode extends AstNode
         private List<AstVariantNode> variants;
         private List<AstListNode> lists;
         private List<AstTypedefNode> typedefs;
+        private List<AstMapNode> maps;
 
         public Builder()
         {
@@ -163,9 +174,11 @@ public final class AstScopeNode extends AstNode
             this.variants = new LinkedList<>();
             this.lists = new LinkedList<>();
             this.typedefs = new LinkedList<>();
+            this.maps = new LinkedList<>();
         }
 
-        public Builder depth(int depth)
+        public Builder depth(
+            int depth)
         {
             this.depth = depth;
             return this;
@@ -176,7 +189,8 @@ public final class AstScopeNode extends AstNode
             return name;
         }
 
-        public Builder name(String name)
+        public Builder name(
+            String name)
         {
             this.name = name;
             return this;
@@ -231,10 +245,17 @@ public final class AstScopeNode extends AstNode
             return this;
         }
 
+        public Builder map(
+            AstMapNode map)
+        {
+            this.maps.add(map);
+            return this;
+        }
+
         @Override
         public AstScopeNode build()
         {
-            return new AstScopeNode(depth, name, enums, structs, unions, scopes, variants, lists, typedefs);
+            return new AstScopeNode(depth, name, enums, structs, unions, scopes, variants, lists, typedefs, maps);
         }
     }
 }

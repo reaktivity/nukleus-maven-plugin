@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -15,11 +15,15 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public final class AstListMemberNode extends AstAbstractMemberNode
 {
+    private final List<AstType> typeParams;
     private final boolean required;
 
     private AstListMemberNode(
@@ -29,10 +33,17 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         String sizeName,
         Object defaultValue,
         AstByteOrder byteOrder,
+        List<AstType> typeParams,
         boolean required)
     {
         super(name, types, size, sizeName, defaultValue, byteOrder);
+        this.typeParams = typeParams;
         this.required = required;
+    }
+
+    public List<AstType> typeParams()
+    {
+        return typeParams;
     }
 
     public boolean isRequired()
@@ -43,7 +54,7 @@ public final class AstListMemberNode extends AstAbstractMemberNode
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, types, defaultValue, byteOrder, required);
+        return Objects.hash(name, types, defaultValue, byteOrder, typeParams, required);
     }
 
     @Override
@@ -65,19 +76,34 @@ public final class AstListMemberNode extends AstAbstractMemberNode
             Objects.equals(this.name, that.name) &&
             Objects.deepEquals(this.types, that.types) &&
             Objects.equals(this.defaultValue, that.defaultValue) &&
-            Objects.equals(this.byteOrder, that.byteOrder);
+            Objects.equals(this.byteOrder, that.byteOrder) &&
+            Objects.equals(this.typeParams, that.typeParams);
     }
 
     @Override
     public String toString()
     {
-        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, required=%s]",
-            name, types, defaultValue, byteOrder, required);
+        return String.format("MEMBER [name=%s, types=%s, defaultValue=%s, byteOrder=%s, typeParams=%s, required=%s]",
+            name, types, defaultValue, byteOrder, typeParams, required);
     }
 
     public static final class Builder extends AstAbstractMemberNode.Builder<AstListMemberNode>
     {
+        private List<AstType> typeParams;
         private boolean required;
+
+        public Builder()
+        {
+            super();
+            this.typeParams = new LinkedList<>();
+        }
+
+        public Builder typeParam(
+            AstType typeParam)
+        {
+            typeParams.add(requireNonNull(typeParam));
+            return this;
+        }
 
         public Builder isRequired(
             boolean required)
@@ -89,7 +115,7 @@ public final class AstListMemberNode extends AstAbstractMemberNode
         @Override
         public AstListMemberNode build()
         {
-            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, required);
+            return new AstListMemberNode(name, types, size, sizeName, defaultValue, byteOrder, typeParams, required);
         }
     }
 }

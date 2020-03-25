@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -16,11 +16,13 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.visit;
 
 import static java.util.Collections.singleton;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind.VARIANT;
 
 import java.util.Collection;
 import java.util.Set;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstStructNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
@@ -82,10 +84,29 @@ public final class VariantVisitor extends AstNode.Visitor<Collection<TypeSpecGen
     {
         Object value = variantCaseNode.value();
         AstType memberType = variantCaseNode.type();
+        AstType mapKeyType = null;
+        AstType mapValueType = null;
+        AstNamedNode memberTypeNode = memberType == null ? null : resolver.resolve(memberType.name());
+        if (memberTypeNode != null)
+        {
+            if (memberTypeNode.getKind() == VARIANT)
+            {
+                AstVariantNode varNode = (AstVariantNode) memberTypeNode;
+                AstType ofType = varNode.of();
+                if (AstType.MAP.equals(ofType))
+                {
+                    mapKeyType = variantCaseNode.typeParams().get(0);
+                    mapValueType = variantCaseNode.typeParams().get(1);
+                }
+            }
+        }
+
         int missingFieldValue = variantCaseNode.missingFieldValue();
         TypeName typeName = resolver.resolveType(memberType);
         TypeName unsignedTypeName = resolver.resolveUnsignedType(memberType);
-        generator.addMember(value, memberType.name(), memberType, typeName, unsignedTypeName, missingFieldValue);
+        String memberTypeName = memberType != null ? memberType.name() : null;
+        generator.addMember(value, memberTypeName, memberType, typeName, unsignedTypeName, missingFieldValue, mapKeyType,
+            mapValueType);
         return defaultResult();
     }
 

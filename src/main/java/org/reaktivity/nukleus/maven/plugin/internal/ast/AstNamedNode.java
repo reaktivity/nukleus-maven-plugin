@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -21,7 +21,7 @@ public abstract class AstNamedNode extends AstNode
 {
     public enum Kind
     {
-        SCOPE, STRUCT, UNION, VARIANT, LIST, ENUM, TYPEDEF, DEFAULT
+        SCOPE, STRUCT, UNION, VARIANT, LIST, ENUM, TYPEDEF, MAP, DEFAULT
     }
     protected final String name;
 

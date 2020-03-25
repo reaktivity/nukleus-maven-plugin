@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -33,15 +33,27 @@ import java.util.function.Consumer;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstSpecificationNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.visit.ScopeVisitor;
-import org.reaktivity.nukleus.maven.plugin.internal.generate.ArrayFlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Array16FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Array32FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Array8FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.ArrayFWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctets16FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctets32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctets8FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.BoundedOctetsFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.List0FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.List32FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.List8FWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.ListFWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Map16FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Map32FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.Map8FWGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.MapFWGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.OctetsFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String16FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.String32FlyweightGenerator;
+import org.reaktivity.nukleus.maven.plugin.internal.generate.String8FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.StringFlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeResolver;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.TypeSpecGenerator;
@@ -49,6 +61,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.Varbyteuint32Flywei
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint32FlyweightGenerator;
 import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGenerator;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 
 public class Generator
@@ -112,19 +125,38 @@ public class Generator
             typeSpecs.addAll(specification.accept(visitor));
         }
 
-        typeSpecs.add(new FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new OctetsFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new StringFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new String16FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new String32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new ArrayFlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new Varbyteuint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new Varint32FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new Varint64FlyweightGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new ListFWGenerator(resolver.resolveClass(AstType.FLYWEIGHT)));
-        typeSpecs.add(new List32FWGenerator(resolver.resolveClass(AstType.LIST)));
-        typeSpecs.add(new List8FWGenerator(resolver.resolveClass(AstType.LIST)));
-        typeSpecs.add(new List0FWGenerator(resolver.resolveClass(AstType.LIST)));
+        ClassName flyweightType = resolver.resolveClass(AstType.FLYWEIGHT);
+        ClassName stringType = resolver.resolveClass(AstType.STRING);
+        ClassName arrayType = resolver.resolveClass(AstType.ARRAY);
+        ClassName listType = resolver.resolveClass(AstType.LIST);
+        ClassName mapType = resolver.resolveClass(AstType.MAP);
+        ClassName boundedOctetsType = resolver.resolveClass(AstType.BOUNDED_OCTETS);
+
+        typeSpecs.add(new FlyweightGenerator(flyweightType, arrayType));
+        typeSpecs.add(new OctetsFlyweightGenerator(flyweightType));
+        typeSpecs.add(new StringFlyweightGenerator(flyweightType));
+        typeSpecs.add(new String8FlyweightGenerator(stringType));
+        typeSpecs.add(new String16FlyweightGenerator(stringType));
+        typeSpecs.add(new String32FlyweightGenerator(stringType));
+        typeSpecs.add(new ArrayFWGenerator(flyweightType));
+        typeSpecs.add(new Array8FWGenerator(flyweightType, arrayType));
+        typeSpecs.add(new Array16FWGenerator(flyweightType, arrayType));
+        typeSpecs.add(new Array32FWGenerator(flyweightType, arrayType));
+        typeSpecs.add(new Varbyteuint32FlyweightGenerator(flyweightType));
+        typeSpecs.add(new Varint32FlyweightGenerator(flyweightType));
+        typeSpecs.add(new Varint64FlyweightGenerator(flyweightType));
+        typeSpecs.add(new ListFWGenerator(flyweightType));
+        typeSpecs.add(new List32FWGenerator(flyweightType, listType));
+        typeSpecs.add(new List8FWGenerator(flyweightType, listType));
+        typeSpecs.add(new List0FWGenerator(flyweightType, listType));
+        typeSpecs.add(new MapFWGenerator(flyweightType));
+        typeSpecs.add(new Map8FWGenerator(flyweightType, mapType));
+        typeSpecs.add(new Map16FWGenerator(flyweightType, mapType));
+        typeSpecs.add(new Map32FWGenerator(flyweightType, mapType));
+        typeSpecs.add(new BoundedOctetsFlyweightGenerator(flyweightType));
+        typeSpecs.add(new BoundedOctets8FlyweightGenerator(flyweightType, boundedOctetsType));
+        typeSpecs.add(new BoundedOctets16FlyweightGenerator(flyweightType, boundedOctetsType));
+        typeSpecs.add(new BoundedOctets32FlyweightGenerator(flyweightType, boundedOctetsType));
 
         System.out.println("Generating to " + outputDirectory);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -66,7 +66,7 @@ simple_type_spec
 base_type_spec
    : integer_type
    | octets_type
-   | string_type
+   | string8_type
    | string16_type
    | string32_type
    ;
@@ -78,6 +78,7 @@ constr_type_spec
    | union_type
    | variant_type
    | typedef_type
+   | map_type
    ;
 
 declarators
@@ -183,9 +184,10 @@ enum_explicit_type
    | int32_type
    | int64_type
    | unsigned_integer_type
-   | string_type
+   | string8_type
    | string16_type
    | string32_type
+   | declarator
    ;
 
 enum_values
@@ -265,14 +267,16 @@ default_null
    ;
 
 list_type
-   : KW_LIST (list_params)? ID LEFT_BRACE list_members RIGHT_BRACE
+   : KW_LIST (list_params)? ID (list_using)? LEFT_BRACE list_members RIGHT_BRACE
    ;
 
 list_params
    : LEFT_ANG_BRACKET unsigned_integer_type COMMA unsigned_integer_type (COMMA uint_literal)? RIGHT_ANG_BRACKET
-   | LEFT_ANG_BRACKET declarator RIGHT_ANG_BRACKET
    ;
 
+list_using
+   : KW_USING declarator
+   ;
 
 list_members
    : list_member* list_unbounded_member?
@@ -287,6 +291,7 @@ list_member
    | KW_REQUIRED? integer_array_member SEMICOLON
    | KW_REQUIRED? varint_array_member SEMICOLON
    | KW_REQUIRED? array_member SEMICOLON
+   | KW_REQUIRED? member_with_parametric_type SEMICOLON
    ;
 
 non_primitive_member_with_default
@@ -305,8 +310,18 @@ unbounded_octets_member
    : unbounded_octets_type declarators SEMICOLON
    ;
 
+member_with_parametric_type
+   : membertype=declarator LEFT_ANG_BRACKET param1=declarator (COMMA param2=declarator)? RIGHT_ANG_BRACKET name=declarator
+   ;
+
+map_type
+   : KW_MAP ID LEFT_ANG_BRACKET keytype=scoped_name COMMA valuetype=scoped_name RIGHT_ANG_BRACKET KW_USING
+   templatetype=scoped_name SEMICOLON
+   ;
+
 union_type
-   : KW_UNION ID KW_SWITCH LEFT_BRACKET KW_UINT8 RIGHT_BRACKET (KW_EXTENDS scoped_name)? LEFT_BRACE case_list RIGHT_BRACE
+   : KW_UNION ID KW_SWITCH LEFT_BRACKET (KW_UINT8 | kindtype=scoped_name) RIGHT_BRACKET (KW_EXTENDS supertype=scoped_name)?
+   LEFT_BRACE case_list RIGHT_BRACE
    ;
 
 case_list
@@ -314,12 +329,12 @@ case_list
    ;
 
 case_member
-   : KW_CASE uint_literal COLON member
+   : KW_CASE (uint_literal | ID) COLON member
    ;
 
 variant_type
-   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET (KW_OF variant_of_type)? LEFT_BRACE variant_case_list
-   RIGHT_BRACE
+   : KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET KW_OF variant_of_type LEFT_BRACE variant_case_list RIGHT_BRACE
+   | KW_VARIANT ID KW_SWITCH LEFT_BRACKET kind RIGHT_BRACKET LEFT_BRACE variant_case_list_without_of RIGHT_BRACE
    ;
 
 kind
@@ -330,17 +345,30 @@ kind
 variant_of_type
    : integer_type
    | string_type
-   | string16_type
-   | string32_type
    | list_keyword
+   | array_keyword
+   | map_keyword
+   | octets_keyword
    ;
 
 variant_case_list
    : variant_case_member *
    ;
 
+variant_case_list_without_of
+   : (variant_case_member_no_type * variant_case_member_without_of +) +
+   ;
+
 variant_case_member
    : KW_CASE variant_case_value COLON variant_member SEMICOLON
+   ;
+
+variant_case_member_no_type
+   : KW_CASE variant_case_value COLON
+   ;
+
+variant_case_member_without_of
+   : KW_CASE variant_case_value COLON variant_member_without_of SEMICOLON
    ;
 
 variant_case_value
@@ -350,11 +378,29 @@ variant_case_value
 
 variant_member
    : integer_type
-   | string_type
+   | string8_type
    | string16_type
    | string32_type
    | variant_int_literal
    | variant_list_member
+   | variant_array_member
+   | variant_map_member
+   | variant_octets_member
+   | defined_variant_member
+   ;
+
+variant_member_without_of
+   : variant_member
+   | defined_variant_member
+   | defined_variant_member_with_parametric_type
+   ;
+
+defined_variant_member
+   : declarator
+   ;
+
+defined_variant_member_with_parametric_type
+   :  membertype=declarator LEFT_ANG_BRACKET param1=declarator (COMMA param2=declarator)? RIGHT_ANG_BRACKET
    ;
 
 variant_list_member
@@ -363,17 +409,45 @@ variant_list_member
    | KW_LIST LEFT_ANG_BRACKET UNSIGNED_INTEGER_LITERAL COMMA UNSIGNED_INTEGER_LITERAL RIGHT_ANG_BRACKET
    ;
 
+variant_array_member
+   : KW_ARRAY LEFT_ANG_BRACKET uint32_type COMMA uint32_type RIGHT_ANG_BRACKET
+   | KW_ARRAY LEFT_ANG_BRACKET uint16_type COMMA uint16_type RIGHT_ANG_BRACKET
+   | KW_ARRAY LEFT_ANG_BRACKET uint8_type COMMA uint8_type RIGHT_ANG_BRACKET
+   ;
+
+variant_map_member
+   : KW_MAP LEFT_ANG_BRACKET uint32_type RIGHT_ANG_BRACKET
+   | KW_MAP LEFT_ANG_BRACKET uint16_type RIGHT_ANG_BRACKET
+   | KW_MAP LEFT_ANG_BRACKET uint8_type RIGHT_ANG_BRACKET
+   ;
+
+variant_octets_member
+   : KW_OCTETS LEFT_SQUARE_BRACKET uint32_type RIGHT_SQUARE_BRACKET
+   | KW_OCTETS LEFT_SQUARE_BRACKET uint16_type RIGHT_SQUARE_BRACKET
+   | KW_OCTETS LEFT_SQUARE_BRACKET uint8_type RIGHT_SQUARE_BRACKET
+   ;
+
 typedef_type
-   : KW_TYPEDEF ID KW_AS ID SEMICOLON
+   : KW_TYPEDEF originaltype=ID KW_AS typedeftype=ID SEMICOLON
+   | KW_TYPEDEF originaltype=ID LEFT_ANG_BRACKET keytype=ID COMMA valuetype=ID RIGHT_ANG_BRACKET KW_AS typedeftype=ID
+   LEFT_ANG_BRACKET valuetype=ID RIGHT_ANG_BRACKET SEMICOLON
    ;
 
 array_type
    : simple_type_spec LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
    ;
 
+map_keyword
+    : KW_MAP
+    ;
+
 string_type
+   : KW_STRING
+   ;
+
+string8_type
    : /* KW_STRING LEFT_ANG_BRACKET positive_int_const RIGHT_ANG_BRACKET
-   | */ KW_STRING
+   | */ KW_STRING8
    ;
 
 string16_type
@@ -387,6 +461,14 @@ string32_type
 
 list_keyword
    : KW_LIST
+   ;
+
+array_keyword
+   : KW_ARRAY
+   ;
+
+octets_keyword
+   : KW_OCTETS LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
    ;
 
 int_literal
@@ -525,6 +607,11 @@ KW_STRING
    ;
 
 
+KW_STRING8
+   : 'string8'
+   ;
+
+
 KW_STRING16
    : 'string16'
    ;
@@ -557,6 +644,21 @@ KW_DEFAULT
 
 KW_LIST
    : 'list'
+   ;
+
+
+KW_USING
+   : 'using'
+   ;
+
+
+KW_ARRAY
+   : 'array'
+   ;
+
+
+KW_MAP
+   : 'map'
    ;
 
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -25,6 +25,7 @@ import java.util.function.Function;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstMapNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstScopeNode;
@@ -96,14 +97,26 @@ public final class TypeResolver
         Map<AstType, TypeName> namesByType = new HashMap<>();
         namesByType.put(AstType.FLYWEIGHT, ClassName.get(packageName, "Flyweight"));
         namesByType.put(AstType.STRING, ClassName.get(packageName, "StringFW"));
+        namesByType.put(AstType.STRING8, ClassName.get(packageName, "String8FW"));
         namesByType.put(AstType.STRING16, ClassName.get(packageName, "String16FW"));
         namesByType.put(AstType.STRING32, ClassName.get(packageName, "String32FW"));
         namesByType.put(AstType.ARRAY, ClassName.get(packageName, "ArrayFW"));
+        namesByType.put(AstType.ARRAY8, ClassName.get(packageName, "Array8FW"));
+        namesByType.put(AstType.ARRAY16, ClassName.get(packageName, "Array16FW"));
+        namesByType.put(AstType.ARRAY32, ClassName.get(packageName, "Array32FW"));
         namesByType.put(AstType.LIST, ClassName.get(packageName, "ListFW"));
         namesByType.put(AstType.LIST0, ClassName.get(packageName, "List0FW"));
         namesByType.put(AstType.LIST8, ClassName.get(packageName, "List8FW"));
         namesByType.put(AstType.LIST32, ClassName.get(packageName, "List32FW"));
         namesByType.put(AstType.OCTETS, ClassName.get(packageName, "OctetsFW"));
+        namesByType.put(AstType.BOUNDED_OCTETS, ClassName.get(packageName, "BoundedOctetsFW"));
+        namesByType.put(AstType.BOUNDED_OCTETS8, ClassName.get(packageName, "BoundedOctets8FW"));
+        namesByType.put(AstType.BOUNDED_OCTETS16, ClassName.get(packageName, "BoundedOctets16FW"));
+        namesByType.put(AstType.BOUNDED_OCTETS32, ClassName.get(packageName, "BoundedOctets32FW"));
+        namesByType.put(AstType.MAP, ClassName.get(packageName, "MapFW"));
+        namesByType.put(AstType.MAP8, ClassName.get(packageName, "Map8FW"));
+        namesByType.put(AstType.MAP16, ClassName.get(packageName, "Map16FW"));
+        namesByType.put(AstType.MAP32, ClassName.get(packageName, "Map32FW"));
         namesByType.put(AstType.INT8, TypeName.BYTE);
         namesByType.put(AstType.UINT8, TypeName.BYTE);
         namesByType.put(AstType.INT16, TypeName.SHORT);
@@ -135,12 +148,12 @@ public final class TypeResolver
 
     private static final class QualifiedNameVisitor extends AstNode.Visitor<Map<String, AstNamedNode>>
     {
-        private final Map<String, AstNamedNode> namedNodesNyName;
+        private final Map<String, AstNamedNode> namedNodesByName;
         private final Deque<String> nestedNames;
 
         private QualifiedNameVisitor()
         {
-            this.namedNodesNyName = new HashMap<>();
+            this.namedNodesByName = new HashMap<>();
             this.nestedNames = new LinkedList<>();
         }
 
@@ -188,6 +201,13 @@ public final class TypeResolver
         }
 
         @Override
+        public Map<String, AstNamedNode> visitMap(
+            AstMapNode mapNode)
+        {
+            return visitNamedNode(mapNode, node -> super.visitMap((AstMapNode) node));
+        }
+
+        @Override
         public Map<String, AstNamedNode> visitUnion(
             AstUnionNode unionNode)
         {
@@ -209,7 +229,7 @@ public final class TypeResolver
             {
                 nestedNames.addLast(namedNode.name());
                 String qualifiedName = String.join("::", nestedNames);
-                namedNodesNyName.put(qualifiedName, namedNode);
+                namedNodesByName.put(qualifiedName, namedNode);
                 return visit.apply(namedNode);
             }
             finally
@@ -221,7 +241,7 @@ public final class TypeResolver
         @Override
         protected Map<String, AstNamedNode> defaultResult()
         {
-            return namedNodesNyName;
+            return namedNodesByName;
         }
     }
 
@@ -294,6 +314,13 @@ public final class TypeResolver
             AstTypedefNode typedefNode)
         {
             return visitNamedType(typedefNode, typedefNode.name(), super::visitTypedef);
+        }
+
+        @Override
+        public Map<AstType, TypeName> visitMap(
+            AstMapNode mapNode)
+        {
+            return visitNamedType(mapNode, mapNode.name(), super::visitMap);
         }
 
         private <N extends AstNode> Map<AstType, TypeName> visitNamedType(

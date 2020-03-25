@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.generated;
 
 import static java.nio.ByteBuffer.allocateDirect;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -24,6 +25,8 @@ import static org.junit.Assert.fail;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt16;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint16;
@@ -42,21 +45,22 @@ public class ListWithVariantFWTest
     };
     private final ListWithVariantFW.Builder listWithVariantOfIntRW = new ListWithVariantFW.Builder();
     private final ListWithVariantFW listWithVariantOfIntRO = new ListWithVariantFW();
-    private final int physicalLengthSize = Byte.BYTES;
+    private final int lengthSize = Byte.BYTES;
     private final int logicalLengthSize = Byte.BYTES;
     private final int bitmaskSize = Long.BYTES;
+    private static final EnumWithInt8 KIND_STRING8 = EnumWithInt8.NINE;
 
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        byte physicalLength = 27;
+        byte length = 27;
         byte logicalLength = 6;
         long bitmask = 0x3F;
-        int offsetPhysicalLength = 10;
-        buffer.putByte(offsetPhysicalLength, physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putByte(offsetLogicalLength, logicalLength);
-        int offsetBitMask = offsetLogicalLength + logicalLengthSize;
+        int offsetLength = 10;
+        buffer.putByte(offsetLength, length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putByte(offsetFieldCount, logicalLength);
+        int offsetBitMask = offsetFieldCount + logicalLengthSize;
         buffer.putLong(offsetBitMask, bitmask);
 
         int offsetIntField1 = offsetBitMask + bitmaskSize;
@@ -80,7 +84,7 @@ public class ListWithVariantFWTest
         int offsetVariantOfInt32 = offsetvariantOfInt32 + Byte.BYTES;
         buffer.putShort(offsetVariantOfInt32, (short) -500);
 
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
             try
             {
@@ -100,14 +104,14 @@ public class ListWithVariantFWTest
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        byte physicalLength = 27;
+        byte length = 27;
         byte logicalLength = 6;
         long bitmask = 0x3F;
-        int offsetPhysicalLength = 10;
-        buffer.putByte(offsetPhysicalLength, physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putByte(offsetLogicalLength, logicalLength);
-        int offsetBitMask = offsetLogicalLength + logicalLengthSize;
+        int offsetLength = 10;
+        buffer.putByte(offsetLength, length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putByte(offsetFieldCount, logicalLength);
+        int offsetBitMask = offsetFieldCount + logicalLengthSize;
         buffer.putLong(offsetBitMask, bitmask);
 
         int offsetIntField1 = offsetBitMask + bitmaskSize;
@@ -131,23 +135,23 @@ public class ListWithVariantFWTest
         int offsetVariantOfInt32 = offsetvariantOfInt32 + Byte.BYTES;
         buffer.putShort(offsetVariantOfInt32, (short) -500);
 
-        for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
+        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
         {
-            assertNull(listWithVariantOfIntRO.tryWrap(buffer,  offsetPhysicalLength, maxLimit));
+            assertNull(listWithVariantOfIntRO.tryWrap(buffer,  offsetLength, maxLimit));
         }
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        byte physicalLength = 65;
-        byte logicalLength = 10;
+        byte length = 50;
+        byte fieldCount = 10;
         long bitmask = 0x03FF;
-        int offsetPhysicalLength = 10;
-        buffer.putByte(offsetPhysicalLength, physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putByte(offsetLogicalLength, logicalLength);
-        int offsetBitMask = offsetLogicalLength + logicalLengthSize;
+        int offsetLength = 10;
+        buffer.putByte(offsetLength, length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putByte(offsetFieldCount, fieldCount);
+        int offsetBitMask = offsetFieldCount + logicalLengthSize;
         buffer.putLong(offsetBitMask, bitmask);
 
         int offsetIntField1 = offsetBitMask + bitmaskSize;
@@ -177,31 +181,31 @@ public class ListWithVariantFWTest
         buffer.putShort(offsetVariantOfInt32, (short) -500);
 
         int offsetKindVariantOfUint8 = offsetVariantOfInt32 + Short.BYTES;
-        buffer.putShort(offsetKindVariantOfUint8, EnumWithUint8.ICHI.value());
-        int offsetVariantOfUint8 = offsetKindVariantOfUint8 + Short.BYTES;
-        buffer.putShort(offsetVariantOfUint8, (short) 200);
+        buffer.putByte(offsetKindVariantOfUint8, (byte) EnumWithUint8.ICHI.value());
+        int offsetVariantOfUint8 = offsetKindVariantOfUint8 + Byte.BYTES;
+        buffer.putByte(offsetVariantOfUint8, (byte) 200);
 
-        int offsetKindVariantOfUint16 = offsetVariantOfUint8 + Short.BYTES;
-        buffer.putInt(offsetKindVariantOfUint16, EnumWithUint16.ICHI.value());
-        int offsetVariantOfUint16 = offsetKindVariantOfUint16 + Integer.BYTES;
-        buffer.putInt(offsetVariantOfUint16, 50000);
+        int offsetKindVariantOfUint16 = offsetVariantOfUint8 + Byte.BYTES;
+        buffer.putShort(offsetKindVariantOfUint16, (short) EnumWithUint16.ICHI.value());
+        int offsetVariantOfUint16 = offsetKindVariantOfUint16 + Short.BYTES;
+        buffer.putShort(offsetVariantOfUint16, (short) 50000);
 
-        int offsetKindVariantOfUint32 = offsetVariantOfUint16 + Integer.BYTES;
-        buffer.putLong(offsetKindVariantOfUint32, EnumWithUint32.NI.value());
-        int offsetVariantOfUint32 = offsetKindVariantOfUint32 + Long.BYTES;
-        buffer.putLong(offsetVariantOfUint32, 4000000000L);
+        int offsetKindVariantOfUint32 = offsetVariantOfUint16 + Short.BYTES;
+        buffer.putInt(offsetKindVariantOfUint32, (int) EnumWithUint32.NI.value());
+        int offsetVariantOfUint32 = offsetKindVariantOfUint32 + Integer.BYTES;
+        buffer.putInt(offsetVariantOfUint32, (int) 4000000000L);
 
-        int offsetKindVariantOfString32 = offsetVariantOfUint32 + Long.BYTES;
-        buffer.putByte(offsetKindVariantOfString32, EnumWithInt8.ONE.value());
+        int offsetKindVariantOfString32 = offsetVariantOfUint32 + Integer.BYTES;
+        buffer.putByte(offsetKindVariantOfString32, KIND_STRING8.value());
         int offsetVariantOfString32 = offsetKindVariantOfString32 + Byte.BYTES;
         buffer.putByte(offsetVariantOfString32, (byte) 7);
         buffer.putBytes(offsetVariantOfString32 + 1, "variant".getBytes());
 
 
-        assertSame(listWithVariantOfIntRO, listWithVariantOfIntRO.wrap(buffer, offsetPhysicalLength,
-            offsetPhysicalLength + physicalLength));
-        assertEquals(physicalLength, listWithVariantOfIntRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithVariantOfIntRO.fieldCount());
+        assertSame(listWithVariantOfIntRO, listWithVariantOfIntRO.wrap(buffer, offsetLength,
+            offsetLength + length));
+        assertEquals(length, listWithVariantOfIntRO.limit() - offsetLength);
+        assertEquals(fieldCount, listWithVariantOfIntRO.fieldCount());
         assertEquals(1, listWithVariantOfIntRO.intField1());
         assertEquals(100000, listWithVariantOfIntRO.variantOfInt64());
         assertEquals(100, listWithVariantOfIntRO.variantOfInt8());
@@ -211,20 +215,20 @@ public class ListWithVariantFWTest
         assertEquals(200, listWithVariantOfIntRO.variantOfUint8());
         assertEquals(50000, listWithVariantOfIntRO.variantOfUint16());
         assertEquals(4000000000L, listWithVariantOfIntRO.variantOfUint32());
-        assertEquals("variant", listWithVariantOfIntRO.variantOfString32());
+        assertEquals("variant", listWithVariantOfIntRO.variantOfString32().asString());
     }
 
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        byte physicalLength = 65;
-        byte logicalLength = 10;
+        byte length = 50;
+        byte fieldCount = 10;
         long bitmask = 0x03FF;
-        int offsetPhysicalLength = 10;
-        buffer.putByte(offsetPhysicalLength, physicalLength);
-        int offsetLogicalLength = offsetPhysicalLength + physicalLengthSize;
-        buffer.putByte(offsetLogicalLength, logicalLength);
-        int offsetBitMask = offsetLogicalLength + logicalLengthSize;
+        int offsetLength = 10;
+        buffer.putByte(offsetLength, length);
+        int offsetFieldCount = offsetLength + lengthSize;
+        buffer.putByte(offsetFieldCount, fieldCount);
+        int offsetBitMask = offsetFieldCount + logicalLengthSize;
         buffer.putLong(offsetBitMask, bitmask);
 
         int offsetIntField1 = offsetBitMask + bitmaskSize;
@@ -254,30 +258,30 @@ public class ListWithVariantFWTest
         buffer.putShort(offsetVariantOfInt32, (short) -500);
 
         int offsetKindVariantOfUint8 = offsetVariantOfInt32 + Short.BYTES;
-        buffer.putShort(offsetKindVariantOfUint8, EnumWithUint8.ICHI.value());
-        int offsetVariantOfUint8 = offsetKindVariantOfUint8 + Short.BYTES;
-        buffer.putShort(offsetVariantOfUint8, (short) 200);
+        buffer.putByte(offsetKindVariantOfUint8, (byte) EnumWithUint8.ICHI.value());
+        int offsetVariantOfUint8 = offsetKindVariantOfUint8 + Byte.BYTES;
+        buffer.putByte(offsetVariantOfUint8, (byte) 200);
 
-        int offsetKindVariantOfUint16 = offsetVariantOfUint8 + Short.BYTES;
-        buffer.putInt(offsetKindVariantOfUint16, EnumWithUint16.ICHI.value());
-        int offsetVariantOfUint16 = offsetKindVariantOfUint16 + Integer.BYTES;
-        buffer.putInt(offsetVariantOfUint16, 50000);
+        int offsetKindVariantOfUint16 = offsetVariantOfUint8 + Byte.BYTES;
+        buffer.putShort(offsetKindVariantOfUint16, (short) EnumWithUint16.ICHI.value());
+        int offsetVariantOfUint16 = offsetKindVariantOfUint16 + Short.BYTES;
+        buffer.putShort(offsetVariantOfUint16, (short) 50000);
 
-        int offsetKindVariantOfUint32 = offsetVariantOfUint16 + Integer.BYTES;
-        buffer.putLong(offsetKindVariantOfUint32, EnumWithUint32.NI.value());
-        int offsetVariantOfUint32 = offsetKindVariantOfUint32 + Long.BYTES;
-        buffer.putLong(offsetVariantOfUint32, 4000000000L);
+        int offsetKindVariantOfUint32 = offsetVariantOfUint16 + Short.BYTES;
+        buffer.putInt(offsetKindVariantOfUint32, (int) EnumWithUint32.NI.value());
+        int offsetVariantOfUint32 = offsetKindVariantOfUint32 + Integer.BYTES;
+        buffer.putInt(offsetVariantOfUint32, (int) 4000000000L);
 
-        int offsetKindVariantOfString32 = offsetVariantOfUint32 + Long.BYTES;
-        buffer.putByte(offsetKindVariantOfString32, EnumWithInt8.ONE.value());
+        int offsetKindVariantOfString32 = offsetVariantOfUint32 + Integer.BYTES;
+        buffer.putByte(offsetKindVariantOfString32, KIND_STRING8.value());
         int offsetVariantOfString32 = offsetKindVariantOfString32 + Byte.BYTES;
         buffer.putByte(offsetVariantOfString32, (byte) 7);
         buffer.putBytes(offsetVariantOfString32 + 1, "variant".getBytes());
 
-        assertSame(listWithVariantOfIntRO, listWithVariantOfIntRO.tryWrap(buffer, offsetPhysicalLength,
-            offsetPhysicalLength + physicalLength));
-        assertEquals(physicalLength, listWithVariantOfIntRO.limit() - offsetPhysicalLength);
-        assertEquals(logicalLength, listWithVariantOfIntRO.fieldCount());
+        assertSame(listWithVariantOfIntRO, listWithVariantOfIntRO.tryWrap(buffer, offsetLength,
+            offsetLength + length));
+        assertEquals(length, listWithVariantOfIntRO.limit() - offsetLength);
+        assertEquals(fieldCount, listWithVariantOfIntRO.fieldCount());
         assertEquals(1, listWithVariantOfIntRO.intField1());
         assertEquals(100000, listWithVariantOfIntRO.variantOfInt64());
         assertEquals(100, listWithVariantOfIntRO.variantOfInt8());
@@ -331,7 +335,7 @@ public class ListWithVariantFWTest
             .variantOfUint8(200)
             .variantOfUint16(50000)
             .variantOfUint32(4000000000L)
-            .variantOfString32("variant")
+            .variantOfString32(asStringFW("variant"))
             .build()
             .limit();
         listWithVariantOfIntRO.wrap(buffer,  0,  limit);
@@ -372,7 +376,7 @@ public class ListWithVariantFWTest
             .variantOfUint8(200)
             .variantOfUint16(50000)
             .variantOfUint32(4000000000L)
-            .variantOfString32("variant")
+            .variantOfString32(asStringFW("variant"))
             .build()
             .limit();
         listWithVariantOfIntRO.wrap(buffer,  0,  limit);
@@ -385,6 +389,13 @@ public class ListWithVariantFWTest
         assertEquals(200, listWithVariantOfIntRO.variantOfUint8());
         assertEquals(50000, listWithVariantOfIntRO.variantOfUint16());
         assertEquals(4000000000L, listWithVariantOfIntRO.variantOfUint32());
-        assertEquals("variant", listWithVariantOfIntRO.variantOfString32());
+        assertEquals("variant", listWithVariantOfIntRO.variantOfString32().asString());
+    }
+
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

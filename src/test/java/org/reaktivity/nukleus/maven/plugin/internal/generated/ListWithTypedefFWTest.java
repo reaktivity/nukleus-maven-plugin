@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -19,6 +19,7 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -50,21 +51,32 @@ public class ListWithTypedefFWTest
     private final int lengthSize = Byte.BYTES;
     private final int fieldCountSize = Byte.BYTES;
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int length = 33;
+        int length = 20;
         setAllFields(buffer);
-        for (int maxLimit = 10; maxLimit <= length; maxLimit++)
+        for (int maxLimit = 10; maxLimit < 10 + length; maxLimit++)
         {
-            flyweightRO.wrap(buffer,  10, maxLimit);
+            try
+            {
+                flyweightRO.wrap(buffer, 10, maxLimit);
+                fail("Exception not thrown");
+            }
+            catch (Exception e)
+            {
+                if (!(e instanceof IndexOutOfBoundsException))
+                {
+                    fail("Unexpected exception " + e);
+                }
+            }
         }
     }
 
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
     {
-        int length = 33;
+        int length = 18;
         int offsetLength = 10;
         setAllFields(buffer);
         for (int maxLimit = 10; maxLimit <= length; maxLimit++)
@@ -76,7 +88,7 @@ public class ListWithTypedefFWTest
     private void setAllFields(
         MutableDirectBuffer buffer)
     {
-        int length = 33;
+        int length = 18;
         int fieldCount = 2;
         int offsetKind = 10;
         buffer.putByte(offsetKind, EnumWithInt8.TWO.value());
@@ -86,20 +98,20 @@ public class ListWithTypedefFWTest
         buffer.putByte(offsetFieldCount, (byte) fieldCount);
 
         int offsetField1Kind = offsetFieldCount + fieldCountSize;
-        buffer.putLong(offsetField1Kind, EnumWithUint32.NI.value());
-        int offsetField1 = offsetField1Kind + Long.BYTES;
-        buffer.putLong(offsetField1, 100);
+        buffer.putInt(offsetField1Kind, (int) EnumWithUint32.NI.value());
+        int offsetField1 = offsetField1Kind + Integer.BYTES;
+        buffer.putInt(offsetField1, 100);
 
-        int offsetField2Kind = offsetField1 + Long.BYTES;
-        buffer.putLong(offsetField2Kind, EnumWithUint32.NI.value());
-        int offsetField2 = offsetField2Kind + Long.BYTES;
-        buffer.putLong(offsetField2, 10000);
+        int offsetField2Kind = offsetField1 + Integer.BYTES;
+        buffer.putInt(offsetField2Kind, (int) EnumWithUint32.NI.value());
+        int offsetField2 = offsetField2Kind + Integer.BYTES;
+        buffer.putInt(offsetField2, 10000);
     }
 
     @Test
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int length = 33;
+        int length = 18;
         int kindSize = Byte.BYTES;
         int fieldCount = 2;
         int offsetLength = 10;
@@ -118,7 +130,7 @@ public class ListWithTypedefFWTest
     @Test
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
-        int length = 33;
+        int length = 18;
         int kindSize = Byte.BYTES;
         int fieldCount = 2;
         int offsetLength = 10;
@@ -137,7 +149,7 @@ public class ListWithTypedefFWTest
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToSetFieldWithInsufficientSpace() throws Exception
     {
-        flyweightRW.wrap(buffer, 10, 30)
+        flyweightRW.wrap(buffer, 10, 20)
             .field1(100);
     }
 

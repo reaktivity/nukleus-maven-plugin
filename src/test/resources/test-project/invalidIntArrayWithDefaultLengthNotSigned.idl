@@ -18,7 +18,7 @@ scope invalidIntArrayWithDefaultLengthNotSigned
     struct InvalidIntegerArray
     {
         uint8 length = 0;
-        uint32[length] array = null;
+        uint32[length] arrayMember = null;
     }
     
 }

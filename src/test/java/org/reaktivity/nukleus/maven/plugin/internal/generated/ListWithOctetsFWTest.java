@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -29,7 +29,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.OctetsFW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.Varint32FW;
 
 public class ListWithOctetsFWTest
@@ -66,7 +66,7 @@ public class ListWithOctetsFWTest
         OctetsFW octets1 = asOctetsFW("1234567891");
         buffer.putBytes(offsetOctets1, octets1.buffer(), 0, octets1.sizeof());
         int offsetString1 = offsetOctets1 + octets1.sizeof();
-        StringFW string1 = asStringFW("string1");
+        String8FW string1 = asString8FW("string1");
         buffer.putBytes(offsetString1, string1.buffer(), 0, string1.sizeof());
 
         for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
@@ -102,7 +102,7 @@ public class ListWithOctetsFWTest
         OctetsFW octets1 = asOctetsFW("1234567891");
         buffer.putBytes(offsetOctets1, octets1.buffer(), 0, octets1.sizeof());
         int offsetString1 = offsetOctets1 + octets1.sizeof();
-        StringFW string1 = asStringFW("string1");
+        String8FW string1 = asString8FW("string1");
         buffer.putBytes(offsetString1, string1.buffer(), 0, string1.sizeof());
 
         for (int maxLimit = 10; maxLimit <= physicalLength; maxLimit++)
@@ -128,7 +128,7 @@ public class ListWithOctetsFWTest
         OctetsFW octets1 = asOctetsFW("1234567891");
         buffer.putBytes(offsetOctets1, octets1.buffer(), 0, octets1.sizeof());
         int offsetString1 = offsetOctets1 + octets1.sizeof();
-        StringFW string1 = asStringFW("string1");
+        String8FW string1 = asString8FW("string1");
         buffer.putBytes(offsetString1, string1.buffer(), 0, string1.sizeof());
         assertSame(listWithOctetsRO, listWithOctetsRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
@@ -151,7 +151,7 @@ public class ListWithOctetsFWTest
         OctetsFW octets1 = asOctetsFW("1234567891");
         buffer.putBytes(offsetOctets1, octets1.buffer(), 0, octets1.sizeof());
         int offsetString1 = offsetOctets1 + octets1.sizeof();
-        StringFW string1 = asStringFW("string1");
+        String8FW string1 = asString8FW("string1");
         buffer.putBytes(offsetString1, string1.buffer(), 0, string1.sizeof());
         assertSame(listWithOctetsRO, listWithOctetsRO.tryWrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
@@ -173,7 +173,7 @@ public class ListWithOctetsFWTest
         OctetsFW octets1 = asOctetsFW("1234567891");
         buffer.putBytes(offsetOctets1, octets1.buffer(), 0, octets1.sizeof());
         int offsetString1 = offsetOctets1 + octets1.sizeof();
-        StringFW string1 = asStringFW("string1");
+        String8FW string1 = asString8FW("string1");
         buffer.putBytes(offsetString1, string1.buffer(), 0, string1.sizeof());
         assertSame(listWithOctetsRO, listWithOctetsRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
@@ -207,7 +207,7 @@ public class ListWithOctetsFWTest
         OctetsFW octets2 = asOctetsFW("123456789123456");
         buffer.putBytes(offsetOctets2, octets2.buffer(), 0, octets2.sizeof());
         int offsetString1 = offsetOctets2 + octets2.sizeof();
-        StringFW string1 = asStringFW("string1");
+        String8FW string1 = asString8FW("string1");
         buffer.putBytes(offsetString1, string1.buffer(), 0, string1.sizeof());
         int offsetLengthOctets3 = offsetString1 + string1.sizeof();
         Varint32FW lengthOctets3 = asVarint32FW(5);
@@ -429,12 +429,12 @@ public class ListWithOctetsFWTest
     }
 
     @Test(expected = AssertionError.class)
-    public void shouldFailToResetString1UsingStringFW() throws Exception
+    public void shouldFailToResetString1UsingString8FW() throws Exception
     {
         listWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-            .string1(asStringFW("value1"))
-            .string1(asStringFW("another value"))
+            .string1(asString8FW("value1"))
+            .string1(asString8FW("another value"))
             .build();
     }
 
@@ -572,11 +572,11 @@ public class ListWithOctetsFWTest
     }
 
     @Test(expected = AssertionError.class)
-    public void shouldFailToSetString1UsingStringFWWhenRequiredOctets1NotSet() throws Exception
+    public void shouldFailToSetString1UsingString8FWWhenRequiredOctets1NotSet() throws Exception
     {
         listWithOctetsRW.wrap(buffer, 0, 100)
             .fixed1(10)
-            .string1(asStringFW("1234567890"))
+            .string1(asString8FW("1234567890"))
             .build();
     }
 
@@ -746,13 +746,13 @@ public class ListWithOctetsFWTest
     }
 
     @Test
-    public void shouldSetStringValuesUsingStringFW() throws Exception
+    public void shouldSetStringValuesUsingString8FW() throws Exception
     {
         int limit = listWithOctetsRW.wrap(buffer, 0, buffer.capacity())
             .fixed1(5)
             .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
             .octets2(b -> b.put("12345".getBytes(UTF_8)))
-            .string1(asStringFW("value1"))
+            .string1(asString8FW("value1"))
             .build()
             .limit();
         listWithOctetsRO.wrap(buffer,  0,  limit);
@@ -775,11 +775,11 @@ public class ListWithOctetsFWTest
         return new OctetsFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value.getBytes(UTF_8)).build();
     }
 
-    private static StringFW asStringFW(
+    private static String8FW asString8FW(
         String value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
-        return new StringFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 
     private static Varint32FW asVarint32FW(

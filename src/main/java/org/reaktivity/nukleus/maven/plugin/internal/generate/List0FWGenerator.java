@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -39,12 +39,14 @@ public final class List0FWGenerator extends ClassSpecGenerator
     private final BuilderClassBuilder builderClassBuilder;
 
     public List0FWGenerator(
-        ClassName flyweightType)
+        ClassName flyweightType,
+        ClassName listType)
     {
-        super(flyweightType.peerClass("List0FW"));
+        super(listType.peerClass("List0FW"));
 
-        this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
+        this.classBuilder = classBuilder(thisName).superclass(listType).addModifiers(PUBLIC, FINAL);
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"),
+            listType.nestedClass("Builder"));
     }
 
     @Override
@@ -206,24 +208,38 @@ public final class List0FWGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final ClassName classType;
         private final ClassName listType;
+        private final ClassName visitorType;
 
         private BuilderClassBuilder(
             ClassName listType,
-            ClassName builderRawType)
+            ClassName flyweightBuilderRawType,
+            ClassName listBuilderRawType)
         {
-            TypeName builderType = ParameterizedTypeName.get(builderRawType, listType);
+            TypeName builderType = ParameterizedTypeName.get(listBuilderRawType, listType);
             this.listType = listType;
             this.classType = listType.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL)
                 .superclass(builderType);
+            this.visitorType = flyweightBuilderRawType.nestedClass("Visitor");
         }
 
         public TypeSpec build()
         {
-            return classBuilder.addMethod(constructor())
+            return classBuilder
+                .addField(fieldCount())
+                .addMethod(constructor())
+                .addMethod(fieldMethod())
+                .addMethod(fieldsMethodViaVisitor())
+                .addMethod(fieldsMethodViaBuffer())
                 .addMethod(wrapMethod())
                 .addMethod(buildMethod())
+                .build();
+        }
+
+        private FieldSpec fieldCount()
+        {
+            return FieldSpec.builder(int.class, "fieldCount", PRIVATE)
                 .build();
         }
 
@@ -232,6 +248,58 @@ public final class List0FWGenerator extends ClassSpecGenerator
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addStatement("super(new List0FW())")
+                .build();
+        }
+
+        private MethodSpec fieldMethod()
+        {
+            return methodBuilder("field")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(listType.nestedClass("Builder"))
+                .addParameter(visitorType, "visitor")
+                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
+                .addStatement("fieldCount++")
+                .addStatement("int newLimit = limit() + length")
+                .addStatement("checkLimit(newLimit, maxLimit())")
+                .addStatement("limit(newLimit)")
+                .addStatement("return this")
+                .build();
+        }
+
+        private MethodSpec fieldsMethodViaVisitor()
+        {
+            return methodBuilder("fields")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(listType.nestedClass("Builder"))
+                .addParameter(int.class, "fieldCount")
+                .addParameter(visitorType, "visitor")
+                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
+                .addStatement("this.fieldCount += fieldCount")
+                .addStatement("int newLimit = limit() + length")
+                .addStatement("checkLimit(newLimit, maxLimit())")
+                .addStatement("limit(newLimit)")
+                .addStatement("return this")
+                .build();
+        }
+
+        private MethodSpec fieldsMethodViaBuffer()
+        {
+            return methodBuilder("fields")
+                .addAnnotation(Override.class)
+                .addModifiers(PUBLIC)
+                .returns(listType.nestedClass("Builder"))
+                .addParameter(int.class, "fieldCount")
+                .addParameter(DIRECT_BUFFER_TYPE, "buffer")
+                .addParameter(int.class, "index")
+                .addParameter(int.class, "length")
+                .addStatement("this.fieldCount += fieldCount")
+                .addStatement("int newLimit = limit() + length")
+                .addStatement("checkLimit(newLimit, maxLimit())")
+                .addStatement("buffer().putBytes(limit(), buffer, index, length)")
+                .addStatement("limit(newLimit)")
+                .addStatement("return this")
                 .build();
         }
 
@@ -245,6 +313,7 @@ public final class List0FWGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
+                .addStatement("fieldCount = 0")
                 .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("return this")
                 .build();

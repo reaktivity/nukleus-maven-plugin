@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast;
 
 import static java.util.Collections.unmodifiableList;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,6 +27,7 @@ public final class AstVariantNode extends AstNamedNode
     private final AstType ofType;
     private final AstType kindType;
     private final List<AstVariantCaseNode> cases;
+    private final AstByteOrder byteOrder;
 
     @Override
     public <R> R accept(
@@ -59,13 +61,18 @@ public final class AstVariantNode extends AstNamedNode
     public AstNamedNode withName(
         String name)
     {
-        return new AstVariantNode(name, ofType, kindType, cases);
+        return new AstVariantNode(name, ofType, kindType, cases, byteOrder);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(name, ofType, kindType, cases);
+        return Objects.hash(name, ofType, kindType, cases, byteOrder);
+    }
+
+    public AstByteOrder byteOrder()
+    {
+        return byteOrder;
     }
 
     @Override
@@ -86,19 +93,22 @@ public final class AstVariantNode extends AstNamedNode
         return Objects.equals(this.name, that.name) &&
             Objects.equals(this.cases, that.cases) &&
             Objects.equals(this.ofType, that.ofType) &&
-            Objects.equals(this.kindType, that.kindType);
+            Objects.equals(this.kindType, that.kindType) &&
+            Objects.equals(this.byteOrder, that.byteOrder);
     }
 
     private AstVariantNode(
         String name,
         AstType ofType,
         AstType kindType,
-        List<AstVariantCaseNode> cases)
+        List<AstVariantCaseNode> cases,
+        AstByteOrder byteOrder)
     {
         super(name);
         this.ofType = ofType;
         this.kindType = kindType;
         this.cases = unmodifiableList(cases);
+        this.byteOrder = byteOrder;
     }
 
     public static final class Builder extends AstNamedNode.Builder<AstVariantNode>
@@ -106,10 +116,12 @@ public final class AstVariantNode extends AstNamedNode
         private AstType ofType;
         private List<AstVariantCaseNode> cases;
         private AstType kindType;
+        private AstByteOrder byteOrder;
 
         public Builder()
         {
             this.cases = new LinkedList<>();
+            this.byteOrder = NATIVE;
         }
 
         public Builder name(
@@ -133,6 +145,13 @@ public final class AstVariantNode extends AstNamedNode
             return this;
         }
 
+        public Builder byteOrder(
+            AstByteOrder byteOrder)
+        {
+            this.byteOrder = byteOrder;
+            return this;
+        }
+
         public Builder caseN(
             AstVariantCaseNode caseN)
         {
@@ -143,7 +162,7 @@ public final class AstVariantNode extends AstNamedNode
         @Override
         public AstVariantNode build()
         {
-            return new AstVariantNode(name, ofType, kindType, cases);
+            return new AstVariantNode(name, ofType, kindType, cases, byteOrder);
         }
     }
 }

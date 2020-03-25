@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -30,7 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.OctetsFW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
 
 public class FlatWithOctetsFWTest
@@ -416,12 +416,12 @@ public class FlatWithOctetsFWTest
     }
 
     @Test
-    public void shouldSetStringValuesUsingStringFW() throws Exception
+    public void shouldSetStringValuesUsingString8FW() throws Exception
     {
         int limit = flatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(5)
                 .octets1(b -> b.put("1234567890".getBytes(UTF_8)))
-                .string1(asStringFW("value1"))
+                .string1(asString8FW("value1"))
                 .octets2(b -> b.put("12345".getBytes(UTF_8)))
                 .extension(b -> b.put("octetsValue".getBytes(UTF_8)))
                 .build()
@@ -460,9 +460,9 @@ public class FlatWithOctetsFWTest
         return new OctetsFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value.getBytes(UTF_8)).build();
     }
 
-    private static StringFW asStringFW(String value)
+    private static String8FW asString8FW(String value)
     {
         MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
-        return new StringFW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }

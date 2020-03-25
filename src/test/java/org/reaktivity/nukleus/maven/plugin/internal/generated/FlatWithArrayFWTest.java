@@ -1,5 +1,5 @@
 /**
- * Copyright 2016-2019 The Reaktivity Project
+ * Copyright 2016-2020 The Reaktivity Project
  *
  * The Reaktivity Project licenses this file to you under the Apache License,
  * version 2.0 (the "License"); you may not use this file except in compliance
@@ -18,10 +18,8 @@ package org.reaktivity.nukleus.maven.plugin.internal.generated;
 import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
@@ -32,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatWithArrayFW;
 
 public class FlatWithArrayFWTest
@@ -53,24 +51,32 @@ public class FlatWithArrayFWTest
     };
     private final FlatWithArrayFW.Builder flatRW = new FlatWithArrayFW.Builder();
     private final FlatWithArrayFW flyweightRO = new FlatWithArrayFW();
-    private final StringFW.Builder stringRW = new StringFW.Builder();
+    private final String8FW.Builder stringRW = new String8FW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
 
-    static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
+    static int setAllTestValues(
+        MutableDirectBuffer buffer,
+        final int offset)
     {
+        int arrayLengthSize = Integer.BYTES;
+        int fieldCountSize = Integer.BYTES;
+        String stringArrayItem = "arrayItem1";
+        int stringValueLengthSize = Byte.BYTES;
         int pos = offset;
         buffer.putLong(pos,  10);
         buffer.putByte(pos += 8, (byte) 6);
         buffer.putStringWithoutLengthUtf8(pos += 1,  "value1");
-        buffer.putInt(pos += "value1".length(), 1 + "arrayItem1".length());
-        buffer.putByte(pos += 4, (byte) "arrayItem1".length());
-        buffer.putStringWithoutLengthUtf8(pos += 1,  "arrayItem1");
-        buffer.putInt(pos += "arrayItem1".length(), 11);
+        buffer.putInt(pos += "value1".length(), fieldCountSize + stringValueLengthSize + stringArrayItem.length());
+        buffer.putInt(pos += arrayLengthSize, 1);
+        buffer.putByte(pos += fieldCountSize, (byte) stringArrayItem.length());
+        buffer.putStringWithoutLengthUtf8(pos += 1,  stringArrayItem);
+        buffer.putInt(pos += stringArrayItem.length(), 11);
 
-        return pos - offset + 4;
+        return pos - offset + Integer.BYTES;
     }
 
-    void assertAllTestValuesRead(FlatWithArrayFW flyweight)
+    void assertAllTestValuesRead(
+        FlatWithArrayFW flyweight)
     {
         assertEquals(10, flyweight.fixed1());
         assertEquals("value1", flyweight.string1().asString());
@@ -133,15 +139,17 @@ public class FlatWithArrayFWTest
     public void shouldDefaultValues() throws Exception
     {
         int limit = flatRW.wrap(buffer, 0, 100)
-                .string1("value1")
-                .build()
-                .limit();
+            .string1("value1")
+            .array1(b -> b.item(i -> i.set("arrayItem1", UTF_8)))
+            .build()
+            .limit();
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(111, flyweightRO.fixed1());
+        assertEquals(5, flyweightRO.fixed2());
         AtomicInteger arraySize = new AtomicInteger(0);
         flyweightRO.array1().forEach(s -> arraySize.incrementAndGet());
-        assertEquals(0, arraySize.get());
-        assertTrue(flyweightRO.array1().isEmpty());
+        assertEquals(1, arraySize.get());
+        assertEquals(1, flyweightRO.array1().fieldCount());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -229,7 +237,6 @@ public class FlatWithArrayFWTest
                 .build()
                 .limit();
         flyweightRO.wrap(buffer,  0,  limit);
-        assertFalse(flyweightRO.array1().isEmpty());
         assertEquals(10, flyweightRO.fixed1());
         assertEquals("value1", flyweightRO.string1().asString());
         final List<String> arrayValues = new ArrayList<>();
@@ -252,11 +259,11 @@ public class FlatWithArrayFWTest
     }
 
     @Test
-    public void shouldSetStringValuesUsingStringFW() throws Exception
+    public void shouldSetStringValuesUsingString8FW() throws Exception
     {
         FlatWithArrayFW.Builder builder = flatRW.wrap(buffer, 0, buffer.capacity());
         builder.fixed1(10);
-        StringFW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+        String8FW value = stringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
                .set("value1", UTF_8)
                .build();
         FlatWithArrayFW flatWithList = builder.string1(value)
@@ -282,5 +289,4 @@ public class FlatWithArrayFWTest
         assertEquals(10, flyweightRO.fixed1());
         assertEquals("value1", flyweightRO.string1().asString());
     }
-
 }
