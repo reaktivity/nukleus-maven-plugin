@@ -2349,13 +2349,17 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private void addUnsignedIntZeroCase()
             {
                 TypeWidth typeZero = kindTypeSet.iterator().next();
+                builder.beginControlFlow(String.format("case %s:", unsignedOfType.equals(TypeName.LONG) ? "8" : "4"));
                 if (typeZero.width() == 0)
                 {
-                    builder.beginControlFlow(String.format("case %s:", unsignedOfType.equals(TypeName.LONG) ? "8" : "4"))
-                           .addStatement("$L()", setAs(typeZero.kindTypeName()))
-                           .addStatement("break")
-                           .endControlFlow();
+                    builder.addStatement("$L()", setAs(typeZero.kindTypeName()));
                 }
+                else
+                {
+                    builder.addStatement("$L(0)", setAs(typeZero.kindTypeName()));
+                }
+                builder.addStatement("break")
+                    .endControlFlow();
             }
 
             private void addSignedNegativeIntBlock()
