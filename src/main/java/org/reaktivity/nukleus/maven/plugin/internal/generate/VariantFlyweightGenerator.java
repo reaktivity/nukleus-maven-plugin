@@ -3568,8 +3568,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     .beginControlFlow("if (kind.get() == $L)", kind(largestListTypeName.name()))
                     .addStatement("$L $L = $LRW.build()", listClassName(largestListTypeName.name()), largestListTypeName,
                         largestListTypeName)
-                    .addStatement("long length = Math.max($L.length(), $L.fieldCount())", largestListTypeName,
-                        largestListTypeName)
+                    .addStatement("long length = $L.fieldCount() == 0 ? 0 : Math.max($L.length(), $L.fieldCount())",
+                        largestListTypeName, largestListTypeName, largestListTypeName)
                     .addStatement("int highestByteIndex = Long.numberOfTrailingZeros(Long.highestOneBit(length)) >> 3")
                     .beginControlFlow("switch (highestByteIndex)");
                 Collections.sort(sizes);
