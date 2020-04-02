@@ -2349,13 +2349,17 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private void addUnsignedIntZeroCase()
             {
                 TypeWidth typeZero = kindTypeSet.iterator().next();
+                builder.beginControlFlow(String.format("case %s:", unsignedOfType.equals(TypeName.LONG) ? "8" : "4"));
                 if (typeZero.width() == 0)
                 {
-                    builder.beginControlFlow(String.format("case %s:", unsignedOfType.equals(TypeName.LONG) ? "8" : "4"))
-                           .addStatement("$L()", setAs(typeZero.kindTypeName()))
-                           .addStatement("break")
-                           .endControlFlow();
+                    builder.addStatement("$L()", setAs(typeZero.kindTypeName()));
                 }
+                else
+                {
+                    builder.addStatement("$L(0)", setAs(typeZero.kindTypeName()));
+                }
+                builder.addStatement("break")
+                    .endControlFlow();
             }
 
             private void addSignedNegativeIntBlock()
@@ -3564,8 +3568,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     .beginControlFlow("if (kind.get() == $L)", kind(largestListTypeName.name()))
                     .addStatement("$L $L = $LRW.build()", listClassName(largestListTypeName.name()), largestListTypeName,
                         largestListTypeName)
-                    .addStatement("long length = Math.max($L.length(), $L.fieldCount())", largestListTypeName,
-                        largestListTypeName)
+                    .addStatement("long length = $L.fieldCount() == 0 ? 0 : Math.max($L.length(), $L.fieldCount())",
+                        largestListTypeName, largestListTypeName, largestListTypeName)
                     .addStatement("int highestByteIndex = Long.numberOfTrailingZeros(Long.highestOneBit(length)) >> 3")
                     .beginControlFlow("switch (highestByteIndex)");
                 Collections.sort(sizes);
