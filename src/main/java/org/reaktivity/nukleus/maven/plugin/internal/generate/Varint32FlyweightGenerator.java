@@ -234,7 +234,7 @@ public final class Varint32FlyweightGenerator extends ClassSpecGenerator
                     .addParameter(int.class, "value")
                     .addStatement("int zigzagged = (value << 1) ^ (value >> 31)")
                     .addStatement("int pos = offset()")
-                    .addStatement("int bits = 1 + $1T.numberOfTrailingZeros($1T.highestOneBit(zigzagged))",
+                    .addStatement("int bits = zigzagged == 0 ? 1 : 1 + $1T.numberOfTrailingZeros($1T.highestOneBit(zigzagged))",
                             java.lang.Integer.class)
                     .addStatement("int size = bits / 7")
                     .beginControlFlow("if (size * 7 < bits)")

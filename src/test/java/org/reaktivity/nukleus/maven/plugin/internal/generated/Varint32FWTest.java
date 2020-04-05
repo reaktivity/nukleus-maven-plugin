@@ -200,6 +200,16 @@ public class Varint32FWTest
     }
 
     @Test
+    public void shouldSetZeroValue() throws Exception
+    {
+        expected.putByte(10, (byte) 0x00);
+        varint32RW.wrap(buffer, 10, 11)
+            .set(0)
+            .build();
+        assertEquals(expected.byteBuffer(), buffer.byteBuffer());
+    }
+
+    @Test
     public void shouldSetOneByteValue() throws Exception
     {
         expected.putByte(10, (byte) 0x18);
