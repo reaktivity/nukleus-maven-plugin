@@ -427,7 +427,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             TypeName generateType = (unsignedTypeName != null) ? unsignedTypeName : typeName;
             if (defaultValue != null)
             {
-                FieldSpec.Builder defaultValueBuilder = FieldSpec.builder(generateType, defaultConstant(fieldName), PRIVATE,
+                FieldSpec.Builder defaultValueBuilder = FieldSpec.builder(generateType, defaultConstant(fieldName), PUBLIC,
                     STATIC, FINAL);
                 AstNamedNode node = resolver.resolve(type.name());
                 if (typeName.isPrimitive())
@@ -454,7 +454,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                         AstType ofType = variantNode.of();
                         TypeName typeOfConstant = Objects.requireNonNullElse(resolver.resolveUnsignedType(ofType),
                             resolver.resolveType(ofType));
-                        defaultValueBuilder = FieldSpec.builder(typeOfConstant, defaultConstant(fieldName), PRIVATE,
+                        defaultValueBuilder = FieldSpec.builder(typeOfConstant, defaultConstant(fieldName), PUBLIC,
                             STATIC, FINAL);
                         if (ofType.equals(AstType.STRING8) || ofType.equals(AstType.STRING16) || ofType.equals(AstType.STRING32))
                         {
@@ -470,7 +470,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                         AstEnumNode enumNode = (AstEnumNode) node;
                         ClassName enumFlyweightName = (ClassName) typeName;
                         ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
-                        defaultValueBuilder = FieldSpec.builder(enumName, defaultConstant(fieldName), PRIVATE, STATIC, FINAL)
+                        defaultValueBuilder = FieldSpec.builder(enumName, defaultConstant(fieldName), PUBLIC, STATIC, FINAL)
                             .initializer("$T.$L", enumName, defaultValue);
                     }
                 }

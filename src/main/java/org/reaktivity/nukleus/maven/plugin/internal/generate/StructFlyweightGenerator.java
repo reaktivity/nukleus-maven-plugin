@@ -1774,14 +1774,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         ClassName enumFlyweightName = (ClassName) typeName;
                         ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
                         builder.addField(
-                            FieldSpec.builder(enumName, defaultName(name), PRIVATE, STATIC, FINAL)
+                            FieldSpec.builder(enumName, defaultName(name), PUBLIC, STATIC, FINAL)
                                 .initializer("$T.$L", enumName, Objects.toString(defaultValueToSet))
                                 .build());
                     }
                     else
                     {
                         builder.addField(
-                            FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
+                            FieldSpec.builder(generateType, defaultName(name), PUBLIC, STATIC, FINAL)
                                 .initializer(Objects.toString(defaultValueToSet))
                                 .build());
                     }
