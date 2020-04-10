@@ -1507,7 +1507,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             this.memberConstant = new MemberConstantGenerator(thisType, resolver, builder);
             this.memberField = new MemberFieldGenerator(thisType, builder);
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder);
-            this.memberMutator = new MemberMutatorGenerator(thisType, builder);
+            this.memberMutator = new MemberMutatorGenerator(thisType, resolver, builder);
             this.wrapMethod = new WrapMethodGenerator(thisType, builder);
             this.wrapMethodWithArray = new WrapMethodWithArrayGenerator(structType, resolver);
             this.resolver = resolver;
@@ -1541,7 +1541,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             wrapMethod.addMember(name, typeName, unsignedTypeName, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
             wrapMethodWithArray.addMember(name, typeName, usedAsSize, size, sizeName);
-            if (defaultValue != null || isImplicitlyDefaulted(typeName, size, sizeName))
+            if (defaultValue != null || isImplicitlyDefaulted(typeName, size, sizeName, type, resolver))
             {
                 priorFieldIfDefaulted = name;
                 priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVarbyteuintType(typeName);
@@ -1624,14 +1624,19 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         }
 
         private static boolean isImplicitlyDefaulted(
-            TypeName type,
+            TypeName typeName,
             int size,
-            String sizeName)
+            String sizeName,
+            AstType type,
+            TypeResolver resolver)
         {
             boolean result = false;
-            if (type instanceof ClassName && !isStringType((ClassName) type) && !isVarintType(type) && !isVarbyteuintType(type))
+            AstNamedNode node = type != null ? resolver.resolve(type.name()) : null;
+            final boolean isEnumType = node != null && isEnumType(node.getKind());
+            if (typeName instanceof ClassName && !isStringType((ClassName) typeName) && !isVarintType(typeName) &&
+                !isVarbyteuintType(typeName) && !isEnumType)
             {
-                ClassName classType = (ClassName) type;
+                ClassName classType = (ClassName) typeName;
                 if ("OctetsFW".equals(classType.simpleName()))
                 {
                     result = size == -1 && sizeName == null;
@@ -1641,9 +1646,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     result = true;
                 }
             }
-            if (type instanceof ParameterizedTypeName)
+            if (typeName instanceof ParameterizedTypeName)
             {
-                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) typeName;
                 if ("ListFW".equals(parameterizedType.rawType.simpleName()) ||
                         "Array32FW".equals(parameterizedType.rawType.simpleName()))
                 {
@@ -2032,14 +2037,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 UNSIGNED_INT_RANGES = unmodifiableMap(unsigned);
             }
 
+            private final TypeResolver resolver;
             private String priorRequiredField = null;
             private boolean priorFieldIsAutomaticallySet;
 
             private MemberMutatorGenerator(
                 ClassName thisType,
+                TypeResolver resolver,
                 TypeSpec.Builder builder)
             {
                 super(thisType, builder);
+                this.resolver = resolver;
             }
 
             public MemberMutatorGenerator addMember(
@@ -2087,7 +2095,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             priorFieldIfDefaulted, defaultPriorField);
                 }
                 priorFieldIsAutomaticallySet = automaticallySet;
-                if (defaultValue == null && !isImplicitlyDefaulted(typeName, size, sizeName) && !automaticallySet)
+                if (defaultValue == null && !isImplicitlyDefaulted(typeName, size, sizeName, type, resolver) && !automaticallySet)
                 {
                     priorRequiredField = name;
                 }
