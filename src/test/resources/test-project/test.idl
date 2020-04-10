@@ -151,6 +151,12 @@ scope test
             FORWARD
         }
 
+        struct StructWithEnumDefault
+        {
+            Roll roll = SPRING;
+            int8 field2;
+        }
+
         enum EnumWithInt8 (int8)
         {
             ONE (1),

@@ -51,6 +51,9 @@ import java.util.function.IntToLongFunction;
 import java.util.function.IntUnaryOperator;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode;
+import org.reaktivity.nukleus.maven.plugin.internal.ast.AstNamedNode.Kind;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
 import com.squareup.javapoet.ClassName;
@@ -1474,8 +1477,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private final MemberMutatorGenerator memberMutator;
         private final WrapMethodGenerator wrapMethod;
         private final WrapMethodWithArrayGenerator wrapMethodWithArray;
+        private final TypeResolver resolver;
         private String priorFieldIfDefaulted;
         private boolean priorDefaultedIsPrimitive;
+        private boolean priorDefaultedIsEnum;
         private Object priorDefaultValue;
         private String priorSizeName;
         private TypeName priorSizeType;
@@ -1499,12 +1504,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC, STATIC, FINAL)
                     .superclass(ParameterizedTypeName.get(builderRawType, structType));
             this.structType = structType;
-            this.memberConstant = new MemberConstantGenerator(thisType, builder);
+            this.memberConstant = new MemberConstantGenerator(thisType, resolver, builder);
             this.memberField = new MemberFieldGenerator(thisType, builder);
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder);
-            this.memberMutator = new MemberMutatorGenerator(thisType, builder);
+            this.memberMutator = new MemberMutatorGenerator(thisType, resolver, builder);
             this.wrapMethod = new WrapMethodGenerator(thisType, builder);
             this.wrapMethodWithArray = new WrapMethodWithArrayGenerator(structType, resolver);
+            this.resolver = resolver;
         }
 
         private void addMember(
@@ -1526,7 +1532,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             }
             Consumer<CodeBlock.Builder> defaultPriorField = priorFieldIfDefaulted == null ? null
                     : b -> defaultPriorField(b);
-            memberConstant.addMember(name, typeName, unsignedTypeName, size, sizeName, usedAsSize, defaultValue);
+            memberConstant.addMember(name, type, typeName, unsignedTypeName, size, sizeName, usedAsSize, defaultValue);
             memberField.addMember(name, typeName, unsignedTypeName, size, sizeName, usedAsSize, byteOrder);
             memberAccessor.addMember(name, typeName, unsignedTypeName, usedAsSize, size, sizeName, defaultValue,
                     priorFieldIfDefaulted, defaultPriorField);
@@ -1535,10 +1541,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             wrapMethod.addMember(name, typeName, unsignedTypeName, usedAsSize, size, sizeName, sizeType,
                     byteOrder, defaultValue, priorFieldIfDefaulted, defaultPriorField);
             wrapMethodWithArray.addMember(name, typeName, usedAsSize, size, sizeName);
-            if (defaultValue != null || isImplicitlyDefaulted(typeName, size, sizeName))
+            if (defaultValue != null || isImplicitlyDefaulted(typeName, size, sizeName, type, resolver))
             {
                 priorFieldIfDefaulted = name;
                 priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVarbyteuintType(typeName);
+                AstNamedNode node = type != null ? resolver.resolve(type.name()) : null;
+                priorDefaultedIsEnum = node != null && isEnumType(node.getKind());
                 priorDefaultValue = defaultValue;
                 priorSizeName = sizeName;
                 priorSizeType = sizeType;
@@ -1616,14 +1624,19 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         }
 
         private static boolean isImplicitlyDefaulted(
-            TypeName type,
+            TypeName typeName,
             int size,
-            String sizeName)
+            String sizeName,
+            AstType type,
+            TypeResolver resolver)
         {
             boolean result = false;
-            if (type instanceof ClassName && !isStringType((ClassName) type) && !isVarintType(type) && !isVarbyteuintType(type))
+            AstNamedNode node = type != null ? resolver.resolve(type.name()) : null;
+            final boolean isEnumType = node != null && isEnumType(node.getKind());
+            if (typeName instanceof ClassName && !isStringType((ClassName) typeName) && !isVarintType(typeName) &&
+                !isVarbyteuintType(typeName) && !isEnumType)
             {
-                ClassName classType = (ClassName) type;
+                ClassName classType = (ClassName) typeName;
                 if ("OctetsFW".equals(classType.simpleName()))
                 {
                     result = size == -1 && sizeName == null;
@@ -1633,9 +1646,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     result = true;
                 }
             }
-            if (type instanceof ParameterizedTypeName)
+            if (typeName instanceof ParameterizedTypeName)
             {
-                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) typeName;
                 if ("ListFW".equals(parameterizedType.rawType.simpleName()) ||
                         "Array32FW".equals(parameterizedType.rawType.simpleName()))
                 {
@@ -1689,6 +1702,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("limit(limit)");
                     }
                 }
+                else if (priorDefaultedIsEnum)
+                {
+                    code.addStatement("$L(b -> b.set($L))", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                }
                 else
                 {
                     code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
@@ -1698,25 +1715,29 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
         private static final class MemberConstantGenerator extends ClassSpecMixinGenerator
         {
+            private final TypeResolver resolver;
             private int nextIndex;
 
             private MemberConstantGenerator(
                 ClassName thisType,
+                TypeResolver resolver,
                 TypeSpec.Builder builder)
             {
                 super(thisType, builder);
+                this.resolver = resolver;
             }
 
             public MemberConstantGenerator addMember(
                 String name,
-                TypeName type,
+                AstType type,
+                TypeName typeName,
                 TypeName unsignedType,
                 int size,
                 String sizeName,
                 boolean usedAsSize,
                 Object defaultValue)
             {
-                boolean automaticallySet = usedAsSize && !isVarintType(type) && !isVarbyteuintType(type);
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
                 if (!automaticallySet)
                 {
                     builder.addField(
@@ -1724,32 +1745,46 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                      .initializer(Integer.toString(nextIndex++))
                                      .build());
                 }
-                boolean isOctetsType = isOctetsType(type);
+                boolean isOctetsType = isOctetsType(typeName);
                 if (defaultValue != null && !isOctetsType)
                 {
                     Object defaultValueToSet = defaultValue == NULL_DEFAULT ? null : defaultValue;
-                    TypeName generateType = (unsignedType != null) ? unsignedType : type;
+                    TypeName generateType = (unsignedType != null) ? unsignedType : typeName;
                     if (size != -1 || sizeName != null)
                     {
                         generateType = generateType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
                                 : INT_ITERATOR_CLASS_NAME;
                     }
-                    if (isVarbyteuint32Type(type))
+                    if (isVarbyteuint32Type(typeName))
                     {
                         generateType = TypeName.INT;
                     }
-                    else if (isVarint32Type(type))
+                    else if (isVarint32Type(typeName))
                     {
                         generateType = TypeName.INT;
                     }
-                    else if (isVarint64Type(type))
+                    else if (isVarint64Type(typeName))
                     {
                         generateType = TypeName.LONG;
                     }
-                    builder.addField(
-                            FieldSpec.builder(generateType, defaultName(name), PRIVATE, STATIC, FINAL)
-                                     .initializer(Objects.toString(defaultValueToSet))
-                                     .build());
+                    AstNamedNode node = resolver.resolve(type.name());
+                    if (node != null && isEnumType(node.getKind()))
+                    {
+                        AstEnumNode enumNode = (AstEnumNode) node;
+                        ClassName enumFlyweightName = (ClassName) typeName;
+                        ClassName enumName = enumFlyweightName.peerClass(enumNode.name());
+                        builder.addField(
+                            FieldSpec.builder(enumName, defaultName(name), PUBLIC, STATIC, FINAL)
+                                .initializer("$T.$L", enumName, Objects.toString(defaultValueToSet))
+                                .build());
+                    }
+                    else
+                    {
+                        builder.addField(
+                            FieldSpec.builder(generateType, defaultName(name), PUBLIC, STATIC, FINAL)
+                                .initializer(Objects.toString(defaultValueToSet))
+                                .build());
+                    }
                 }
                 return this;
             }
@@ -2002,14 +2037,17 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 UNSIGNED_INT_RANGES = unmodifiableMap(unsigned);
             }
 
+            private final TypeResolver resolver;
             private String priorRequiredField = null;
             private boolean priorFieldIsAutomaticallySet;
 
             private MemberMutatorGenerator(
                 ClassName thisType,
+                TypeResolver resolver,
                 TypeSpec.Builder builder)
             {
                 super(thisType, builder);
+                this.resolver = resolver;
             }
 
             public MemberMutatorGenerator addMember(
@@ -2057,7 +2095,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             priorFieldIfDefaulted, defaultPriorField);
                 }
                 priorFieldIsAutomaticallySet = automaticallySet;
-                if (defaultValue == null && !isImplicitlyDefaulted(typeName, size, sizeName) && !automaticallySet)
+                if (defaultValue == null && !isImplicitlyDefaulted(typeName, size, sizeName, type, resolver) && !automaticallySet)
                 {
                     priorRequiredField = name;
                 }
@@ -3314,6 +3352,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         TypeName type)
     {
         return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static boolean isEnumType(
+        Kind kind)
+    {
+        return Kind.ENUM.equals(kind);
     }
 
     private static String index(
