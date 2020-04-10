@@ -223,6 +223,7 @@ member
    | uint_member_with_default SEMICOLON
    | int_member_with_default SEMICOLON
    | octets_member_with_default SEMICOLON
+   | enum_member_with_default SEMICOLON
    | integer_array_member SEMICOLON
    | varint_array_member SEMICOLON
    | array_member SEMICOLON
@@ -231,15 +232,19 @@ member
 uint_member_with_default
    : unsigned_integer_type declarator EQUALS uint_literal
    ;
-   
+
 int_member_with_default 
    : signed_integer_type declarator EQUALS int_literal
    ;
-   
+
 octets_member_with_default
    : octets_type declarator default_null
    ;
-   
+
+enum_member_with_default
+   : scoped_name declarator EQUALS ID
+   ;
+
 integer_array_member
    : int8_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?
    | int16_type LEFT_SQUARE_BRACKET (positive_int_const | ID) RIGHT_SQUARE_BRACKET declarator default_null?

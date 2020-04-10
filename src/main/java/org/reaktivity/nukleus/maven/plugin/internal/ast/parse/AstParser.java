@@ -53,6 +53,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Declara
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Default_nullContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Defined_variant_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Defined_variant_member_with_parametric_typeContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_member_with_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Enum_valueContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Int16_typeContext;
@@ -454,6 +455,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.defaultValue(parseInt(ctx.int_literal()));
         return super.visitInt_member_with_default(ctx);
+    }
+
+    @Override
+    public AstNode visitEnum_member_with_default(
+        Enum_member_with_defaultContext ctx)
+    {
+        memberBuilder.defaultValue(ctx.ID().getText());
+        return super.visitEnum_member_with_default(ctx);
     }
 
     @Override
