@@ -1816,7 +1816,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 kindTypeName, ofType, builder);
             this.setWithSpecificKindMethod = new SetWithSpecificKindMethodGenerator(kindTypeName, ofType, resolver);
             this.memberField = new MemberFieldGenerator(thisVariantBuilderType, kindTypeName, typeVarB, typeVarV, typeVarKB,
-                typeVarKV, typeVarVB, typeVarVV, ofType, builder, resolver);
+                typeVarKV, typeVarVB, typeVarVV, ofType, builder, resolver, byteOrder);
             this.constructor = new ConstructorGenerator(thisVariantType, ofType, typeVarB, typeVarV, typeVarKB, typeVarKV,
                 typeVarVB, typeVarVV);
             this.setMethod = new SetMethodGenerator(ofType, ofTypeName, unsignedOfTypeName, kindTypeName, resolver);
@@ -4429,6 +4429,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             private final TypeVariableName typeVarVB;
             private final TypeVariableName typeVarVV;
             private final TypeResolver resolver;
+            private final AstByteOrder byteOrder;
 
             private MemberFieldGenerator(
                 ClassName thisType,
@@ -4441,7 +4442,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 TypeVariableName typeVarVV,
                 AstType ofType,
                 TypeSpec.Builder builder,
-                TypeResolver resolver)
+                TypeResolver resolver,
+                AstByteOrder byteOrder)
             {
                 super(thisType, builder);
                 this.ofType = ofType;
@@ -4452,6 +4454,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 this.typeVarVB = typeVarVB;
                 this.typeVarVV = typeVarVV;
                 this.resolver = resolver;
+                this.byteOrder = byteOrder;
                 if (!kindTypeName.isPrimitive() && ofType != null)
                 {
                     ClassName classType = (ClassName) kindTypeName;
@@ -4505,6 +4508,22 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                             .endControlFlow()
                             .addStatement("return $L", fieldRW)
                             .build());
+                    }
+                    else if (isListType(ofType) || isBoundedOctetsType(ofType))
+                    {
+                        if (byteOrder == NATIVE || memberType.equals(AstType.LIST0) || memberType.equals(AstType.LIST8) ||
+                            memberType.equals(AstType.BOUNDED_OCTETS8))
+                        {
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                .initializer("new $T()", builderType)
+                                .build());
+                        }
+                        else
+                        {
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                .initializer("new $T($T.BIG_ENDIAN)", builderType, ByteOrder.class)
+                                .build());
+                        }
                     }
                     else
                     {
