@@ -246,7 +246,7 @@ public final class BoundedOctets32FlyweightGenerator extends ClassSpecGenerator
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addParameter(ByteOrder.class, "byteOrder")
-                .addStatement("super(new BoundedOctets32FW())")
+                .addStatement("super(new BoundedOctets32FW(byteOrder))")
                 .addStatement("this.byteOrder = byteOrder")
                 .build();
         }

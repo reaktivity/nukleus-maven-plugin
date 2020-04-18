@@ -290,7 +290,7 @@ public final class List32FWGenerator extends ClassSpecGenerator
             return constructorBuilder()
                 .addModifiers(PUBLIC)
                 .addParameter(ByteOrder.class, "byteOrder")
-                .addStatement("super(new List32FW())")
+                .addStatement("super(new List32FW(byteOrder))")
                 .addStatement("this.byteOrder = byteOrder")
                 .build();
         }
@@ -360,6 +360,7 @@ public final class List32FWGenerator extends ClassSpecGenerator
                 .addStatement("int newLimit = offset + FIELDS_OFFSET")
                 .addStatement("checkLimit(newLimit, maxLimit)")
                 .addStatement("limit(newLimit)")
+                .addStatement("this.fieldCount = 0")
                 .addStatement("return this")
                 .build();
         }
