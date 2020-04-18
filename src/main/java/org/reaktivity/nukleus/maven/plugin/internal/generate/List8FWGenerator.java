@@ -321,6 +321,7 @@ public final class List8FWGenerator extends ClassSpecGenerator
                 .addStatement("int newLimit = offset + FIELDS_OFFSET")
                 .addStatement("checkLimit(newLimit, maxLimit)")
                 .addStatement("limit(newLimit)")
+                .addStatement("this.fieldCount = 0")
                 .addStatement("return this")
                 .build();
         }
