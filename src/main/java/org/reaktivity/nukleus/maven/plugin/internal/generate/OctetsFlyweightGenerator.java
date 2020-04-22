@@ -19,13 +19,16 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
+import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
@@ -51,13 +54,23 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
     @Override
     public TypeSpec generate()
     {
-        return classBuilder.addMethod(getMethod())
-                            .addMethod(limitMethod())
-                            .addMethod(tryWrapMethod())
-                            .addMethod(wrapMethod())
-                            .addMethod(toStringMethod())
-                            .addType(builderClassBuilder.build())
-                            .build();
+        return classBuilder
+                .addField(valueField())
+                .addMethod(getMethod())
+                .addMethod(valueMethod())
+                .addMethod(limitMethod())
+                .addMethod(tryWrapMethod())
+                .addMethod(wrapMethod())
+                .addMethod(toStringMethod())
+                .addType(builderClassBuilder.build())
+                .build();
+    }
+
+    private FieldSpec valueField()
+    {
+        return FieldSpec.builder(DIRECT_BUFFER_TYPE, "valueRO", PRIVATE, FINAL)
+                .initializer("new $T(0L, 0)", UNSAFE_BUFFER_TYPE)
+                .build();
     }
 
     private MethodSpec getMethod()
@@ -74,6 +87,15 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .addStatement("int offset = offset()")
                 .addStatement("int limit = limit()")
                 .addStatement("return visitor.visit(buffer, offset, limit)")
+                .build();
+    }
+
+    private MethodSpec valueMethod()
+    {
+        return methodBuilder("value")
+                .addModifiers(PUBLIC)
+                .returns(DIRECT_BUFFER_TYPE)
+                .addStatement("return valueRO")
                 .build();
     }
 
@@ -99,6 +121,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit))")
                 .addStatement("return null")
                 .endControlFlow()
+                .addStatement("valueRO.wrap(buffer, offset, sizeof())")
                 .addStatement("return this")
                 .build();
     }
@@ -113,6 +136,7 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
+                .addStatement("valueRO.wrap(buffer, offset, sizeof())")
                 .addStatement("return this")
                 .build();
     }

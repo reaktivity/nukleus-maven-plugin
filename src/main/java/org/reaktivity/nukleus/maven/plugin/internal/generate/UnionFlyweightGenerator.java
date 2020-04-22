@@ -1593,9 +1593,13 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 else if (kindNode != null && kindNode.getKind() == Kind.LIST)
                 {
                     ClassName builderType = className.nestedClass("Builder");
-                    CodeBlock.Builder code = CodeBlock.builder().addStatement("kind($L)", kind(name))
+                    CodeBlock.Builder code = CodeBlock.builder()
+                        .addStatement("final int fieldCount = value.fieldCount()")
+                        .addStatement("final $T fields = value.fields()", DIRECT_BUFFER_TYPE)
+                        .addStatement("final int length = fields.capacity()")
+                        .addStatement("kind($L)", kind(name))
                         .addStatement("$T $L = $L()", builderType, name, name)
-                        .addStatement("$L.fields(value.fieldCount(), value.fields(), 0, value.fields().capacity())", name)
+                        .addStatement("$L.fields(fieldCount, fields, 0, length)", name)
                         .addStatement("limit($L.build().limit())", name)
                         .addStatement("return this");
 
