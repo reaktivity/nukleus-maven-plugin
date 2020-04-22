@@ -70,6 +70,7 @@ public class OctetsFWTest
         byte[] result = new byte[1];
         octets.get((b, o, l) -> result[0] = b.getByte(o));
         assertEquals(value, result[0]);
+        assertEquals(value, octets.value().getByte(0));
     }
 
     @Test
