@@ -77,6 +77,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
     private static final ClassName LONG_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfLong.class);
 
+    private static final ClassName STRING_CLASS_NAME = ClassName.get(String.class);
+
     private static final Map<TypeName, String> GETTER_NAMES;
 
     static
@@ -1767,6 +1769,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     {
                         generateType = TypeName.LONG;
                     }
+                    else if (isStringType(typeName))
+                    {
+                        generateType = STRING_CLASS_NAME;
+                    }
                     AstNamedNode node = resolver.resolve(type.name());
                     if (node != null && isEnumType(node.getKind()))
                     {
@@ -3354,6 +3360,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
     }
 
+    private static boolean isStringType(
+        TypeName type)
+    {
+        return type instanceof ClassName && ("String8FW".equals(((ClassName) type).simpleName()) ||
+                                             "String16FW".equals(((ClassName) type).simpleName()) ||
+                                             "String32FW".equals(((ClassName) type).simpleName()));
+    }
+
     private static boolean isEnumType(
         Kind kind)
     {
@@ -3366,7 +3380,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         return String.format("INDEX_%s", constant(fieldName));
     }
 
-    private static String initCap(String value)
+    private static String initCap(
+        String value)
     {
         return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
