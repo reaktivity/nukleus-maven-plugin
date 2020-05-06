@@ -222,6 +222,7 @@ member
    : type_spec declarators SEMICOLON
    | uint_member_with_default SEMICOLON
    | int_member_with_default SEMICOLON
+   | string_member_with_default SEMICOLON
    | octets_member_with_default SEMICOLON
    | enum_member_with_default SEMICOLON
    | integer_array_member SEMICOLON
@@ -235,6 +236,15 @@ uint_member_with_default
 
 int_member_with_default 
    : signed_integer_type declarator EQUALS int_literal
+   ;
+
+string_member_with_default
+   : string8_type declarator EQUALS string_literal
+   | string8_type declarator default_null
+   | string16_type declarator EQUALS string_literal
+   | string16_type declarator default_null
+   | string32_type declarator EQUALS string_literal
+   | string32_type declarator default_null
    ;
 
 octets_member_with_default
