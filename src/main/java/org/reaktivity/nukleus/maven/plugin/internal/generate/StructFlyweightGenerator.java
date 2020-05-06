@@ -1697,6 +1697,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("$L(0)", methodName(priorSizeName))
                             .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
                     }
+                    else if (priorDefaultedIsString)
+                    {
+                        code.addStatement("$L((String) null)", priorFieldIfDefaulted);
+                    }
                     else
                     {
                         code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
