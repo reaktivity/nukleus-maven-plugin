@@ -46,7 +46,6 @@ import org.reaktivity.nukleus.maven.plugin.internal.ast.AstValueNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantCaseNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusBaseVisitor;
-import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Array_keywordContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Array_memberContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Case_memberContext;
@@ -87,6 +86,7 @@ import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String3
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String8_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_literalContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_member_with_defaultContext;
+import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_member_with_null_defaultContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.String_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Struct_typeContext;
 import org.reaktivity.nukleus.maven.plugin.internal.parser.NukleusParser.Type_idContext;
@@ -465,6 +465,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.defaultValue(parseString(ctx.string_literal()));
         return super.visitString_member_with_default(ctx);
+    }
+
+    @Override
+    public AstNode visitString_member_with_null_default(
+        String_member_with_null_defaultContext ctx)
+    {
+        memberBuilder.defaultToNull();
+        return super.visitString_member_with_null_default(ctx);
     }
 
     @Override

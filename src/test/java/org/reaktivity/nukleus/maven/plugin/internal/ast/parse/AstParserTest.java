@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
 import static org.junit.Assert.assertEquals;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode.NULL_DEFAULT;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.INT32;
@@ -26,7 +27,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstEnumNode;
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstListMemberNode;
@@ -977,9 +977,8 @@ public class AstParserTest
         assertEquals(expected, actual);
     }
 
-    @Ignore
     @Test
-    public void shouldParseDefaultStringMember()
+    public void shouldParseDefaultString8Member()
     {
         NukleusParser parser = newParser("string8 field = \"test\";");
         MemberContext ctx = parser.member();
@@ -988,15 +987,46 @@ public class AstParserTest
         AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                .type(AstType.STRING8)
                .name("field")
-               .defaultValue("test")
+               .defaultValue("\"test\"")
                .build();
 
         assertEquals(expected, actual);
     }
 
-    @Ignore
     @Test
-    public void shouldParseNullStringMember()
+    public void shouldParseDefaultString16Member()
+    {
+        NukleusParser parser = newParser("string16 field = \"test\";");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING16)
+               .name("field")
+               .defaultValue("\"test\"")
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseDefaultString32Member()
+    {
+        NukleusParser parser = newParser("string32 field = \"test\";");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING32)
+               .name("field")
+               .defaultValue("\"test\"")
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseNullString8Member()
     {
         NukleusParser parser = newParser("string8 field = null;");
         MemberContext ctx = parser.member();
@@ -1005,10 +1035,41 @@ public class AstParserTest
         AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
                .type(AstType.STRING8)
                .name("field")
-               .defaultValue(null)
+               .defaultValue(NULL_DEFAULT)
                .build();
 
-        System.out.println(actual.defaultValue().toString());
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseNullString16Member()
+    {
+        NukleusParser parser = newParser("string16 field = null;");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING16)
+               .name("field")
+               .defaultValue(NULL_DEFAULT)
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseNullString32Member()
+    {
+        NukleusParser parser = newParser("string32 field = null;");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING32)
+               .name("field")
+               .defaultValue(NULL_DEFAULT)
+               .build();
+
         assertEquals(expected, actual);
     }
 
