@@ -2314,7 +2314,7 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                                 .endControlFlow();
                         }
                     }
-                    else if (nullValue != null && priorFieldName != null)
+                    else if (priorFieldName != null)
                     {
                         methodBuilder.beginControlFlow("if (lastFieldSet < $L)", fieldIndex(priorFieldName))
                             .addStatement(String.format("default%s%s()",
