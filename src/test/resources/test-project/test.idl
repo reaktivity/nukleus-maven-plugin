@@ -156,11 +156,6 @@ scope test
             string8 field = "field";
         }
 
-        struct StructWithNullString8Default
-        {
-            string8 field = null;
-        }
-
         struct StructWithEnumDefault
         {
             Roll roll = SPRING;

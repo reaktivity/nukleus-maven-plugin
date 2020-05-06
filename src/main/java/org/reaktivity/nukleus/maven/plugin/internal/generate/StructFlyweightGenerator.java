@@ -1483,6 +1483,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private String priorFieldIfDefaulted;
         private boolean priorDefaultedIsPrimitive;
         private boolean priorDefaultedIsEnum;
+        private boolean priorDefaultedIsString;
         private Object priorDefaultValue;
         private String priorSizeName;
         private TypeName priorSizeType;
@@ -1547,6 +1548,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 priorFieldIfDefaulted = name;
                 priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVarbyteuintType(typeName);
+                priorDefaultedIsString = isStringType(typeName);
                 AstNamedNode node = type != null ? resolver.resolve(type.name()) : null;
                 priorDefaultedIsEnum = node != null && isEnumType(node.getKind());
                 priorDefaultValue = defaultValue;
@@ -1707,6 +1709,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 else if (priorDefaultedIsEnum)
                 {
                     code.addStatement("$L(b -> b.set($L))", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                }
+                else if (priorDefaultedIsString)
+                {
+                    code.addStatement("$L($L)", priorFieldIfDefaulted, priorDefaultValue);
                 }
                 else
                 {
