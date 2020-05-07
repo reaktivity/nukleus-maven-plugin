@@ -513,5 +513,15 @@ scope test
         {
             case TYPE2: ListWithEnumAndVariantWithDefault listValue;
         }
+
+        struct StructWithNonPrimitiveFields
+        {
+            string8 stringField;
+            EnumWithUint8 enumField;
+            UnionOctets unionField;
+            UnionOctets[] arrayField;
+            ListWithPhysicalAndLogicalLength listField;
+            VariantEnumKindOfInt8 variantField;
+        }
     }
 }
