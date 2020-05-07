@@ -16,6 +16,7 @@
 package org.reaktivity.nukleus.maven.plugin.internal.ast.parse;
 
 import static org.junit.Assert.assertEquals;
+import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstAbstractMemberNode.NULL_DEFAULT;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NATIVE;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder.NETWORK;
 import static org.reaktivity.nukleus.maven.plugin.internal.ast.AstType.INT32;
@@ -377,10 +378,50 @@ public class AstParserTest
         AstStructNode actual = new AstParser().visitStruct_type(ctx);
 
         AstStructNode expected = new AstStructNode.Builder()
-                .name("Person")
-                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("firstName").build())
-                .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("lastName").build())
-                .build();
+               .name("Person")
+               .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("firstName").build())
+               .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8).name("lastName").build())
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseStructWithDefaultStringMembers()
+    {
+        NukleusParser parser = newParser("struct Person { string8 firstName = \"firstname\"; string8 lastName = \"lastname\"; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+               .name("Person")
+               .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8)
+                                                                              .name("firstName")
+                                                                              .defaultValue("\"firstname\"")
+                                                                              .build())
+               .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8)
+                                                                              .name("lastName")
+                                                                              .defaultValue("\"lastname\"")
+                                                                              .build())
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseStructWithDefaultNullStringMembers()
+    {
+        NukleusParser parser = newParser("struct Test { string8 field = null; }");
+        Struct_typeContext ctx = parser.struct_type();
+        AstStructNode actual = new AstParser().visitStruct_type(ctx);
+
+        AstStructNode expected = new AstStructNode.Builder()
+                 .name("Test")
+                 .member((AstStructMemberNode) new AstStructMemberNode.Builder().type(AstType.STRING8)
+                                                                                .name("field")
+                                                                                .defaultValue(NULL_DEFAULT)
+                                                                                .build())
+                 .build();
 
         assertEquals(expected, actual);
     }
@@ -972,6 +1013,102 @@ public class AstParserTest
                 .type(AstType.STRING8)
                 .name("field")
                 .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseDefaultString8Member()
+    {
+        NukleusParser parser = newParser("string8 field = \"test\";");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING8)
+               .name("field")
+               .defaultValue("\"test\"")
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseDefaultString16Member()
+    {
+        NukleusParser parser = newParser("string16 field = \"test\";");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING16)
+               .name("field")
+               .defaultValue("\"test\"")
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseDefaultString32Member()
+    {
+        NukleusParser parser = newParser("string32 field = \"test\";");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING32)
+               .name("field")
+               .defaultValue("\"test\"")
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseNullString8Member()
+    {
+        NukleusParser parser = newParser("string8 field = null;");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING8)
+               .name("field")
+               .defaultValue(NULL_DEFAULT)
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseNullString16Member()
+    {
+        NukleusParser parser = newParser("string16 field = null;");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING16)
+               .name("field")
+               .defaultValue(NULL_DEFAULT)
+               .build();
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void shouldParseNullString32Member()
+    {
+        NukleusParser parser = newParser("string32 field = null;");
+        MemberContext ctx = parser.member();
+        AstStructMemberNode actual = new AstParser().visitMember(ctx);
+
+        AstStructMemberNode expected = (AstStructMemberNode) new AstStructMemberNode.Builder()
+               .type(AstType.STRING32)
+               .name("field")
+               .defaultValue(NULL_DEFAULT)
+               .build();
 
         assertEquals(expected, actual);
     }

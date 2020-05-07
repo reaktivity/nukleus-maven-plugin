@@ -210,14 +210,14 @@ public abstract class AstAbstractMemberNode extends AstNode
             return this;
         }
 
-        public  Builder defaultValue(
+        public Builder defaultValue(
             Object defaultValue)
         {
             this.defaultValue = defaultValue;
             return this;
         }
 
-        public  Builder defaultToNull()
+        public Builder defaultToNull()
         {
             this.defaultValue = NULL_DEFAULT;
             return this;
