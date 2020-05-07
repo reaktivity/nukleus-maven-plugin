@@ -1654,7 +1654,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 ParameterizedTypeName parameterizedType = (ParameterizedTypeName) typeName;
                 if ("ListFW".equals(parameterizedType.rawType.simpleName()) ||
-                        "Array32FW".equals(parameterizedType.rawType.simpleName()))
+                    "Array32FW".equals(parameterizedType.rawType.simpleName()))
                 {
                     result = true;
                 }
@@ -2785,6 +2785,27 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addParameter(parameterType, parameterName)
                             .addCode(code.build())
                             .build());
+
+                    code = CodeBlock.builder();
+                    if (priorFieldIfDefaulted != null)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                        defaultPriorField.accept(code);
+                        code.endControlFlow();
+                    }
+                    code.addStatement("assert lastFieldSet == $L - 1", index(name))
+                        .addStatement("int newLimit = limit() + field.sizeof()")
+                        .addStatement("checkLimit(newLimit, maxLimit())")
+                        .addStatement("buffer().putBytes(limit(), field.buffer(), field.offset(), field.sizeof())")
+                        .addStatement("limit(newLimit)")
+                        .addStatement("lastFieldSet = $L", index(name))
+                        .addStatement("return this");
+                    builder.addMethod(methodBuilder(methodName(name))
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addParameter(className, "field")
+                        .addCode(code.build())
+                        .build());
                 }
             }
 
@@ -3178,6 +3199,27 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 if ("Array32FW".equals(rawType.simpleName()))
                 {
+                    code = CodeBlock.builder();
+                    if (priorFieldIfDefaulted != null)
+                    {
+                        code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                        defaultPriorField.accept(code);
+                        code.endControlFlow();
+                    }
+                    code.addStatement("assert lastFieldSet == $L - 1", index(name))
+                        .addStatement("int newLimit = limit() + field.sizeof()")
+                        .addStatement("checkLimit(newLimit, maxLimit())")
+                        .addStatement("buffer().putBytes(limit(), field.buffer(), field.offset(), field.sizeof())")
+                        .addStatement("limit(newLimit)")
+                        .addStatement("lastFieldSet = $L", index(name))
+                        .addStatement("return this");
+                    builder.addMethod(methodBuilder(methodName(name))
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addParameter(ParameterizedTypeName.get(rawType, itemType), "field")
+                        .addCode(code.build())
+                        .build());
+
                     // Add a method to append list items
                     code = CodeBlock.builder();
                     if (priorFieldIfDefaulted != null)
