@@ -77,6 +77,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
     private static final ClassName LONG_ITERATOR_CLASS_NAME = ClassName.get(PrimitiveIterator.OfLong.class);
 
+    private static final ClassName STRING_CLASS_NAME = ClassName.get(String.class);
+
     private static final Map<TypeName, String> GETTER_NAMES;
 
     static
@@ -1481,6 +1483,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         private String priorFieldIfDefaulted;
         private boolean priorDefaultedIsPrimitive;
         private boolean priorDefaultedIsEnum;
+        private boolean priorDefaultedIsString;
         private Object priorDefaultValue;
         private String priorSizeName;
         private TypeName priorSizeType;
@@ -1545,6 +1548,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             {
                 priorFieldIfDefaulted = name;
                 priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVarbyteuintType(typeName);
+                priorDefaultedIsString = isStringType(typeName);
                 AstNamedNode node = type != null ? resolver.resolve(type.name()) : null;
                 priorDefaultedIsEnum = node != null && isEnumType(node.getKind());
                 priorDefaultValue = defaultValue;
@@ -1693,6 +1697,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("$L(0)", methodName(priorSizeName))
                             .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
                     }
+                    else if (priorDefaultedIsString)
+                    {
+                        code.addStatement("$L((String) null)", priorFieldIfDefaulted);
+                    }
                     else
                     {
                         code.addStatement("$L(b -> { })", priorFieldIfDefaulted);
@@ -1705,6 +1713,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 else if (priorDefaultedIsEnum)
                 {
                     code.addStatement("$L(b -> b.set($L))", priorFieldIfDefaulted, defaultName(priorFieldIfDefaulted));
+                }
+                else if (priorDefaultedIsString)
+                {
+                    code.addStatement("$L($L)", priorFieldIfDefaulted, priorDefaultValue);
                 }
                 else
                 {
@@ -1766,6 +1778,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     else if (isVarint64Type(typeName))
                     {
                         generateType = TypeName.LONG;
+                    }
+                    else if (isStringType(typeName))
+                    {
+                        generateType = STRING_CLASS_NAME;
                     }
                     AstNamedNode node = resolver.resolve(type.name());
                     if (node != null && isEnumType(node.getKind()))
@@ -3396,6 +3412,14 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
     }
 
+    private static boolean isStringType(
+        TypeName type)
+    {
+        return type instanceof ClassName && ("String8FW".equals(((ClassName) type).simpleName()) ||
+                                             "String16FW".equals(((ClassName) type).simpleName()) ||
+                                             "String32FW".equals(((ClassName) type).simpleName()));
+    }
+
     private static boolean isEnumType(
         Kind kind)
     {
@@ -3408,7 +3432,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         return String.format("INDEX_%s", constant(fieldName));
     }
 
-    private static String initCap(String value)
+    private static String initCap(
+        String value)
     {
         return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }

@@ -151,6 +151,37 @@ scope test
             FORWARD
         }
 
+        struct StructWithString8Default
+        {
+            string8 field = "field";
+        }
+
+        struct StructWithNullString8Default
+        {
+            string8 field = null;
+        }
+
+        struct StructWithMultipleString8Defaults
+        {
+            string8 field1 = "field1";
+            string8 field2 = "field2";
+            string8 field3 = null;
+        }
+
+        struct StructWithMultipleString16Defaults
+        {
+            string16 field1 = "field1";
+            string16 field2 = "field2";
+            string16 field3 = null;
+        }
+
+        struct StructWithMultipleString32Defaults
+        {
+            string32 field1 = "field1";
+            string32 field2 = "field2";
+            string16 field3 = null;
+        }
+
         struct StructWithEnumDefault
         {
             Roll roll = SPRING;
