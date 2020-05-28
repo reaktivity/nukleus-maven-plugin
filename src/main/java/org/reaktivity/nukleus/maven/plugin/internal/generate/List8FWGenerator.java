@@ -136,7 +136,7 @@ public final class List8FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getByte(offset() + LENGTH_OFFSET)")
+            .addStatement("return buffer().getByte(offset() + LENGTH_OFFSET) & 0xFF")
             .build();
     }
 
@@ -146,7 +146,7 @@ public final class List8FWGenerator extends ClassSpecGenerator
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .returns(int.class)
-            .addStatement("return buffer().getByte(offset() + FIELD_COUNT_OFFSET)")
+            .addStatement("return buffer().getByte(offset() + FIELD_COUNT_OFFSET) & 0xFF")
             .build();
     }
 
