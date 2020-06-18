@@ -25,6 +25,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.BIT_UTIL_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
+import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -59,7 +60,9 @@ public final class BoundedOctets8FlyweightGenerator extends ClassSpecGenerator
             .addField(lengthSizeConstant())
             .addField(lengthOffsetConstant())
             .addField(valueOffsetConstant())
+            .addField(valueField())
             .addMethod(getMethod())
+            .addMethod(valueMethod())
             .addMethod(lengthMethod())
             .addMethod(tryWrapMethod())
             .addMethod(wrapMethod())
@@ -90,6 +93,13 @@ public final class BoundedOctets8FlyweightGenerator extends ClassSpecGenerator
             .build();
     }
 
+    private FieldSpec valueField()
+    {
+        return FieldSpec.builder(DIRECT_BUFFER_TYPE, "valueRO", PRIVATE, FINAL)
+            .initializer("new $T(0L, 0)", UNSAFE_BUFFER_TYPE)
+            .build();
+    }
+
     private MethodSpec getMethod()
     {
         TypeVariableName typeVarT = TypeVariableName.get("T");
@@ -100,6 +110,16 @@ public final class BoundedOctets8FlyweightGenerator extends ClassSpecGenerator
             .returns(typeVarT)
             .addParameter(ParameterizedTypeName.get(visitorClass, typeVarT), "visitor")
             .addStatement("return visitor.visit(buffer(), offset() + VALUE_OFFSET, limit())")
+            .build();
+    }
+
+    private MethodSpec valueMethod()
+    {
+        return methodBuilder("value")
+            .addAnnotation(Override.class)
+            .addModifiers(PUBLIC)
+            .returns(DIRECT_BUFFER_TYPE)
+            .addStatement("return valueRO")
             .build();
     }
 
@@ -125,6 +145,7 @@ public final class BoundedOctets8FlyweightGenerator extends ClassSpecGenerator
             .beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null)")
             .addStatement("return null")
             .endControlFlow()
+            .addStatement("valueRO.wrap(buffer, offset + VALUE_OFFSET, length())")
             .beginControlFlow("if (limit() > maxLimit)")
             .addStatement("return null")
             .endControlFlow()
@@ -142,6 +163,7 @@ public final class BoundedOctets8FlyweightGenerator extends ClassSpecGenerator
             .addParameter(int.class, "maxLimit")
             .returns(thisName)
             .addStatement("super.wrap(buffer, offset, maxLimit)")
+            .addStatement("valueRO.wrap(buffer, offset + VALUE_OFFSET, length())")
             .addStatement("checkLimit(limit(), maxLimit)")
             .addStatement("return this")
             .build();
