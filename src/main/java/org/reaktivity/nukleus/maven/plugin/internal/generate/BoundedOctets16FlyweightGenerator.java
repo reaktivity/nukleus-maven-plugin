@@ -62,7 +62,7 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
             .addField(lengthSizeConstant())
             .addField(lengthOffsetConstant())
             .addField(valueOffsetConstant())
-            .addField(fieldsField())
+            .addField(valueField())
             .addField(byteOrderField())
             .addMethod(constructor())
             .addMethod(constructorWithByteOrder())
@@ -99,7 +99,7 @@ public final class BoundedOctets16FlyweightGenerator extends ClassSpecGenerator
             .build();
     }
 
-    private FieldSpec fieldsField()
+    private FieldSpec valueField()
     {
         return FieldSpec.builder(DIRECT_BUFFER_TYPE, "valueRO", PRIVATE, FINAL)
             .initializer("new $T(0L, 0)", UNSAFE_BUFFER_TYPE)
