@@ -52,9 +52,18 @@ public final class BoundedOctetsFlyweightGenerator extends ClassSpecGenerator
     public TypeSpec generate()
     {
         return classBuilder
+            .addMethod(valueMethod())
             .addMethod(getMethod())
             .addMethod(lengthMethod())
             .addType(builderClassBuilder.build())
+            .build();
+    }
+
+    private MethodSpec valueMethod()
+    {
+        return methodBuilder("value")
+            .addModifiers(PUBLIC, ABSTRACT)
+            .returns(DIRECT_BUFFER_TYPE)
             .build();
     }
 
