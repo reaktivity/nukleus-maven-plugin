@@ -519,9 +519,10 @@ public final class Array32FWGenerator extends ClassSpecGenerator
                 .addParameter(consumerType, "consumer")
                 .addStatement("itemRW.wrap(this)")
                 .addStatement("consumer.accept(itemRW)")
-                .addStatement("maxLength = Math.max(maxLength, itemRW.sizeof())")
-                .addStatement("checkLimit(itemRW.limit(), maxLimit())")
-                .addStatement("limit(itemRW.limit())")
+                .addStatement("final V item = itemRW.build()")
+                .addStatement("maxLength = Math.max(maxLength, item.sizeof())")
+                .addStatement("checkLimit(item.limit(), maxLimit())")
+                .addStatement("limit(item.limit())")
                 .addStatement("fieldCount++")
                 .addStatement("return this")
                 .build();
