@@ -1741,6 +1741,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         private final MemberFieldGenerator memberField;
         private final WrapMethodGenerator wrapMethod;
         private final WrapMethodWithArrayGenerator wrapMethodWithArray;
+        private final ResetMethodGenerator resetMethod;
         private final SizeOfMethodGenerator sizeOfMethod;
         private final RebuildMethodGenerator rebuildMethod;
         private final SetMethodGenerator setMethod;
@@ -1811,7 +1812,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.fieldMethod = new FieldMethodGenerator(flyweightBuilderRawType, ofType);
             this.fieldsMethod = new FieldsMethodGenerator(thisVariantBuilderType, ofType, flyweightBuilderRawType, builder);
             this.wrapMethod = new WrapMethodGenerator(ofType, kindTypeName);
-            this.wrapMethodWithArray = new  WrapMethodWithArrayGenerator(thisVariantType, ofType, kindTypeName, resolver);
+            this.wrapMethodWithArray = new WrapMethodWithArrayGenerator(thisVariantType, ofType, kindTypeName, resolver);
+            this.resetMethod = new ResetMethodGenerator(thisVariantType, ofType, kindTypeName, resolver);
             this.sizeOfMethod = new SizeOfMethodGenerator(thisVariantType, kindTypeName, ofType, builder);
             this.rebuildMethod = new RebuildMethodGenerator(thisVariantType, kindTypeName, ofType, ofTypeName, builder);
             this.setAsFieldMethod = new SetAsFieldMethodGenerator(thisVariantBuilderType, kindTypeName, ofType, ofTypeName,
@@ -1928,6 +1930,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             setMethodWithByteArray.mixin(builder);
             wrapMethod.mixin(builder);
             wrapMethodWithArray.mixin(builder);
+            resetMethod.mixin(builder);
             sizeOfMethod.build();
             rebuildMethod.build();
             buildMethod.mixin(builder);
@@ -4308,6 +4311,55 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     .addStatement("limit(array.limit())")
                     .addStatement("this.array = array")
                     .addStatement("return this")
+                    .build();
+            }
+
+            @Override
+            public void mixin(
+                TypeSpec.Builder builder)
+            {
+                if (isStringType(ofType) && !kindTypeName.isPrimitive())
+                {
+                    super.mixin(builder);
+                }
+            }
+        }
+
+        private final class ResetMethodGenerator extends MethodSpecGenerator
+        {
+            private final ClassName variantType;
+            private final AstType ofType;
+            private final TypeName kindTypeName;
+            private final TypeResolver resolver;
+
+            private ResetMethodGenerator(
+                ClassName variantType,
+                AstType ofType,
+                TypeName kindTypeName,
+                TypeResolver resolver)
+            {
+                super(methodBuilder("reset")
+                    .addModifiers(PUBLIC)
+                    .addAnnotation(Override.class));
+                this.variantType = variantType;
+                this.ofType = ofType;
+                this.kindTypeName = kindTypeName;
+                this.resolver = resolver;
+            }
+
+            @Override
+            public MethodSpec generate()
+            {
+                ClassName arrayClassName = resolver.resolveClass(AstType.ARRAY);
+                ClassName arrayBuilderClassName = arrayClassName.nestedClass("Builder");
+                ClassName flyweightBuilderClassName = resolver.flyweightName().nestedClass("Builder");
+                TypeName typeParamT = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(arrayClassName, variantType));
+                TypeName typeParamB = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(flyweightBuilderClassName,
+                    variantType));
+                TypeName parameterizedArrayBuilderType = ParameterizedTypeName.get(arrayBuilderClassName, typeParamT,
+                    typeParamB, variantType);
+                return builder.addParameter(parameterizedArrayBuilderType, "array")
+                    .addStatement("flyweight().kind = null")
                     .build();
             }
 
