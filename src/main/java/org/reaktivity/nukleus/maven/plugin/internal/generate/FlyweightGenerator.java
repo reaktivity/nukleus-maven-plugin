@@ -305,6 +305,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                 .addMethod(limitAccessor())
                 .addMethod(maxLimitAccessor())
                 .addMethod(buildMethod())
+                .addMethod(resetMethod())
                 .addMethod(rewrapMethod())
                 .addMethod(constructor())
                 .addMethod(flyweightAccessor())
@@ -385,6 +386,19 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                       .returns(typeVarT)
                       .addStatement("flyweight.wrap(buffer, offset, limit)")
                       .addStatement("return flyweight")
+                      .build();
+        }
+
+        private MethodSpec resetMethod()
+        {
+            ClassName arrayBuilderRawType = arrayType.nestedClass("Builder");
+            TypeName arrayParametricTypeT = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(arrayType, typeVarT));
+            TypeName arrayParametricTypeB = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(thisRawName, typeVarT));
+            TypeName parameterizedArrayBuilderType = ParameterizedTypeName.get(arrayBuilderRawType, arrayParametricTypeT,
+                arrayParametricTypeB, typeVarT);
+            return methodBuilder("reset")
+                      .addModifiers(PUBLIC)
+                      .addParameter(parameterizedArrayBuilderType, "array")
                       .build();
         }
 

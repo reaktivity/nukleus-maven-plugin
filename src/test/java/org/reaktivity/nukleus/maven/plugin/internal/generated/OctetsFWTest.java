@@ -19,6 +19,7 @@ import static java.nio.ByteBuffer.allocateDirect;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import org.agrona.BitUtil;
@@ -62,6 +63,16 @@ public class OctetsFWTest
     }
 
     @Test
+    public void shouldTryWrapEmptyAtNonZeroOffet()
+    {
+        OctetsFW octets = octetsRO.tryWrap(buffer, 10, 10);
+
+        assertNotNull(octets);
+        assertEquals(0, octets.sizeof());
+        assertEquals(0, octets.value().capacity());
+    }
+
+    @Test
     public void shouldWrap()
     {
         byte value = 1;
@@ -71,6 +82,15 @@ public class OctetsFWTest
         octets.get((b, o, l) -> result[0] = b.getByte(o));
         assertEquals(value, result[0]);
         assertEquals(value, octets.value().getByte(0));
+    }
+
+    @Test
+    public void shouldWrapEmptyAtNonZeroOffet()
+    {
+        OctetsFW octets = octetsRO.wrap(buffer, 10, 10);
+
+        assertEquals(0, octets.sizeof());
+        assertEquals(0, octets.value().capacity());
     }
 
     @Test

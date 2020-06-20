@@ -121,7 +121,8 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit))")
                 .addStatement("return null")
                 .endControlFlow()
-                .addStatement("valueRO.wrap(buffer, offset, sizeof())")
+                .addStatement("final int sizeof = sizeof()")
+                .addStatement("valueRO.wrap(buffer, sizeof != 0 ? offset : 0, sizeof)")
                 .addStatement("return this")
                 .build();
     }
@@ -136,7 +137,8 @@ public final class OctetsFlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("valueRO.wrap(buffer, offset, sizeof())")
+                .addStatement("final int sizeof = sizeof()")
+                .addStatement("valueRO.wrap(buffer, sizeof != 0 ? offset : 0, sizeof)")
                 .addStatement("return this")
                 .build();
     }
