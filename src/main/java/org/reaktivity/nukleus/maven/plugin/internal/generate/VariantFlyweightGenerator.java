@@ -658,7 +658,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             {
                 builder.addStatement("final $L $L = $L.tryWrap(buffer, offset, maxLimit)",
                     ((ClassName) kindTypeName).simpleName(), enumFWName(kindTypeName), enumRO(kindTypeName))
-                    .beginControlFlow("if ($L == null)", enumFWName(kindTypeName))
+                    .beginControlFlow(!isStringType(ofType) ? "if ($L == null || kind() == null)" : "if ($L == null)",
+                        enumFWName(kindTypeName))
                     .addStatement("return null")
                     .endControlFlow();
             }
