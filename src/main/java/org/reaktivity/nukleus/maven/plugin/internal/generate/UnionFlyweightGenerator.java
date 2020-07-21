@@ -1585,6 +1585,29 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                             .addParameter(String.class, "value")
                             .addCode(codeBlock.build())
                             .build());
+
+                    codeBlock = CodeBlock.builder();
+                    codeBlock.beginControlFlow("if (value == null)")
+                        .addStatement("limit(offset() + $L)", offset(name))
+                        .nextControlFlow("else")
+                        .addStatement("kind($L)", kind(name))
+                        .addStatement("$T $L = $L()", builderType, name, name)
+                        .addStatement("$L.set(value)", name);
+                    if (nextType instanceof ParameterizedTypeName)
+                    {
+                        codeBlock.addStatement("$L($L.build().limit())", nextName, name);
+                    }
+
+                    codeBlock.addStatement("limit($L.build().limit())", name)
+                        .endControlFlow()
+                        .addStatement("return this");
+
+                    builder.addMethod(methodBuilder(name)
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addParameter(resolver.resolveType(AstType.STRING), "value")
+                        .addCode(codeBlock.build())
+                        .build());
                 }
                 else if (DIRECT_BUFFER_TYPE.equals(className))
                 {

@@ -199,8 +199,9 @@ public class UnionOctetsFWTest
     @Test
     public void shouldSetStringWithValueNull()
     {
+        String string1 = null;
         int limit = flyweightRW.wrap(buffer, 10, buffer.capacity())
-            .string1(null).build().limit();
+            .string1(string1).build().limit();
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(null, flyweightRO.string1().asString());
     }
