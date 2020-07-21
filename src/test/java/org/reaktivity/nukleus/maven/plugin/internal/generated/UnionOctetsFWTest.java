@@ -28,6 +28,8 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.UnionOctetsFW;
 
 public class UnionOctetsFWTest
@@ -197,6 +199,17 @@ public class UnionOctetsFWTest
     }
 
     @Test
+    public void shouldSetString1WithStringFW()
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .string1(asStringFW("valueOfString1"))
+            .build()
+            .limit();
+        flyweightRO.wrap(buffer,  0,  limit);
+        assertAllTestValuesReadCase3(flyweightRO);
+    }
+
+    @Test
     public void shouldSetStringWithValueNull()
     {
         String string1 = null;
@@ -245,4 +258,10 @@ public class UnionOctetsFWTest
         assertEquals(0, flyweightRO.octets4().sizeof());
     }
 
+    private static StringFW asStringFW(
+        String value)
+    {
+        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
+        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
+    }
 }
