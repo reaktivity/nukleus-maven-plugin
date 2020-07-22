@@ -29,7 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
-import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.UnionOctetsFW;
 
 public class UnionOctetsFWTest
@@ -202,7 +201,7 @@ public class UnionOctetsFWTest
     public void shouldSetString1WithStringFW()
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
-            .string1(asStringFW("valueOfString1"))
+            .string1(new String8FW("valueOfString1"))
             .build()
             .limit();
         flyweightRO.wrap(buffer,  0,  limit);
@@ -256,12 +255,5 @@ public class UnionOctetsFWTest
         flyweightRO.wrap(buffer,  0,  limit);
         assertEquals(0, flyweightRO.octets16().sizeof());
         assertEquals(0, flyweightRO.octets4().sizeof());
-    }
-
-    private static StringFW asStringFW(
-        String value)
-    {
-        MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
-        return new String8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value, UTF_8).build();
     }
 }
