@@ -84,6 +84,17 @@ public class Varint32FWTest
     }
 
     @Test
+    public void shouldNotTryWrapValueWith33bits() throws Exception
+    {
+        buffer.putByte(50, (byte) 0xfe);
+        buffer.putByte(51, (byte) 0xff);
+        buffer.putByte(52, (byte) 0xff);
+        buffer.putByte(53, (byte) 0xff);
+        buffer.putByte(54, (byte) 0x1f);
+        assertNull(varint32RO.tryWrap(buffer,  50,  buffer.capacity()));
+    }
+
+    @Test
     public void shouldNotWrapValueWith33bits() throws Exception
     {
         buffer.putByte(50, (byte) 0xfe);

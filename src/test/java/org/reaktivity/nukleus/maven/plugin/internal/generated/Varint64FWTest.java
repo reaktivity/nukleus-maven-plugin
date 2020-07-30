@@ -84,6 +84,19 @@ public class Varint64FWTest
     }
 
     @Test
+    public void shouldNotTryWrapValueWith65bits() throws Exception
+    {
+        int offset = 37;
+        buffer.putByte(offset, (byte) 0xfe);
+        for (int i = 0; i < 9; i++)
+        {
+            buffer.putByte(offset + i, (byte) 0xff);
+        }
+        buffer.putByte(offset + 9, (byte) 0x02);
+        assertNull(varint64RO.tryWrap(buffer,  offset,  buffer.capacity()));
+    }
+
+    @Test
     public void shouldNotWrapValueWith65bits() throws Exception
     {
         int offset = 37;
