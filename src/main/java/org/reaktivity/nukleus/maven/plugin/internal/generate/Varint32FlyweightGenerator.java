@@ -110,6 +110,10 @@ public final class Varint32FlyweightGenerator extends ClassSpecGenerator
                 .returns(thisName)
                 .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || maxLimit - offset  < 1)")
                 .addStatement("return null")
+                .nextControlFlow("else if (maxLimit - offset >= 5 && " +
+                        "(buffer.getInt(offset) & 0x80808080) == 0x80808080 && " +
+                        "(buffer.getByte(offset + Integer.BYTES) & 0xf0) != 0)")
+                .addStatement("return null")
                 .endControlFlow()
                 .addStatement("size = length0()")
                 .beginControlFlow("if (limit() > maxLimit)")

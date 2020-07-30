@@ -92,7 +92,7 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("throw new $T($S)", IllegalArgumentException.class, "varint64 value too long")
                 .endControlFlow()
                 .endControlFlow()
-                .addStatement("long unsigned = value  | (b << i);")
+                .addStatement("long unsigned = value | (b << i);")
                 .addStatement("long result = (((unsigned << 63) >> 63) ^ unsigned) >> 1")
                 .addStatement("result = result ^ (unsigned & (1L << 63))")
                 .addStatement("return result")
@@ -109,6 +109,11 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "maxLimit")
                 .returns(thisName)
                 .beginControlFlow("if (null == super.tryWrap(buffer, offset, maxLimit) || maxLimit - offset  < 1)")
+                .addStatement("return null")
+                .nextControlFlow("else if (maxLimit - offset >= 10 && " +
+                        "(buffer.getLong(offset) & 0x80808080_80808080L) == 0x80808080_80808080L && " +
+                        "(buffer.getByte(offset + Long.BYTES) & 0x80) == 0x80 && " +
+                        "(buffer.getByte(offset + Long.BYTES + Byte.BYTES) & 0xfe) != 0)")
                 .addStatement("return null")
                 .endControlFlow()
                 .addStatement("size = length0()")
@@ -158,10 +163,10 @@ public final class Varint64FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("pos++")
                 .endControlFlow()
                 .addStatement("int size = 1 + pos - offset()")
-                .addStatement("int mask = size < 10 ? 0x80 : 0x02") // 64 % 7 = 1 bit allowed only in 10th byte
+                .addStatement("int mask = size < 10 ? 0x80 : 0xfe") // 64 % 7 = 1 bit allowed only in 10th byte
                 .beginControlFlow("if ((b & mask) != 0 && size >= 10)")
                 .addStatement("throw new $T(String.format($S, offset()))", IllegalArgumentException.class,
-                        "(varint64 value at offset %d exceeds 64 bits")
+                        "varint64 value at offset %d exceeds 64 bits")
                 .endControlFlow()
                 .addStatement("return size")
                 .build();
