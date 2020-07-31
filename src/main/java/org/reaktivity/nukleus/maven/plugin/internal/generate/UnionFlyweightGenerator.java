@@ -123,7 +123,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         wrapMethod.addMember(value, name, typeName, size, sizeName);
         limitMethod.addMember(value, name, typeName);
         toStringMethod.addMember(value, name, typeName);
-        builderClass.addMember(name, type, typeName, size, sizeName);
+        builderClass.addMember(name, type, typeName, size, sizeName, byteOrder);
         return this;
     }
 
@@ -910,12 +910,13 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             AstType type,
             TypeName typeName,
             int size,
-            String sizeName)
+            String sizeName,
+            AstByteOrder byteOrder)
         {
             // TODO: eliminate need for lookahead
             memberMutator.lookaheadMember(name, typeName);
 
-            memberField.addMember(name, typeName);
+            memberField.addMember(name, typeName, byteOrder);
             memberAccessor.addMember(name, typeName, size, sizeName);
             memberMutator.addMember(name, type, typeName, sizeName);
 
@@ -1037,7 +1038,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             public MemberFieldGenerator addMember(
                 String name,
-                TypeName type)
+                TypeName type,
+                AstByteOrder byteOrder)
             {
                 if (!type.isPrimitive())
                 {
@@ -1066,9 +1068,19 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     {
                         ClassName classType = (ClassName) type;
                         TypeName builderType = classType.nestedClass("Builder");
-                        builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
-                                .initializer("new $T()", builderType)
-                                .build());
+
+                        if ((isString16Type(classType) || isString32Type(classType)) && byteOrder == NETWORK)
+                        {
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                    .initializer("new $T($T.BIG_ENDIAN)", builderType, ByteOrder.class)
+                                    .build());
+                        }
+                        else
+                        {
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                    .initializer("new $T()", builderType)
+                                    .build());
+                        }
                     }
                     else
                     {
