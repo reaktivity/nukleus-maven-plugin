@@ -143,7 +143,8 @@ public final class String32FlyweightGenerator extends ClassSpecGenerator
                          .addParameter(ByteOrder.class, "byteOrder")
                          .addStatement("this.byteOrder = byteOrder")
                          .addStatement("final byte[] encoded = value.getBytes(charset)")
-                         .addStatement("final $T buffer = new $T(new byte[FIELD_SIZE_LENGTH + encoded.length])",
+                         .addStatement("final $T buffer = " +
+                                 "new $T(new byte[Math.max(FIELD_SIZE_LENGTH + encoded.length, FIELD_SIZE_LENGTH + 1)])",
                              MUTABLE_DIRECT_BUFFER_TYPE, UNSAFE_BUFFER_TYPE)
                          .addStatement("buffer.putInt(0, encoded.length, byteOrder)")
                          .addStatement("buffer.putBytes(FIELD_SIZE_LENGTH, encoded)")
