@@ -85,6 +85,15 @@ public class String16FWTest
     }
 
     @Test
+    public void shouldInitWithNullString() throws Exception
+    {
+        String16FW string = new String16FW((String) null);
+
+        assertNull(string.asString());
+        assertEquals(LENGTH_SIZE, string.sizeof());
+    }
+
+    @Test
     public void shouldInitWithStringAndCharset() throws Exception
     {
         String16FW string = new String16FW("test", UTF_8);

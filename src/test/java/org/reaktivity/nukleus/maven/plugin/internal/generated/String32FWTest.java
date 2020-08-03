@@ -85,6 +85,15 @@ public class String32FWTest
     }
 
     @Test
+    public void shouldInitWithNullString() throws Exception
+    {
+        String32FW string = new String32FW((String) null);
+
+        assertNull(string.asString());
+        assertEquals(LENGTH_SIZE, string.sizeof());
+    }
+
+    @Test
     public void shouldInitWithStringAndCharset() throws Exception
     {
         String32FW string = new String32FW("test", UTF_8);

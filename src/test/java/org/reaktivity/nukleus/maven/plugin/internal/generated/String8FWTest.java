@@ -59,6 +59,15 @@ public class String8FWTest
     }
 
     @Test
+    public void shouldInitWithNullString() throws Exception
+    {
+        String8FW string = new String8FW(null);
+
+        assertNull(string.asString());
+        assertEquals(LENGTH_SIZE, string.sizeof());
+    }
+
+    @Test
     public void shouldInitWithStringAndCharset() throws Exception
     {
         String8FW string = new String8FW("test", UTF_8);
