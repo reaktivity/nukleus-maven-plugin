@@ -108,13 +108,19 @@ public final class String8FlyweightGenerator extends ClassSpecGenerator
                          .addModifiers(PUBLIC)
                          .addParameter(String.class, "value")
                          .addParameter(Charset.class, "charset")
+                         .beginControlFlow("if (value != null)")
                          .addStatement("final byte[] encoded = value.getBytes(charset)")
-                         .addStatement("final $T buffer = " +
-                                 "new $T(new byte[Math.max(FIELD_SIZE_LENGTH + encoded.length, FIELD_SIZE_LENGTH + 1)])",
+                         .addStatement("final $T buffer = new $T(new byte[FIELD_SIZE_LENGTH + Math.max(encoded.length, 1)])",
                                  MUTABLE_DIRECT_BUFFER_TYPE, UNSAFE_BUFFER_TYPE)
-                         .addStatement("buffer.putByte(0, (byte)(encoded.length & 0xFF))")
+                         .addStatement("buffer.putByte(0, (byte) (encoded.length & 0xFF))")
                          .addStatement("buffer.putBytes(FIELD_SIZE_LENGTH, encoded)")
                          .addStatement("wrap(buffer, 0, buffer.capacity())")
+                         .nextControlFlow("else")
+                         .addStatement("final $T buffer = new $T(new byte[FIELD_SIZE_LENGTH + 1])",
+                                 MUTABLE_DIRECT_BUFFER_TYPE, UNSAFE_BUFFER_TYPE)
+                         .addStatement("buffer.putByte(0, (byte) -1)")
+                         .addStatement("wrap(buffer, 0, buffer.capacity())")
+                         .endControlFlow()
                          .build();
     }
 
