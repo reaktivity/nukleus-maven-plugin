@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.63</version>
+  <version>0.64</version>
   <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
@@ -44,7 +44,7 @@
     <checkstyle.config.location>src/conf/checkstyle/configuration.xml</checkstyle.config.location>
     <checkstyle.suppressions.location>src/conf/checkstyle/suppressions.xml</checkstyle.suppressions.location>
     <antlr4.version>4.7</antlr4.version>
-    <agrona.version>0.9.35</agrona.version>
+    <agrona.version>1.6.0</agrona.version>
     <jmh.version>1.12</jmh.version>
     <jacoco.coverage.ratio>0.82</jacoco.coverage.ratio>
     <jacoco.missed.count>2</jacoco.missed.count>
@@ -219,7 +219,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.2</version>
+        <version>0.8.5</version>
         <configuration>
           <excludes>
             <exclude>org/reaktivity/nukleus/maven/plugin/internal/parser/**/*.class</exclude>
