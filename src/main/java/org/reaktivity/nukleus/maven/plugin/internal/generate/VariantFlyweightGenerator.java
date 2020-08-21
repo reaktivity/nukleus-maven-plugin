@@ -350,11 +350,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                             resolver.resolveClass(mapValueType));
                     fieldBuilder = FieldSpec.builder(parameterizedMapTypeName, fieldRO, PRIVATE);
                 }
-                else if (isListType(ofType) || isBoundedOctetsType(ofType))
+                else if (isListType(ofType) || isBoundedOctetsType(ofType) || isStringType(ofType))
                 {
                     fieldBuilder = FieldSpec.builder(memberTypeName, fieldRO, PRIVATE, FINAL);
                     if (byteOrder == NATIVE || memberType.equals(AstType.LIST0) || memberType.equals(AstType.LIST8) ||
-                        memberType.equals(AstType.BOUNDED_OCTETS8))
+                        memberType.equals(AstType.BOUNDED_OCTETS8) || memberType.equals(AstType.STRING8))
                     {
                         fieldBuilder.initializer("new $T()", memberTypeName);
                     }
@@ -4568,10 +4568,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                             .addStatement("return $L", fieldRW)
                             .build());
                     }
-                    else if (isListType(ofType) || isBoundedOctetsType(ofType))
+                    else if (isListType(ofType) || isBoundedOctetsType(ofType) || isStringType(ofType))
                     {
                         if (byteOrder == NATIVE || memberType.equals(AstType.LIST0) || memberType.equals(AstType.LIST8) ||
-                            memberType.equals(AstType.BOUNDED_OCTETS8))
+                            memberType.equals(AstType.BOUNDED_OCTETS8) || memberType.equals(AstType.STRING8))
                         {
                             builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
                                 .initializer("new $T()", builderType)
