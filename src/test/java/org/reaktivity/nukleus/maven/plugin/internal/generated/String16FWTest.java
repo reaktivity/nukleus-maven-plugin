@@ -262,7 +262,7 @@ public class String16FWTest
     public void shouldSetToNull() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-                            .set(null)
+                            .set(new String16FW((String)null))
                             .build()
                             .limit();
         assertEquals(2, limit);

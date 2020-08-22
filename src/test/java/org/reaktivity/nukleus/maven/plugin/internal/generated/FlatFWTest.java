@@ -367,8 +367,8 @@ public class FlatFWTest
         int limit = flatRW.wrap(buffer, offset, buffer.capacity())
             .fixed1(10)
             .string1((String) null)
-            .string2((String8FW) null)
-            .string3((String8FW) null)
+            .string2((String) null)
+            .string3((String) null)
             .build()
             .limit();
         expected.putLong(offset, 10);
