@@ -262,7 +262,7 @@ public class String32FWTest
     public void shouldSetToNull() throws Exception
     {
         int limit = stringRW.wrap(buffer, 0, buffer.capacity())
-            .set(null)
+            .set(new String32FW((String)null))
             .build()
             .limit();
         assertEquals(4, limit);

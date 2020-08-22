@@ -365,7 +365,7 @@ public final class String16FlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .returns(classType)
                     .addParameter(stringType, "value")
-                    .beginControlFlow("if (value == null)")
+                    .beginControlFlow("if (value.length() == -1)")
                     .addStatement("int newLimit = offset() + FIELD_SIZE_LENGTH")
                     .addStatement("checkLimit(newLimit, maxLimit())")
                     .addStatement("buffer().putShort(offset(), (short) -1, byteOrder)")
