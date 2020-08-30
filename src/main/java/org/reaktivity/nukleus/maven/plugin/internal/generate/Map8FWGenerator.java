@@ -362,6 +362,7 @@ public final class Map8FWGenerator extends ClassSpecGenerator
                 .addStatement("int newLimit = offset + FIELDS_OFFSET")
                 .addStatement("checkLimit(newLimit, maxLimit)")
                 .addStatement("limit(newLimit)")
+                .addStatement("fieldCount = 0")
                 .addStatement("return this")
                 .build();
         }

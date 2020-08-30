@@ -223,6 +223,19 @@ public class Map8FWTest
         assertAllTestValuesRead(map, 0);
     }
 
+    @Test
+    public void shouldResetFieldCountOnBuilderWrap() throws Exception
+    {
+        flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .entry(k -> k.set(asStringFW("entry1Key")), v -> v.set(asStringFW("entry1Value")))
+            .build();
+
+        Map8FW flyweight = flyweightRW.wrap(buffer, 0, buffer.capacity())
+                   .build();
+
+        assertEquals(0, flyweight.fieldCount());
+    }
+
     private static StringFW asStringFW(
         String value)
     {
