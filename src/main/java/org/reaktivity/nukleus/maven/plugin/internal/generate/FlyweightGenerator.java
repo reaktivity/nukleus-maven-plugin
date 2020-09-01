@@ -317,6 +317,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                 .addMethod(wrapWithArrayMethod())
                 .addMethod(iterateMethod())
                 .addMethod(rebuildMethod())
+                .addMethod(setMethod())
                 .addType(visitorInterface())
                 .build();
         }
@@ -526,6 +527,18 @@ public final class FlyweightGenerator extends ClassSpecGenerator
                 .addParameter(typeVarT, "item")
                 .addParameter(int.class, "maxLength")
                 .addStatement("return item")
+                .build();
+        }
+
+        private MethodSpec setMethod()
+        {
+            return methodBuilder("set")
+                .addModifiers(PUBLIC)
+                .returns(thisName)
+                .addParameter(typeVarT, "value")
+                .addStatement("buffer().putBytes(offset(), value.buffer(), value.offset(), value.sizeof())")
+                .addStatement("limit(limit() + value.sizeof())")
+                .addStatement("return this")
                 .build();
         }
     }
