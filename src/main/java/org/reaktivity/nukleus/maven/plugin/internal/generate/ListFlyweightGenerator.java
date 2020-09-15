@@ -2101,49 +2101,142 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 AstType mapValueType,
                 ClassName mapParamName)
             {
-                ClassName className = (ClassName) typeName;
-                AstNamedNode namedNode = resolver.resolve(type.name());
-                if (isStringType(className))
+                if (typeName instanceof ParameterizedTypeName)
                 {
-                    addStringType(className, name);
+                    ParameterizedTypeName parameterizedType = (ParameterizedTypeName) typeName;
+                    addParameterizedType(name, parameterizedType);
                 }
                 else
                 {
-                    Kind kind = namedNode.getKind();
-                    if (isTypedefType(kind))
+                    ClassName className = (ClassName) typeName;
+                    AstNamedNode namedNode = resolver.resolve(type.name());
+
+                    if (isStringType(className))
                     {
-                        AstTypedefNode typedefNode = (AstTypedefNode) namedNode;
-                        type = typedefNode.originalType();
-                        className = resolver.resolveClass(type);
-                        kind = resolver.resolve(type.name()).getKind();
-                        if (isTypedefType(kind))
-                        {
-                            addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired,
-                                arrayItemTypeName, mapKeyType, mapValueType, mapParamName);
-                            return;
-                        }
-                    }
-                    if (isEnumType(kind))
-                    {
-                        addEnumType(name, type, isRequired, className);
-                    }
-                    else if (isVariantType(kind))
-                    {
-                        addVariantType(name, type, className, isRequired, arrayItemTypeName, mapKeyType,
-                            mapValueType);
-                    }
-                    else if (isMapType(kind))
-                    {
-                        addMapType(name, isRequired, className, mapParamName);
-                    }
-                    else if (isListType(kind))
-                    {
-                        addListType(name, isRequired, className);
+                        addStringType(className, name);
                     }
                     else
                     {
-                        addUnionType(name, isRequired, className);
+                        Kind kind = namedNode.getKind();
+                        if (isTypedefType(kind))
+                        {
+                            AstTypedefNode typedefNode = (AstTypedefNode) namedNode;
+                            type = typedefNode.originalType();
+                            className = resolver.resolveClass(type);
+                            kind = resolver.resolve(type.name()).getKind();
+                            if (isTypedefType(kind))
+                            {
+                                addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired,
+                                    arrayItemTypeName, mapKeyType, mapValueType, mapParamName);
+                                return;
+                            }
+                        }
+                        if (isEnumType(kind))
+                        {
+                            addEnumType(name, type, isRequired, className);
+                        }
+                        else if (isVariantType(kind))
+                        {
+                            addVariantType(name, type, className, isRequired, arrayItemTypeName, mapKeyType,
+                                mapValueType);
+                        }
+                        else if (isMapType(kind))
+                        {
+                            addMapType(name, isRequired, className, mapParamName);
+                        }
+                        else if (isListType(kind))
+                        {
+                            addListType(name, isRequired, className);
+                        }
+                        else
+                        {
+                            addUnionType(name, isRequired, className);
+                        }
                     }
+                }
+            }
+
+            private void addParameterizedType(
+                String name,
+                ParameterizedTypeName parameterizedType)
+            {
+                ClassName rawType = parameterizedType.rawType;
+                ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+                ClassName builderRawType = rawType.nestedClass("Builder");
+                ClassName itemBuilderType = itemType.nestedClass("Builder");
+                ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+                ClassName consumerType = ClassName.get(Consumer.class);
+                TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+
+                CodeBlock.Builder code = CodeBlock.builder();
+                // if (priorFieldIfDefaulted != null)
+                // {
+                //     code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                //     defaultPriorField.accept(code);
+                //     code.endControlFlow();
+                // }
+                code.addStatement("assert lastFieldSet == $L - 1", index(name))
+                    .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                    .addStatement("mutator.accept($LRW)", name)
+                    .addStatement("limit($LRW.build().limit())", name)
+                    .addStatement("lastFieldSet = $L", index(name))
+                    .addStatement("return this");
+
+                builder.addMethod(methodBuilder(methodName(name))
+                                      .addModifiers(PUBLIC)
+                                      .returns(thisType)
+                                      .addParameter(mutatorType, "mutator")
+                                      .addCode(code.build())
+                                      .build());
+
+                if ("Array32FW".equals(rawType.simpleName()))
+                {
+                    code = CodeBlock.builder();
+                    // if (priorFieldIfDefaulted != null)
+                    // {
+                    //     code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    //     defaultPriorField.accept(code);
+                    //     code.endControlFlow();
+                    // }
+                    code.addStatement("assert lastFieldSet == $L - 1", index(name))
+                        .addStatement("int newLimit = limit() + field.sizeof()")
+                        .addStatement("checkLimit(newLimit, maxLimit())")
+                        .addStatement("buffer().putBytes(limit(), field.buffer(), field.offset(), field.sizeof())")
+                        .addStatement("limit(newLimit)")
+                        .addStatement("lastFieldSet = $L", index(name))
+                        .addStatement("return this");
+                    builder.addMethod(methodBuilder(methodName(name))
+                                          .addModifiers(PUBLIC)
+                                          .returns(thisType)
+                                          .addParameter(ParameterizedTypeName.get(rawType, itemType), "field")
+                                          .addCode(code.build())
+                                          .build());
+
+                    // Add a method to append list items
+                    code = CodeBlock.builder();
+                    // if (priorFieldIfDefaulted != null)
+                    // {
+                    //     code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
+                    //     defaultPriorField.accept(code);
+                    //     code.endControlFlow();
+                    // }
+                    code.addStatement("assert lastFieldSet >= $L - 1", index(name))
+                        .beginControlFlow("if (lastFieldSet < $L)", index(name))
+                        .addStatement("$LRW.wrap(buffer(), limit(), maxLimit())", name)
+                        .endControlFlow()
+                        .addStatement("$LRW.item(mutator)", name)
+                        .addStatement("limit($LRW.build().limit())", name)
+                        .addStatement("lastFieldSet = $L", index(name))
+                        .addStatement("return this");
+
+                    TypeName itemMutatorType = ParameterizedTypeName.get(consumerType, itemBuilderType);
+                    builder.addMethod(methodBuilder(methodName(name + "Item"))
+                                          .addModifiers(PUBLIC)
+                                          .returns(thisType)
+                                          .addParameter(itemMutatorType, "mutator")
+                                          .addCode(code.build())
+                                          .build());
                 }
             }
 
@@ -3271,6 +3364,12 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         TypeName type)
     {
         return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static String index(
+        String fieldName)
+    {
+        return String.format("INDEX_%s", constant(fieldName));
     }
 
     private static ClassName enumClassName(

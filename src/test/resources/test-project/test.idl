@@ -415,6 +415,17 @@ scope test
                VariantOfInt32;
         }
 
+        struct Field
+        {
+            string16 field;
+        }
+
+        list<uint32, uint32> ListWithPlainArray
+        {
+            required string8 field0;
+            Field[] field1;
+        }
+
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
             required string8 field0;
