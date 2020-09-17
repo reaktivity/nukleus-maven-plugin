@@ -197,6 +197,20 @@ public class VariantOfOctetsFWTest
     }
 
     @Test
+    public void shouldSetWithEmptyOctets() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(asBoundedOctetsFW(""))
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.tryWrap(buffer, 0, limit);
+
+        assertNotNull(variantOfOctets);
+        assertEquals("", variantOfOctets.get().get((b, o, l) -> b.getStringWithoutLengthUtf8(o, l - o)));
+    }
+
+    @Test
     public void shouldSetWithBoundedOctets32FWUsingBuffer() throws Exception
     {
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
@@ -233,6 +247,20 @@ public class VariantOfOctetsFWTest
         final VariantOfOctetsFW variantOfOctets = flyweightRO.wrap(buffer, 0, limit);
 
         assertAllTestValuesReadCaseOctets8(variantOfOctets, 0);
+    }
+
+    @Test
+    public void shouldSetWithEmptyOctetsUsingBuffer() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set(asBuffer(""), 0, 0)
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.tryWrap(buffer, 0, limit);
+
+        assertNotNull(variantOfOctets);
+        assertEquals("", variantOfOctets.get().get((b, o, l) -> b.getStringWithoutLengthUtf8(o, l - o)));
     }
 
     @Test
@@ -274,6 +302,20 @@ public class VariantOfOctetsFWTest
         assertAllTestValuesReadCaseOctets8(variantOfOctets, 0);
     }
 
+    @Test
+    public void shouldSetWithEmptyOctetsUsingByteArray() throws Exception
+    {
+        int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
+            .set("".getBytes(UTF_8))
+            .build()
+            .limit();
+
+        final VariantOfOctetsFW variantOfOctets = flyweightRO.tryWrap(buffer, 0, limit);
+
+        assertNotNull(variantOfOctets);
+        assertEquals("", variantOfOctets.get().get((b, o, l) -> b.getStringWithoutLengthUtf8(o, l - o)));
+    }
+
     private static DirectBuffer asBuffer(
         String value)
     {
@@ -291,6 +333,7 @@ public class VariantOfOctetsFWTest
         switch (highestByteIndex)
         {
         case 0:
+        case 4:
             buffer = new UnsafeBuffer(allocateDirect(Byte.SIZE + value.length()));
             return new BoundedOctets8FW.Builder().wrap(buffer, 0, buffer.capacity()).set(value.getBytes(UTF_8)).build();
         case 1:
