@@ -952,6 +952,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         }
 
         @Override
+        public AstListNode.Builder visitArray_member(
+            Array_memberContext ctx)
+        {
+            listMemberBuilder.type(AstType.ARRAY32);
+            return super.visitArray_member(ctx);
+        }
+
+        @Override
         public Builder visitMember_with_parametric_type(
             Member_with_parametric_typeContext ctx)
         {

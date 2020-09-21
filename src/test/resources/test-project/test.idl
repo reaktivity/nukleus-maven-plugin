@@ -415,6 +415,12 @@ scope test
                VariantOfInt32;
         }
 
+        list<uint32, uint32> ListWithArrayOfStruct
+        {
+            required string8 requiredField;
+            FlatParent[] arrayField;
+        }
+
         list<uint32, uint32> ListWithPhysicalAndLogicalLength
         {
             required string8 field0;
