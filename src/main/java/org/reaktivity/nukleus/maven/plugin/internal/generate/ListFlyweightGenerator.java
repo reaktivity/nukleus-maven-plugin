@@ -600,7 +600,13 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         {
             String fieldRO = String.format("%sRO", name);
             FieldSpec.Builder fieldBuilder = FieldSpec.builder(typeName, fieldRO, PRIVATE);
-            if (typeName instanceof ClassName && (isString16Type((ClassName) typeName) ||
+            if (typeName instanceof ParameterizedTypeName)
+            {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) typeName;
+                TypeName typeArgument = parameterizedType.typeArguments.get(0);
+                fieldBuilder.initializer("new $T(new $T())", typeName, typeArgument);
+            }
+            else if (typeName instanceof ClassName && (isString16Type((ClassName) typeName) ||
                 isString32Type((ClassName) typeName)) && byteOrder == NETWORK)
             {
                 fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", typeName, ByteOrder.class);
@@ -1736,8 +1742,20 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 if (!type.isPrimitive())
                 {
                     String fieldRW = String.format("%sRW", name);
+                    if (type instanceof ParameterizedTypeName)
+                    {
+                        ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                        ClassName rawType = parameterizedType.rawType;
+                        ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+                        ClassName builderRawType = rawType.nestedClass("Builder");
+                        ClassName itemBuilderType = itemType.nestedClass("Builder");
+                        ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
 
-                    if (type instanceof ClassName)
+                        builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                .initializer("new $T(new $T(), new $T())", builderType, itemBuilderType, itemType)
+                                .build());
+                    }
+                    else if (type instanceof ClassName)
                     {
                         ClassName classType = (ClassName) type;
                         ClassName builderType = classType.nestedClass("Builder");
@@ -2101,49 +2119,145 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 AstType mapValueType,
                 ClassName mapParamName)
             {
-                ClassName className = (ClassName) typeName;
-                AstNamedNode namedNode = resolver.resolve(type.name());
-                if (isStringType(className))
+                if (typeName instanceof ParameterizedTypeName)
                 {
-                    addStringType(className, name);
+                    ParameterizedTypeName parameterizedType = (ParameterizedTypeName) typeName;
+                    addParameterizedType(name, parameterizedType);
                 }
                 else
                 {
-                    Kind kind = namedNode.getKind();
-                    if (isTypedefType(kind))
+                    ClassName className = (ClassName) typeName;
+                    AstNamedNode namedNode = resolver.resolve(type.name());
+
+                    if (isStringType(className))
                     {
-                        AstTypedefNode typedefNode = (AstTypedefNode) namedNode;
-                        type = typedefNode.originalType();
-                        className = resolver.resolveClass(type);
-                        kind = resolver.resolve(type.name()).getKind();
-                        if (isTypedefType(kind))
-                        {
-                            addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired,
-                                arrayItemTypeName, mapKeyType, mapValueType, mapParamName);
-                            return;
-                        }
-                    }
-                    if (isEnumType(kind))
-                    {
-                        addEnumType(name, type, isRequired, className);
-                    }
-                    else if (isVariantType(kind))
-                    {
-                        addVariantType(name, type, className, isRequired, arrayItemTypeName, mapKeyType,
-                            mapValueType);
-                    }
-                    else if (isMapType(kind))
-                    {
-                        addMapType(name, isRequired, className, mapParamName);
-                    }
-                    else if (isListType(kind))
-                    {
-                        addListType(name, isRequired, className);
+                        addStringType(className, name);
                     }
                     else
                     {
-                        addUnionType(name, isRequired, className);
+                        Kind kind = namedNode.getKind();
+                        if (isTypedefType(kind))
+                        {
+                            AstTypedefNode typedefNode = (AstTypedefNode) namedNode;
+                            type = typedefNode.originalType();
+                            className = resolver.resolveClass(type);
+                            kind = resolver.resolve(type.name()).getKind();
+                            if (isTypedefType(kind))
+                            {
+                                addNonPrimitiveMember(name, type, resolver.resolveType(type), isRequired,
+                                    arrayItemTypeName, mapKeyType, mapValueType, mapParamName);
+                                return;
+                            }
+                        }
+                        if (isEnumType(kind))
+                        {
+                            addEnumType(name, type, isRequired, className);
+                        }
+                        else if (isVariantType(kind))
+                        {
+                            addVariantType(name, type, className, isRequired, arrayItemTypeName, mapKeyType,
+                                mapValueType);
+                        }
+                        else if (isMapType(kind))
+                        {
+                            addMapType(name, isRequired, className, mapParamName);
+                        }
+                        else if (isListType(kind))
+                        {
+                            addListType(name, isRequired, className);
+                        }
+                        else
+                        {
+                            addUnionType(name, isRequired, className);
+                        }
                     }
+                }
+            }
+
+            private void addParameterizedType(
+                String name,
+                ParameterizedTypeName parameterizedType)
+            {
+                ClassName rawType = parameterizedType.rawType;
+                ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+                ClassName builderRawType = rawType.nestedClass("Builder");
+                ClassName itemBuilderType = itemType.nestedClass("Builder");
+                ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
+
+                ClassName consumerType = ClassName.get(Consumer.class);
+                TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
+
+                CodeBlock.Builder code = CodeBlock.builder();
+                code.addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" is already set or subsequent fields " +
+                            "are already set\"", String.format("0x%02X", bitsOfOnes), name);
+                if (priorRequiredFieldName != null)
+                {
+                    code.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredFieldName)),
+                        priorRequiredFieldName);
+                }
+                code.addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                    .addStatement("mutator.accept($LRW)", name)
+                    .addStatement("limit($LRW.build().limit())", name)
+                    .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                    .addStatement("return this");
+
+                builder.addMethod(methodBuilder(methodName(name))
+                                      .addModifiers(PUBLIC)
+                                      .returns(thisType)
+                                      .addParameter(mutatorType, "mutator")
+                                      .addCode(code.build())
+                                      .build());
+
+                if ("Array32FW".equals(rawType.simpleName()))
+                {
+                    code = CodeBlock.builder();
+                    code.addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" is already set or subsequent fields " +
+                                "are already set\"", String.format("0x%02X", bitsOfOnes), name);
+                    if (priorRequiredFieldName != null)
+                    {
+                        code.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                            "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredFieldName)),
+                            priorRequiredFieldName);
+                    }
+                    code.addStatement("int newLimit = limit() + field.sizeof()")
+                        .addStatement("checkLimit(newLimit, maxLimit())")
+                        .addStatement("buffer().putBytes(limit(), field.buffer(), field.offset(), field.sizeof())")
+                        .addStatement("limit(newLimit)")
+                        .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                        .addStatement("return this");
+                    builder.addMethod(methodBuilder(methodName(name))
+                                          .addModifiers(PUBLIC)
+                                          .returns(thisType)
+                                          .addParameter(ParameterizedTypeName.get(rawType, itemType), "field")
+                                          .addCode(code.build())
+                                          .build());
+
+                    // Add a method to append list items
+                    code = CodeBlock.builder();
+                    code.addStatement("assert (fieldsMask & ~$L) >= 0 : \"Field \\\"$L\\\" is already set or subsequent fields" +
+                                          " are already set\"", String.format("0x%02X", bitsOfOnes), name);
+                    if (priorRequiredFieldName != null)
+                    {
+                        code.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                                              "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredFieldName)),
+                            priorRequiredFieldName);
+                    }
+                    code.beginControlFlow("if ((fieldsMask & ~$L) == 0)", String.format("0x%02X", bitsOfOnes))
+                            .addStatement("$LRW.wrap(buffer(), limit(), maxLimit())", name)
+                        .endControlFlow()
+                        .addStatement("$LRW.item(mutator)", name)
+                        .addStatement("limit($LRW.build().limit())", name)
+                        .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
+                        .addStatement("return this");
+
+                    TypeName itemMutatorType = ParameterizedTypeName.get(consumerType, itemBuilderType);
+                    builder.addMethod(methodBuilder(methodName(name + "Item"))
+                                          .addModifiers(PUBLIC)
+                                          .returns(thisType)
+                                          .addParameter(itemMutatorType, "mutator")
+                                          .addCode(code.build())
+                                          .build());
                 }
             }
 
@@ -3271,6 +3385,12 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         TypeName type)
     {
         return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
+    }
+
+    private static String index(
+        String fieldName)
+    {
+        return String.format("INDEX_%s", constant(fieldName));
     }
 
     private static ClassName enumClassName(
