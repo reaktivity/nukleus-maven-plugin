@@ -600,7 +600,13 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         {
             String fieldRO = String.format("%sRO", name);
             FieldSpec.Builder fieldBuilder = FieldSpec.builder(typeName, fieldRO, PRIVATE);
-            if (typeName instanceof ClassName && (isString16Type((ClassName) typeName) ||
+            if (typeName instanceof ParameterizedTypeName)
+            {
+                ParameterizedTypeName parameterizedType = (ParameterizedTypeName) typeName;
+                TypeName typeArgument = parameterizedType.typeArguments.get(0);
+                fieldBuilder.initializer("new $T(new $T())", typeName, typeArgument);
+            }
+            else if (typeName instanceof ClassName && (isString16Type((ClassName) typeName) ||
                 isString32Type((ClassName) typeName)) && byteOrder == NETWORK)
             {
                 fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", typeName, ByteOrder.class);
@@ -1736,8 +1742,20 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 if (!type.isPrimitive())
                 {
                     String fieldRW = String.format("%sRW", name);
+                    if (type instanceof ParameterizedTypeName)
+                    {
+                        ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                        ClassName rawType = parameterizedType.rawType;
+                        ClassName itemType = (ClassName) parameterizedType.typeArguments.get(0);
+                        ClassName builderRawType = rawType.nestedClass("Builder");
+                        ClassName itemBuilderType = itemType.nestedClass("Builder");
+                        ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
 
-                    if (type instanceof ClassName)
+                        builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
+                                .initializer("new $T(new $T(), new $T())", builderType, itemBuilderType, itemType)
+                                .build());
+                    }
+                    else if (type instanceof ClassName)
                     {
                         ClassName classType = (ClassName) type;
                         ClassName builderType = classType.nestedClass("Builder");
@@ -2170,17 +2188,18 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
 
                 CodeBlock.Builder code = CodeBlock.builder();
-                // if (priorFieldIfDefaulted != null)
-                // {
-                //     code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
-                //     defaultPriorField.accept(code);
-                //     code.endControlFlow();
-                // }
-                code.addStatement("assert lastFieldSet == $L - 1", index(name))
-                    .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
+                code.addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" is already set or subsequent fields " +
+                            "are already set\"", String.format("0x%02X", bitsOfOnes), name);
+                if (priorRequiredFieldName != null)
+                {
+                    code.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                        "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredFieldName)),
+                        priorRequiredFieldName);
+                }
+                code.addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name)
                     .addStatement("mutator.accept($LRW)", name)
                     .addStatement("limit($LRW.build().limit())", name)
-                    .addStatement("lastFieldSet = $L", index(name))
+                    .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
                     .addStatement("return this");
 
                 builder.addMethod(methodBuilder(methodName(name))
@@ -2193,18 +2212,19 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                 if ("Array32FW".equals(rawType.simpleName()))
                 {
                     code = CodeBlock.builder();
-                    // if (priorFieldIfDefaulted != null)
-                    // {
-                    //     code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
-                    //     defaultPriorField.accept(code);
-                    //     code.endControlFlow();
-                    // }
-                    code.addStatement("assert lastFieldSet == $L - 1", index(name))
-                        .addStatement("int newLimit = limit() + field.sizeof()")
+                    code.addStatement("assert (fieldsMask & ~$L) == 0 : \"Field \\\"$L\\\" is already set or subsequent fields " +
+                                "are already set\"", String.format("0x%02X", bitsOfOnes), name);
+                    if (priorRequiredFieldName != null)
+                    {
+                        code.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                            "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredFieldName)),
+                            priorRequiredFieldName);
+                    }
+                    code.addStatement("int newLimit = limit() + field.sizeof()")
                         .addStatement("checkLimit(newLimit, maxLimit())")
                         .addStatement("buffer().putBytes(limit(), field.buffer(), field.offset(), field.sizeof())")
                         .addStatement("limit(newLimit)")
-                        .addStatement("lastFieldSet = $L", index(name))
+                        .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
                         .addStatement("return this");
                     builder.addMethod(methodBuilder(methodName(name))
                                           .addModifiers(PUBLIC)
@@ -2215,19 +2235,20 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
                     // Add a method to append list items
                     code = CodeBlock.builder();
-                    // if (priorFieldIfDefaulted != null)
-                    // {
-                    //     code.beginControlFlow("if (lastFieldSet < $L)", index(priorFieldIfDefaulted));
-                    //     defaultPriorField.accept(code);
-                    //     code.endControlFlow();
-                    // }
-                    code.addStatement("assert lastFieldSet >= $L - 1", index(name))
-                        .beginControlFlow("if (lastFieldSet < $L)", index(name))
-                        .addStatement("$LRW.wrap(buffer(), limit(), maxLimit())", name)
+                    code.addStatement("assert (fieldsMask & ~$L) >= 0 : \"Field \\\"$L\\\" is already set or subsequent fields" +
+                                          " are already set\"", String.format("0x%02X", bitsOfOnes), name);
+                    if (priorRequiredFieldName != null)
+                    {
+                        code.addStatement("assert (fieldsMask & $L) != 0 : \"Prior required field \\\"$L\\\" is not " +
+                                              "set\"", String.format("0x%02X", requiredFieldPosition.get(priorRequiredFieldName)),
+                            priorRequiredFieldName);
+                    }
+                    code.beginControlFlow("if ((fieldsMask & ~$L) == 0)", String.format("0x%02X", bitsOfOnes))
+                            .addStatement("$LRW.wrap(buffer(), limit(), maxLimit())", name)
                         .endControlFlow()
                         .addStatement("$LRW.item(mutator)", name)
                         .addStatement("limit($LRW.build().limit())", name)
-                        .addStatement("lastFieldSet = $L", index(name))
+                        .addStatement("fieldsMask |= 1 << $L", fieldIndex(name))
                         .addStatement("return this");
 
                     TypeName itemMutatorType = ParameterizedTypeName.get(consumerType, itemBuilderType);
