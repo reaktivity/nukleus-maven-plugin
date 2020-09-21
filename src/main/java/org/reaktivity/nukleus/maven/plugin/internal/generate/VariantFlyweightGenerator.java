@@ -2177,6 +2177,11 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     else
                     {
                         builder.beginControlFlow("case 0:");
+                        if (isStringType(ofType) || isBoundedOctetsType(ofType))
+                        {
+                            builder.endControlFlow()
+                                .beginControlFlow("case 4:");
+                        }
                         if (isListType(ofType))
                         {
                             builder.addStatement("$L(list)", setAs(type.kindTypeName()));
@@ -2493,8 +2498,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     switch (width)
                     {
                     case 8:
-                        builder.beginControlFlow("case 0:")
-                            .addStatement(setAsStatement, setAs(type.kindTypeName()))
+                        builder.beginControlFlow("case 0:");
+                        if (isStringType(ofType) || isBoundedOctetsType(ofType))
+                        {
+                            builder.endControlFlow()
+                                .beginControlFlow("case 4:");
+                        }
+                        builder.addStatement(setAsStatement, setAs(type.kindTypeName()))
                             .addStatement("break")
                             .endControlFlow();
                         lastCaseSet = 0;
@@ -2608,8 +2618,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     switch (width)
                     {
                     case 8:
-                        builder.beginControlFlow("case 0:")
-                            .addStatement("$L(value, charset)", setAs(type.kindTypeName()))
+                        builder.beginControlFlow("case 0:");
+                        if (isStringType(ofType))
+                        {
+                            builder.endControlFlow()
+                                .beginControlFlow("case 4:");
+                        }
+                        builder.addStatement("$L(value, charset)", setAs(type.kindTypeName()))
                             .addStatement("break")
                             .endControlFlow();
                         lastCaseSet = 0;
@@ -2721,8 +2736,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     switch (width)
                     {
                     case 8:
-                        builder.beginControlFlow("case 0:")
-                            .addStatement(setAsStatement, setAs(type.kindTypeName()))
+                        builder.beginControlFlow("case 0:");
+                        if (isStringType(ofType) || isBoundedOctetsType(ofType))
+                        {
+                            builder.endControlFlow()
+                                .beginControlFlow("case 4:");
+                        }
+                        builder.addStatement(setAsStatement, setAs(type.kindTypeName()))
                             .addStatement("break")
                             .endControlFlow();
                         lastCaseSet = 0;
