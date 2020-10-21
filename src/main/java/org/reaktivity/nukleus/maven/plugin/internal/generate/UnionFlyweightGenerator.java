@@ -118,7 +118,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         memberOffsetConstant.addMember(name);
         memberSizeConstant.addMember(name, typeName, size);
         memberField.addMember(name, typeName, byteOrder);
-        memberAccessor.addMember(name, typeName, unsignedType);
+        memberAccessor.addMember(name, typeName, unsignedType, byteOrder);
         tryWrapMethod.addMember(value, name, typeName, size, sizeName);
         wrapMethod.addMember(value, name, typeName, size, sizeName);
         limitMethod.addMember(value, name, typeName);
@@ -142,7 +142,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
     {
         memberSizeConstant.addParentMember(name, type, typeName);
         memberOffsetConstant.addParentMember(name, type, typeName);
-        memberAccessor.addMember(name, typeName, unsignedTypeName);
+        memberAccessor.addMember(name, typeName, unsignedTypeName, byteOrder);
         limitMethod.addParentMember(name);
         toStringMethod.addParentMember(name, typeName);
         builderClass.addParentMember(name, type, typeName, unsignedType, unsignedTypeName, size, sizeName, sizeTypeName,
@@ -378,27 +378,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             if (!type.isPrimitive())
             {
                 String fieldRO = String.format("%sRO", name);
-                Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE, FINAL);
-
-                if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
-                {
-                    fieldBuilder.initializer("new $T(new byte[0])", UNSAFE_BUFFER_TYPE);
-                }
-                else if (type instanceof ParameterizedTypeName)
-                {
-                    ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
-                    TypeName typeArgument = parameterizedType.typeArguments.get(0);
-                    fieldBuilder.initializer("new $T(new $T())", type, typeArgument);
-                }
-                else if (type instanceof ClassName && (isString16Type((ClassName) type) ||
-                        isString32Type((ClassName) type)) && byteOrder == NETWORK)
-                {
-                    fieldBuilder.initializer("new $T($T.BIG_ENDIAN)", type, ByteOrder.class);
-                }
-                else
-                {
-                    fieldBuilder.initializer("new $T()", type);
-                }
+                Builder fieldBuilder = FieldSpec.builder(type, fieldRO, PRIVATE);
 
                 builder.addField(fieldBuilder.build());
             }
@@ -461,7 +441,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         public MemberAccessorGenerator addMember(
             String name,
             TypeName type,
-            TypeName unsignedType)
+            TypeName unsignedType,
+            AstByteOrder byteOrder)
         {
             TypeName publicType = (unsignedType != null) ? unsignedType : type;
 
@@ -512,6 +493,30 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             }
             else
             {
+                codeBlock.beginControlFlow("if ($LRO == null)", name);
+
+                if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
+                {
+                    codeBlock.addStatement("$LRO = new $T(new byte[0])", name, UNSAFE_BUFFER_TYPE);
+                }
+                else if (type instanceof ParameterizedTypeName)
+                {
+                    ParameterizedTypeName parameterizedType = (ParameterizedTypeName) type;
+                    TypeName typeArgument = parameterizedType.typeArguments.get(0);
+                    codeBlock.addStatement("$LRO = new $T(new $T())", name, type, typeArgument);
+                }
+                else if (type instanceof ClassName && (isString16Type((ClassName) type) ||
+                                                           isString32Type((ClassName) type)) && byteOrder == NETWORK)
+                {
+                    codeBlock.addStatement("$LRO = new $T($T.BIG_ENDIAN)", name, type, ByteOrder.class);
+                }
+                else
+                {
+                    codeBlock.addStatement("$LRO = new $T()", name, type);
+                }
+
+                codeBlock.endControlFlow();
+
                 if (DIRECT_BUFFER_TYPE.equals(type))
                 {
                     TypeVariableName typeVarT = TypeVariableName.get("T");
@@ -639,29 +644,29 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             if (DIRECT_BUFFER_TYPE.equals(type))
             {
-                addFailIfStatement("$LRO.tryWrap(buffer, offset + $L, $L) == null",
+                addFailIfStatement("$L().tryWrap(buffer, offset + $L, $L) == null",
                         name, offset(name), size(name));
             }
             else if (!type.isPrimitive())
             {
                 if (size >= 0)
                 {
-                    addFailIfStatement("$LRO.tryWrap(buffer, offset + $L, offset + $L + $L) == null",
+                    addFailIfStatement("$L().tryWrap(buffer, offset + $L, offset + $L + $L) == null",
                             name, offset(name), offset(name), size);
                 }
                 else if (sizeName != null)
                 {
-                    addFailIfStatement("$LRO.tryWrap(buffer, offset + $L, offset + $L + $L()) == null",
+                    addFailIfStatement("$L().tryWrap(buffer, offset + $L, offset + $L + $L()) == null",
                             name, offset(name), offset(name), sizeName);
                 }
                 else if (!kindTypeName.isPrimitive())
                 {
-                    addFailIfStatement("$LRO.tryWrap(buffer, offset + $L.sizeof(), maxLimit) == null", name,
+                    addFailIfStatement("$L().tryWrap(buffer, offset + $L.sizeof(), maxLimit) == null", name,
                         fieldName(kindTypeName));
                 }
                 else
                 {
-                    addFailIfStatement("$LRO.tryWrap(buffer, offset + $L, maxLimit) == null", name, offset(name));
+                    addFailIfStatement("$L().tryWrap(buffer, offset + $L, maxLimit) == null", name, offset(name));
                 }
             }
             builder.addStatement("break").endControlFlow();
@@ -727,29 +732,29 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             if (DIRECT_BUFFER_TYPE.equals(type))
             {
-                builder.addStatement("$LRO.wrap(buffer, offset + $L, $L)",
+                builder.addStatement("$L().wrap(buffer, offset + $L, $L)",
                         name, offset(name), size(name));
             }
             else if (!type.isPrimitive())
             {
                 if (size >= 0)
                 {
-                    builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + $L)",
+                    builder.addStatement("$L().wrap(buffer, offset + $L, offset + $L + $L)",
                             name, offset(name), offset(name), size);
                 }
                 else if (sizeName != null)
                 {
-                    builder.addStatement("$LRO.wrap(buffer, offset + $L, offset + $L + $L())",
+                    builder.addStatement("$L().wrap(buffer, offset + $L, offset + $L + $L())",
                             name, offset(name), offset(name), sizeName);
                 }
                 else if (!kindTypeName.isPrimitive())
                 {
-                    builder.addStatement("$LRO.wrap(buffer, offset + $L.sizeof(), maxLimit)", name,
+                    builder.addStatement("$L().wrap(buffer, offset + $L.sizeof(), maxLimit)", name,
                         fieldName(kindTypeName));
                 }
                 else
                 {
-                    builder.addStatement("$LRO.wrap(buffer, offset + $L, maxLimit)", name, offset(name));
+                    builder.addStatement("$L().wrap(buffer, offset + $L, maxLimit)", name, offset(name));
                 }
             }
             builder.addStatement("break").endControlFlow();
@@ -798,7 +803,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
             if (typeName instanceof ClassName && isStringType((ClassName) typeName))
             {
-                builder.addStatement("return String.format(\"$L [$L$L=%s]\", $L$LRO.asString())", constant(baseName),
+                builder.addStatement("return String.format(\"$L [$L$L=%s]\", $L$L().asString())", constant(baseName),
                     fieldString, name, fieldMethod, name);
             }
             else if (typeName.isPrimitive())
@@ -917,7 +922,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             memberMutator.lookaheadMember(name, typeName);
 
             memberField.addMember(name, typeName, byteOrder);
-            memberAccessor.addMember(name, typeName, size, sizeName);
+            memberAccessor.addMember(name, typeName, size, sizeName, byteOrder);
             memberMutator.addMember(name, type, typeName, sizeName);
 
             //   setMethod
@@ -1021,7 +1026,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
         private static final class MemberFieldGenerator extends ClassSpecMixinGenerator
         {
-            private MemberFieldGenerator(
+            private  MemberFieldGenerator(
                 ClassName thisType,
                 TypeName kindTypeName,
                 TypeSpec.Builder builder)
@@ -1047,8 +1052,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
                     if (TypeNames.DIRECT_BUFFER_TYPE.equals(type))
                     {
-                        builder.addField(FieldSpec.builder(MUTABLE_DIRECT_BUFFER_TYPE, fieldRW, PRIVATE, FINAL)
-                                .initializer("new $T(new byte[0])", UNSAFE_BUFFER_TYPE)
+                        builder.addField(FieldSpec.builder(MUTABLE_DIRECT_BUFFER_TYPE, fieldRW, PRIVATE)
                                 .build());
                     }
                     else if (type instanceof ParameterizedTypeName)
@@ -1060,8 +1064,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         ClassName itemBuilderType = itemType.nestedClass("Builder");
                         ParameterizedTypeName builderType = ParameterizedTypeName.get(builderRawType, itemBuilderType, itemType);
 
-                        builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
-                                .initializer("new $T(new $T(), new $T())", builderType, itemBuilderType, itemType)
+                        builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE)
                                 .build());
                     }
                     else if (type instanceof ClassName)
@@ -1071,14 +1074,12 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
                         if ((isString16Type(classType) || isString32Type(classType)) && byteOrder == NETWORK)
                         {
-                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
-                                    .initializer("new $T($T.BIG_ENDIAN)", builderType, ByteOrder.class)
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE)
                                     .build());
                         }
                         else
                         {
-                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE, FINAL)
-                                    .initializer("new $T()", builderType)
+                            builder.addField(FieldSpec.builder(builderType, fieldRW, PRIVATE)
                                     .build());
                         }
                     }
@@ -1108,7 +1109,8 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 String name,
                 TypeName type,
                 int size,
-                String sizeName)
+                String sizeName,
+                AstByteOrder byteOrder)
             {
                 if (!type.isPrimitive())
                 {
@@ -1119,6 +1121,9 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
                         builder.addMethod(methodBuilder(name)
                                 .addModifiers(PRIVATE)
+                                .beginControlFlow("if ($LRW == null)", name)
+                                    .addStatement("$LRW = new $T(new byte[0])", name, UNSAFE_BUFFER_TYPE)
+                                .endControlFlow()
                                 .addStatement("$LRW.wrap(buffer(), offset() + $L, $L)", name, offset(name), limit)
                                 .addStatement("return $LRW", name)
                                 .returns(MUTABLE_DIRECT_BUFFER_TYPE)
@@ -1136,6 +1141,10 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         builder.addMethod(methodBuilder(name)
                                 .addModifiers(PRIVATE)
                                 .addParameter(int.class, "offset")
+                                .beginControlFlow("if ($LRW == null)", name)
+                                    .addStatement("$LRW = new $T(new $T(), new $T())",
+                                        name, builderType, itemBuilderType, itemType)
+                                .endControlFlow()
                                 .addStatement("return $LRW.wrap(buffer(), offset, maxLimit())", name)
                                 .returns(builderType)
                                 .build());
@@ -1153,10 +1162,26 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         {
                             accessorBuilder.addStatement("int newLimit = $L", limit)
                                 .addStatement("checkLimit(newLimit, maxLimit())")
+                                .beginControlFlow("if ($LRW == null)", name)
+                                   .addStatement("$LRW = new $T()", name, builderType)
+                                .endControlFlow()
                                 .addStatement("return $LRW.wrap(buffer(), offset() + $L, newLimit)", name, offset(name));
                         }
                         else
                         {
+                            if ((isString16Type(classType) || isString32Type(classType)) && byteOrder == NETWORK)
+                            {
+                                accessorBuilder.beginControlFlow("if ($LRW == null)", name)
+                                                .addStatement("$LRW = new $T($T.BIG_ENDIAN)", name, builderType, ByteOrder.class)
+                                               .endControlFlow();
+                            }
+                            else
+                            {
+                                accessorBuilder.beginControlFlow("if ($LRW == null)", name)
+                                                .addStatement("$LRW = new $T()", name, builderType)
+                                               .endControlFlow();
+                            }
+
                             accessorBuilder.addStatement("return $LRW.wrap(buffer(), offset() + $L.sizeof(), maxLimit())",
                                 name, enumRW(kindTypeName));
                         }
