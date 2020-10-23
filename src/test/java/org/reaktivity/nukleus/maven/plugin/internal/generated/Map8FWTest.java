@@ -29,7 +29,7 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.Map8FW;
+//import org.reaktivity.reaktor.internal.test.types.Map8FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
@@ -107,7 +107,7 @@ public class Map8FWTest
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.forEach(kv -> vv ->
+        flyweight.forEach((kv, vv) ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());
@@ -199,7 +199,7 @@ public class Map8FWTest
         final Map8FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer,  0,  limit);
 
         List<String> mapItems = new ArrayList<>();
-        map.forEach(kv -> vv ->
+        map.forEach((kv, vv) ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());

@@ -32,8 +32,8 @@ import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
+//import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
+//import org.reaktivity.reaktor.internal.test.types.inner.VariantOfMapFW;
 
 public class VariantOfMapFWTest
 {
@@ -108,7 +108,7 @@ public class VariantOfMapFWTest
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.forEach(kv -> vv ->
+        flyweight.forEach((kv, vv) ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());
@@ -198,7 +198,7 @@ public class VariantOfMapFWTest
             flyweightRO.wrap(buffer, 0, limit);
 
         List<String> mapItems = new ArrayList<>();
-        variantOfMap.get().forEach(kv -> vv ->
+        variantOfMap.get().forEach((kv, vv) ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.get().asString());

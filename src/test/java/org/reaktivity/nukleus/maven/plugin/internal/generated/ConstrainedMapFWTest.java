@@ -31,10 +31,10 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.ConstrainedMapFW;
+//import org.reaktivity.reaktor.internal.test.types.inner.ConstrainedMapFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
-import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
+//import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
+//import org.reaktivity.reaktor.internal.test.types.inner.VariantWithoutOfFW;
 
 public class ConstrainedMapFWTest
 {
@@ -109,7 +109,7 @@ public class ConstrainedMapFWTest
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.forEach(kv -> vv ->
+        flyweight.forEach((kv, vv) ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.getAsVariantEnumKindOfString().get().asString());
@@ -200,7 +200,7 @@ public class ConstrainedMapFWTest
         final ConstrainedMapFW<VariantWithoutOfFW> constrainedMap = flyweightRO.wrap(buffer, 0, limit);
 
         List<String> mapItems = new ArrayList<>();
-        constrainedMap.forEach(kv -> vv ->
+        constrainedMap.forEach((kv, vv) ->
         {
             mapItems.add(kv.get().asString());
             mapItems.add(vv.getAsVariantEnumKindOfString().get().asString());
