@@ -135,10 +135,10 @@ public class ListWithMapFWTest
         assertEquals("field1", flyweight.field1().asString());
         assertEquals(6, flyweight.field1().length());
         List<String> mapItems = new ArrayList<>();
-        flyweight.mapOfString().forEach(kv -> vv ->
+        flyweight.mapOfString().forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.get().asString());
         });
         assertEquals(49, flyweight.mapOfString().length());
         assertEquals(4, flyweight.mapOfString().fieldCount());

@@ -26,8 +26,8 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DI
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MUTABLE_DIRECT_BUFFER_TYPE;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstType;
 
@@ -182,15 +182,12 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
 
     private MethodSpec forEachMethod()
     {
-        ClassName functionType = ClassName.get(Function.class);
-        ClassName consumerType = ClassName.get(Consumer.class);
-        TypeName parameterizedConsumerType = ParameterizedTypeName.get(consumerType, valueTypeName);
-        ParameterizedTypeName parameterizedFunctionType = ParameterizedTypeName.get(functionType, keyTypeName,
-            parameterizedConsumerType);
+        TypeName parameterizedBiConsumerType = ParameterizedTypeName.get(ClassName.get(BiConsumer.class), keyTypeName,
+            valueTypeName);
         return methodBuilder("forEach")
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
-            .addParameter(parameterizedFunctionType, "consumer")
+            .addParameter(parameterizedBiConsumerType, "consumer")
             .addStatement("$LRO.get().forEach(consumer)", fieldName(templateMapTypeName))
             .build();
     }

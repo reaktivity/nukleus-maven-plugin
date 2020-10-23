@@ -42,8 +42,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.reaktivity.nukleus.maven.plugin.internal.ast.AstByteOrder;
@@ -730,7 +730,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         public MethodSpec generate()
         {
             return builder.beginControlFlow("default:")
-                          .addStatement("break")
+                          .addStatement("return null")
                           .endControlFlow()
                           .endControlFlow()
                           .beginControlFlow("if (limit() > maxLimit)")
@@ -824,7 +824,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         public MethodSpec generate()
         {
             return builder.beginControlFlow("default:")
-                          .addStatement("break")
+                          .addStatement("throw new IllegalStateException(\"Unrecognized kind: \" + $L)",
+                              isStringType(ofType) && !kindTypeName.isPrimitive() ? "kind" : "kind()")
                           .endControlFlow()
                           .endControlFlow()
                           .addStatement("checkLimit(limit(), maxLimit)")
@@ -887,7 +888,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         public MethodSpec generate()
         {
             return builder.beginControlFlow("default:")
-                .addStatement("break")
+                .addStatement("throw new IllegalStateException(\"Unrecognized kind: \" + $L)",
+                    isStringType(ofType) && !kindTypeName.isPrimitive() ? "kind" : "kind()")
                 .endControlFlow()
                 .endControlFlow()
                 .addStatement("checkLimit(limit(), maxLimit)")
@@ -1690,9 +1692,8 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             super(thisType, builder);
             if (isMapType(ofType))
             {
-                TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarVV);
-                TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarKV,
-                    parameterizedConsumerType);
+                TypeName parameterizedBiConsumerType = ParameterizedTypeName.get(ClassName.get(BiConsumer.class), typeVarKV,
+                    typeVarVV);
                 builder
                     .addMethod(methodBuilder("length")
                         .addAnnotation(Override.class)
@@ -1709,7 +1710,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                     .addMethod(methodBuilder("forEach")
                         .addAnnotation(Override.class)
                         .addModifiers(PUBLIC)
-                        .addParameter(parameterizedFunctionType, "consumer")
+                        .addParameter(parameterizedBiConsumerType, "consumer")
                         .addStatement("get().forEach(consumer)")
                         .build())
                     .addMethod(methodBuilder("entries")
