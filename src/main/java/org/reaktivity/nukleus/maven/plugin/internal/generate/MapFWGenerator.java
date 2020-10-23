@@ -23,8 +23,8 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -85,12 +85,10 @@ public final class MapFWGenerator extends ClassSpecGenerator
 
     private MethodSpec forEachMethod()
     {
-        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
-        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarK,
-            parameterizedConsumerType);
+        TypeName parameterizedBiConsumerType = ParameterizedTypeName.get(ClassName.get(BiConsumer.class), typeVarK, typeVarV);
         return methodBuilder("forEach")
             .addModifiers(PUBLIC, ABSTRACT)
-            .addParameter(parameterizedFunctionType, "consumer")
+            .addParameter(parameterizedBiConsumerType, "consumer")
             .build();
     }
 

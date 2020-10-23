@@ -28,8 +28,8 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.MU
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UNSAFE_BUFFER_TYPE;
 
 import java.nio.ByteOrder;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -215,21 +215,19 @@ public final class Map32FWGenerator extends ClassSpecGenerator
 
     private MethodSpec forEachMethod()
     {
-        TypeName parameterizedConsumerType = ParameterizedTypeName.get(ClassName.get(Consumer.class), typeVarV);
-        TypeName parameterizedFunctionType = ParameterizedTypeName.get(ClassName.get(Function.class), typeVarK,
-            parameterizedConsumerType);
+        TypeName parameterizedBiConsumerType = ParameterizedTypeName.get(ClassName.get(BiConsumer.class), typeVarK, typeVarV);
 
         return methodBuilder("forEach")
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
-            .addParameter(parameterizedFunctionType, "consumer")
+            .addParameter(parameterizedBiConsumerType, "consumer")
             .addStatement("int offset = offset() + FIELDS_OFFSET")
             .addStatement("int fieldCount = fieldCount()")
             .beginControlFlow("for (int i = 0; i < fieldCount; i += 2)")
-            .addStatement("keyRO.wrap(buffer(), offset, limit())")
-            .addStatement("valueRO.wrap(buffer(), keyRO.limit(), limit())")
-            .addStatement("offset = valueRO.limit()")
-            .addStatement("consumer.apply(keyRO).accept(valueRO)")
+            .addStatement("K key = (K) keyRO.wrap(buffer(), offset, limit())")
+            .addStatement("V value = (V) valueRO.wrap(buffer(), key.limit(), limit())")
+            .addStatement("consumer.accept(key, value)")
+            .addStatement("offset = value.limit()")
             .endControlFlow()
             .build();
     }
@@ -245,6 +243,19 @@ public final class Map32FWGenerator extends ClassSpecGenerator
             .returns(ParameterizedTypeName.get(thisName, typeVarK, typeVarV))
             .beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null)")
             .addStatement("return null")
+            .endControlFlow()
+            .addStatement("int entryOffset = offset + FIELDS_OFFSET")
+            .addStatement("int fieldCount = fieldCount()")
+            .beginControlFlow("for (int i = 0; i < fieldCount; i += 2)")
+            .addStatement("K key = (K) keyRO.tryWrap(buffer, entryOffset, maxLimit)")
+            .beginControlFlow("if (key == null)")
+            .addStatement("return null")
+            .endControlFlow()
+            .addStatement("V value = (V) valueRO.tryWrap(buffer, key.limit(), maxLimit)")
+            .beginControlFlow("if (value == null)")
+            .addStatement("return null")
+            .endControlFlow()
+            .addStatement("entryOffset = value.limit()")
             .endControlFlow()
             .addStatement("final int itemsSize = length() - FIELD_COUNT_SIZE")
             .addStatement("entriesRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize)")
@@ -265,6 +276,13 @@ public final class Map32FWGenerator extends ClassSpecGenerator
             .addParameter(int.class, "maxLimit")
             .returns(ParameterizedTypeName.get(thisName, typeVarK, typeVarV))
             .addStatement("super.wrap(buffer, offset, maxLimit)")
+            .addStatement("int entryOffset = offset + FIELDS_OFFSET")
+            .addStatement("int fieldCount = fieldCount()")
+            .beginControlFlow("for (int i = 0; i < fieldCount; i += 2)")
+            .addStatement("K key = (K) keyRO.wrap(buffer, entryOffset, maxLimit)")
+            .addStatement("V value = (V) valueRO.wrap(buffer, key.limit(), maxLimit)")
+            .addStatement("entryOffset = value.limit()")
+            .endControlFlow()
             .addStatement("final int itemsSize = length() - FIELD_COUNT_SIZE")
             .addStatement("entriesRO.wrap(buffer, offset + FIELDS_OFFSET, itemsSize)")
             .addStatement("checkLimit(limit(), maxLimit)")

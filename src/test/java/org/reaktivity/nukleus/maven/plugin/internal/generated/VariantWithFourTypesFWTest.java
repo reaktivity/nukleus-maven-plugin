@@ -104,7 +104,7 @@ public class VariantWithFourTypesFWTest
         assertNotNull(variantWithThreeTypes.variantOfMap());
         assertEquals(2, variantWithThreeTypes.variantOfMap().fieldCount());
         List<String> mapItems = new ArrayList<>();
-        variantWithThreeTypes.variantOfMap().get().forEach(k -> v ->
+        variantWithThreeTypes.variantOfMap().get().forEach((k, v) ->
         {
             mapItems.add(k.getAsVariantEnumKindOfString().get().asString());
             mapItems.add(v.getAsVariantEnumKindOfString().get().asString());

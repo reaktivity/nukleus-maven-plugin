@@ -107,10 +107,10 @@ public class Map16FWTest
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.forEach(kv -> vv ->
+        flyweight.forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.get().asString());
         });
         assertEquals(4, mapItems.size());
         assertEquals("entry1Key", mapItems.get(0));
@@ -199,10 +199,10 @@ public class Map16FWTest
         final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer,  0,  limit);
 
         List<String> mapItems = new ArrayList<>();
-        map.forEach(kv -> vv ->
+        map.forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.get().asString());
         });
 
         assertEquals(lengthSize + fieldCountSize, map.limit());
