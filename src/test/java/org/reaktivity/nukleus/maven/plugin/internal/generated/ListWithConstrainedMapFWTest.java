@@ -126,10 +126,10 @@ public class ListWithConstrainedMapFWTest
         assertEquals(1, flyweight.fieldCount());
         assertEquals(offset + 54, flyweight.limit());
         List<String> mapItems = new ArrayList<>();
-        flyweight.constrainedMap().forEach(kv -> vv ->
+        flyweight.constrainedMap().forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.getAsVariantEnumKindOfString().get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.getAsVariantEnumKindOfString().get().asString());
         });
         assertEquals(49, flyweight.constrainedMap().length());
         assertEquals(4, flyweight.constrainedMap().fieldCount());
@@ -149,10 +149,10 @@ public class ListWithConstrainedMapFWTest
         assertEquals(offset + 35, flyweight.limit());
         List<String> mapKeys = new ArrayList<>();
         List<Integer> mapValues = new ArrayList<>();
-        flyweight.constrainedMap().forEach(kv -> vv ->
+        flyweight.constrainedMap().forEach((k, v) ->
         {
-            mapKeys.add(kv.get().asString());
-            mapValues.add(vv.getAsVariantOfInt32().get());
+            mapKeys.add(k.get().asString());
+            mapValues.add(v.getAsVariantOfInt32().get());
         });
         assertEquals(30, flyweight.constrainedMap().length());
         assertEquals(4, flyweight.constrainedMap().fieldCount());

@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
-//import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 
 public class VariantEnumKindOfStringFWTest
 {

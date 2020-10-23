@@ -2453,8 +2453,8 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
                         TypeName parameterizedMapBuilderName = ParameterizedTypeName.get(builderType, mapKeyTypeClass,
                             mapValueTypeClass, mapKeyTypeBuilderClass, mapValueTypeBuilderClass);
-                        methodBuilder.addStatement("$L.field((b, o, m) ->\n{\n$T $L = $LRW.wrap(b, o, m);\nvalue.forEach(kv " +
-                                "-> vv -> $L.entry(k -> k.set(kv.get()), v -> v.set(vv.get())));\nreturn $L.build().sizeof();" +
+                        methodBuilder.addStatement("$L.field((b, o, m) ->\n{\n$T $L = $LRW.wrap(b, o, m);\nvalue.forEach((kv, " +
+                                " vv) -> $L.entry(k -> k.set(kv.get()), v -> v.set(vv.get())));\nreturn $L.build().sizeof();" +
                                 "\n})",
                             variantRW(templateClassName), parameterizedMapBuilderName, name, name, name, name);
                     }

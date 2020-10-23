@@ -29,12 +29,12 @@ import java.util.List;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-//import org.reaktivity.reaktor.internal.test.types.Map16FW;
+import org.reaktivity.reaktor.internal.test.types.Map16FW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.StringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.TypedefStringFW;
-//import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
+import org.reaktivity.reaktor.internal.test.types.inner.VariantEnumKindOfStringFW;
 
 public class Map16FWTest
 {
