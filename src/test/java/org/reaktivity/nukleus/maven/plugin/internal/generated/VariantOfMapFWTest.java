@@ -108,10 +108,10 @@ public class VariantOfMapFWTest
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.forEach((kv, vv) ->
+        flyweight.forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.get().asString());
         });
         assertEquals(4, mapItems.size());
         assertEquals("entry1Key", mapItems.get(0));
@@ -198,10 +198,10 @@ public class VariantOfMapFWTest
             flyweightRO.wrap(buffer, 0, limit);
 
         List<String> mapItems = new ArrayList<>();
-        variantOfMap.get().forEach((kv, vv) ->
+        variantOfMap.get().forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.get().asString());
         });
 
         assertEquals(3, variantOfMap.limit());

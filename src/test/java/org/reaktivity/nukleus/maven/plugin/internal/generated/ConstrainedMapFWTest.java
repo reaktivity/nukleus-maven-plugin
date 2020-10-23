@@ -109,10 +109,10 @@ public class ConstrainedMapFWTest
         int offset)
     {
         List<String> mapItems = new ArrayList<>();
-        flyweight.forEach((kv, vv) ->
+        flyweight.forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.getAsVariantEnumKindOfString().get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.getAsVariantEnumKindOfString().get().asString());
         });
         assertEquals(4, mapItems.size());
         assertEquals("entry1Key", mapItems.get(0));
@@ -200,10 +200,10 @@ public class ConstrainedMapFWTest
         final ConstrainedMapFW<VariantWithoutOfFW> constrainedMap = flyweightRO.wrap(buffer, 0, limit);
 
         List<String> mapItems = new ArrayList<>();
-        constrainedMap.forEach((kv, vv) ->
+        constrainedMap.forEach((k, v) ->
         {
-            mapItems.add(kv.get().asString());
-            mapItems.add(vv.getAsVariantEnumKindOfString().get().asString());
+            mapItems.add(k.get().asString());
+            mapItems.add(v.getAsVariantEnumKindOfString().get().asString());
         });
 
         assertEquals(3, constrainedMap.limit());

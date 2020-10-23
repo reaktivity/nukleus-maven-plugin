@@ -76,13 +76,9 @@ public final class Map8FW<K extends Flyweight, V extends Flyweight> extends MapF
         int fieldCount = fieldCount();
         for (int i = 0; i < fieldCount; i += 2)
         {
-            K key = (K) keyRO.tryWrap(buffer(), offset, limit());
-            V value = key != null ? (V) valueRO.wrap(buffer(), key.limit(), limit()) : null;
+            K key = (K) keyRO.wrap(buffer(), offset, limit());
+            V value = (V) valueRO.wrap(buffer(), key.limit(), limit());
             consumer.accept(key, value);
-            if (key == null || value == null)
-            {
-                break;
-            }
             offset = value.limit();
         }
     }
@@ -102,9 +98,13 @@ public final class Map8FW<K extends Flyweight, V extends Flyweight> extends MapF
         int fieldCount = fieldCount();
         for (int i = 0; i < fieldCount; i += 2)
         {
-            K key = (K) keyRO.tryWrap(buffer, entryOffset, maxLimit);
-            V value = key != null ? (V) valueRO.tryWrap(buffer, key.limit(), maxLimit) : null;
-            if (key == null || value == null)
+            Flyweight key = keyRO.tryWrap(buffer, entryOffset, maxLimit);
+            if (key == null)
+            {
+                return null;
+            }
+            V value = (V) valueRO.tryWrap(buffer, key.limit(), maxLimit);
+            if (value == null)
             {
                 return null;
             }
