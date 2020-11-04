@@ -407,7 +407,7 @@ public final class Map32FWGenerator extends ClassSpecGenerator
                 .addParameter(typeVarKB, "keyRW")
                 .addParameter(typeVarVB, "valueRW")
                 .addParameter(ByteOrder.class, "byteOrder")
-                .addStatement("super(new Map32FW<>(keyRO, valueRO))")
+                .addStatement("super(new Map32FW<>(keyRO, valueRO, byteOrder))")
                 .addStatement("this.keyRW = keyRW")
                 .addStatement("this.valueRW = valueRW")
                 .addStatement("this.byteOrder = byteOrder")

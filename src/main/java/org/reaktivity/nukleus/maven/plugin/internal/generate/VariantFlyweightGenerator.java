@@ -1984,11 +1984,28 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             {
                 if (isArrayType(ofType))
                 {
-                    builder.addStatement("$LRW = new $T.Builder<>(itemRW, itemRO)", memberName, memberTypeName);
+                    if (isArray8Type((ClassName) memberTypeName))
+                    {
+                        builder.addStatement("$LRW = new $T.Builder<>(itemRW, itemRO)", memberName, memberTypeName);
+                    }
+                    else
+                    {
+                        builder.addStatement("$LRW = new $T.Builder<>(itemRW, itemRO, $T.BIG_ENDIAN)", memberName,
+                            memberTypeName, ByteOrder.class);
+                    }
                 }
                 else if (isMapType(ofType))
                 {
-                    builder.addStatement("$LRW = new $T.Builder<>(keyRO, valueRO, keyRW, valueRW)", memberName, memberTypeName);
+                    if (isMap8Type((ClassName) memberTypeName))
+                    {
+                        builder.addStatement("$LRW = new $T.Builder<>(keyRO, valueRO, keyRW, valueRW)", memberName,
+                            memberTypeName);
+                    }
+                    else
+                    {
+                        builder.addStatement("$LRW = new $T.Builder<>(keyRO, valueRO, keyRW, valueRW, $T.BIG_ENDIAN)", memberName,
+                            memberTypeName, ByteOrder.class);
+                    }
                 }
                 return this;
             }
@@ -4660,10 +4677,24 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             AstType.ARRAY16.equals(type) || AstType.ARRAY32.equals(type);
     }
 
+    private static boolean isArray8Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "Array8FW".equals(name);
+    }
+
     private static boolean isMapType(
         AstType type)
     {
         return AstType.MAP.equals(type);
+    }
+
+    private static boolean isMap8Type(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "Map8FW".equals(name);
     }
 
     private static boolean isBoundedOctetsType(
