@@ -1828,7 +1828,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             this.memberField = new MemberFieldGenerator(thisVariantBuilderType, kindTypeName, typeVarB, typeVarV, typeVarKB,
                 typeVarKV, typeVarVB, typeVarVV, ofType, builder, resolver, byteOrder);
             this.constructor = new ConstructorGenerator(thisVariantType, ofType, typeVarB, typeVarV, typeVarKB, typeVarKV,
-                typeVarVB, typeVarVV);
+                typeVarVB, typeVarVV, byteOrder);
             this.setMethod = new SetMethodGenerator(ofType, ofTypeName, unsignedOfTypeName, kindTypeName, resolver);
             this.setMethodWithBuffer = new SetMethodWithBufferGenerator(kindTypeName, ofType);
             this.setMethodWithString = new SetMethodWithStringGenerator(kindTypeName, ofType);
@@ -1903,7 +1903,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             setAsFieldMethodForOctetsOfType.addMember(memberName, memberType, memberTypeName);
             setWithSpecificKindMethod.addMember(kindValue, memberName);
             memberField.addMember(memberName, memberType, memberTypeName, mapKeyType, mapValueType);
-            constructor.addMember(memberName, memberTypeName);
+            constructor.addMember(memberName, memberType, memberTypeName);
             setMethod.addMember(memberName, memberType, memberTypeName, unsignedMemberTypeName);
             setMethodWithBuffer.addMember(memberName, memberTypeName, unsignedMemberTypeName);
             setMethodWithString.addMember(memberName, memberTypeName, unsignedMemberTypeName);
@@ -1948,6 +1948,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
         {
             private final ClassName thisVariantType;
             private final AstType ofType;
+            private final AstByteOrder byteOrder;
 
             private ConstructorGenerator(
                 ClassName thisVariantType,
@@ -1957,11 +1958,13 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 TypeVariableName typeVarKB,
                 TypeVariableName typeVarKV,
                 TypeVariableName typeVarVB,
-                TypeVariableName typeVarVV)
+                TypeVariableName typeVarVV,
+                AstByteOrder byteOrder)
             {
                 super(constructorBuilder());
                 this.thisVariantType = thisVariantType;
                 this.ofType = ofType;
+                this.byteOrder = byteOrder;
                 if (isArrayType(ofType))
                 {
                     builder.addParameter(typeVarB, "itemRW")
@@ -1980,11 +1983,12 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
 
             public ConstructorGenerator addMember(
                 String memberName,
+                AstType memberType,
                 TypeName memberTypeName)
             {
                 if (isArrayType(ofType))
                 {
-                    if (isArray8Type((ClassName) memberTypeName))
+                    if (byteOrder == NATIVE || memberType.equals(AstType.ARRAY8))
                     {
                         builder.addStatement("$LRW = new $T.Builder<>(itemRW, itemRO)", memberName, memberTypeName);
                     }
@@ -1996,7 +2000,7 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
                 }
                 else if (isMapType(ofType))
                 {
-                    if (isMap8Type((ClassName) memberTypeName))
+                    if (byteOrder == NATIVE || memberType.equals(AstType.MAP8))
                     {
                         builder.addStatement("$LRW = new $T.Builder<>(keyRO, valueRO, keyRW, valueRW)", memberName,
                             memberTypeName);
@@ -4677,24 +4681,10 @@ public final class VariantFlyweightGenerator extends ClassSpecGenerator
             AstType.ARRAY16.equals(type) || AstType.ARRAY32.equals(type);
     }
 
-    private static boolean isArray8Type(
-        ClassName classType)
-    {
-        String name = classType.simpleName();
-        return "Array8FW".equals(name);
-    }
-
     private static boolean isMapType(
         AstType type)
     {
         return AstType.MAP.equals(type);
-    }
-
-    private static boolean isMap8Type(
-        ClassName classType)
-    {
-        String name = classType.simpleName();
-        return "Map8FW".equals(name);
     }
 
     private static boolean isBoundedOctetsType(
