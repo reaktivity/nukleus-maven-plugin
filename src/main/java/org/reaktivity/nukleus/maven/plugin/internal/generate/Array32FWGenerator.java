@@ -495,7 +495,7 @@ public final class Array32FWGenerator extends ClassSpecGenerator
                 .addParameter(typeVarB, "itemRW")
                 .addParameter(typeVarV, "itemRO")
                 .addParameter(ByteOrder.class, "byteOrder")
-                .addStatement("super(new Array32FW<>(itemRO))")
+                .addStatement("super(new Array32FW<>(itemRO, byteOrder))")
                 .addStatement("this.byteOrder = byteOrder")
                 .addStatement("this.itemRW = itemRW")
                 .addStatement("this.itemRO = itemRO")
