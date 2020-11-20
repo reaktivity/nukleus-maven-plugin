@@ -1606,16 +1606,13 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         .addStatement("kind($L)", kind(name))
                         .addStatement("$T $L = $L()", builderType, name, name)
                         .addStatement("$L.set(value, $T.UTF_8)", name, StandardCharsets.class);
-
                     if (nextType instanceof ParameterizedTypeName)
                     {
                         codeBlock.addStatement("$L($L.build().limit())", nextName, name);
                     }
-
                     codeBlock.addStatement("limit($L.build().limit())", name)
                         .endControlFlow()
                         .addStatement("return this");
-
                     builder.addMethod(methodBuilder(name)
                             .addModifiers(PUBLIC)
                             .returns(thisType)
@@ -1634,7 +1631,6 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     {
                         codeBlock.addStatement("$L($L.build().limit())", nextName, name);
                     }
-
                     codeBlock.addStatement("limit($L.build().limit())", name)
                         .endControlFlow()
                         .addStatement("return this");
@@ -1675,7 +1671,6 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     ClassName consumerType = ClassName.get(Consumer.class);
                     ClassName builderType = className.nestedClass("Builder");
                     TypeName mutatorType = ParameterizedTypeName.get(consumerType, builderType);
-
                     CodeBlock.Builder code = CodeBlock.builder()
                         .addStatement("kind($L)", kind(name));
 
@@ -1687,17 +1682,29 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     {
                         code.addStatement("$T $L = $L()", builderType, name, name);
                     }
-
                     code.addStatement("mutator.accept($L)", name)
                         .addStatement("limit($L.build().limit())", name)
                         .addStatement("return this");
-
                     builder.addMethod(methodBuilder(name)
                             .addModifiers(PUBLIC)
                             .returns(thisType)
                             .addParameter(mutatorType, "mutator")
                             .addCode(code.build())
                             .build());
+
+                    code = CodeBlock.builder();
+                    code.addStatement("kind($L)", kind(name))
+                        .addStatement("int newLimit = limit() + field.sizeof()")
+                        .addStatement("checkLimit(newLimit, maxLimit())")
+                        .addStatement("buffer().putBytes(limit(), field.buffer(), field.offset(), field.sizeof())")
+                        .addStatement("limit(newLimit)")
+                        .addStatement("return this");
+                    builder.addMethod(methodBuilder(methodName(name))
+                        .addModifiers(PUBLIC)
+                        .returns(thisType)
+                        .addParameter(className, "field")
+                        .addCode(code.build())
+                        .build());
                 }
             }
 
