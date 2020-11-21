@@ -1600,9 +1600,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                     ClassName builderType = className.nestedClass("Builder");
 
                     // TODO: handle optional fields
-                    codeBlock.beginControlFlow("if (value == null)")
-                        .addStatement("limit(offset() + $L)", offset(name))
-                        .nextControlFlow("else")
+                    codeBlock
                         .addStatement("kind($L)", kind(name))
                         .addStatement("$T $L = $L()", builderType, name, name)
                         .addStatement("$L.set(value, $T.UTF_8)", name, StandardCharsets.class);
@@ -1611,7 +1609,6 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         codeBlock.addStatement("$L($L.build().limit())", nextName, name);
                     }
                     codeBlock.addStatement("limit($L.build().limit())", name)
-                        .endControlFlow()
                         .addStatement("return this");
                     builder.addMethod(methodBuilder(name)
                             .addModifiers(PUBLIC)
@@ -1621,9 +1618,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                             .build());
 
                     codeBlock = CodeBlock.builder();
-                    codeBlock.beginControlFlow("if (value == null)")
-                        .addStatement("limit(offset() + $L)", offset(name))
-                        .nextControlFlow("else")
+                    codeBlock
                         .addStatement("kind($L)", kind(name))
                         .addStatement("$T $L = $L()", builderType, name, name)
                         .addStatement("$L.set(value)", name);
@@ -1632,7 +1627,6 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         codeBlock.addStatement("$L($L.build().limit())", nextName, name);
                     }
                     codeBlock.addStatement("limit($L.build().limit())", name)
-                        .endControlFlow()
                         .addStatement("return this");
 
                     builder.addMethod(methodBuilder(name)
