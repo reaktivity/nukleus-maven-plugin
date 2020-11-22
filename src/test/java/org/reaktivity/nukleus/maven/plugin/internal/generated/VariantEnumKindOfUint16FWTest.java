@@ -39,14 +39,6 @@ public class VariantEnumKindOfUint16FWTest
         }
     };
 
-    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
-    {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
-
     private final VariantEnumKindOfUint16FW.Builder flyweightRW = new VariantEnumKindOfUint16FW.Builder();
     private final VariantEnumKindOfUint16FW flyweightRO = new VariantEnumKindOfUint16FW();
 
@@ -54,7 +46,6 @@ public class VariantEnumKindOfUint16FWTest
         MutableDirectBuffer buffer,
         final int offset)
     {
-        int pos = offset;
         buffer.putShort(offset, (short) EnumWithUint16.ICHI.value());
         buffer.putShort(offset + SIZE_OF_SHORT, (short) 60000);
         return SIZE_OF_SHORT + SIZE_OF_SHORT;

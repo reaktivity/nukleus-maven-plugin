@@ -24,9 +24,7 @@ import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithString16;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithString16FW;
 
@@ -50,9 +48,6 @@ public class EnumWithString16FWTest
     };
     private final EnumWithString16FW.Builder flyweightRW = new EnumWithString16FW.Builder();
     private final EnumWithString16FW flyweightRO = new EnumWithString16FW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValues(
         MutableDirectBuffer buffer,
@@ -186,11 +181,9 @@ public class EnumWithString16FWTest
             .set(asEnumWithString16FW(EnumWithString16.BLUE));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToBuildWithNothingSet()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("EnumWithString16");
         flyweightRW.wrap(buffer, 10, buffer.capacity()).build();
     }
 

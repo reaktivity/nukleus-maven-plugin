@@ -24,9 +24,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generated.FlyweightTe
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.NestedFW;
 
 public class NestedFWTest
@@ -40,9 +38,6 @@ public class NestedFWTest
             setMemory(0, capacity(), (byte) 0xab);
         }
     };
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static void assertAllTestValuesRead(NestedFW flyweight)
     {

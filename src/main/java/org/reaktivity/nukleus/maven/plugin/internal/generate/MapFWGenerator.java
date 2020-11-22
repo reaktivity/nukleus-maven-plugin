@@ -33,7 +33,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
-public final class MapFWGenerator extends ClassSpecGenerator
+public final class MapFWGenerator extends ParameterizedTypeSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final TypeVariableName typeVarK;
@@ -41,12 +41,13 @@ public final class MapFWGenerator extends ClassSpecGenerator
     private final BuilderClassBuilder builderClassBuilder;
 
     public MapFWGenerator(
-        ClassName flyweightType)
+        ClassName flyweightType,
+        ParameterizedTypeName mapType)
     {
-        super(flyweightType.peerClass("MapFW"));
+        super(mapType);
         this.typeVarK = TypeVariableName.get("K", flyweightType);
         this.typeVarV = TypeVariableName.get("V", flyweightType);
-        this.classBuilder = classBuilder(thisName)
+        this.classBuilder = classBuilder(thisRawName)
             .superclass(flyweightType)
             .addModifiers(PUBLIC, ABSTRACT)
             .addTypeVariable(typeVarK)
@@ -107,13 +108,13 @@ public final class MapFWGenerator extends ClassSpecGenerator
         private final TypeVariableName typeVarKB;
         private final TypeVariableName typeVarVB;
 
-        private final TypeName parameterizedBuilderType;
+        private final TypeName builderType;
 
         private BuilderClassBuilder(
-            ClassName mapType,
+            ParameterizedTypeName mapType,
             ClassName flyweightType)
         {
-            ClassName builderType = mapType.nestedClass("Builder");
+            ClassName builderType = mapType.rawType.nestedClass("Builder");
             ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
 
             TypeVariableName typeVarK = TypeVariableName.get("K", flyweightType);
@@ -121,8 +122,7 @@ public final class MapFWGenerator extends ClassSpecGenerator
             TypeVariableName typeVarV = TypeVariableName.get("V", flyweightType);
             this.typeVarVB = TypeVariableName.get("VB", ParameterizedTypeName.get(flyweightBuilderType, typeVarV));
             this.typeVarT = TypeVariableName.get("T", mapType);
-            this.parameterizedBuilderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarK, typeVarV, typeVarKB,
-                typeVarVB);
+            this.builderType = ParameterizedTypeName.get(builderType, typeVarT, typeVarK, typeVarV, typeVarKB, typeVarVB);
 
             this.classBuilder = classBuilder(builderType.simpleName())
                 .addModifiers(PUBLIC, ABSTRACT, STATIC)
@@ -160,7 +160,7 @@ public final class MapFWGenerator extends ClassSpecGenerator
 
             return methodBuilder("entry")
                 .addModifiers(PUBLIC, ABSTRACT)
-                .returns(parameterizedBuilderType)
+                .returns(builderType)
                 .addParameter(consumerKeyType, "key")
                 .addParameter(consumerValueType, "value")
                 .build();
@@ -170,7 +170,7 @@ public final class MapFWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("entries")
                 .addModifiers(PUBLIC, ABSTRACT)
-                .returns(parameterizedBuilderType)
+                .returns(builderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")

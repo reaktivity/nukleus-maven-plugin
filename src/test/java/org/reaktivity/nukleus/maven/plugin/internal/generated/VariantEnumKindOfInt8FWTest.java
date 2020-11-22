@@ -39,14 +39,6 @@ public class VariantEnumKindOfInt8FWTest
         }
     };
 
-    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
-    {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
-
     private final VariantEnumKindOfInt8FW.Builder flyweightRW = new VariantEnumKindOfInt8FW.Builder();
     private final VariantEnumKindOfInt8FW flyweightRO = new VariantEnumKindOfInt8FW();
 

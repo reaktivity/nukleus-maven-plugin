@@ -38,14 +38,6 @@ public class VariantUint8KindOfUint64FWTest
         }
     };
 
-    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
-    {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
-
     private final VariantUint8KindOfUint64FW.Builder flyweightRW = new VariantUint8KindOfUint64FW.Builder();
     private final VariantUint8KindOfUint64FW flyweightRO = new VariantUint8KindOfUint64FW();
 
@@ -300,9 +292,9 @@ public class VariantUint8KindOfUint64FWTest
 
         final VariantUint8KindOfUint64FW variantUint8KindOfUint64 = flyweightRO.wrap(buffer, 0, limit);
 
-        assertEquals(0, flyweightRO.getAsZero());
-        assertEquals(0, flyweightRO.get());
-        assertEquals(0x44, flyweightRO.kind());
+        assertEquals(0, variantUint8KindOfUint64.getAsZero());
+        assertEquals(0, variantUint8KindOfUint64.get());
+        assertEquals(0x44, variantUint8KindOfUint64.kind());
     }
 
     @Test
@@ -315,9 +307,9 @@ public class VariantUint8KindOfUint64FWTest
 
         final VariantUint8KindOfUint64FW variantUint8KindOfUint64 = flyweightRO.wrap(buffer, 0, limit);
 
-        assertEquals(1, flyweightRO.getAsOne());
-        assertEquals(1, flyweightRO.get());
-        assertEquals(0x01, flyweightRO.kind());
+        assertEquals(1, variantUint8KindOfUint64.getAsOne());
+        assertEquals(1, variantUint8KindOfUint64.get());
+        assertEquals(0x01, variantUint8KindOfUint64.kind());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)

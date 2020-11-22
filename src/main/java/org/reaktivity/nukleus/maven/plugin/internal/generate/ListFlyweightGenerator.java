@@ -1609,9 +1609,9 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
             this.templateTypeRW = new TemplateTypeRWGenerator(thisType, builder, templateType, resolver);
             this.memberAccessor = new MemberAccessorGenerator(thisType, builder, templateType, resolver, nullValue);
             this.memberMutator = new MemberMutatorGenerator(thisType, builder, templateType, resolver, nullValue);
-            this.fieldMethod = new FieldMethodGenerator(nullValue, templateType, resolver);
-            this.fieldsMethodWithVisitor = new FieldsMethodWithVisitorGenerator(nullValue, templateType, resolver);
-            this.fieldsMethodWithBuffer = new FieldsMethodWithBufferGenerator(nullValue, templateType, resolver);
+            this.fieldMethod = new FieldMethodGenerator(templateType, resolver);
+            this.fieldsMethodWithVisitor = new FieldsMethodWithVisitorGenerator(templateType, resolver);
+            this.fieldsMethodWithBuffer = new FieldsMethodWithBufferGenerator(templateType, resolver);
             this.wrapMethod = new WrapMethodGenerator(nullValue, templateType, resolver);
             this.buildMethod = new BuildMethodGenerator(templateType, lengthTypeName, fieldCountTypeName, nullValue, resolver);
         }
@@ -2925,13 +2925,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private final class FieldMethodGenerator extends MethodSpecGenerator
         {
-            private final Byte nullValue;
             private final AstType templateType;
             private final TypeResolver resolver;
             private String lastFieldName;
 
             private FieldMethodGenerator(
-                Byte nullValue,
                 AstType templateType,
                 TypeResolver resolver)
             {
@@ -2940,7 +2938,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     .addModifiers(PUBLIC)
                     .addParameter(resolver.flyweightName().nestedClass("Builder").nestedClass("Visitor"), "visitor")
                     .returns(thisName));
-                this.nullValue = nullValue;
                 this.templateType = templateType;
                 this.resolver = resolver;
             }
@@ -2978,13 +2975,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private final class FieldsMethodWithVisitorGenerator extends MethodSpecGenerator
         {
-            private final Byte nullValue;
             private final AstType templateType;
             private final TypeResolver resolver;
             private String lastFieldName;
 
             private FieldsMethodWithVisitorGenerator(
-                Byte nullValue,
                 AstType templateType,
                 TypeResolver resolver)
             {
@@ -2994,7 +2989,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(int.class, "fieldCount")
                     .addParameter(resolver.flyweightName().nestedClass("Builder").nestedClass("Visitor"), "visitor")
                     .returns(thisName));
-                this.nullValue = nullValue;
                 this.templateType = templateType;
                 this.resolver = resolver;
             }
@@ -3032,13 +3026,11 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
 
         private final class FieldsMethodWithBufferGenerator extends MethodSpecGenerator
         {
-            private final Byte nullValue;
             private final AstType templateType;
             private final TypeResolver resolver;
             private String lastFieldName;
 
             private FieldsMethodWithBufferGenerator(
-                Byte nullValue,
                 AstType templateType,
                 TypeResolver resolver)
             {
@@ -3051,7 +3043,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
                     .addParameter(int.class, "length")
                     .returns(thisName));
 
-                this.nullValue = nullValue;
                 this.templateType = templateType;
                 this.resolver = resolver;
             }
@@ -3298,23 +3289,10 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         }
     }
 
-    private static boolean isOctetsType(
-        TypeName type)
-    {
-        return type instanceof ClassName && "OctetsFW".equals(((ClassName) type).simpleName());
-    }
-
     private static boolean isStringType(
         ClassName classType)
     {
         return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
-    }
-
-    private static boolean isArrayType(
-        AstType type)
-    {
-        return AstType.ARRAY.equals(type) || AstType.ARRAY8.equals(type) ||
-            AstType.ARRAY16.equals(type) || AstType.ARRAY32.equals(type);
     }
 
     private static boolean isString8Type(
@@ -3368,13 +3346,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         return Kind.TYPEDEF.equals(kind);
     }
 
-    private static boolean isVarintType(
-        TypeName type)
-    {
-        return type instanceof ClassName && "Varint32FW".equals(((ClassName) type).simpleName()) ||
-            type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
-    }
-
     private static boolean isVarint32Type(
         TypeName type)
     {
@@ -3385,19 +3356,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         TypeName type)
     {
         return type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
-    }
-
-    private static String index(
-        String fieldName)
-    {
-        return String.format("INDEX_%s", constant(fieldName));
-    }
-
-    private static ClassName enumClassName(
-        TypeName enumFWTypeName)
-    {
-        String enumFWName = ((ClassName) enumFWTypeName).simpleName();
-        return ClassName.bestGuess(enumFWName.substring(0, enumFWName.length() - 2));
     }
 
     private static String variantRW(
@@ -3414,18 +3372,6 @@ public final class ListFlyweightGenerator extends ClassSpecGenerator
         String variantFWName = className.simpleName();
         return String.format("%s%sRO", Character.toLowerCase(variantFWName.charAt(0)),
             variantFWName.substring(1, variantFWName.length() - 2));
-    }
-
-    private static String arraySize(
-        String fieldName)
-    {
-        return String.format("ARRAY_SIZE_%s", constant(fieldName));
-    }
-
-    private static String fieldOffset(
-        String fieldName)
-    {
-        return String.format("FIELD_OFFSET_%s", constant(fieldName));
     }
 
     private static String defaultConstant(

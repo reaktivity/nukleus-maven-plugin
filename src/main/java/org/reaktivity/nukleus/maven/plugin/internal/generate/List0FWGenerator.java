@@ -54,9 +54,6 @@ public final class List0FWGenerator extends ClassSpecGenerator
     {
         return classBuilder.addField(fieldsEmptyValueField())
             .addField(lengthSizeConstant())
-            .addField(fieldCountSizeConstant())
-            .addField(lengthOffsetConstant())
-            .addField(fieldCountOffsetConstant())
             .addField(lengthValueConstant())
             .addField(fieldCountValueConstant())
             .addMethod(limitMethod())
@@ -81,27 +78,6 @@ public final class List0FWGenerator extends ClassSpecGenerator
     {
         return FieldSpec.builder(int.class, "LENGTH_SIZE", PRIVATE, STATIC, FINAL)
             .initializer("0")
-            .build();
-    }
-
-    private FieldSpec fieldCountSizeConstant()
-    {
-        return FieldSpec.builder(int.class, "FIELD_COUNT_SIZE", PRIVATE, STATIC, FINAL)
-            .initializer("0")
-            .build();
-    }
-
-    private FieldSpec lengthOffsetConstant()
-    {
-        return FieldSpec.builder(int.class, "LENGTH_OFFSET", PRIVATE, STATIC, FINAL)
-            .initializer("0")
-            .build();
-    }
-
-    private FieldSpec fieldCountOffsetConstant()
-    {
-        return FieldSpec.builder(int.class, "FIELD_COUNT_OFFSET", PRIVATE, STATIC, FINAL)
-            .initializer("LENGTH_OFFSET + LENGTH_SIZE")
             .build();
     }
 
@@ -227,19 +203,12 @@ public final class List0FWGenerator extends ClassSpecGenerator
         public TypeSpec build()
         {
             return classBuilder
-                .addField(fieldCount())
                 .addMethod(constructor())
                 .addMethod(fieldMethod())
                 .addMethod(fieldsMethodViaVisitor())
                 .addMethod(fieldsMethodViaBuffer())
                 .addMethod(wrapMethod())
                 .addMethod(buildMethod())
-                .build();
-        }
-
-        private FieldSpec fieldCount()
-        {
-            return FieldSpec.builder(int.class, "fieldCount", PRIVATE)
                 .build();
         }
 
@@ -258,12 +227,7 @@ public final class List0FWGenerator extends ClassSpecGenerator
                 .addModifiers(PUBLIC)
                 .returns(listType.nestedClass("Builder"))
                 .addParameter(visitorType, "visitor")
-                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
-                .addStatement("fieldCount++")
-                .addStatement("int newLimit = limit() + length")
-                .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("limit(newLimit)")
-                .addStatement("return this")
+                .addStatement("throw new UnsupportedOperationException()")
                 .build();
         }
 
@@ -275,11 +239,7 @@ public final class List0FWGenerator extends ClassSpecGenerator
                 .returns(listType.nestedClass("Builder"))
                 .addParameter(int.class, "fieldCount")
                 .addParameter(visitorType, "visitor")
-                .addStatement("int length = visitor.visit(buffer(), limit(), maxLimit())")
-                .addStatement("this.fieldCount += fieldCount")
-                .addStatement("int newLimit = limit() + length")
-                .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("limit(newLimit)")
+                .addStatement("assert fieldCount == 0")
                 .addStatement("return this")
                 .build();
         }
@@ -294,11 +254,7 @@ public final class List0FWGenerator extends ClassSpecGenerator
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "index")
                 .addParameter(int.class, "length")
-                .addStatement("this.fieldCount += fieldCount")
-                .addStatement("int newLimit = limit() + length")
-                .addStatement("checkLimit(newLimit, maxLimit())")
-                .addStatement("buffer().putBytes(limit(), buffer, index, length)")
-                .addStatement("limit(newLimit)")
+                .addStatement("assert fieldCount == 0")
                 .addStatement("return this")
                 .build();
         }
@@ -313,7 +269,6 @@ public final class List0FWGenerator extends ClassSpecGenerator
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
                 .addStatement("super.wrap(buffer, offset, maxLimit)")
-                .addStatement("fieldCount = 0")
                 .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("return this")
                 .build();

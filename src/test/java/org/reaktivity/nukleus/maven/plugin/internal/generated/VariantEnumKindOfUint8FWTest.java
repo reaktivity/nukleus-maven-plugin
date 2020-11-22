@@ -39,14 +39,6 @@ public class VariantEnumKindOfUint8FWTest
         }
     };
 
-    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
-    {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
-
     private final VariantEnumKindOfUint8FW.Builder flyweightRW = new VariantEnumKindOfUint8FW.Builder();
     private final VariantEnumKindOfUint8FW flyweightRO = new VariantEnumKindOfUint8FW();
 
@@ -180,9 +172,9 @@ public class VariantEnumKindOfUint8FWTest
 
         final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, 0, limit);
 
-        assertEquals(0, flyweightRO.getAsZero());
-        assertEquals(0, flyweightRO.get());
-        assertEquals(EnumWithUint8.NI, flyweightRO.kind());
+        assertEquals(0, variantEnumKindOfUint8.getAsZero());
+        assertEquals(0, variantEnumKindOfUint8.get());
+        assertEquals(EnumWithUint8.NI, variantEnumKindOfUint8.kind());
     }
 
     @Test
@@ -195,8 +187,8 @@ public class VariantEnumKindOfUint8FWTest
 
         final VariantEnumKindOfUint8FW variantEnumKindOfUint8 = flyweightRO.wrap(buffer, 0, limit);
 
-        assertEquals(1, flyweightRO.getAsOne());
-        assertEquals(1, flyweightRO.get());
-        assertEquals(EnumWithUint8.SAN, flyweightRO.kind());
+        assertEquals(1, variantEnumKindOfUint8.getAsOne());
+        assertEquals(1, variantEnumKindOfUint8.get());
+        assertEquals(EnumWithUint8.SAN, variantEnumKindOfUint8.kind());
     }
 }

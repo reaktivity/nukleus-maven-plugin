@@ -24,9 +24,7 @@ import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithVariantOfUint64;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithVariantOfUint64FW;
 
@@ -40,19 +38,8 @@ public class EnumWithVariantOfUint64FWTest
         }
     };
 
-    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
-    {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
-
     private final EnumWithVariantOfUint64FW.Builder flyweightRW = new EnumWithVariantOfUint64FW.Builder();
     private final EnumWithVariantOfUint64FW flyweightRO = new EnumWithVariantOfUint64FW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValues(
         MutableDirectBuffer buffer,
@@ -194,11 +181,9 @@ public class EnumWithVariantOfUint64FWTest
             .set(enumWithVariantOfUint64);
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToBuildWithNothingSet()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("EnumWithVariantOfUint64");
         flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build();
     }

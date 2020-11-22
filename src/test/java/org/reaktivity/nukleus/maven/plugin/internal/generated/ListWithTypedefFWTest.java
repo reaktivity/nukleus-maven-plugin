@@ -38,14 +38,6 @@ public class ListWithTypedefFWTest
         }
     };
 
-    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
-    {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
-
     private final ListWithTypedefFW.Builder flyweightRW = new ListWithTypedefFW.Builder();
     private final ListWithTypedefFW flyweightRO = new ListWithTypedefFW();
     private final int lengthSize = Byte.BYTES;

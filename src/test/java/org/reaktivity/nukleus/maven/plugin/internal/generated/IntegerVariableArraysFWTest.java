@@ -31,9 +31,7 @@ import java.util.PrimitiveIterator;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.IntegerVariableArraysFW;
 
 public class IntegerVariableArraysFWTest
@@ -53,9 +51,6 @@ public class IntegerVariableArraysFWTest
     };
     private final IntegerVariableArraysFW.Builder flyweightRW = new IntegerVariableArraysFW.Builder();
     private final IntegerVariableArraysFW flyweightRO = new IntegerVariableArraysFW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValues(
         MutableDirectBuffer buffer,

@@ -19,13 +19,11 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.DIRECT_BUFFER_TYPE;
 
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
@@ -83,7 +81,6 @@ public final class ListFWGenerator extends ClassSpecGenerator
     {
         private final TypeSpec.Builder classBuilder;
         private final ClassName classType;
-        private final ClassName listType;
         private final ClassName visitorType;
         private final TypeName parameterizedListBuildertype;
         private final TypeVariableName typeVarT;
@@ -94,7 +91,6 @@ public final class ListFWGenerator extends ClassSpecGenerator
         {
             this.typeVarT = TypeVariableName.get("T");
             TypeName builderType = ParameterizedTypeName.get(builderRawType, typeVarT);
-            this.listType = listType;
             this.parameterizedListBuildertype = ParameterizedTypeName.get(listType.nestedClass("Builder"), typeVarT);
             this.classType = listType.nestedClass("Builder");
             this.classBuilder = classBuilder(classType.simpleName())
@@ -106,17 +102,12 @@ public final class ListFWGenerator extends ClassSpecGenerator
 
         public TypeSpec build()
         {
-            return classBuilder.addField(fieldCountField())
+            return classBuilder
                 .addMethod(constructor())
                 .addMethod(fieldMethod())
                 .addMethod(fieldsMethodViaVisitor())
                 .addMethod(fieldsMethodViaBuffer())
                 .build();
-        }
-
-        private FieldSpec fieldCountField()
-        {
-            return FieldSpec.builder(int.class, "fieldCount", PRIVATE).build();
         }
 
         private MethodSpec constructor()

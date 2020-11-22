@@ -31,6 +31,7 @@ import java.nio.ByteOrder;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -40,22 +41,20 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
 
-public final class Array32FWGenerator extends ClassSpecGenerator
+public final class Array32FWGenerator extends ParameterizedTypeSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final TypeVariableName typeVarV;
-    private final TypeName parameterizedArray32Type;
     private final BuilderClassBuilder builderClassBuilder;
 
     public Array32FWGenerator(
         ClassName flyweightType,
-        ClassName arrayType)
+        ParameterizedTypeName arrayType)
     {
-        super(flyweightType.peerClass("Array32FW"));
-        this.typeVarV = TypeVariableName.get("V", flyweightType);
-        this.parameterizedArray32Type = ParameterizedTypeName.get(thisName, typeVarV);
-        this.classBuilder = classBuilder(thisName)
-            .superclass(ParameterizedTypeName.get(arrayType, typeVarV))
+        super(flyweightType.peerClass("Array32FW"), TypeVariableName.get("V", flyweightType));
+        this.typeVarV = (TypeVariableName) thisName.typeArguments.get(0);
+        this.classBuilder = classBuilder(thisRawName)
+            .superclass(arrayType)
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariable(typeVarV);
 
@@ -71,7 +70,6 @@ public final class Array32FWGenerator extends ClassSpecGenerator
             .addField(lengthOffsetConstant())
             .addField(fieldCountOffsetConstant())
             .addField(fieldsOffsetConstant())
-            .addField(lengthMaxValueConstant())
             .addField(emptyBufferConstant())
             .addField(byteOrderField())
             .addField(itemField())
@@ -130,13 +128,6 @@ public final class Array32FWGenerator extends ClassSpecGenerator
     {
         return FieldSpec.builder(int.class, "FIELDS_OFFSET", PRIVATE, STATIC, FINAL)
             .initializer("FIELD_COUNT_OFFSET + FIELD_COUNT_SIZE")
-            .build();
-    }
-
-    private FieldSpec lengthMaxValueConstant()
-    {
-        return FieldSpec.builder(long.class, "LENGTH_MAX_VALUE", PRIVATE, STATIC, FINAL)
-            .initializer("0xFFFFFFFFL")
             .build();
     }
 
@@ -324,7 +315,7 @@ public final class Array32FWGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(parameterizedArray32Type)
+            .returns(thisName)
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("final int itemsSize = limit() - fieldsOffset()")
             .beginControlFlow("if (itemsSize == 0)")
@@ -346,7 +337,7 @@ public final class Array32FWGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(parameterizedArray32Type)
+            .returns(thisName)
             .beginControlFlow("if (offset + FIELDS_OFFSET > maxLimit)")
             .addStatement("return null")
             .endControlFlow()
@@ -403,22 +394,22 @@ public final class Array32FWGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final TypeVariableName typeVarB;
         private final TypeVariableName typeVarV;
-        private final TypeName parameterizedArray32Type;
-        private final TypeName parameterizedArray32BuilderType;
+        private final TypeName array32Type;
+        private final TypeName array32BuilderType;
 
         private BuilderClassBuilder(
             ClassName flyweight,
-            ClassName arrayType,
-            ClassName array32Type)
+            ParameterizedTypeName arrayType,
+            ParameterizedTypeName array32Type)
         {
-            ClassName array8BuilderRawType = array32Type.nestedClass("Builder");
+            ClassName array8BuilderRawType = array32Type.rawType.nestedClass("Builder");
             ClassName flyweightBuilderRawType = flyweight.nestedClass("Builder");
-            ClassName arrayBuilderRawType = arrayType.nestedClass("Builder");
+            ClassName arrayBuilderRawType = arrayType.rawType.nestedClass("Builder");
             this.typeVarV = TypeVariableName.get("V", flyweight);
             this.typeVarB = TypeVariableName.get("B", ParameterizedTypeName.get(flyweightBuilderRawType, typeVarV));
-            this.parameterizedArray32Type = ParameterizedTypeName.get(array32Type, typeVarV);
-            this.parameterizedArray32BuilderType = ParameterizedTypeName.get(array8BuilderRawType, typeVarB, typeVarV);
-            TypeName superClassType = ParameterizedTypeName.get(arrayBuilderRawType, parameterizedArray32Type, typeVarB,
+            this.array32Type = array32Type;
+            this.array32BuilderType = ParameterizedTypeName.get(array8BuilderRawType, typeVarB, typeVarV);
+            TypeName superClassType = ParameterizedTypeName.get(arrayBuilderRawType, array32Type, typeVarB,
                 typeVarV);
             this.classBuilder = classBuilder(array8BuilderRawType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL)
@@ -518,7 +509,7 @@ public final class Array32FWGenerator extends ClassSpecGenerator
             return methodBuilder("item")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray32BuilderType)
+                .returns(array32BuilderType)
                 .addParameter(consumerType, "consumer")
                 .addStatement("itemRW.wrap(this)")
                 .addStatement("consumer.accept(itemRW)")
@@ -536,7 +527,7 @@ public final class Array32FWGenerator extends ClassSpecGenerator
             return methodBuilder("items")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray32BuilderType)
+                .returns(array32BuilderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")
@@ -560,7 +551,7 @@ public final class Array32FWGenerator extends ClassSpecGenerator
             return methodBuilder("wrap")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray32BuilderType)
+                .returns(array32BuilderType)
                 .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
@@ -578,8 +569,9 @@ public final class Array32FWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("build")
                 .addAnnotation(Override.class)
+                .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unchecked\"").build())
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray32Type)
+                .returns(array32Type)
                 .addStatement("int length = limit() - offset() - FIELD_COUNT_OFFSET")
                 .addStatement("buffer().putInt(offset() + LENGTH_OFFSET, length, byteOrder)")
                 .addStatement("buffer().putInt(offset() + FIELD_COUNT_OFFSET, fieldCount, byteOrder)")

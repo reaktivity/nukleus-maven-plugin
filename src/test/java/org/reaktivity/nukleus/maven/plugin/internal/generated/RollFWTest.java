@@ -24,9 +24,7 @@ import static org.junit.Assert.fail;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.Roll;
 import org.reaktivity.reaktor.internal.test.types.inner.RollFW;
 
@@ -48,9 +46,6 @@ public class RollFWTest
     };
     private final RollFW.Builder flyweightRW = new RollFW.Builder();
     private final RollFW flyweightRO = new RollFW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
     {
@@ -171,11 +166,9 @@ public class RollFWTest
               .set(roll);
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToBuildWithNothingSet()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("Roll");
         flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build();
     }

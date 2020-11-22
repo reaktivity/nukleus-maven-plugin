@@ -135,8 +135,10 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
             return visitEnum((AstEnumNode) newNode);
         case TYPEDEF:
             return visitTypedef((AstTypedefNode) newNode);
+        case DEFAULT:
+        default:
+            return defaultResult();
         }
-        return defaultResult();
     }
 
     @Override
@@ -158,8 +160,8 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
             ClassName mapKeyTypeName = resolver.resolveClass(mapNode.keyType());
             ClassName mapValueTypeName = resolver.resolveClass(mapNode.valueType());
 
-            MapFlyweightGenerator generator = new MapFlyweightGenerator(mapName, resolver.flyweightName(), baseName,
-                templateMapTypeName, mapNode.keyType(), mapKeyTypeName, mapNode.valueType(), mapValueTypeName, resolver);
+            MapFlyweightGenerator generator = new MapFlyweightGenerator(mapName, resolver.flyweightName(), templateMapTypeName,
+                mapNode.keyType(), mapKeyTypeName, mapNode.valueType(), mapValueTypeName, resolver);
             defaultResult.add(generator);
         }
         return defaultResult();
