@@ -26,9 +26,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generated.FlyweightTe
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.OctetsFW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatWithOctetsFW;
@@ -46,9 +44,6 @@ public class FlatWithOctetsFWTest
     };
     private final FlatWithOctetsFW.Builder flatWithOctetsRW = new FlatWithOctetsFW.Builder();
     private final FlatWithOctetsFW flatWithOctetsRO = new FlatWithOctetsFW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldNotTryWrapWhenLengthInsufficientForMinimumRequiredLength()
@@ -208,50 +203,40 @@ public class FlatWithOctetsFWTest
                 .octets1(b -> b.put("12345678901".getBytes(UTF_8)));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToSetOctets1WithValueShorterThanSize()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("9 instead of 10");
         flatWithOctetsRW.wrap(buffer, 0, 100)
                 .octets1(b -> b.put("123456789".getBytes(UTF_8)));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetOctets1WithValueLongerThanSizeUsingBuffer()
     {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("10");
         flatWithOctetsRW.wrap(buffer, 0, 100)
                 .octets1(asBuffer("12345678901"), 0, 11);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetOctets1WithValueShorterThanSizeUsingBuffer()
     {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("octets1");
         flatWithOctetsRW.wrap(buffer, 0, 100)
                 .fixed1(0)
                 .octets1(asBuffer("123456789"), 0, 9);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetOctets2ToNull() throws Exception
     {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("octets2");
         flatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
                 .octets1(asOctetsFW("1234567890"))
                 .string1("value1")
                 .octets2((OctetsFW) null);
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToSetOctets3WithLengthTooLong() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("lengthOctets3");
         flatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(5)
                 .octets1(asOctetsFW("1234567890"))
@@ -261,11 +246,9 @@ public class FlatWithOctetsFWTest
                 .octets3(asOctetsFW("678"));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToSetOctets3ToNullWithLengthNotSet() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("lengthOctets3");
         flatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(5)
                 .octets1(asOctetsFW("1234567890"))
@@ -274,11 +257,9 @@ public class FlatWithOctetsFWTest
                 .octets3((OctetsFW) null);
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToSetOctets3WithLengthTooLongVariant1() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("lengthOctets3");
         flatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(5)
                 .octets1(asOctetsFW("1234567890"))
@@ -288,11 +269,9 @@ public class FlatWithOctetsFWTest
                 .octets3(b -> b.set("678".getBytes(UTF_8)));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToSetOctets3WithLengthTooLongVariant2() throws Exception
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("lengthOctets3");
         flatWithOctetsRW.wrap(buffer, 0, buffer.capacity())
                 .fixed1(5)
                 .octets1(asOctetsFW("1234567890"))

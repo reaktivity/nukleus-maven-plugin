@@ -102,16 +102,6 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
                            .build();
     }
 
-    private static Map<TypeName, String> initstringValueTypeByTypeName()
-    {
-        Map<TypeName, String> stringValueTypeByTypeName = new HashMap<>();
-        stringValueTypeByTypeName.put(TypeName.BYTE, "Byte");
-        stringValueTypeByTypeName.put(TypeName.SHORT, "Short");
-        stringValueTypeByTypeName.put(TypeName.INT, "Int");
-        stringValueTypeByTypeName.put(TypeName.LONG, "Long");
-        return stringValueTypeByTypeName;
-    }
-
     private boolean isValueTypeNonPrimitive()
     {
         return valueTypeName != null && !valueTypeName.isPrimitive();
@@ -474,11 +464,6 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
         {
             return valueTypeName != null;
         }
-
-        private boolean isTypeUnsignedInt()
-        {
-            return valueTypeName != null && unsignedValueTypeName != null;
-        }
     }
 
     private static boolean isStringType(
@@ -520,10 +505,5 @@ public final class EnumFlyweightGenerator extends ClassSpecGenerator
     {
         String fieldName =  ((ClassName) type).simpleName();
         return String.format("%s%s", Character.toLowerCase(fieldName.charAt(0)), fieldName.substring(1, fieldName.length() - 2));
-    }
-
-    private boolean isTypeByte()
-    {
-        return valueTypeName.equals(TypeName.BYTE) && unsignedValueTypeName.equals(TypeName.INT);
     }
 }

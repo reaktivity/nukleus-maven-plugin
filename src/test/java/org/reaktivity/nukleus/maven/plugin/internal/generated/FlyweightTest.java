@@ -27,16 +27,11 @@ import java.util.Arrays;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.Flyweight;
 
 public class FlyweightTest
 {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(150))
     {
         {
@@ -62,11 +57,9 @@ public class FlyweightTest
 
     private TestFlyweight flyweigthRO = new TestFlyweight();
 
-    @Test
+    @Test(expected = IndexOutOfBoundsException.class)
     public void shouldFailToWrapWhenOffsetExceedsMaxLimit() throws Exception
     {
-        expectedException.expect(IndexOutOfBoundsException.class);
-        expectedException.expectMessage("offset");
         flyweigthRO.wrap(buffer,  4,  1);
     }
 

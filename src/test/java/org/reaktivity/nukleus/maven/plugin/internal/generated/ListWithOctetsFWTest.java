@@ -25,9 +25,7 @@ import static org.junit.Assert.fail;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.OctetsFW;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.Varint32FW;
@@ -46,9 +44,6 @@ public class ListWithOctetsFWTest
     private final int physicalLengthSize = Byte.BYTES;
     private final int logicalLengthSize = Byte.BYTES;
     private final int bitmaskSize = Long.BYTES;
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldNotWrapWhenLengthInsufficientForMinimumRequiredLength()
@@ -220,7 +215,6 @@ public class ListWithOctetsFWTest
         int offsetOctets4 = offsetLengthOctets4 + Integer.BYTES;
         OctetsFW octets4 = asOctetsFW("123");
         buffer.putBytes(offsetOctets4, octets4.buffer(), 0, octets4.sizeof());
-        int offsetExtension = offsetOctets4 + octets4.sizeof();
 
         assertSame(listWithOctetsRO, listWithOctetsRO.wrap(buffer, offsetPhysicalLength,
             offsetPhysicalLength + physicalLength));
@@ -318,29 +312,23 @@ public class ListWithOctetsFWTest
             .octets1(b -> b.put("12345678901".getBytes(UTF_8)));
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToSetOctets1WithValueShorterThanSize()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("9 instead of 10");
         listWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(b -> b.put("123456789".getBytes(UTF_8)));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetOctets1WithValueLongerThanSizeUsingBuffer()
     {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("10");
         listWithOctetsRW.wrap(buffer, 0, 100)
             .octets1(asBuffer("12345678901"), 0, 11);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetOctets1WithValueShorterThanSizeUsingBuffer()
     {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("octets1");
         listWithOctetsRW.wrap(buffer, 0, 100)
             .fixed1(0)
             .octets1(asBuffer("123456789"), 0, 9);

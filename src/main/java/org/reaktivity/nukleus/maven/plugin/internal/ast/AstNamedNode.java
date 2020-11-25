@@ -40,10 +40,10 @@ public abstract class AstNamedNode extends AstNode
 
     public abstract Kind getKind();
 
-    public abstract static class Builder<T extends AstNamedNode> extends AstNode.Builder
+    public abstract static class Builder<T extends AstNamedNode> extends AstNode.Builder<T>
     {
         protected String name;
 
-        public abstract Builder name(String name);
+        public abstract Builder<T> name(String name);
     }
 }

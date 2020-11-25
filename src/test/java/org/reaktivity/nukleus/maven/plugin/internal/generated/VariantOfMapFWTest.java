@@ -154,7 +154,7 @@ public class VariantOfMapFWTest
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int size = setTwoEntries(buffer, offset);
+        setTwoEntries(buffer, offset);
         final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMap = flyweightRO.wrap(buffer, offset,
             buffer.capacity());
 
@@ -166,7 +166,7 @@ public class VariantOfMapFWTest
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int size = setTwoEntries(buffer, offset);
+        setTwoEntries(buffer, offset);
         final VariantOfMapFW<VariantEnumKindOfStringFW, TypedefStringFW> variantOfMap =
             flyweightRO.tryWrap(buffer, offset, buffer.capacity());
 

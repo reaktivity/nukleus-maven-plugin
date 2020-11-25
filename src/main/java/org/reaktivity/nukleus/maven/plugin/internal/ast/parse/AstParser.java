@@ -365,7 +365,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             AstType astTypeName = astTypesByQualifiedName.get(superTypeName);
             if (astTypeName == null)
             {
-                Iterator prefixIterator = qualifiedPrefixes.iterator();
+                Iterator<String> prefixIterator = qualifiedPrefixes.iterator();
                 String currentPrefix = qualifiedPrefixes.peekFirst();
                 while (prefixIterator.hasNext() &&
                     astTypesByQualifiedName.get(String.format("%s%s", currentPrefix, superTypeName)) == null)
@@ -881,7 +881,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public AstListNode.Builder visitList_params(
             List_paramsContext ctx)
         {
-            AstListNode.Builder builder = new ListParamsVisitor(listBuilder).visitList_params(ctx);
+            new ListParamsVisitor(listBuilder).visitList_params(ctx);
             return listBuilder;
         }
 
@@ -889,7 +889,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         public Builder visitList_using(
             List_usingContext ctx)
         {
-            AstListNode.Builder builder = new ListParamsVisitor(listBuilder).visitList_using(ctx);
+            new ListParamsVisitor(listBuilder).visitList_using(ctx);
             return listBuilder;
         }
 
@@ -1506,8 +1506,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitVariant_list_member(
                 Variant_list_memberContext ctx)
             {
-                AstVariantCaseNode.Builder variantListMemberVisitor = new VariantListMemberVisitor(variantCaseBuilder)
-                    .visitVariant_list_member(ctx);
+                new VariantListMemberVisitor(variantCaseBuilder).visitVariant_list_member(ctx);
                 return variantCaseBuilder;
             }
 
@@ -1515,8 +1514,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitVariant_array_member(
                 Variant_array_memberContext ctx)
             {
-                AstVariantCaseNode.Builder variantArrayMemberVisitor = new VariantArrayMemberVisitor(variantCaseBuilder)
-                    .visitVariant_array_member(ctx);
+                new VariantArrayMemberVisitor(variantCaseBuilder).visitVariant_array_member(ctx);
                 return variantCaseBuilder;
             }
 
@@ -1524,8 +1522,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitVariant_map_member(
                 Variant_map_memberContext ctx)
             {
-                AstVariantCaseNode.Builder variantMapMemberVisitor = new MapMemberVisitor(variantCaseBuilder)
-                    .visitVariant_map_member(ctx);
+                new MapMemberVisitor(variantCaseBuilder).visitVariant_map_member(ctx);
                 return variantCaseBuilder;
             }
 
@@ -1533,8 +1530,7 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             public AstVariantCaseNode.Builder visitVariant_octets_member(
                 Variant_octets_memberContext ctx)
             {
-                AstVariantCaseNode.Builder variantOctetsMemberVisitor = new OctetsMemberVisitor(variantCaseBuilder)
-                    .visitVariant_octets_member(ctx);
+                new OctetsMemberVisitor(variantCaseBuilder).visitVariant_octets_member(ctx);
                 return variantCaseBuilder;
             }
         }

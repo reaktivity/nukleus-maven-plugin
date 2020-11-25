@@ -166,7 +166,7 @@ public abstract class AstAbstractMemberNode extends AstNode
         return c;
     }
 
-    public abstract static class Builder<T extends AstAbstractMemberNode> extends AstNode.Builder
+    public abstract static class Builder<T extends AstAbstractMemberNode> extends AstNode.Builder<T>
     {
         protected String name;
         protected List<AstType> types;
@@ -182,48 +182,48 @@ public abstract class AstAbstractMemberNode extends AstNode
             this.byteOrder = NATIVE;
         }
 
-        public Builder name(
+        public Builder<T> name(
             String name)
         {
             this.name = name;
             return this;
         }
 
-        public Builder type(
+        public Builder<T> type(
             AstType type)
         {
             types.add(requireNonNull(type));
             return this;
         }
 
-        public Builder size(
+        public Builder<T> size(
             int size)
         {
             this.size = size;
             return this;
         }
 
-        public Builder sizeName(
+        public Builder<T> sizeName(
             String sizeName)
         {
             this.sizeName = sizeName;
             return this;
         }
 
-        public Builder defaultValue(
+        public Builder<T> defaultValue(
             Object defaultValue)
         {
             this.defaultValue = defaultValue;
             return this;
         }
 
-        public Builder defaultToNull()
+        public Builder<T> defaultToNull()
         {
             this.defaultValue = NULL_DEFAULT;
             return this;
         }
 
-        public Builder byteOrder(
+        public Builder<T> byteOrder(
             AstByteOrder byteOrder)
         {
             this.byteOrder = byteOrder;

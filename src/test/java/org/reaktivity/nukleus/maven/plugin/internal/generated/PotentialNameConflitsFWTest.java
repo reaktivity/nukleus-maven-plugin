@@ -21,9 +21,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.PotentialNameConflictsFW;
 
 public class PotentialNameConflitsFWTest
@@ -37,9 +35,6 @@ public class PotentialNameConflitsFWTest
     };
     private final PotentialNameConflictsFW.Builder potentialNameConflictsRW = new PotentialNameConflictsFW.Builder();
     private final PotentialNameConflictsFW potentialNameConflictsRO = new PotentialNameConflictsFW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldSetAllValues() throws Exception

@@ -63,6 +63,8 @@ import org.reaktivity.nukleus.maven.plugin.internal.generate.Varint64FlyweightGe
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeVariableName;
 
 public class Generator
 {
@@ -127,9 +129,11 @@ public class Generator
 
         ClassName flyweightType = resolver.resolveClass(AstType.FLYWEIGHT);
         ClassName stringType = resolver.resolveClass(AstType.STRING);
-        ClassName arrayType = resolver.resolveClass(AstType.ARRAY);
+        ParameterizedTypeName arrayType = ParameterizedTypeName.get(resolver.resolveClass(AstType.ARRAY),
+                TypeVariableName.get("V", flyweightType));
         ClassName listType = resolver.resolveClass(AstType.LIST);
-        ClassName mapType = resolver.resolveClass(AstType.MAP);
+        ParameterizedTypeName mapType = ParameterizedTypeName.get(resolver.resolveClass(AstType.MAP),
+                TypeVariableName.get("K", flyweightType), TypeVariableName.get("V", flyweightType));
         ClassName boundedOctetsType = resolver.resolveClass(AstType.BOUNDED_OCTETS);
 
         typeSpecs.add(new FlyweightGenerator(flyweightType, arrayType));
@@ -149,7 +153,7 @@ public class Generator
         typeSpecs.add(new List32FWGenerator(flyweightType, listType));
         typeSpecs.add(new List8FWGenerator(flyweightType, listType));
         typeSpecs.add(new List0FWGenerator(flyweightType, listType));
-        typeSpecs.add(new MapFWGenerator(flyweightType));
+        typeSpecs.add(new MapFWGenerator(flyweightType, mapType));
         typeSpecs.add(new Map8FWGenerator(flyweightType, mapType));
         typeSpecs.add(new Map16FWGenerator(flyweightType, mapType));
         typeSpecs.add(new Map32FWGenerator(flyweightType, mapType));

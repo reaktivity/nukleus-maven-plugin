@@ -128,7 +128,7 @@ public class VariantOfArrayFWTest
     public void shouldWrapWhenLengthSufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int size = setAllItems(buffer, offset);
+        setAllItems(buffer, offset);
         final VariantOfArrayFW<VariantEnumKindOfStringFW> variantOfList = flyweightRO.wrap(buffer, offset,
             buffer.capacity());
 
@@ -140,7 +140,7 @@ public class VariantOfArrayFWTest
     public void shouldTryWrapWhenLengthSufficientForMinimumRequiredLength()
     {
         final int offset = 10;
-        int size = setAllItems(buffer, offset);
+        setAllItems(buffer, offset);
         final VariantOfArrayFW<VariantEnumKindOfStringFW> variantOfList =
             flyweightRO.tryWrap(buffer, offset, buffer.capacity());
 

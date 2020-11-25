@@ -39,14 +39,6 @@ public class TypedefUint32FWTest
         }
     };
 
-    private final MutableDirectBuffer expected = new UnsafeBuffer(allocateDirect(100))
-    {
-        {
-            // Make sure the code is not secretly relying upon memory being initialized to 0
-            setMemory(0, capacity(), (byte) 0xab);
-        }
-    };
-
     private final TypedefUint32FW.Builder flyweightRW = new TypedefUint32FW.Builder();
     private final TypedefUint32FW flyweightRO = new TypedefUint32FW();
 

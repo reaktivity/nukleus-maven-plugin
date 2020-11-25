@@ -45,11 +45,6 @@ public class Array8FWTest
         }
     };
 
-    private final Array8FW.Builder
-        <VariantEnumKindOfStringFW.Builder, VariantEnumKindOfStringFW>
-        flyweightRW = new Array8FW.Builder<>(new VariantEnumKindOfStringFW.Builder(),
-        new VariantEnumKindOfStringFW());
-
     private final Array8FW<VariantEnumKindOfStringFW> flyweightRO =
         new Array8FW<>(new VariantEnumKindOfStringFW());
 

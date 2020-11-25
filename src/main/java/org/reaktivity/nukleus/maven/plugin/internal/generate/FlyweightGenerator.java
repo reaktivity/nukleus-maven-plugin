@@ -34,7 +34,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
@@ -42,18 +41,18 @@ import com.squareup.javapoet.WildcardTypeName;
 public final class FlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
-    private final ClassName arrayType;
+    private final ParameterizedTypeName arrayAnyType;
     private final BuilderClassBuilder builderClassBuilder;
 
     public FlyweightGenerator(
         ClassName flyweightType,
-        ClassName arrayType)
+        ParameterizedTypeName arrayType)
     {
         super(flyweightType);
 
         this.classBuilder = classBuilder(thisName).addModifiers(PUBLIC, ABSTRACT);
-        this.arrayType = arrayType;
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, arrayType);
+        this.arrayAnyType = ParameterizedTypeName.get(arrayType.rawType, WildcardTypeName.subtypeOf(Object.class));
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, arrayAnyType);
     }
 
     @Override
@@ -216,7 +215,7 @@ public final class FlyweightGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .addParameter(arrayType, "array")
+            .addParameter(arrayAnyType, "array")
             .returns(thisName)
             .addStatement("wrap(buffer, offset, maxLimit)")
             .addStatement("return this")
@@ -275,16 +274,16 @@ public final class FlyweightGenerator extends ClassSpecGenerator
     {
         private final TypeSpec.Builder classBuilder;
         private final ClassName thisRawName;
-        private final ClassName arrayType;
+        private final ParameterizedTypeName arrayAnyType;
         private final ParameterizedTypeName thisName;
         private final TypeVariableName typeVarT;
 
         private BuilderClassBuilder(
             ClassName flyweightType,
-            ClassName arrayType)
+            ParameterizedTypeName arrayAnyType)
         {
             this.thisRawName = flyweightType.nestedClass("Builder");
-            this.arrayType = arrayType;
+            this.arrayAnyType = arrayAnyType;
 
             this.typeVarT = TypeVariableName.get("T");
             this.thisName = ParameterizedTypeName.get(thisRawName, typeVarT);
@@ -392,14 +391,14 @@ public final class FlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec resetMethod()
         {
-            ClassName arrayBuilderRawType = arrayType.nestedClass("Builder");
-            TypeName arrayParametricTypeT = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(arrayType, typeVarT));
-            TypeName arrayParametricTypeB = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(thisRawName, typeVarT));
-            TypeName parameterizedArrayBuilderType = ParameterizedTypeName.get(arrayBuilderRawType, arrayParametricTypeT,
-                arrayParametricTypeB, typeVarT);
+            ClassName arrayBuilderRawType = arrayAnyType.rawType.nestedClass("Builder");
+            ParameterizedTypeName arrayBuilderType = ParameterizedTypeName.get(arrayBuilderRawType,
+                    WildcardTypeName.subtypeOf(Object.class),
+                    WildcardTypeName.subtypeOf(Object.class),
+                    WildcardTypeName.subtypeOf(Object.class));
             return methodBuilder("reset")
                       .addModifiers(PUBLIC)
-                      .addParameter(parameterizedArrayBuilderType, "array")
+                      .addParameter(arrayBuilderType, "array")
                       .build();
         }
 
@@ -485,15 +484,15 @@ public final class FlyweightGenerator extends ClassSpecGenerator
 
         private MethodSpec wrapWithArrayMethod()
         {
-            ClassName arrayBuilderRawType = arrayType.nestedClass("Builder");
-            TypeName arrayParametricTypeT = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(arrayType, typeVarT));
-            TypeName arrayParametricTypeB = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(thisRawName, typeVarT));
-            TypeName parameterizedArrayBuilderType = ParameterizedTypeName.get(arrayBuilderRawType, arrayParametricTypeT,
-                arrayParametricTypeB, typeVarT);
+            ClassName arrayBuilderRawType = arrayAnyType.rawType.nestedClass("Builder");
+            ParameterizedTypeName arrayBuilderType = ParameterizedTypeName.get(arrayBuilderRawType,
+                    WildcardTypeName.subtypeOf(Object.class),
+                    WildcardTypeName.subtypeOf(Object.class),
+                    WildcardTypeName.subtypeOf(Object.class));
             return methodBuilder("wrap")
                 .addModifiers(PUBLIC)
                 .returns(thisName)
-                .addParameter(parameterizedArrayBuilderType, "array")
+                .addParameter(arrayBuilderType, "array")
                 .addStatement("this.buffer = array.buffer()")
                 .addStatement("this.offset = array.limit()")
                 .addStatement("this.limit = array.limit()")

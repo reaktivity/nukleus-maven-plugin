@@ -45,11 +45,6 @@ public class Array32FWTest
         }
     };
 
-    private final Array32FW.Builder
-        <VariantEnumKindOfStringFW.Builder, VariantEnumKindOfStringFW>
-        flyweightRW = new Array32FW.Builder<>(new VariantEnumKindOfStringFW.Builder(),
-        new VariantEnumKindOfStringFW());
-
     private final Array32FW<VariantEnumKindOfStringFW> flyweightRO =
         new Array32FW<>(new VariantEnumKindOfStringFW());
 

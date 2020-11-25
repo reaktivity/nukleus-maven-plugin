@@ -30,6 +30,7 @@ import static org.reaktivity.nukleus.maven.plugin.internal.generate.TypeNames.UN
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -39,22 +40,20 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
 
-public final class Array8FWGenerator extends ClassSpecGenerator
+public final class Array8FWGenerator extends ParameterizedTypeSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final TypeVariableName typeVarV;
-    private final TypeName parameterizedArray8Type;
     private final BuilderClassBuilder builderClassBuilder;
 
     public Array8FWGenerator(
         ClassName flyweightType,
-        ClassName arrayType)
+        ParameterizedTypeName arrayType)
     {
-        super(flyweightType.peerClass("Array8FW"));
-        this.typeVarV = TypeVariableName.get("V", flyweightType);
-        this.parameterizedArray8Type = ParameterizedTypeName.get(thisName, typeVarV);
-        this.classBuilder = classBuilder(thisName)
-            .superclass(ParameterizedTypeName.get(arrayType, typeVarV))
+        super(flyweightType.peerClass("Array8FW"), TypeVariableName.get("V", flyweightType));
+        this.typeVarV = (TypeVariableName) thisName.typeArguments.get(0);
+        this.classBuilder = classBuilder(thisRawName)
+            .superclass(arrayType)
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariable(typeVarV);
         this.builderClassBuilder = new BuilderClassBuilder(flyweightType, arrayType, thisName);
@@ -301,7 +300,7 @@ public final class Array8FWGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(parameterizedArray8Type)
+            .returns(thisName)
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("final int itemsSize = limit() - fieldsOffset()")
             .beginControlFlow("if (itemsSize == 0)")
@@ -323,7 +322,7 @@ public final class Array8FWGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(parameterizedArray8Type)
+            .returns(thisName)
             .beginControlFlow("if (offset + FIELDS_OFFSET > maxLimit)")
             .addStatement("return null")
             .endControlFlow()
@@ -380,22 +379,22 @@ public final class Array8FWGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final TypeVariableName typeVarB;
         private final TypeVariableName typeVarV;
-        private final TypeName parameterizedArray8Type;
-        private final TypeName parameterizedArray8BuilderType;
+        private final TypeName array8Type;
+        private final TypeName array8BuilderType;
 
         private BuilderClassBuilder(
             ClassName flyweight,
-            ClassName arrayType,
-            ClassName array8Type)
+            ParameterizedTypeName arrayType,
+            ParameterizedTypeName array8Type)
         {
-            ClassName array8BuilderRawType = array8Type.nestedClass("Builder");
+            ClassName array8BuilderRawType = array8Type.rawType.nestedClass("Builder");
             ClassName flyweightBuilderRawType = flyweight.nestedClass("Builder");
-            ClassName arrayBuilderRawType = arrayType.nestedClass("Builder");
+            ClassName arrayBuilderRawType = arrayType.rawType.nestedClass("Builder");
             this.typeVarV = TypeVariableName.get("V", flyweight);
             this.typeVarB = TypeVariableName.get("B", ParameterizedTypeName.get(flyweightBuilderRawType, typeVarV));
-            this.parameterizedArray8Type = ParameterizedTypeName.get(array8Type, typeVarV);
-            this.parameterizedArray8BuilderType = ParameterizedTypeName.get(array8BuilderRawType, typeVarB, typeVarV);
-            TypeName superClassType = ParameterizedTypeName.get(arrayBuilderRawType, parameterizedArray8Type, typeVarB, typeVarV);
+            this.array8Type = array8Type;
+            this.array8BuilderType = ParameterizedTypeName.get(array8BuilderRawType, typeVarB, typeVarV);
+            TypeName superClassType = ParameterizedTypeName.get(arrayBuilderRawType, array8Type, typeVarB, typeVarV);
             this.classBuilder = classBuilder(array8BuilderRawType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL)
                 .superclass(superClassType)
@@ -471,7 +470,7 @@ public final class Array8FWGenerator extends ClassSpecGenerator
             return methodBuilder("item")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray8BuilderType)
+                .returns(array8BuilderType)
                 .addParameter(consumerType, "consumer")
                 .addStatement("itemRW.wrap(this)")
                 .addStatement("consumer.accept(itemRW)")
@@ -489,7 +488,7 @@ public final class Array8FWGenerator extends ClassSpecGenerator
             return methodBuilder("items")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray8BuilderType)
+                .returns(array8BuilderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")
@@ -514,7 +513,7 @@ public final class Array8FWGenerator extends ClassSpecGenerator
             return methodBuilder("wrap")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray8BuilderType)
+                .returns(array8BuilderType)
                 .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
@@ -532,8 +531,9 @@ public final class Array8FWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("build")
                 .addAnnotation(Override.class)
+                .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unchecked\"").build())
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray8Type)
+                .returns(array8Type)
                 .addStatement("int length = limit() - offset() - FIELD_COUNT_OFFSET")
                 .addStatement("assert length <= LENGTH_MAX_VALUE : \"Length is too large\"")
                 .addStatement("assert fieldCount <= LENGTH_MAX_VALUE : \"Field count is too large\"")

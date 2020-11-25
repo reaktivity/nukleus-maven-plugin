@@ -15,7 +15,9 @@
  */
 package org.reaktivity.nukleus.maven.plugin.internal.generate;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeVariableName;
 
 public abstract class ParameterizedTypeSpecGenerator extends TypeSpecGenerator<ParameterizedTypeName>
 {
@@ -23,5 +25,12 @@ public abstract class ParameterizedTypeSpecGenerator extends TypeSpecGenerator<P
         ParameterizedTypeName thisType)
     {
         super(thisType, thisType.rawType);
+    }
+
+    protected ParameterizedTypeSpecGenerator(
+        ClassName rawType,
+        TypeVariableName... typeVars)
+    {
+        super(ParameterizedTypeName.get(rawType, typeVars), rawType);
     }
 }

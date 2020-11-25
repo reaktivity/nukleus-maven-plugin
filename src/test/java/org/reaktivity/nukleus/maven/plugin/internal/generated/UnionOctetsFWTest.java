@@ -25,9 +25,7 @@ import static org.junit.Assert.fail;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
 import org.reaktivity.reaktor.internal.test.types.inner.UnionOctetsFW;
 
@@ -50,9 +48,6 @@ public class UnionOctetsFWTest
     };
     private final UnionOctetsFW.Builder flyweightRW = new UnionOctetsFW.Builder();
     private final UnionOctetsFW flyweightRO = new UnionOctetsFW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValuesCase1(MutableDirectBuffer buffer, final int offset)
     {

@@ -35,7 +35,6 @@ public class List0FWTest
         }
     };
 
-    private final List0FW.Builder list0RW = new List0FW.Builder();
     private final List0FW list0RO = new List0FW();
 
     @Test(expected = IndexOutOfBoundsException.class)

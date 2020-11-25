@@ -22,8 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-import org.reaktivity.nukleus.maven.plugin.internal.ast.AstVariantNode.Builder;
-
 public final class AstListNode extends AstNamedNode
 {
     private final List<AstListMemberNode> members;

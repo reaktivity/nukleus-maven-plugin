@@ -21,9 +21,7 @@ import static org.junit.Assert.assertNull;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.Varint64FW;
 
 public class Varint64FWTest
@@ -45,9 +43,6 @@ public class Varint64FWTest
 
     private final Varint64FW.Builder varintRW = new Varint64FW.Builder();
     private final Varint64FW varint64RO = new Varint64FW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldNotTryWrapZeroLengthBuffer() throws Exception
@@ -96,7 +91,7 @@ public class Varint64FWTest
         assertNull(varint64RO.tryWrap(buffer,  offset,  buffer.capacity()));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldNotWrapValueWith65bits() throws Exception
     {
         int offset = 37;
@@ -106,8 +101,6 @@ public class Varint64FWTest
             buffer.putByte(offset + i, (byte) 0xff);
         }
         buffer.putByte(offset + 9, (byte) 0x02);
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("offset 37 exceeds 64 bits");
         varint64RO.wrap(buffer,  offset,  buffer.capacity());
     }
 

@@ -154,11 +154,11 @@ public class List8FWTest
         };
         VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
-        ListFW.Builder listRW = new List8FW.Builder()
+        ListFW.Builder<List8FW> listRW = new List8FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
-        List8FW list8RO = (List8FW) listRW.build();
+        List8FW list8RO = listRW.build();
         int limit = list8RW.wrap(buffer, 0, buffer.capacity())
             .fields(2, list8RO.buffer(), 0, list8RO.length() - fieldCountSize)
             .build()
@@ -183,11 +183,11 @@ public class List8FWTest
         };
         VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
         VariantEnumKindOfUint32FW.Builder field2RW = new VariantEnumKindOfUint32FW.Builder();
-        ListFW.Builder listRW = new List8FW.Builder()
+        ListFW.Builder<List8FW> listRW = new List8FW.Builder()
             .wrap(listBuffer, 0, listBuffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof())
             .field((b, o, m) -> field2RW.wrap(b, o, m).set(4000000000L).build().sizeof());
-        List8FW list8RO = (List8FW) listRW.build();
+        List8FW list8RO = listRW.build();
 
         int limit = list8RW.wrap(buffer, 0, buffer.capacity())
             .fields(2, (b, o, m) ->

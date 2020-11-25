@@ -21,9 +21,7 @@ import static org.junit.Assert.assertNull;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.Varbyteuint32FW;
 
 public class Varbyteuint32FWTest
@@ -45,9 +43,6 @@ public class Varbyteuint32FWTest
 
     private final Varbyteuint32FW.Builder varbyteuint32RW = new Varbyteuint32FW.Builder();
     private final Varbyteuint32FW varbyteuint32RO = new Varbyteuint32FW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldNotTryWrapZeroLengthBuffer() throws Exception
@@ -83,7 +78,7 @@ public class Varbyteuint32FWTest
         varbyteuint32RO.wrap(buffer, 0, 1);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldNotWrapValueWith33bits() throws Exception
     {
         buffer.putByte(50, (byte) 0xFF);
@@ -91,8 +86,6 @@ public class Varbyteuint32FWTest
         buffer.putByte(52, (byte) 0xFF);
         buffer.putByte(53, (byte) 0xFF);
         buffer.putByte(54, (byte) 0x80);
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("offset 50 exceeds 32 bits");
         varbyteuint32RO.wrap(buffer,  50,  buffer.capacity());
         assertEquals(Integer.MAX_VALUE, varbyteuint32RO.value());
     }

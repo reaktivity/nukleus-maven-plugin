@@ -30,9 +30,7 @@ import java.util.stream.LongStream;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.IntegerFixedArraysFW;
 
 public class IntegerFixedArraysFWTest
@@ -52,9 +50,6 @@ public class IntegerFixedArraysFWTest
     };
     private final IntegerFixedArraysFW.Builder flyweightRW = new IntegerFixedArraysFW.Builder();
     private final IntegerFixedArraysFW flyweightRO = new IntegerFixedArraysFW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValues(MutableDirectBuffer buffer, int offset)
     {
