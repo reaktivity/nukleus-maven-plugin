@@ -63,11 +63,11 @@ public class VariantWithFourTypesFWTest
     {
         MutableDirectBuffer variantOfListBuffer = new UnsafeBuffer(allocateDirect(20));
         VariantEnumKindOfStringFW.Builder field1RW = new VariantEnumKindOfStringFW.Builder();
-        ListFW.Builder listRW = new List8FW.Builder()
+        ListFW.Builder<List8FW> listRW = new List8FW.Builder()
             .wrap(variantOfListBuffer, 0, variantOfListBuffer.capacity())
             .field((b, o, m) -> field1RW.wrap(b, o, m).set(asStringFW("string1")).build().sizeof());
         VariantOfListFW variantOfList = new VariantOfListFW.Builder().wrap(variantOfListBuffer, 0,
-            variantOfListBuffer.capacity()).set((ListFW) listRW.build()).build();
+            variantOfListBuffer.capacity()).set(listRW.build()).build();
 
         int limit = flyweightRW.wrap(buffer, 0, buffer.capacity())
             .setAsVariantOfList(variantOfList)

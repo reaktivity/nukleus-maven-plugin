@@ -89,9 +89,6 @@ public final class ListVisitor extends AstNode.Visitor<Collection<TypeSpecGenera
         ClassName originalMapKeyName = null;
         ClassName originalMapValueName = null;
 
-        int size = listMemberNode.size();
-        TypeName sizeTypeName = listMemberNode.sizeType() == null ? null : listMemberNode.sizeType().isUnsignedInt() ?
-                        resolver.resolveUnsignedType(listMemberNode.sizeType()) : resolver.resolveType(listMemberNode.sizeType());
         boolean usedAsSize = listMemberNode.usedAsSize();
         Object defaultValue = listMemberNode.defaultValue();
         AstByteOrder byteOrder = listMemberNode.byteOrder();

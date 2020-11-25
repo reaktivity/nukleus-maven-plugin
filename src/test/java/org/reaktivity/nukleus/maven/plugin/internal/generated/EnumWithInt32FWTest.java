@@ -25,9 +25,7 @@ import static org.junit.Assert.fail;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt32;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt32FW;
 
@@ -51,9 +49,6 @@ public class EnumWithInt32FWTest
 
     private final EnumWithInt32FW.Builder flyweightRW = new EnumWithInt32FW.Builder();
     private final EnumWithInt32FW flyweightRO = new EnumWithInt32FW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
     {
@@ -174,11 +169,9 @@ public class EnumWithInt32FWTest
             .set(enumWithInt8);
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToBuildWithNothingSet()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("EnumWithInt32");
         flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build();
     }

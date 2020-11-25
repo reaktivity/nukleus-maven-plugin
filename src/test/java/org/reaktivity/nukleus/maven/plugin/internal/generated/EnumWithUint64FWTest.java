@@ -25,9 +25,7 @@ import static org.junit.Assert.fail;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint64;
 import org.reaktivity.reaktor.internal.test.types.inner.EnumWithUint64FW;
 
@@ -51,9 +49,6 @@ public class EnumWithUint64FWTest
 
     private final EnumWithUint64FW.Builder flyweightRW = new EnumWithUint64FW.Builder();
     private final EnumWithUint64FW flyweightRO = new EnumWithUint64FW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     static int setAllTestValues(
         MutableDirectBuffer buffer,
@@ -185,11 +180,9 @@ public class EnumWithUint64FWTest
             .set(enumWithUint64);
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void shouldFailToBuildWithNothingSet()
     {
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("EnumWithUint64");
         flyweightRW.wrap(buffer, 10, buffer.capacity())
             .build();
     }

@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.inner.EnumWithInt8;
 import org.reaktivity.reaktor.internal.test.types.inner.ListWithArrayOfStructFW;
 
 public class ListWithArrayOfStructFWTest
@@ -35,12 +34,6 @@ public class ListWithArrayOfStructFWTest
     };
     private final ListWithArrayOfStructFW.Builder listWithArrayRW = new ListWithArrayOfStructFW.Builder();
     private final ListWithArrayOfStructFW listWithArrayRO = new ListWithArrayOfStructFW();
-    private final int lengthSize = Byte.BYTES;
-    private final int fieldCountSize = Byte.BYTES;
-    private final byte kindList8 = EnumWithInt8.TWO.value();
-    private final int kindSize = Byte.BYTES;
-    private final byte kindArray8 = EnumWithInt8.EIGHT.value();
-    private final byte kindString8 = EnumWithInt8.NINE.value();
 
     @Test
     public void shouldSetAllFields() throws Exception

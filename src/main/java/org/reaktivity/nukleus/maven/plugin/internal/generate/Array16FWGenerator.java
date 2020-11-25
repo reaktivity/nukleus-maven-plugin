@@ -31,6 +31,7 @@ import java.nio.ByteOrder;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -40,22 +41,20 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.squareup.javapoet.WildcardTypeName;
 
-public final class Array16FWGenerator extends ClassSpecGenerator
+public final class Array16FWGenerator extends ParameterizedTypeSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final TypeVariableName typeVarV;
-    private final TypeName parameterizedArray16Type;
     private final BuilderClassBuilder builderClassBuilder;
 
     public Array16FWGenerator(
         ClassName flyweightType,
-        ClassName arrayType)
+        ParameterizedTypeName arrayType)
     {
-        super(flyweightType.peerClass("Array16FW"));
-        this.typeVarV = TypeVariableName.get("V", flyweightType);
-        this.parameterizedArray16Type = ParameterizedTypeName.get(thisName, typeVarV);
-        this.classBuilder = classBuilder(thisName)
-            .superclass(ParameterizedTypeName.get(arrayType, typeVarV))
+        super(flyweightType.peerClass("Array16FW"), TypeVariableName.get("V", flyweightType));
+        this.typeVarV = (TypeVariableName) thisName.typeArguments.get(0);
+        this.classBuilder = classBuilder(thisRawName)
+            .superclass(arrayType)
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariable(typeVarV);
 
@@ -323,7 +322,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(parameterizedArray16Type)
+            .returns(thisName)
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("final int itemsSize = limit() - fieldsOffset()")
             .beginControlFlow("if (itemsSize == 0)")
@@ -345,7 +344,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(parameterizedArray16Type)
+            .returns(thisName)
             .beginControlFlow("if (offset + FIELDS_OFFSET > maxLimit)")
             .addStatement("return null")
             .endControlFlow()
@@ -402,22 +401,22 @@ public final class Array16FWGenerator extends ClassSpecGenerator
         private final TypeSpec.Builder classBuilder;
         private final TypeVariableName typeVarB;
         private final TypeVariableName typeVarV;
-        private final TypeName parameterizedArray16Type;
-        private final TypeName parameterizedArray16BuilderType;
+        private final TypeName array16Type;
+        private final TypeName array16BuilderType;
 
         private BuilderClassBuilder(
             ClassName flyweight,
-            ClassName arrayType,
-            ClassName array16Type)
+            ParameterizedTypeName arrayType,
+            ParameterizedTypeName array16Type)
         {
-            ClassName array8BuilderRawType = array16Type.nestedClass("Builder");
+            ClassName array8BuilderRawType = array16Type.rawType.nestedClass("Builder");
             ClassName flyweightBuilderRawType = flyweight.nestedClass("Builder");
-            ClassName arrayBuilderRawType = arrayType.nestedClass("Builder");
+            ClassName arrayBuilderRawType = arrayType.rawType.nestedClass("Builder");
             this.typeVarV = TypeVariableName.get("V", flyweight);
             this.typeVarB = TypeVariableName.get("B", ParameterizedTypeName.get(flyweightBuilderRawType, typeVarV));
-            this.parameterizedArray16Type = ParameterizedTypeName.get(array16Type, typeVarV);
-            this.parameterizedArray16BuilderType = ParameterizedTypeName.get(array8BuilderRawType, typeVarB, typeVarV);
-            TypeName superClassType = ParameterizedTypeName.get(arrayBuilderRawType, parameterizedArray16Type, typeVarB,
+            this.array16Type = array16Type;
+            this.array16BuilderType = ParameterizedTypeName.get(array8BuilderRawType, typeVarB, typeVarV);
+            TypeName superClassType = ParameterizedTypeName.get(arrayBuilderRawType, array16Type, typeVarB,
                 typeVarV);
             this.classBuilder = classBuilder(array8BuilderRawType.simpleName())
                 .addModifiers(PUBLIC, STATIC, FINAL)
@@ -517,7 +516,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             return methodBuilder("item")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray16BuilderType)
+                .returns(array16BuilderType)
                 .addParameter(consumerType, "consumer")
                 .addStatement("itemRW.wrap(this)")
                 .addStatement("consumer.accept(itemRW)")
@@ -535,7 +534,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             return methodBuilder("items")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray16BuilderType)
+                .returns(array16BuilderType)
                 .addParameter(DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")
@@ -561,7 +560,7 @@ public final class Array16FWGenerator extends ClassSpecGenerator
             return methodBuilder("wrap")
                 .addAnnotation(Override.class)
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray16BuilderType)
+                .returns(array16BuilderType)
                 .addParameter(MUTABLE_DIRECT_BUFFER_TYPE, "buffer")
                 .addParameter(int.class, "offset")
                 .addParameter(int.class, "maxLimit")
@@ -579,8 +578,9 @@ public final class Array16FWGenerator extends ClassSpecGenerator
         {
             return methodBuilder("build")
                 .addAnnotation(Override.class)
+                .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unchecked\"").build())
                 .addModifiers(PUBLIC)
-                .returns(parameterizedArray16Type)
+                .returns(array16Type)
                 .addStatement("int length = limit() - offset() - FIELD_COUNT_OFFSET")
                 .addStatement("assert length <= LENGTH_MAX_VALUE : \"Length is too large\"")
                 .addStatement("assert fieldCount <= LENGTH_MAX_VALUE : \"Field count is too large\"")

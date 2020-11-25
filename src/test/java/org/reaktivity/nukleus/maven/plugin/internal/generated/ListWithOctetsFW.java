@@ -83,8 +83,6 @@ public final class ListWithOctetsFW extends Flyweight
 
     private OctetsFW octets4RO = new OctetsFW();
 
-    private final OctetsFW extensionRO = new OctetsFW();
-
     private final int[] optionalOffsets = new int[FIELD_INDEX_EXTENSION + 1];
 
     public int length()

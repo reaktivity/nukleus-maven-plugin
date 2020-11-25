@@ -28,7 +28,6 @@ import java.nio.charset.Charset;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
@@ -43,7 +42,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         super(flyweightType.peerClass("StringFW"));
 
         this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, ABSTRACT);
-        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
+        this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType);
     }
 
     @Override
@@ -83,24 +82,22 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
 
     private static final class BuilderClassBuilder
     {
-        private final TypeSpec.Builder classBuilder;
-        private final ClassName classType;
         private final ClassName stringType;
-        private final TypeVariableName parameterType;
+        private final ParameterizedTypeName thisName;
+        private final TypeVariableName typeVarT;
+        private final TypeSpec.Builder classBuilder;
 
         private BuilderClassBuilder(
             ClassName stringType,
-            ClassName builderRawType)
+            ClassName flyweightType)
         {
-            parameterType = TypeVariableName.get("T", stringType);
-            TypeName builderType = ParameterizedTypeName.get(builderRawType, parameterType);
-
             this.stringType = stringType;
-            this.classType = stringType.nestedClass("Builder");
-            this.classBuilder = classBuilder(classType.simpleName())
+            this.typeVarT = TypeVariableName.get("T", stringType);
+            this.thisName = ParameterizedTypeName.get(stringType.nestedClass("Builder"), typeVarT);
+            this.classBuilder = classBuilder(thisName.rawType)
                 .addModifiers(PUBLIC, ABSTRACT, STATIC)
-                .superclass(builderType)
-                .addTypeVariable(parameterType);
+                .superclass(ParameterizedTypeName.get(flyweightType.nestedClass("Builder"), typeVarT))
+                .addTypeVariable(typeVarT);
         }
 
         public TypeSpec build()
@@ -117,7 +114,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return constructorBuilder()
                 .addModifiers(PUBLIC)
-                .addParameter(parameterType, "flyweight")
+                .addParameter(typeVarT, "flyweight")
                 .addStatement("super(flyweight)")
                 .build();
         }
@@ -126,7 +123,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return methodBuilder("set")
                 .addModifiers(PUBLIC, ABSTRACT)
-                .returns(classType)
+                .returns(thisName)
                 .addParameter(stringType, "value")
                 .build();
         }
@@ -135,7 +132,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return methodBuilder("set")
                 .addModifiers(PUBLIC, ABSTRACT)
-                .returns(classType)
+                .returns(thisName)
                 .addParameter(DIRECT_BUFFER_TYPE, "srcBuffer")
                 .addParameter(int.class, "srcOffset")
                 .addParameter(int.class, "length")
@@ -146,7 +143,7 @@ public final class StringFlyweightGenerator extends ClassSpecGenerator
         {
             return methodBuilder("set")
                 .addModifiers(PUBLIC, ABSTRACT)
-                .returns(classType)
+                .returns(thisName)
                 .addParameter(String.class, "value")
                 .addParameter(Charset.class, "charset")
                 .build();

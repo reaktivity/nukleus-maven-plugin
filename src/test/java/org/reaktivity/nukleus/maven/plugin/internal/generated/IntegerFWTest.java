@@ -20,9 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.reaktivity.reaktor.internal.test.types.inner.IntegersFW;
 
 public class IntegerFWTest
@@ -36,9 +34,6 @@ public class IntegerFWTest
     };
     private final IntegersFW.Builder integersRW = new IntegersFW.Builder();
     private final IntegersFW integersRO = new IntegersFW();
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void shouldDefaultValues() throws Exception
@@ -169,11 +164,9 @@ public class IntegerFWTest
             .unsigned16(0xFFFF + 1);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldFailToSetUnsigned16WithValueTooLow()
     {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("unsigned16");
         integersRW.wrap(buffer, 0, buffer.capacity())
             .unsigned16(-1);
     }

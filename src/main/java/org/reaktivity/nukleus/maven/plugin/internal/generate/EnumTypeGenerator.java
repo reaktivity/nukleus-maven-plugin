@@ -242,7 +242,6 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     {
         private final List<String> constantNames = new LinkedList<>();
         private final Map<String, Object> valueByConstantName = new HashMap<>();
-        private final ClassName enumName;
 
         private ValueOfMethodGenerator(
             ClassName enumName)
@@ -250,7 +249,6 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
             super(methodBuilder("valueOf")
                     .addModifiers(PUBLIC, STATIC)
                     .returns(enumName));
-            this.enumName = enumName;
         }
 
         public ValueOfMethodGenerator addValue(
@@ -309,11 +307,6 @@ public final class EnumTypeGenerator extends ClassSpecGenerator
     private boolean isTypeUnsignedInt()
     {
         return valueTypeName != null && unsignedValueTypeName != null;
-    }
-
-    private boolean isTypeByte()
-    {
-        return valueTypeName.equals(TypeName.BYTE) && unsignedValueTypeName.equals(TypeName.INT);
     }
 
     private boolean isValueTypeLong()

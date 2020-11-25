@@ -3299,7 +3299,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
         private final class WrapMethodWithArrayGenerator extends MethodSpecGenerator
         {
-            private final TypeName parameterizedArrayBuilderType;
+            private final TypeName arrayBuilderType;
 
             private WrapMethodWithArrayGenerator(
                 ClassName structType,
@@ -3313,12 +3313,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
 
                 ClassName arrayClassName = resolver.resolveClass(AstType.ARRAY);
                 ClassName arrayBuilderClassName = arrayClassName.nestedClass("Builder");
-                ClassName flyweightBuilderClassName = resolver.flyweightName().nestedClass("Builder");
-                TypeName typeParamT = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(arrayClassName, structType));
-                TypeName typeParamB = WildcardTypeName.subtypeOf(ParameterizedTypeName.get(flyweightBuilderClassName,
-                    structType));
-                parameterizedArrayBuilderType = ParameterizedTypeName.get(arrayBuilderClassName, typeParamT, typeParamB,
-                    structType);
+                arrayBuilderType = ParameterizedTypeName.get(arrayBuilderClassName,
+                        WildcardTypeName.subtypeOf(Object.class),
+                        WildcardTypeName.subtypeOf(Object.class),
+                        WildcardTypeName.subtypeOf(Object.class));
             }
 
             public WrapMethodWithArrayGenerator addMember(
@@ -3340,7 +3338,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             @Override
             public MethodSpec generate()
             {
-                return builder.addParameter(parameterizedArrayBuilderType, "array")
+                return builder.addParameter(arrayBuilderType, "array")
                     .addStatement("lastFieldSet = -1")
                     .addStatement("return this")
                     .build();

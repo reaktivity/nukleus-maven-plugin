@@ -41,7 +41,6 @@ import com.squareup.javapoet.TypeVariableName;
 
 public final class MapFlyweightGenerator extends ClassSpecGenerator
 {
-    private final String baseName;
     private final TypeSpec.Builder builder;
     private final TypeName keyTypeName;
     private final TypeName valueTypeName;
@@ -52,7 +51,6 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
     public MapFlyweightGenerator(
         ClassName mapName,
         ClassName flyweightName,
-        String baseName,
         ClassName templateMapTypeName,
         AstType mapKeyType,
         ClassName mapKeyTypeName,
@@ -61,7 +59,6 @@ public final class MapFlyweightGenerator extends ClassSpecGenerator
         TypeResolver resolver)
     {
         super(mapName);
-        this.baseName = baseName;
         this.keyTypeName = Objects.requireNonNullElse(mapKeyTypeName, TypeVariableName.get(mapKeyType.name(), flyweightName));
         this.valueTypeName = Objects.requireNonNullElse(mapValueTypeName,
             TypeVariableName.get(mapValueType.name(), flyweightName));

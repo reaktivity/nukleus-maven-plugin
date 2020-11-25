@@ -218,7 +218,7 @@ public class Map16FWTest
             .build()
             .limit();
 
-        final Map16FW map = flyweightRO.wrap(buffer,  0,  limit);
+        final Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> map = flyweightRO.wrap(buffer,  0,  limit);
 
         assertAllTestValuesRead(map, 0);
     }
@@ -230,7 +230,7 @@ public class Map16FWTest
             .entry(k -> k.set(asStringFW("entry1Key")), v -> v.set(asStringFW("entry1Value")))
             .build();
 
-        Map16FW flyweight = flyweightRW.wrap(buffer, 0, buffer.capacity())
+        Map16FW<TypedefStringFW, VariantEnumKindOfStringFW> flyweight = flyweightRW.wrap(buffer, 0, buffer.capacity())
                    .build();
 
         assertEquals(0, flyweight.fieldCount());

@@ -31,6 +31,7 @@ import java.nio.ByteOrder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -39,7 +40,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
-public final class Map16FWGenerator extends ClassSpecGenerator
+public final class Map16FWGenerator extends ParameterizedTypeSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final TypeVariableName typeVarK;
@@ -48,14 +49,14 @@ public final class Map16FWGenerator extends ClassSpecGenerator
 
     public Map16FWGenerator(
         ClassName flyweightType,
-        ClassName mapType)
+        ParameterizedTypeName mapType)
     {
-        super(flyweightType.peerClass("Map16FW"));
-        this.typeVarK = TypeVariableName.get("K", flyweightType);
-        this.typeVarV = TypeVariableName.get("V", flyweightType);
-        TypeName parameterizedMapType = ParameterizedTypeName.get(mapType, typeVarK, typeVarV);
-        this.classBuilder = classBuilder(thisName)
-            .superclass(parameterizedMapType)
+        super(ParameterizedTypeName.get(flyweightType.peerClass("Map16FW"),
+                TypeVariableName.get("K", flyweightType), TypeVariableName.get("V", flyweightType)));
+        this.typeVarK = (TypeVariableName) thisName.typeArguments.get(0);
+        this.typeVarV = (TypeVariableName) thisName.typeArguments.get(1);
+        this.classBuilder = classBuilder(thisRawName)
+            .superclass(mapType)
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariable(typeVarK)
             .addTypeVariable(typeVarV);
@@ -219,6 +220,7 @@ public final class Map16FWGenerator extends ClassSpecGenerator
 
         return methodBuilder("forEach")
             .addAnnotation(Override.class)
+            .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unchecked\"").build())
             .addModifiers(PUBLIC)
             .addParameter(parameterizedBiConsumerType, "consumer")
             .addStatement("int offset = offset() + FIELDS_OFFSET")
@@ -236,11 +238,12 @@ public final class Map16FWGenerator extends ClassSpecGenerator
     {
         return methodBuilder("tryWrap")
             .addAnnotation(Override.class)
+            .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unchecked\"").build())
             .addModifiers(PUBLIC)
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(ParameterizedTypeName.get(thisName, typeVarK, typeVarV))
+            .returns(thisName)
             .beginControlFlow("if (super.tryWrap(buffer, offset, maxLimit) == null)")
             .addStatement("return null")
             .endControlFlow()
@@ -270,11 +273,12 @@ public final class Map16FWGenerator extends ClassSpecGenerator
     {
         return methodBuilder("wrap")
             .addAnnotation(Override.class)
+            .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "\"unchecked\"").build())
             .addModifiers(PUBLIC)
             .addParameter(DIRECT_BUFFER_TYPE, "buffer")
             .addParameter(int.class, "offset")
             .addParameter(int.class, "maxLimit")
-            .returns(ParameterizedTypeName.get(thisName, typeVarK, typeVarV))
+            .returns(thisName)
             .addStatement("super.wrap(buffer, offset, maxLimit)")
             .addStatement("int entryOffset = offset + FIELDS_OFFSET")
             .addStatement("int fieldCount = fieldCount()")
@@ -312,7 +316,7 @@ public final class Map16FWGenerator extends ClassSpecGenerator
 
     private static final class BuilderClassBuilder
     {
-        private final ClassName map16Type;
+        private final ParameterizedTypeName map16Type;
         private final TypeSpec.Builder classBuilder;
         private final TypeVariableName typeVarKB;
         private final TypeVariableName typeVarK;
@@ -321,12 +325,12 @@ public final class Map16FWGenerator extends ClassSpecGenerator
         private final TypeName parameterizedBuilderType;
 
         private BuilderClassBuilder(
-            ClassName map16Type,
-            ClassName mapType,
+            ParameterizedTypeName map16Type,
+            ParameterizedTypeName mapType,
             ClassName flyweightType)
         {
-            ClassName map16BuilderType = map16Type.nestedClass("Builder");
-            ClassName mapBuilderType = mapType.nestedClass("Builder");
+            ClassName map16BuilderType = map16Type.rawType.nestedClass("Builder");
+            ClassName mapBuilderType = mapType.rawType.nestedClass("Builder");
             ClassName flyweightBuilderType = flyweightType.nestedClass("Builder");
             this.map16Type = map16Type;
             this.typeVarK = TypeVariableName.get("K", flyweightType);
