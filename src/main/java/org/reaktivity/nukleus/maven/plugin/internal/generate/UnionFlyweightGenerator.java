@@ -1160,28 +1160,31 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
 
                         if (kindTypeName.isPrimitive())
                         {
-                            accessorBuilder.addStatement("int newLimit = $L", limit)
-                                .addStatement("checkLimit(newLimit, maxLimit())")
-                                .beginControlFlow("if ($LRW == null)", name)
-                                   .addStatement("$LRW = new $T()", name, builderType)
-                                .endControlFlow()
-                                .addStatement("return $LRW.wrap(buffer(), offset() + $L, newLimit)", name, offset(name));
+                            accessorBuilder
+                                .addStatement("int newLimit = $L", limit)
+                                .addStatement("checkLimit(newLimit, maxLimit())");
+                        }
+
+                        if ((isString16Type(classType) || isString32Type(classType)) && byteOrder == NETWORK)
+                        {
+                            accessorBuilder.beginControlFlow("if ($LRW == null)", name)
+                                            .addStatement("$LRW = new $T($T.BIG_ENDIAN)", name, builderType, ByteOrder.class)
+                                           .endControlFlow();
                         }
                         else
                         {
-                            if ((isString16Type(classType) || isString32Type(classType)) && byteOrder == NETWORK)
-                            {
-                                accessorBuilder.beginControlFlow("if ($LRW == null)", name)
-                                                .addStatement("$LRW = new $T($T.BIG_ENDIAN)", name, builderType, ByteOrder.class)
-                                               .endControlFlow();
-                            }
-                            else
-                            {
-                                accessorBuilder.beginControlFlow("if ($LRW == null)", name)
-                                                .addStatement("$LRW = new $T()", name, builderType)
-                                               .endControlFlow();
-                            }
+                            accessorBuilder.beginControlFlow("if ($LRW == null)", name)
+                                            .addStatement("$LRW = new $T()", name, builderType)
+                                           .endControlFlow();
+                        }
 
+                        if (kindTypeName.isPrimitive())
+                        {
+                            accessorBuilder
+                            .addStatement("return $LRW.wrap(buffer(), offset() + $L, newLimit)", name, offset(name));
+                        }
+                        else
+                        {
                             accessorBuilder.addStatement("return $LRW.wrap(buffer(), offset() + $L.sizeof(), maxLimit())",
                                 name, enumRW(kindTypeName));
                         }
