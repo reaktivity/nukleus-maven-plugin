@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.77</version>
+  <version>0.78</version>
   <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
@@ -167,10 +167,7 @@
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <sourceDirectories>
-            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
-            <sourceDirectory>${project.build.testSourceDirectory}</sourceDirectory>
-          </sourceDirectories>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
         </configuration>
         <executions>
           <execution>
@@ -219,7 +216,7 @@
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.5</version>
+        <version>0.8.6</version>
         <configuration>
           <excludes>
             <exclude>org/reaktivity/nukleus/maven/plugin/internal/parser/**/*.class</exclude>
