@@ -561,4 +561,16 @@ scope test
             VariantEnumKindOfInt8 variantField;
         }
     }
+
+    scope networkOrder
+    {
+        option byteorder network;
+
+        union UnionString switch (uint8)
+        {
+            case 1: string8 string1;
+            case 2: string16 string2;
+            case 3: string32 string3;
+        }
+    }
 }
