@@ -298,7 +298,7 @@ public final class ScopeVisitor extends AstNode.Visitor<Collection<TypeSpecGener
         {
             AstNamedNode namedNode = resolver.resolve(currentNode.supertype().name());
 
-            currentNode = namedNode.getKind() == Kind.STRUCT ? (AstStructNode) namedNode : null;
+            currentNode = namedNode != null && namedNode.getKind() == Kind.STRUCT ? (AstStructNode) namedNode : null;
         }
 
         return (currentNode != null) ? currentNode.typeId() : 0;
