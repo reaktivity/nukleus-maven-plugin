@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.80</version>
+  <version>0.81</version>
   <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
@@ -35,6 +35,13 @@
     <developerConnection>scm:git:https://github.com/reaktivity/nukleus-maven-plugin</developerConnection>
     <url>https://github.com/reaktivity/nukleus-maven-plugin</url>
   </scm>
+
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/reaktivity/packages/</url>
+    </repository>
+  </repositories>
 
   <properties>
     <maven.compiler.source>9</maven.compiler.source>
@@ -417,13 +424,6 @@
 
     <profile>
       <id>github.packages</id>
-
-      <repositories>
-        <repository>
-          <id>github</id>
-          <url>https://maven.pkg.github.com/reaktivity/packages/</url>
-        </repository>
-      </repositories>
 
       <build>
         <plugins>
