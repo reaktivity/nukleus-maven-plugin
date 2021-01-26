@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.82</version>
+  <version>0.83</version>
   <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
@@ -387,7 +387,7 @@
                       <message>No Snapshots Allowed!</message>
                     </requireReleaseDeps>
                     <requireJavaVersion>
-                      <version>[11,12)</version>
+                      <version>[13,14)</version>
                     </requireJavaVersion>
                   </rules>
                 </configuration>
