@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.reaktivity</groupId>
   <artifactId>nukleus-maven-plugin</artifactId>
-  <version>0.83</version>
+  <version>0.84</version>
   <packaging>maven-plugin</packaging>
   <name>Nukleus Maven Plugin</name>
   <description>Nukleus Maven Plugin</description>
@@ -82,20 +82,22 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-core</artifactId>
-        <version>3.6.0</version>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>3.6.0</version>
+      <scope>provided</scope>
     </dependency>    
     <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-artifact</artifactId>
-        <version>3.5.0</version>
-        <scope>provided</scope>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-artifact</artifactId>
+      <version>3.5.0</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
-        <groupId>org.apache.maven</groupId>
-        <artifactId>maven-compat</artifactId>
-        <version>3.6.0</version>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-compat</artifactId>
+      <version>3.6.0</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
@@ -167,6 +169,35 @@
             <g4>SLASHSTAR_STYLE</g4>
           </mapping>
           <failIfUnknown>true</failIfUnknown>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.jasig.maven</groupId>
+        <artifactId>maven-notice-plugin</artifactId>
+        <version>1.1.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.1</version>
+          </dependency>
+          <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.2.5</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <includeScopes>compile</includeScopes>
+          <licenseMapping>src/conf/notice/license-mappings.xml</licenseMapping>
         </configuration>
         <executions>
           <execution>
