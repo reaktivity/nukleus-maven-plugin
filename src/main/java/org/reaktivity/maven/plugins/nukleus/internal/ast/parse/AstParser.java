@@ -116,6 +116,7 @@ import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varian
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint32_typeContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint64_typeContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint_array_memberContext;
+import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varstring_typeContext;
 
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
@@ -726,6 +727,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
+    public AstNode visitVarstring_type(
+        Varstring_typeContext ctx)
+    {
+        memberBuilder.type(AstType.VARSTRING);
+        return super.visitVarstring_type(ctx);
+    }
+
+    @Override
     public AstNode visitOctets_type(
         Octets_typeContext ctx)
     {
@@ -1092,6 +1101,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
         {
             listMemberBuilder.type(AstType.STRING32);
             return super.visitString32_type(ctx);
+        }
+
+        @Override
+        public Builder visitVarstring_type(
+            Varstring_typeContext ctx)
+        {
+            listMemberBuilder.type(AstType.VARSTRING);
+            return super.visitVarstring_type(ctx);
         }
 
         @Override
@@ -1492,6 +1509,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
             {
                 variantCaseBuilder.type(AstType.STRING32);
                 return super.visitString32_type(ctx);
+            }
+
+            @Override
+            public AstVariantCaseNode.Builder visitVarstring_type(
+                Varstring_typeContext ctx)
+            {
+                variantCaseBuilder.type(AstType.VARSTRING);
+                return super.visitVarstring_type(ctx);
             }
 
             @Override

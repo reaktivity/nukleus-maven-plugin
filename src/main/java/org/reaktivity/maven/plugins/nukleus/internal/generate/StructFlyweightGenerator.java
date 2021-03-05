@@ -3355,7 +3355,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     private static boolean isStringType(
         ClassName classType)
     {
-        return isString8Type(classType) || isString16Type(classType) || isString32Type(classType);
+        return isString8Type(classType) || isString16Type(classType) || isString32Type(classType) || isVarStringType(classType);
     }
 
     private static boolean isString8Type(
@@ -3377,6 +3377,13 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     {
         String name = classType.simpleName();
         return "String32FW".equals(name);
+    }
+
+    private static boolean isVarStringType(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "VarStringFW".equals(name);
     }
 
     private static boolean isVarbyteuintType(
@@ -3415,7 +3422,8 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
     {
         return type instanceof ClassName && ("String8FW".equals(((ClassName) type).simpleName()) ||
                                              "String16FW".equals(((ClassName) type).simpleName()) ||
-                                             "String32FW".equals(((ClassName) type).simpleName()));
+                                             "String32FW".equals(((ClassName) type).simpleName()) ||
+                                             "VarStringFW".equals(((ClassName) type).simpleName()));
     }
 
     private static boolean isEnumType(

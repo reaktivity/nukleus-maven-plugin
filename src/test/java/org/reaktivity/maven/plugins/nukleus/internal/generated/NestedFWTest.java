@@ -49,8 +49,10 @@ public class NestedFWTest
         assertEquals("value2", flyweight.flat().string2().asString());
         assertEquals(40, flyweight.flat().fixed4());
         assertEquals("value3", flyweight.flat().string3().asString());
+        assertEquals(50, flyweight.flat().fixed5());
+        assertEquals("value4", flyweight.flat().string4().asString());
         assertEquals(50, flyweight.fixed5());
-        assertEquals(flyweight.flat().string3().limit() + 8, flyweight.limit());
+        assertEquals(flyweight.flat().string4().limit() + 8, flyweight.limit());
     }
 
     static int setAllTestValues(MutableDirectBuffer buffer, final int offset)
@@ -67,6 +69,9 @@ public class NestedFWTest
         buffer.putInt(pos += 6,  40);
         buffer.putByte(pos += 4, (byte) 6);
         buffer.putStringWithoutLengthUtf8(pos += 1,  "value3");
+        buffer.putByte(pos += 6,  (byte) 50);
+        buffer.putByte(pos += 1, (byte) 12);
+        buffer.putStringWithoutLengthUtf8(pos += 1,  "value4");
         buffer.putLong(pos += 6,  50);
 
         return pos - offset + Long.BYTES;
@@ -136,6 +141,8 @@ public class NestedFWTest
                     .string2("value2")
                     .fixed4(40)
                     .string3("value3")
+                    .fixed5((byte) 50)
+                    .string4("value4")
                  )
                 .fixed5(50)
                 .build()
@@ -152,6 +159,8 @@ public class NestedFWTest
                     .string2("value2")
                     //.fixed4(40)
                     .string3("value3")
+                    //.fixed5((byte) 50)
+                    .string4("value4")
                 )
                 .fixed5(50)
                 .build()
@@ -161,6 +170,7 @@ public class NestedFWTest
         assertEquals(222, nestedRO.flat().fixed2());
         assertEquals(333, nestedRO.flat().fixed3());
         assertEquals(444, nestedRO.flat().fixed4());
+        assertEquals(55, nestedRO.flat().fixed5());
         assertEquals(limit1, limit2);
     }
 
@@ -238,6 +248,8 @@ public class NestedFWTest
                     .string2("value2")
                     .fixed4(40)
                     .string3("value3")
+                    .fixed5((byte) 50)
+                    .string4("value4")
                  )
                 .fixed5(50)
                 .build()
@@ -251,8 +263,10 @@ public class NestedFWTest
         assertEquals("value2", nestedRO.flat().string2().asString());
         assertEquals(40, nestedRO.flat().fixed4());
         assertEquals("value3", nestedRO.flat().string3().asString());
+        assertEquals(50, nestedRO.flat().fixed5());
+        assertEquals("value4", nestedRO.flat().string4().asString());
         assertEquals(50, nestedRO.fixed5());
-        assertEquals(nestedRO.flat().string3().limit() + 8, limit);
+        assertEquals(nestedRO.flat().string4().limit() + 8, limit);
     }
 
 }

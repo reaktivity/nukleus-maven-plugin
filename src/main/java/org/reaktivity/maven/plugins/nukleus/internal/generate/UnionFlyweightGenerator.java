@@ -1920,7 +1920,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
         ClassName classType)
     {
         String name = classType.simpleName();
-        return "StringFW".equals(name) || isString16Type(classType) || isString32Type(classType);
+        return "StringFW".equals(name) || isString16Type(classType) || isString32Type(classType) || isVarStringType(classType);
     }
 
     private static boolean isString16Type(
@@ -1935,6 +1935,13 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
     {
         String name = classType.simpleName();
         return "String32FW".equals(name);
+    }
+
+    private static boolean isVarStringType(
+        ClassName classType)
+    {
+        String name = classType.simpleName();
+        return "VarStringFW".equals(name);
     }
 
     private static boolean isVarintType(

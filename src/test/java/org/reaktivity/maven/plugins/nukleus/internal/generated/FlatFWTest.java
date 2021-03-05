@@ -27,6 +27,7 @@ import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
 import org.reaktivity.reaktor.internal.test.types.String8FW;
+import org.reaktivity.reaktor.internal.test.types.VarStringFW;
 import org.reaktivity.reaktor.internal.test.types.inner.FlatFW;
 
 public class FlatFWTest
@@ -48,6 +49,7 @@ public class FlatFWTest
     private final FlatFW.Builder flatRW = new FlatFW.Builder();
     private final FlatFW flatRO = new FlatFW();
     private final String8FW.Builder stringRW = new String8FW.Builder();
+    private final VarStringFW.Builder varstringRW = new VarStringFW.Builder();
     private final MutableDirectBuffer valueBuffer = new UnsafeBuffer(allocateDirect(100));
 
     @Test
@@ -58,6 +60,7 @@ public class FlatFWTest
                 .string1("value1")
                 .string2("value2")
                 .string3("value3")
+                .string4("value4")
                 .build()
                 .limit();
         flatRO.wrap(buffer,  0,  limit);
@@ -111,7 +114,9 @@ public class FlatFWTest
         buffer.putByte(10 + offsetString2, (byte) 0);
         int offsetString3 = offsetString2 + Byte.BYTES + Integer.BYTES;
         buffer.putByte(10 + offsetString3, (byte) 0);
-        assertSame(flatRO, flatRO.tryWrap(buffer, 10, 10 + offsetString3 + Byte.BYTES));
+        int offsetString4 = offsetString3 + Byte.BYTES + Byte.BYTES;
+        buffer.putByte(10 + offsetString4, (byte) 0);
+        assertSame(flatRO, flatRO.tryWrap(buffer, 10, 10 + offsetString4 + Byte.BYTES));
     }
 
     @Test
@@ -123,7 +128,9 @@ public class FlatFWTest
         buffer.putByte(10 + offsetString2, (byte) 0);
         int offsetString3 = offsetString2 + Byte.BYTES + Integer.BYTES;
         buffer.putByte(10 + offsetString3, (byte) 0);
-        assertSame(flatRO, flatRO.wrap(buffer, 10, 10 + offsetString3 + Byte.BYTES));
+        int offsetString4 = offsetString3 + Byte.BYTES + Byte.BYTES;
+        buffer.putByte(10 + offsetString4, (byte) 0);
+        assertSame(flatRO, flatRO.wrap(buffer, 10, 10 + offsetString4 + Byte.BYTES));
     }
 
     @Test
@@ -134,6 +141,7 @@ public class FlatFWTest
                 .string1("value1a")
                 .string2("value2a")
                 .string3("value3a")
+                .string4("value4a")
                 .build();
 
         final FlatFW flat = flatRW.rewrap()
@@ -141,12 +149,14 @@ public class FlatFWTest
                 .string1("value1b")
                 .string2("value2b")
                 .string3("value3b")
+                .string4("value4b")
                 .build();
 
         assertSame(20L, flat.fixed1());
         assertEquals("value1b", flat.string1().asString());
         assertEquals("value2b", flat.string2().asString());
         assertEquals("value3b", flat.string3().asString());
+        assertEquals("value4b", flat.string4().asString());
     }
 
     @Test
@@ -157,12 +167,14 @@ public class FlatFWTest
                 .string1("value1")
                 .string2("value2")
                 .string3("value3")
+                .string4("value4")
                 .build()
                 .limit();
         flatRO.wrap(buffer,  0,  limit);
         assertEquals(222, flatRO.fixed2());
         assertEquals(333, flatRO.fixed3());
         assertEquals(444, flatRO.fixed4());
+        assertEquals(55, flatRO.fixed5());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -293,6 +305,8 @@ public class FlatFWTest
                 .string2("value2")
                 .fixed4(40)
                 .string3("value3")
+                .fixed5((byte) 50)
+                .string4("value4")
                 .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(10, flatRO.fixed1());
@@ -302,10 +316,12 @@ public class FlatFWTest
         assertEquals("value2", flatRO.string2().asString());
         assertEquals(40, flatRO.fixed4());
         assertEquals("value3", flatRO.string3().asString());
+        assertEquals(50, flatRO.fixed5());
+        assertEquals("value4", flatRO.string4().asString());
     }
 
     @Test
-    public void shouldSetStringValuesUsingString8FW() throws Exception
+    public void shouldSetStringValuesUsingFlyweight() throws Exception
     {
         FlatFW.Builder builder = flatRW.wrap(buffer, 0, buffer.capacity());
         builder.fixed1(10)
@@ -324,6 +340,11 @@ public class FlatFWTest
                 .set("value3", UTF_8)
                 .build();
         builder.string3(value)
+               .fixed5((byte) 50);
+        VarStringFW varvalue = varstringRW.wrap(valueBuffer,  0, valueBuffer.capacity())
+                .set("value4", UTF_8)
+                .build();
+        builder.string4(varvalue)
                .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(10, flatRO.fixed1());
@@ -333,6 +354,8 @@ public class FlatFWTest
         assertEquals("value2", flatRO.string2().asString());
         assertEquals(40, flatRO.fixed4());
         assertEquals("value3", flatRO.string3().asString());
+        assertEquals(50, flatRO.fixed5());
+        assertEquals("value4", flatRO.string4().asString());
     }
 
     @Test
@@ -341,6 +364,7 @@ public class FlatFWTest
         valueBuffer.putStringWithoutLengthUtf8(0, "value1");
         valueBuffer.putStringWithoutLengthUtf8(10, "value2");
         valueBuffer.putStringWithoutLengthUtf8(20, "value3");
+        valueBuffer.putStringWithoutLengthUtf8(30, "value4");
         flatRW.wrap(buffer, 0, buffer.capacity())
             .fixed1(10)
             .fixed2(20)
@@ -349,6 +373,8 @@ public class FlatFWTest
             .string2(valueBuffer, 10, 6)
             .fixed4(40)
             .string3(valueBuffer, 20, 6)
+            .fixed5((byte) 50)
+            .string4(valueBuffer, 30, 6)
             .build();
         flatRO.wrap(buffer,  0,  100);
         assertEquals(10, flatRO.fixed1());
@@ -358,6 +384,8 @@ public class FlatFWTest
         assertEquals("value2", flatRO.string2().asString());
         assertEquals(40, flatRO.fixed4());
         assertEquals("value3", flatRO.string3().asString());
+        assertEquals(50, flatRO.fixed5());
+        assertEquals("value4", flatRO.string4().asString());
     }
 
     @Test
@@ -369,6 +397,7 @@ public class FlatFWTest
             .string1((String) null)
             .string2((String) null)
             .string3((String) null)
+            .string4((String) null)
             .build()
             .limit();
         expected.putLong(offset, 10);
@@ -378,6 +407,8 @@ public class FlatFWTest
         expected.putByte(offset + 14, (byte) -1);
         expected.putInt(offset + 15, 444);
         expected.putByte(offset + 19, (byte) -1);
+        expected.putByte(offset + 20, (byte) 55);
+        expected.putByte(offset + 21, (byte) 1);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 
@@ -385,6 +416,7 @@ public class FlatFWTest
         assertNull(flatRO.string1().asString());
         assertNull(flatRO.string2().asString());
         assertNull(flatRO.string3().asString());
+        assertNull(flatRO.string4().asString());
     }
 
     @Test
@@ -398,12 +430,15 @@ public class FlatFWTest
             .string2("")
             .fixed4(40)
             .string3("")
+            .fixed5((byte) 50)
+            .string4("")
             .build()
             .limit();
         flatRO.wrap(buffer,  0,  limit);
         assertEquals("", flatRO.string1().asString());
         assertEquals("", flatRO.string2().asString());
         assertEquals("", flatRO.string3().asString());
+        assertEquals("", flatRO.string4().asString());
     }
 
 }
