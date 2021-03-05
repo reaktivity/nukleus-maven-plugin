@@ -69,6 +69,7 @@ base_type_spec
    | string8_type
    | string16_type
    | string32_type
+   | varstring_type
    ;
 
 constr_type_spec
@@ -243,12 +244,14 @@ string_member_with_default
    : string8_type declarator EQUALS string_literal
    | string16_type declarator EQUALS string_literal
    | string32_type declarator EQUALS string_literal
+   | varstring_type declarator EQUALS string_literal
    ;
 
 string_member_with_null_default
    : string8_type declarator default_null
    | string16_type declarator default_null
    | string32_type declarator default_null
+   | varstring_type declarator default_null
    ;
 
 octets_member_with_default
@@ -478,6 +481,10 @@ string32_type
    : KW_STRING32
    ;
 
+varstring_type
+   : KW_VARSTRING
+   ;
+
 list_keyword
    : KW_LIST
    ;
@@ -638,6 +645,11 @@ KW_STRING16
 
 KW_STRING32
    : 'string32'
+   ;
+
+
+KW_VARSTRING
+   : 'varstring'
    ;
 
 

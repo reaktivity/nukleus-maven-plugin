@@ -32,6 +32,8 @@ scope test
             string8 string2;
             int32 fixed4 = 444;
             string8 string3;
+            int8 fixed5 = 55;
+            varstring string4;
         }
 
         struct Nested
@@ -180,6 +182,13 @@ scope test
             string32 field1 = "field1";
             string32 field2 = "field2";
             string16 field3 = null;
+        }
+
+        struct StructWithMultipleVarStringDefaults
+        {
+            varstring field1 = "field1";
+            varstring field2 = "field2";
+            varstring field3 = null;
         }
 
         struct StructWithEnumDefault
