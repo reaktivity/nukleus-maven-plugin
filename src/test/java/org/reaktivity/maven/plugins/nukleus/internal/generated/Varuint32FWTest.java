@@ -22,9 +22,9 @@ import static org.junit.Assert.assertNull;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.Varbyteuint32FW;
+import org.reaktivity.reaktor.internal.test.types.Varuint32FW;
 
-public class Varbyteuint32FWTest
+public class Varuint32FWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -41,8 +41,8 @@ public class Varbyteuint32FWTest
         }
     };
 
-    private final Varbyteuint32FW.Builder varbyteuint32RW = new Varbyteuint32FW.Builder();
-    private final Varbyteuint32FW varbyteuint32RO = new Varbyteuint32FW();
+    private final Varuint32FW.Builder varbyteuint32RW = new Varuint32FW.Builder();
+    private final Varuint32FW varbyteuint32RO = new Varuint32FW();
 
     @Test
     public void shouldNotTryWrapZeroLengthBuffer() throws Exception
@@ -96,7 +96,7 @@ public class Varbyteuint32FWTest
         // Actual value is 128
         buffer.putByte(50, (byte) 0x80);
         buffer.putByte(51, (byte) 0x01);
-        Varbyteuint32FW result = varbyteuint32RO.tryWrap(buffer, 50, 52);
+        Varuint32FW result = varbyteuint32RO.tryWrap(buffer, 50, 52);
         assertEquals(128, result.value());
     }
 

@@ -32,15 +32,15 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
+public final class Varuint32FlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
 
-    public Varbyteuint32FlyweightGenerator(
+    public Varuint32FlyweightGenerator(
         ClassName flyweightType)
     {
-        super(flyweightType.peerClass("Varbyteuint32FW"));
+        super(flyweightType.peerClass("Varuint32FW"));
 
         this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
@@ -132,7 +132,7 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("size = length0()")
                 .beginControlFlow("if (size < 0 || size > 5)")
                     .addStatement("throw new $T(String.format($S, offset))", IllegalArgumentException.class,
-                            "varbyteuint32 value at offset %d exceeds 32 bits")
+                            "varuint32 value at offset %d exceeds 32 bits")
                 .endControlFlow()
                 .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("return this")

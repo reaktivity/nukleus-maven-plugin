@@ -636,7 +636,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 codeBlock.addStatement("return $LRO.value()", name);
                 returnType = isVarint32Type(type) ? TypeName.INT : TypeName.LONG;
             }
-            else if (isVarbyteuint32Type(type))
+            else if (isVaruint32Type(type))
             {
                 codeBlock.addStatement("return $LRO.value()", name);
                 returnType = TypeName.INT;
@@ -1547,7 +1547,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             if (defaultValue != null || isImplicitlyDefaulted(typeName, size, sizeName, type, resolver))
             {
                 priorFieldIfDefaulted = name;
-                priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVarbyteuintType(typeName);
+                priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVaruintType(typeName);
                 priorDefaultedIsString = isStringType(typeName);
                 AstNamedNode node = type != null ? resolver.resolve(type.name()) : null;
                 priorDefaultedIsEnum = node != null && isEnumType(node.getKind());
@@ -1638,7 +1638,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             AstNamedNode node = type != null ? resolver.resolve(type.name()) : null;
             final boolean isEnumType = node != null && isEnumType(node.getKind());
             if (typeName instanceof ClassName && !isStringType((ClassName) typeName) && !isVarintType(typeName) &&
-                !isVarbyteuintType(typeName) && !isEnumType)
+                !isVaruintType(typeName) && !isEnumType)
             {
                 ClassName classType = (ClassName) typeName;
                 if ("OctetsFW".equals(classType.simpleName()))
@@ -1674,7 +1674,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
             return String.format("dynamicValue%s", initCap(fieldName));
         }
 
-        // TODO: Varbyteuint32 should NEVER be < 0
+        // TODO: Varuint32 should NEVER be < 0
         private void defaultPriorField(
             CodeBlock.Builder code)
         {
@@ -1692,7 +1692,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("$L(-1)", methodName(priorSizeName))
                             .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
                     }
-                    else if (isVarbyteuintType(priorSizeType))
+                    else if (isVaruintType(priorSizeType))
                     {
                         code.addStatement("$L(0)", methodName(priorSizeName))
                             .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
@@ -1749,7 +1749,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 boolean usedAsSize,
                 Object defaultValue)
             {
-                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVaruintType(typeName);
                 if (!automaticallySet)
                 {
                     builder.addField(
@@ -1767,7 +1767,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                         generateType = generateType == TypeName.LONG ? LONG_ITERATOR_CLASS_NAME
                                 : INT_ITERATOR_CLASS_NAME;
                     }
-                    if (isVarbyteuint32Type(typeName))
+                    if (isVaruint32Type(typeName))
                     {
                         generateType = TypeName.INT;
                     }
@@ -1839,12 +1839,12 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 boolean usedAsSize,
                 AstByteOrder byteOrder)
             {
-                if (usedAsSize && (isVarintType(type) || isVarbyteuintType(type)))
+                if (usedAsSize && (isVarintType(type) || isVaruintType(type)))
                 {
                     builder.addField(FieldSpec.builder(TypeName.INT, dynamicValue(name), PRIVATE)
                             .build());
                 }
-                if (usedAsSize && !isVarintType(type) && !isVarbyteuintType(type))
+                if (usedAsSize && !isVarintType(type) && !isVaruintType(type))
                 {
                     builder.addField(FieldSpec.builder(TypeName.INT, dynamicOffset(name), PRIVATE)
                            .build());
@@ -1949,7 +1949,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                                 defaultPriorField);
                     }
                 }
-                priorFieldIsAutomaticallySet = usedAsSize && !isVarintType(type) && !isVarbyteuintType(type);
+                priorFieldIsAutomaticallySet = usedAsSize && !isVarintType(type) && !isVaruintType(type);
                 return this;
             }
 
@@ -2081,7 +2081,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
-                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVaruintType(typeName);
                 if (typeName.isPrimitive())
                 {
                     if (sizeName != null)
@@ -2129,7 +2129,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
-                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVaruintType(typeName);
                 String putterName = PUTTER_NAMES.get(typeName);
                 if (putterName == null)
                 {
@@ -2750,9 +2750,9 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     ClassName builderType = className.nestedClass("Builder");
                     TypeName parameterType = isVarint32Type(className) ? TypeName.INT
                         : isVarint64Type(className) ? TypeName.LONG
-                        : isVarbyteuint32Type(className) ? TypeName.INT
+                        : isVaruint32Type(className) ? TypeName.INT
                         : ParameterizedTypeName.get(consumerType, builderType);
-                    String parameterName = isVarintType(className) || isVarbyteuintType(className) ? "value" : "mutator";
+                    String parameterName = isVarintType(className) || isVaruintType(className) ? "value" : "mutator";
 
                     CodeBlock.Builder code = CodeBlock.builder();
                     if (priorFieldIfDefaulted != null)
@@ -2763,7 +2763,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     }
                     code.addStatement("assert lastFieldSet == $L - 1", index(name))
                         .addStatement("$T $LRW = this.$LRW.wrap(buffer(), limit(), maxLimit())", builderType, name, name);
-                    if (isVarintType(className) || isVarbyteuintType(className))
+                    if (isVarintType(className) || isVaruintType(className))
                     {
                         code.addStatement("$LRW.set($L)", name, parameterName);
                         if (usedAsSize)
@@ -2852,7 +2852,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.addStatement("int size$$")
                         .addStatement("int newLimit")
                         .addStatement("$T $LRW = $L()", builderType, name, methodName(name));
-                    if (isVarbyteuintType(sizeType))
+                    if (isVaruintType(sizeType))
                     {
                         code.beginControlFlow("if (value == null)")
                                 .addStatement("size$$ = 0")
@@ -2885,7 +2885,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                             .addStatement("size$$ = newLimit - limit()");
                     }
 
-                    if (isVarintType(sizeType) || isVarbyteuintType(sizeType))
+                    if (isVarintType(sizeType) || isVaruintType(sizeType))
                     {
                         code.beginControlFlow("if (size$$ != $L)", dynamicValue(sizeName))
                             .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
@@ -2948,7 +2948,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.addStatement("int newLimit = $LRW.build().limit()", name)
                         .addStatement("int size$$ = newLimit - limit()");
 
-                    if (isVarintType(sizeType) || isVarbyteuintType(sizeType))
+                    if (isVarintType(sizeType) || isVaruintType(sizeType))
                     {
                         code.beginControlFlow("if (size$$ != $L)", dynamicValue(sizeName))
                             .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
@@ -3004,7 +3004,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                     code.addStatement("int newLimit = $LRW.build().limit()", name)
                         .addStatement("int size$$ = newLimit - limit()");
 
-                    if (isVarintType(sizeType) || isVarbyteuintType(sizeType))
+                    if (isVarintType(sizeType) || isVaruintType(sizeType))
                     {
                         code.beginControlFlow("if (size$$ != $L)", dynamicValue(sizeName))
                             .addStatement("throw new IllegalStateException(String.format($S, size$$, $L, $S))",
@@ -3279,7 +3279,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
 
-                if ((usedAsSize && !isVarintType(type) && !isVarbyteuintType(type)) ||
+                if ((usedAsSize && !isVarintType(type) && !isVaruintType(type)) ||
                     (type.isPrimitive() && (size != -1 || sizeName != null)))
                 {
                     builder.addStatement("$L = -1", dynamicOffset(name));
@@ -3327,7 +3327,7 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 String sizeName)
             {
 
-                if ((usedAsSize && !isVarintType(type) && !isVarbyteuintType(type)) ||
+                if ((usedAsSize && !isVarintType(type) && !isVaruintType(type)) ||
                     (type.isPrimitive() && (size != -1 || sizeName != null)))
                 {
                     builder.addStatement("$L = -1", dynamicOffset(name));
@@ -3386,10 +3386,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
         return "VarStringFW".equals(name);
     }
 
-    private static boolean isVarbyteuintType(
+    private static boolean isVaruintType(
         TypeName type)
     {
-        return type instanceof ClassName && "Varbyteuint32FW".equals(((ClassName) type).simpleName());
+        return type instanceof ClassName && "Varuint32FW".equals(((ClassName) type).simpleName());
     }
 
     private static boolean isVarintType(
@@ -3399,10 +3399,10 @@ public final class StructFlyweightGenerator extends ClassSpecGenerator
                 type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
     }
 
-    private static boolean isVarbyteuint32Type(
+    private static boolean isVaruint32Type(
         TypeName type)
     {
-        return type instanceof ClassName && "Varbyteuint32FW".equals(((ClassName) type).simpleName());
+        return type instanceof ClassName && "Varuint32FW".equals(((ClassName) type).simpleName());
     }
 
     private static boolean isVarint32Type(

@@ -126,7 +126,7 @@ public final class TypeResolver
         namesByType.put(AstType.UINT24, TypeName.INT);
         namesByType.put(AstType.INT32, TypeName.INT);
         namesByType.put(AstType.UINT32, TypeName.INT);
-        namesByType.put(AstType.VARBYTEUINT32, ClassName.get(packageName, "Varbyteuint32FW"));
+        namesByType.put(AstType.VARUINT32, ClassName.get(packageName, "Varuint32FW"));
         namesByType.put(AstType.VARINT32, ClassName.get(packageName, "Varint32FW"));
         namesByType.put(AstType.VARINT64, ClassName.get(packageName, "Varint64FW"));
         namesByType.put(AstType.INT64, TypeName.LONG);
@@ -143,7 +143,7 @@ public final class TypeResolver
         namesByUnsignedType.put(AstType.UINT24, TypeName.INT);
         namesByUnsignedType.put(AstType.UINT32, TypeName.LONG);
         namesByUnsignedType.put(AstType.UINT64, TypeName.LONG);
-        namesByUnsignedType.put(AstType.VARBYTEUINT32, ClassName.get(packageName, "Varbyteuint32FW"));
+        namesByUnsignedType.put(AstType.VARUINT32, ClassName.get(packageName, "Varuint32FW"));
         return namesByUnsignedType;
     }
 

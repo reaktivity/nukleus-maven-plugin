@@ -101,7 +101,6 @@ import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Uint_m
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Unbounded_memberContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Unbounded_octets_typeContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Union_typeContext;
-import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varbyteuint32_typeContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Variant_array_memberContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Variant_case_memberContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Variant_case_member_no_typeContext;
@@ -117,6 +116,7 @@ import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint64_typeContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint_array_memberContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varstring_typeContext;
+import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varuint32_typeContext;
 
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
@@ -599,11 +599,11 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     }
 
     @Override
-    public AstNode visitVarbyteuint32_type(
-        Varbyteuint32_typeContext ctx)
+    public AstNode visitVaruint32_type(
+        Varuint32_typeContext ctx)
     {
-        memberBuilder.type(AstType.VARBYTEUINT32);
-        return super.visitVarbyteuint32_type(ctx);
+        memberBuilder.type(AstType.VARUINT32);
+        return super.visitVaruint32_type(ctx);
     }
 
     @Override

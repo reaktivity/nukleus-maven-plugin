@@ -949,7 +949,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             if (defaultValue != null)
             {
                 priorFieldIfDefaulted = name;
-                priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVarbyteuintType(typeName);
+                priorDefaultedIsPrimitive = typeName.isPrimitive() || isVarintType(typeName) || isVaruintType(typeName);
                 priorDefaultValue = defaultValue;
                 priorSizeName = sizeName;
                 priorSizeType = sizeTypeName;
@@ -1312,7 +1312,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 String priorFieldIfDefaulted,
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
-                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVaruintType(typeName);
                 if (typeName.isPrimitive())
                 {
                     addPrimitiveParentMember(name, type, typeName, unsignedType, unsignedTypeName, usedAsSize, byteOrder,
@@ -1349,7 +1349,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                 Consumer<CodeBlock.Builder> defaultPriorField)
             {
 
-                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVarbyteuintType(typeName);
+                boolean automaticallySet = usedAsSize && !isVarintType(typeName) && !isVaruintType(typeName);
                 String putterName = PUTTER_NAMES.get(typeName);
                 if (putterName == null)
                 {
@@ -1894,7 +1894,7 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
                         code.addStatement("$L(-1)", methodName(priorSizeName))
                             .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
                     }
-                    else if (isVarbyteuintType(priorSizeType))
+                    else if (isVaruintType(priorSizeType))
                     {
                         code.addStatement("$L(0)", methodName(priorSizeName))
                             .addStatement("lastFieldSet = $L", index(priorFieldIfDefaulted));
@@ -1951,10 +1951,10 @@ public final class UnionFlyweightGenerator extends ClassSpecGenerator
             type instanceof ClassName && "Varint64FW".equals(((ClassName) type).simpleName());
     }
 
-    private static boolean isVarbyteuintType(
+    private static boolean isVaruintType(
         TypeName type)
     {
-        return type instanceof ClassName && "Varbyteuint32FW".equals(((ClassName) type).simpleName());
+        return type instanceof ClassName && "Varuint32FW".equals(((ClassName) type).simpleName());
     }
 
     private static String index(
