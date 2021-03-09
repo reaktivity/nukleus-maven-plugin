@@ -39,6 +39,7 @@ public final class AstType
     public static final AstType UINT32 = new AstType("uint32", 32);
     public static final AstType UINT64 = new AstType("uint64", 64);
     public static final AstType VARUINT32 = new AstType("varuint32");
+    public static final AstType VARUINT32N = new AstType("varuint32n");
 
     public static final AstType OCTETS = new AstType("octets");
     public static final AstType BOUNDED_OCTETS = new AstType("boundedOctets");
@@ -131,7 +132,7 @@ public final class AstType
     boolean isSignedInt()
     {
         return this == INT8 || this == INT16 || this == INT24 || this == INT32 || this == INT64 ||
-               this == VARINT32 || this == VARINT64;
+               this == VARINT32 || this == VARINT64 || this == VARUINT32N;
     }
 
     public boolean isUnsignedInt()

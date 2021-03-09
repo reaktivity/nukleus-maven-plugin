@@ -408,7 +408,7 @@ public class FlatFWTest
         expected.putInt(offset + 15, 444);
         expected.putByte(offset + 19, (byte) -1);
         expected.putByte(offset + 20, (byte) 55);
-        expected.putByte(offset + 21, (byte) 1);
+        expected.putByte(offset + 21, (byte) 0);
 
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
 

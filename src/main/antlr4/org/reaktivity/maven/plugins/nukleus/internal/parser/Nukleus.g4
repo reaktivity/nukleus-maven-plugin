@@ -103,6 +103,7 @@ signed_integer_type
    | int64_type
    | varint32_type
    | varint64_type
+   | varuint32n_type
    ;
 
 unsigned_integer_type
@@ -156,6 +157,10 @@ uint64_type
    
 varuint32_type
    : KW_VARUINT32
+   ;
+
+varuint32n_type
+   : KW_VARUINT32N
    ;
 
 varint32_type
@@ -775,6 +780,11 @@ KW_UINT64
 
 KW_VARUINT32
    : 'varuint32'
+   ;
+
+
+KW_VARUINT32N
+   : 'varuint32n'
    ;
 
 

@@ -117,6 +117,7 @@ import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varint_array_memberContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varstring_typeContext;
 import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varuint32_typeContext;
+import org.reaktivity.maven.plugins.nukleus.internal.parser.NukleusParser.Varuint32n_typeContext;
 
 
 public final class AstParser extends NukleusBaseVisitor<AstNode>
@@ -604,6 +605,14 @@ public final class AstParser extends NukleusBaseVisitor<AstNode>
     {
         memberBuilder.type(AstType.VARUINT32);
         return super.visitVaruint32_type(ctx);
+    }
+
+    @Override
+    public AstNode visitVaruint32n_type(
+        Varuint32n_typeContext ctx)
+    {
+        memberBuilder.type(AstType.VARUINT32N);
+        return super.visitVaruint32n_type(ctx);
     }
 
     @Override

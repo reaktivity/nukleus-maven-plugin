@@ -22,9 +22,9 @@ import static org.junit.Assert.assertNull;
 import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.Test;
-import org.reaktivity.reaktor.internal.test.types.Varuint32FW;
+import org.reaktivity.reaktor.internal.test.types.Varuint32nFW;
 
-public class Varuint32FWTest
+public class Varuint32nFWTest
 {
     private final MutableDirectBuffer buffer = new UnsafeBuffer(allocateDirect(100))
     {
@@ -41,19 +41,19 @@ public class Varuint32FWTest
         }
     };
 
-    private final Varuint32FW.Builder varuint32RW = new Varuint32FW.Builder();
-    private final Varuint32FW varuint32RO = new Varuint32FW();
+    private final Varuint32nFW.Builder varuint32nRW = new Varuint32nFW.Builder();
+    private final Varuint32nFW varuint32nRO = new Varuint32nFW();
 
     @Test
     public void shouldNotTryWrapZeroLengthBuffer() throws Exception
     {
-        assertNull(varuint32RO.tryWrap(buffer,  10,  10));
+        assertNull(varuint32nRO.tryWrap(buffer,  10,  10));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotWrapZeroLengthBuffer() throws Exception
     {
-        varuint32RO.wrap(buffer,  10,  10);
+        varuint32nRO.wrap(buffer,  10,  10);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class Varuint32FWTest
         MutableDirectBuffer buffer = new UnsafeBuffer(new byte[2]);
         buffer.putByte(0, (byte) 0x81);
         buffer.putByte(1, (byte) 0x81);
-        assertNull(varuint32RO.tryWrap(buffer, 0, buffer.capacity()));
+        assertNull(varuint32nRO.tryWrap(buffer, 0, buffer.capacity()));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -75,7 +75,7 @@ public class Varuint32FWTest
         MutableDirectBuffer buffer = new UnsafeBuffer(new byte[2]);
         buffer.putByte(0, (byte) 0x81);
         buffer.putByte(1, (byte) 0x81);
-        varuint32RO.wrap(buffer, 0, 1);
+        varuint32nRO.wrap(buffer, 0, 1);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -86,39 +86,39 @@ public class Varuint32FWTest
         buffer.putByte(52, (byte) 0xFF);
         buffer.putByte(53, (byte) 0xFF);
         buffer.putByte(54, (byte) 0x80);
-        varuint32RO.wrap(buffer,  50,  buffer.capacity());
-        assertEquals(Integer.MAX_VALUE, varuint32RO.value());
+        varuint32nRO.wrap(buffer,  50,  buffer.capacity());
+        assertEquals(Integer.MAX_VALUE, varuint32nRO.value());
     }
 
     @Test
     public void shouldTryWrap() throws Exception
     {
-        // Actual value is 128
+        // Actual value is 128 - 1
         buffer.putByte(50, (byte) 0x80);
         buffer.putByte(51, (byte) 0x01);
-        Varuint32FW result = varuint32RO.tryWrap(buffer, 50, 52);
-        assertEquals(128, result.value());
+        Varuint32nFW result = varuint32nRO.tryWrap(buffer, 50, 52);
+        assertEquals(127, result.value());
     }
 
     @Test
     public void shouldWrap() throws Exception
     {
-        // Actual value is 128
+        // Actual value is 127
         buffer.putByte(50, (byte) 0x80);
         buffer.putByte(51, (byte) 0x01);
-        Varuint32FW result = varuint32RO.wrap(buffer, 50, 52);
-        assertEquals(128, result.value());
+        Varuint32nFW result = varuint32nRO.wrap(buffer, 50, 52);
+        assertEquals(127, result.value());
     }
 
     @Test
     public void shouldReadOneByteValue() throws Exception
     {
-        // Actual value is 24 = 0x18
+        // Actual value is 23 = 0x18 - 1
         // Encoded value is 24 = 0x18
         int offset = 13;
         buffer.putByte(offset,  (byte) 0x18);
-        assertEquals(offset + 1, varuint32RO.wrap(buffer,  offset,  21).limit());
-        assertEquals(24, varuint32RO.value());
+        assertEquals(offset + 1, varuint32nRO.wrap(buffer,  offset,  21).limit());
+        assertEquals(23, varuint32nRO.value());
     }
 
     @Test
@@ -128,21 +128,21 @@ public class Varuint32FWTest
         // Encoded value is 32767 = 0x7FFF
         buffer.putByte(50, (byte) 0xFF);
         buffer.putByte(51, (byte) 0x7F);
-        assertEquals(52, varuint32RO.wrap(buffer,  50,  buffer.capacity()).limit());
-        assertEquals(16383, varuint32RO.value());
+        assertEquals(52, varuint32nRO.wrap(buffer,  50,  buffer.capacity()).limit());
+        assertEquals(16382, varuint32nRO.value());
     }
 
     @Test
     public void shouldReadMaximumValue() throws Exception
     {
-        // Actual value is 268435455 = 0x0FFFFFFF (31 bits set)
+        // Actual value is 268435455 (- 1) = 0x0FFFFFFF (31 bits set)
         // Encoded value is 217483647 = 0x7FFFFFFF
         buffer.putByte(50, (byte) 0xFF);
         buffer.putByte(51, (byte) 0xFF);
         buffer.putByte(52, (byte) 0xFF);
         buffer.putByte(53, (byte) 0x7F);
-        assertEquals(54, varuint32RO.wrap(buffer,  50,  buffer.capacity()).limit());
-        assertEquals(268435455, varuint32RO.value());
+        assertEquals(54, varuint32nRO.wrap(buffer,  50,  buffer.capacity()).limit());
+        assertEquals(268435454, varuint32nRO.value());
     }
 
     @Test
@@ -151,21 +151,21 @@ public class Varuint32FWTest
         // Actual value is 0 = 0x00
         // Encoded value is 0x00
         buffer.putByte(50, (byte) 0x00);
-        varuint32RO.wrap(buffer,  50,  buffer.capacity());
-        assertEquals(0, varuint32RO.value());
+        varuint32nRO.wrap(buffer,  50,  buffer.capacity());
+        assertEquals(-1, varuint32nRO.value());
     }
 
     @Test
     public void shouldSetMaximumValue() throws Exception
     {
-        // Actual value is 268435455 = 0x0FFFFFFF (31 bits set)
+        // Actual value is 268435455 (- 1) = 0x0FFFFFFF (31 bits set)
         // Encoded value is 217483647 = 0x7FFFFFFF
         expected.putByte(50, (byte) 0xFF);
         expected.putByte(51, (byte) 0xFF);
         expected.putByte(52, (byte) 0xFF);
         expected.putByte(53, (byte) 0x7F);
-        varuint32RW.wrap(buffer,  50,  buffer.capacity())
-            .set(268435455)
+        varuint32nRW.wrap(buffer,  50,  buffer.capacity())
+            .set(268435454)
             .build();
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
@@ -176,8 +176,8 @@ public class Varuint32FWTest
         // Actual value is 0 = 0x00
         // Encoded value is 0x00
         expected.putByte(50, (byte) 0x00);
-        varuint32RW.wrap(buffer,  50,  buffer.capacity())
-            .set(0)
+        varuint32nRW.wrap(buffer,  50,  buffer.capacity())
+            .set(-1)
             .build();
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
@@ -186,8 +186,8 @@ public class Varuint32FWTest
     public void shouldSetOneByteValue() throws Exception
     {
         expected.putByte(10, (byte) 0x01);
-        varuint32RW.wrap(buffer, 10, 21)
-            .set(1)
+        varuint32nRW.wrap(buffer, 10, 21)
+            .set(0)
             .build();
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
@@ -195,12 +195,12 @@ public class Varuint32FWTest
     @Test
     public void shouldSetTwoByteValue() throws Exception
     {
-        // Actual value is 16383
+        // Actual value is 16382
         // Encoded value is 32767 = 0x7FFF
         expected.putByte(0, (byte) 0xFF);
         expected.putByte(1, (byte) 0x7F);
-        varuint32RW.wrap(buffer, 0, buffer.capacity())
-            .set(16383)
+        varuint32nRW.wrap(buffer, 0, buffer.capacity())
+            .set(16382)
             .build();
         assertEquals(expected.byteBuffer(), buffer.byteBuffer());
     }
@@ -208,28 +208,28 @@ public class Varuint32FWTest
     @Test
     public void shouldReportAsString() throws Exception
     {
-        // Actual value is 268435455 = 0x0FFFFFFF (31 bits set)
+        // Actual value is 268435455 (- 1) = 0x0FFFFFFF (31 bits set)
         // Encoded value is 217483647 = 0x7FFFFFFF
         buffer.putByte(50, (byte) 0xFF);
         buffer.putByte(51, (byte) 0xFF);
         buffer.putByte(52, (byte) 0xFF);
         buffer.putByte(53, (byte) 0x7F);
-        varuint32RO.wrap(buffer,  50,  buffer.capacity());
-        assertEquals(Integer.toString(268435455), varuint32RO.toString());
+        varuint32nRO.wrap(buffer,  50,  buffer.capacity());
+        assertEquals(Integer.toString(268435454), varuint32nRO.toString());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotBuildWithZeroLengthBuffer() throws Exception
     {
         expected.putByte(10, (byte) 0x18);
-        varuint32RW.wrap(buffer, 10, 10);
+        varuint32nRW.wrap(buffer, 10, 10);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
     public void shouldNotSetValueWithInsufficientSpace() throws Exception
     {
         expected.putByte(10, (byte) 0x18);
-        varuint32RW.wrap(buffer, 10, 11)
+        varuint32nRW.wrap(buffer, 10, 11)
             .set(268435455);
     }
 }

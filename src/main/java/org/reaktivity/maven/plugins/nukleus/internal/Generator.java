@@ -61,6 +61,7 @@ import org.reaktivity.maven.plugins.nukleus.internal.generate.VarStringFlyweight
 import org.reaktivity.maven.plugins.nukleus.internal.generate.Varint32FlyweightGenerator;
 import org.reaktivity.maven.plugins.nukleus.internal.generate.Varint64FlyweightGenerator;
 import org.reaktivity.maven.plugins.nukleus.internal.generate.Varuint32FlyweightGenerator;
+import org.reaktivity.maven.plugins.nukleus.internal.generate.Varuint32nFlyweightGenerator;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
@@ -148,9 +149,10 @@ public class Generator
         typeSpecs.add(new Array8FWGenerator(flyweightType, arrayType));
         typeSpecs.add(new Array16FWGenerator(flyweightType, arrayType));
         typeSpecs.add(new Array32FWGenerator(flyweightType, arrayType));
-        typeSpecs.add(new Varuint32FlyweightGenerator(flyweightType));
         typeSpecs.add(new Varint32FlyweightGenerator(flyweightType));
         typeSpecs.add(new Varint64FlyweightGenerator(flyweightType));
+        typeSpecs.add(new Varuint32FlyweightGenerator(flyweightType));
+        typeSpecs.add(new Varuint32nFlyweightGenerator(flyweightType));
         typeSpecs.add(new ListFWGenerator(flyweightType));
         typeSpecs.add(new List32FWGenerator(flyweightType, listType));
         typeSpecs.add(new List8FWGenerator(flyweightType, listType));

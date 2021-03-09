@@ -127,6 +127,7 @@ public final class TypeResolver
         namesByType.put(AstType.INT32, TypeName.INT);
         namesByType.put(AstType.UINT32, TypeName.INT);
         namesByType.put(AstType.VARUINT32, ClassName.get(packageName, "Varuint32FW"));
+        namesByType.put(AstType.VARUINT32N, ClassName.get(packageName, "Varuint32nFW"));
         namesByType.put(AstType.VARINT32, ClassName.get(packageName, "Varint32FW"));
         namesByType.put(AstType.VARINT64, ClassName.get(packageName, "Varint64FW"));
         namesByType.put(AstType.INT64, TypeName.LONG);
