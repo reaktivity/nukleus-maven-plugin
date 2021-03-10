@@ -32,15 +32,15 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
+public final class Varuint32FlyweightGenerator extends ClassSpecGenerator
 {
     private final TypeSpec.Builder classBuilder;
     private final BuilderClassBuilder builderClassBuilder;
 
-    public Varbyteuint32FlyweightGenerator(
+    public Varuint32FlyweightGenerator(
         ClassName flyweightType)
     {
-        super(flyweightType.peerClass("Varbyteuint32FW"));
+        super(flyweightType.peerClass("Varuint32FW"));
 
         this.classBuilder = classBuilder(thisName).superclass(flyweightType).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(thisName, flyweightType.nestedClass("Builder"));
@@ -85,15 +85,17 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("final int offset = offset()")
                 .addStatement("final int limit = limit()")
                 .addStatement("int value = 0")
-                .addStatement("int index = 0")
-                .addStatement("int multiplier = 1")
-                .addStatement("int b")
-                .beginControlFlow("do")
-                    .addStatement("b = buffer.getByte(offset + index)")
-                    .addStatement("value += (b & 0x7F) * multiplier")
-                    .addStatement("multiplier *= 0x80")
-                    .addStatement("index++")
-                .endControlFlow("while (offset + index < limit && (b & 0x80) != 0)")
+                .addStatement("int progress = offset")
+                .beginControlFlow("if (progress < limit)")
+                    .addStatement("int shift = 0")
+                    .addStatement("int bits")
+                    .beginControlFlow("do")
+                        .addStatement("bits = buffer.getByte(progress)")
+                        .addStatement("value |= (bits & 0x7F) << shift")
+                        .addStatement("shift += 7")
+                        .addStatement("progress++")
+                    .endControlFlow("while (progress < limit && (bits & 0x80) != 0)")
+                .endControlFlow()
                 .addStatement("return value")
                 .build();
     }
@@ -132,7 +134,7 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                 .addStatement("size = length0()")
                 .beginControlFlow("if (size < 0 || size > 5)")
                     .addStatement("throw new $T(String.format($S, offset))", IllegalArgumentException.class,
-                            "varbyteuint32 value at offset %d exceeds 32 bits")
+                            "varuint32 value at offset %d exceeds 32 bits")
                 .endControlFlow()
                 .addStatement("checkLimit(limit(), maxLimit)")
                 .addStatement("return this")
@@ -237,17 +239,13 @@ public final class Varbyteuint32FlyweightGenerator extends ClassSpecGenerator
                     .endControlFlow()
                     .addStatement("final MutableDirectBuffer buffer = buffer()")
                     .addStatement("int progress = offset()")
-                    .addStatement("int varint = 0")
-                    .addStatement("int i = 0")
                     .beginControlFlow("do")
-                        .addStatement("int encodedByte = value % 0x80")
-                        .addStatement("value /= 0x80")
-                        .beginControlFlow("if (value > 0)")
-                            .addStatement("encodedByte |= 0x80")
+                        .addStatement("int bits = value & 0x7F")
+                        .addStatement("value >>= 7")
+                        .beginControlFlow("if (value != 0)")
+                            .addStatement("bits |= 0x80")
                         .endControlFlow()
-                        .addStatement("varint |= ((varint & 0x80) > 0 ? encodedByte << (8 * i) : encodedByte) | varint")
-                        .addStatement("buffer.putByte(progress++, (byte) (encodedByte & 0xFF))")
-                        .addStatement("i++")
+                        .addStatement("buffer.putByte(progress++, (byte) (bits & 0xFF))")
                     .endControlFlow("while (value > 0)")
                     .addStatement("int newLimit = progress")
                     .addStatement("checkLimit(newLimit, maxLimit())")

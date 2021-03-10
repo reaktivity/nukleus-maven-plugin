@@ -38,7 +38,8 @@ public final class AstType
     public static final AstType UINT24 = new AstType("uint24", 24);
     public static final AstType UINT32 = new AstType("uint32", 32);
     public static final AstType UINT64 = new AstType("uint64", 64);
-    public static final AstType VARBYTEUINT32 = new AstType("varbyteuint32");
+    public static final AstType VARUINT32 = new AstType("varuint32");
+    public static final AstType VARUINT32N = new AstType("varuint32n");
 
     public static final AstType OCTETS = new AstType("octets");
     public static final AstType BOUNDED_OCTETS = new AstType("boundedOctets");
@@ -74,7 +75,7 @@ public final class AstType
     {
         Set<AstType> astTypes = Collections.newSetFromMap(new IdentityHashMap<>());
         astTypes.addAll(List.of(INT8, INT16, INT24, INT32, INT64, VARINT32, VARINT64, UINT8, UINT16, UINT24, UINT32, UINT64,
-            VARBYTEUINT32, OCTETS, BOUNDED_OCTETS, BOUNDED_OCTETS8, BOUNDED_OCTETS16, BOUNDED_OCTETS32, STRING, STRING8,
+            VARUINT32, OCTETS, BOUNDED_OCTETS, BOUNDED_OCTETS8, BOUNDED_OCTETS16, BOUNDED_OCTETS32, STRING, STRING8,
             STRING16, STRING32, ARRAY, ARRAY8, ARRAY16, ARRAY32, FLYWEIGHT, LIST, LIST0, LIST8, LIST32, MAP, MAP8, MAP16, MAP32));
         AST_TYPES = astTypes;
     }
@@ -131,12 +132,12 @@ public final class AstType
     boolean isSignedInt()
     {
         return this == INT8 || this == INT16 || this == INT24 || this == INT32 || this == INT64 ||
-               this == VARINT32 || this == VARINT64;
+               this == VARINT32 || this == VARINT64 || this == VARUINT32N;
     }
 
     public boolean isUnsignedInt()
     {
-        return this == UINT8 || this == UINT16 || this == UINT24 || this == UINT32 || this == UINT64 || this == VARBYTEUINT32;
+        return this == UINT8 || this == UINT16 || this == UINT24 || this == UINT32 || this == UINT64 || this == VARUINT32;
     }
 
     public boolean isDynamicType()

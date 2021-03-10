@@ -48,7 +48,7 @@ public final class VarStringFlyweightGenerator extends ClassSpecGenerator
     {
         super(stringType.peerClass("VarStringFW"));
 
-        this.varintType = stringType.peerClass("Varint32FW");
+        this.varintType = stringType.peerClass("Varuint32nFW");
         this.classBuilder = classBuilder(thisName).superclass(stringType).addModifiers(PUBLIC, FINAL);
         this.builderClassBuilder = new BuilderClassBuilder(stringType, thisName,
                 stringType.nestedClass("Builder"), varintType, varintType.nestedClass("Builder"));

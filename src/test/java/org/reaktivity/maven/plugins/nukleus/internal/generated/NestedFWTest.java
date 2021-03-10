@@ -70,7 +70,7 @@ public class NestedFWTest
         buffer.putByte(pos += 4, (byte) 6);
         buffer.putStringWithoutLengthUtf8(pos += 1,  "value3");
         buffer.putByte(pos += 6,  (byte) 50);
-        buffer.putByte(pos += 1, (byte) 12);
+        buffer.putByte(pos += 1, (byte) 7);
         buffer.putStringWithoutLengthUtf8(pos += 1,  "value4");
         buffer.putLong(pos += 6,  50);
 

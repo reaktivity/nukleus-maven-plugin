@@ -18,7 +18,6 @@ package org.reaktivity.maven.plugins.nukleus.internal.generate;
 import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.TypeVariableName;
 
 public final class TypeNames
 {
@@ -36,10 +35,6 @@ public final class TypeNames
         ClassName.get(AGRONA_COLLECTIONS_PACKAGE, "Long2ObjectHashMap");
 
     public static final TypeName BYTE_ARRAY = ArrayTypeName.of(byte.class);
-
-    public static final TypeName VARINT = TypeVariableName.get("Varint");
-    public static final TypeName VARBYTEUINT = TypeVariableName.get("Varbyteuint");
-
 
     private TypeNames()
     {
